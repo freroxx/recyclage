@@ -69,6 +69,13 @@ const translations = {
     "footer.followUs": "Suivez-nous",
     "footer.school": "École Maria",
     "footer.rights": "Tous droits réservés",
+    "footer.credits": "Crédits",
+    "footer.creditsTitle": "Crédits du Projet",
+    "footer.creator": "Créateur",
+    "footer.organization": "Organisation",
+    "footer.created": "Créé",
+    "footer.date": "Novembre 2025",
+    "footer.project": "Projet",
   },
   en: {
     // Navigation
@@ -130,6 +137,13 @@ const translations = {
     "footer.followUs": "Follow us",
     "footer.school": "École Maria",
     "footer.rights": "All rights reserved",
+    "footer.credits": "Credits",
+    "footer.creditsTitle": "Project Credits",
+    "footer.creator": "Creator",
+    "footer.organization": "Organization",
+    "footer.created": "Created",
+    "footer.date": "November 2025",
+    "footer.project": "Project",
   },
 };
 
