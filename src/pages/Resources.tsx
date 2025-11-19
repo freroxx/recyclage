@@ -1,10 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useNavigate } from "react-router-dom";
 import { FileText, Palette, Video, ImageIcon } from "lucide-react";
 
 export default function Resources() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
   const resources = [
     { icon: FileText, key: "guides", color: "text-blue-500", bg: "bg-blue-500/10" },
@@ -36,8 +38,13 @@ export default function Resources() {
                 <h3 className="font-bold text-lg mb-3">
                   {t(`resources.${resource.key}`)}
                 </h3>
-                <Button variant="outline" className="w-full" disabled>
-                  Coming Soon
+                <Button 
+                  variant="outline" 
+                  className="w-full" 
+                  disabled={resource.key !== "posters"}
+                  onClick={() => resource.key === "posters" && navigate("/posters")}
+                >
+                  {resource.key === "posters" ? t("resources.view") : "Coming Soon"}
                 </Button>
               </CardContent>
             </Card>
