@@ -1,9 +1,11 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { Trash2, FileText, Apple, Package } from "lucide-react";
 
 export default function Project() {
   const { t } = useLanguage();
+  useScrollReveal();
 
   const bins = [
     { icon: Package, color: "text-blue-500", bg: "bg-blue-500/10", key: "plastic" },
@@ -26,13 +28,14 @@ export default function Project() {
         </div>
 
         {/* Sorting Bins */}
-        <div className="mb-16 animate-slide-up">
-          <h2 className="text-2xl font-bold mb-6 text-center">{t("project.bins.title")}</h2>
+        <div className="mb-16">
+          <h2 className="text-2xl font-bold mb-6 text-center scroll-reveal">{t("project.bins.title")}</h2>
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-            {bins.map((bin) => (
+            {bins.map((bin, index) => (
               <Card
                 key={bin.key}
-                className="hover:shadow-lg transition-all hover:-translate-y-1"
+                className="hover:shadow-lg transition-all hover:-translate-y-2 scroll-reveal"
+                style={{ transitionDelay: `${index * 100}ms` }}
               >
                 <CardContent className="pt-6 text-center">
                   <div className={`w-16 h-16 rounded-full ${bin.bg} flex items-center justify-center mx-auto mb-3`}>
@@ -46,8 +49,8 @@ export default function Project() {
         </div>
 
         {/* Key Actions */}
-        <div className="space-y-6 animate-slide-up [animation-delay:200ms]">
-          <Card className="bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
+        <div className="space-y-6">
+          <Card className="bg-gradient-to-br from-primary/5 to-transparent border-primary/20 scroll-fade-left">
             <CardContent className="pt-6">
               <h3 className="font-bold text-lg mb-2 text-primary">
                 {t("project.implementation")}
@@ -56,7 +59,7 @@ export default function Project() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-accent/5 to-transparent border-accent/20">
+          <Card className="bg-gradient-to-br from-accent/5 to-transparent border-accent/20 scroll-reveal">
             <CardContent className="pt-6">
               <h3 className="font-bold text-lg mb-2 text-accent-foreground">
                 {t("project.awareness")}
@@ -65,7 +68,7 @@ export default function Project() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-secondary to-transparent">
+          <Card className="bg-gradient-to-br from-secondary to-transparent scroll-fade-right">
             <CardContent className="pt-6">
               <h3 className="font-bold text-lg mb-2 text-foreground">
                 {t("project.mobilization")}

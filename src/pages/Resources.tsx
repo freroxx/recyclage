@@ -2,11 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { FileText, Palette, Video, ImageIcon } from "lucide-react";
 
 export default function Resources() {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  useScrollReveal();
 
   const resources = [
     { icon: FileText, key: "guides", color: "text-blue-500", bg: "bg-blue-500/10" },
@@ -25,11 +27,12 @@ export default function Resources() {
           <p className="text-lg text-muted-foreground">{t("resources.subtitle")}</p>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-6 animate-slide-up">
-          {resources.map((resource) => (
+        <div className="grid sm:grid-cols-2 gap-6">
+          {resources.map((resource, index) => (
             <Card
               key={resource.key}
-              className="hover:shadow-lg transition-all hover:-translate-y-1"
+              className={`hover:shadow-lg transition-all hover:-translate-y-2 scroll-reveal`}
+              style={{ transitionDelay: `${index * 100}ms` }}
             >
               <CardContent className="pt-6">
                 <div className={`w-14 h-14 rounded-lg ${resource.bg} flex items-center justify-center mb-4`}>
@@ -41,10 +44,13 @@ export default function Resources() {
                 <Button 
                   variant="outline" 
                   className="w-full" 
-                  disabled={resource.key !== "posters"}
-                  onClick={() => resource.key === "posters" && navigate("/posters")}
+                  disabled={resource.key !== "posters" && resource.key !== "guides"}
+                  onClick={() => {
+                    if (resource.key === "posters") navigate("/posters");
+                    if (resource.key === "guides") navigate("/guide");
+                  }}
                 >
-                  {resource.key === "posters" ? t("resources.view") : "Coming Soon"}
+                  {resource.key === "posters" || resource.key === "guides" ? t("resources.view") : "Coming Soon"}
                 </Button>
               </CardContent>
             </Card>

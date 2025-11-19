@@ -4,16 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, Languages } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import logo from "@/assets/logo.png";
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const { language, setLanguage, t } = useLanguage();
 
-  const navItems = [
+    const navItems = [
     { key: "nav.home", path: "/" },
     { key: "nav.project", path: "/project" },
     { key: "nav.allAges", path: "/all-ages" },
     { key: "nav.resources", path: "/resources" },
+    { key: "guide.title", path: "/guide" },
     { key: "nav.contact", path: "/contact" },
   ];
 
@@ -26,10 +28,12 @@ export function Navigation() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <NavLink to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-eco-primary flex items-center justify-center">
-              <span className="text-white font-bold text-sm">EM</span>
-            </div>
+          <NavLink to="/" className="flex items-center gap-3 group">
+            <img 
+              src={logo} 
+              alt="Recyclage Maria Logo" 
+              className="w-10 h-10 object-contain transition-transform group-hover:scale-110"
+            />
             <span className="font-bold text-lg text-foreground">Recyclage Maria</span>
           </NavLink>
 

@@ -1,8 +1,10 @@
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { Card } from "@/components/ui/card";
 
 export default function Posters() {
   const { t } = useLanguage();
+  useScrollReveal();
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -14,9 +16,9 @@ export default function Posters() {
           <p className="text-lg text-muted-foreground">{t("posters.subtitle")}</p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 animate-slide-up">
+        <div className="grid md:grid-cols-2 gap-8">
           {/* First Poster */}
-          <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+          <Card className="overflow-hidden hover:shadow-xl transition-all hover:-translate-y-2 scroll-fade-left">
             <div className="relative w-full h-0 pb-[141.4286%] overflow-hidden rounded-t-lg">
               <iframe
                 loading="lazy"
@@ -39,7 +41,7 @@ export default function Posters() {
           </Card>
 
           {/* Second Poster */}
-          <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+          <Card className="overflow-hidden hover:shadow-xl transition-all hover:-translate-y-2 scroll-fade-right">
             <div className="relative w-full h-0 pb-[141.4286%] overflow-hidden rounded-t-lg">
               <iframe
                 loading="lazy"
