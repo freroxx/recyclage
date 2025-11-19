@@ -54,6 +54,13 @@ const translations = {
     "resources.activities": "Activités éducatives",
     "resources.videos": "Vidéos",
     "resources.posters": "Affiches",
+    "resources.view": "Voir",
+    
+    // Posters
+    "posters.title": "Affiches de Recyclage",
+    "posters.subtitle": "Découvrez nos affiches éducatives sur le recyclage",
+    "posters.poster1": "Affiche Sauver la Terre avec les 3R",
+    "posters.poster2": "Affiche Campagne de Recyclage Minimaliste",
     
     // Contact
     "contact.title": "Contactez-nous",
@@ -122,6 +129,13 @@ const translations = {
     "resources.activities": "Educational Activities",
     "resources.videos": "Videos",
     "resources.posters": "Posters",
+    "resources.view": "View",
+    
+    // Posters
+    "posters.title": "Recycling Posters",
+    "posters.subtitle": "Discover our educational posters on recycling",
+    "posters.poster1": "Save the Earth With 3R Poster",
+    "posters.poster2": "Minimalist Recycling Campaign Poster",
     
     // Contact
     "contact.title": "Contact Us",

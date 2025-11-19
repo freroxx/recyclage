@@ -11,6 +11,7 @@ import Home from "./pages/Home";
 import Project from "./pages/Project";
 import AllAges from "./pages/AllAges";
 import Resources from "./pages/Resources";
+import Posters from "./pages/Posters";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 
@@ -32,6 +33,7 @@ const App = () => (
                 <Route path="/project" element={<Project />} />
                 <Route path="/all-ages" element={<AllAges />} />
                 <Route path="/resources" element={<Resources />} />
+                <Route path="/posters" element={<Posters />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
