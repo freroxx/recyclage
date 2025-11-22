@@ -62,6 +62,12 @@ const translations = {
     "posters.poster1": "Affiche Sauver la Terre avec les 3R",
     "posters.poster2": "Affiche Campagne de Recyclage Minimaliste",
     
+    // Videos
+    "videos.title": "Vidéos Éducatives",
+    "videos.subtitle": "Découvrez nos vidéos sur le recyclage et l'environnement",
+    "videos.video1.title": "Introduction au Recyclage",
+    "videos.video1.description": "Une vidéo complète sur les bases du recyclage et son importance pour l'environnement",
+    
     // Guide
     "guide.title": "Guide de Tri",
     "guide.subtitle": "Apprenez à trier correctement vos déchets",
@@ -146,6 +152,12 @@ const translations = {
     "posters.subtitle": "Discover our educational posters on recycling",
     "posters.poster1": "Save the Earth With 3R Poster",
     "posters.poster2": "Minimalist Recycling Campaign Poster",
+    
+    // Videos
+    "videos.title": "Educational Videos",
+    "videos.subtitle": "Discover our videos on recycling and the environment",
+    "videos.video1.title": "Introduction to Recycling",
+    "videos.video1.description": "A comprehensive video on the basics of recycling and its importance for the environment",
     
     // Guide
     "guide.title": "Sorting Guide",

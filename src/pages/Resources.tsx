@@ -44,13 +44,14 @@ export default function Resources() {
                 <Button 
                   variant="outline" 
                   className="w-full" 
-                  disabled={resource.key !== "posters" && resource.key !== "guides"}
+                  disabled={resource.key === "activities"}
                   onClick={() => {
                     if (resource.key === "posters") navigate("/posters");
                     if (resource.key === "guides") navigate("/guide");
+                    if (resource.key === "videos") navigate("/videos");
                   }}
                 >
-                  {resource.key === "posters" || resource.key === "guides" ? t("resources.view") : "Coming Soon"}
+                  {resource.key === "activities" ? "Coming Soon" : t("resources.view")}
                 </Button>
               </CardContent>
             </Card>
