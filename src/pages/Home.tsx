@@ -14,13 +14,14 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-[600px] flex items-center justify-center overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center transform transition-transform duration-700 hover:scale-105"
-          style={{ backgroundImage: `url(${heroImage})` }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/60" />
-        </div>
+      <section className="relative h-[500px] md:h-[600px] lg:h-[700px] flex items-center justify-center overflow-hidden">
+        <img
+          src={heroImage}
+          alt="Ecole Maria"
+          className="absolute inset-0 w-full h-full object-cover object-center transform transition-transform duration-700 hover:scale-105"
+          loading="eager"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/60" />
 
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto animate-fade-in">
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 drop-shadow-lg animate-slide-in-left">
