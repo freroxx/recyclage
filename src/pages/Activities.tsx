@@ -64,10 +64,10 @@ export default function Activities() {
                 <CardDescription>{t(game.descriptionKey)}</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
+                <div className="w-full h-[700px] md:h-[800px] lg:h-[900px]">
                   <iframe
                     src={game.url}
-                    className="absolute top-0 left-0 w-full h-full rounded-lg border-2 border-border"
+                    className="w-full h-full rounded-lg border-2 border-border"
                     title={t(game.titleKey)}
                     allowFullScreen
                     loading="lazy"
