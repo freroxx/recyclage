@@ -15,7 +15,6 @@ export function Navigation() {
     { key: "nav.project", path: "/project" },
     { key: "nav.allAges", path: "/all-ages" },
     { key: "nav.resources", path: "/resources" },
-    { key: "guide.title", path: "/guide" },
     { key: "nav.contact", path: "/contact" },
   ];
 
