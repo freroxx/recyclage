@@ -14,6 +14,7 @@ import Resources from "./pages/Resources";
 import Guide from "./pages/Guide";
 import Posters from "./pages/Posters";
 import Videos from "./pages/Videos";
+import Activities from "./pages/Activities";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 
@@ -38,6 +39,7 @@ const App = () => (
                 <Route path="/guide" element={<Guide />} />
                 <Route path="/posters" element={<Posters />} />
                 <Route path="/videos" element={<Videos />} />
+                <Route path="/activities" element={<Activities />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

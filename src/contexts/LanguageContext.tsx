@@ -68,6 +68,18 @@ const translations = {
     "videos.video1.title": "Introduction au Recyclage",
     "videos.video1.description": "Une vidéo complète sur les bases du recyclage et son importance pour l'environnement",
     
+    // Activities
+    "activities.title": "Activités Éducatives",
+    "activities.subtitle": "Jouez et apprenez avec nos jeux interactifs sur le recyclage",
+    "activities.game1.title": "Champion du Tri",
+    "activities.game1.description": "Apprenez à trier correctement vos déchets",
+    "activities.game2.title": "Un Geste pour la Planète",
+    "activities.game2.description": "Découvrez l'impact de vos gestes quotidiens",
+    "activities.game3.title": "Transforme tes Déchets",
+    "activities.game3.description": "Explorez le cycle de vie des déchets recyclés",
+    "activities.game4.title": "Le Roi du Compost",
+    "activities.game4.description": "Maîtrisez l'art du compostage",
+    
     // Guide
     "guide.title": "Guide de Tri",
     "guide.subtitle": "Apprenez à trier correctement vos déchets",
@@ -158,6 +170,18 @@ const translations = {
     "videos.subtitle": "Discover our videos on recycling and the environment",
     "videos.video1.title": "Introduction to Recycling",
     "videos.video1.description": "A comprehensive video on the basics of recycling and its importance for the environment",
+    
+    // Activities
+    "activities.title": "Educational Activities",
+    "activities.subtitle": "Play and learn with our interactive recycling games",
+    "activities.game1.title": "Sorting Champion",
+    "activities.game1.description": "Learn how to sort your waste correctly",
+    "activities.game2.title": "A Gesture for the Planet",
+    "activities.game2.description": "Discover the impact of your daily actions",
+    "activities.game3.title": "Transform Your Waste",
+    "activities.game3.description": "Explore the lifecycle of recycled waste",
+    "activities.game4.title": "Compost King",
+    "activities.game4.description": "Master the art of composting",
     
     // Guide
     "guide.title": "Sorting Guide",
