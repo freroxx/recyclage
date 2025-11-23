@@ -71,6 +71,10 @@ const translations = {
     // Activities
     "activities.title": "Activités Éducatives",
     "activities.subtitle": "Jouez et apprenez avec nos jeux interactifs sur le recyclage",
+    "activities.nextLevel": "Niveau Suivant",
+    "activities.goHome": "Retour à l'Accueil",
+    "activities.completed": "Tous les niveaux terminés !",
+    "activities.restart": "Recommencer",
     "activities.game1.title": "Champion du Tri",
     "activities.game1.description": "Apprenez à trier correctement vos déchets",
     "activities.game2.title": "Un Geste pour la Planète",
@@ -174,6 +178,10 @@ const translations = {
     // Activities
     "activities.title": "Educational Activities",
     "activities.subtitle": "Play and learn with our interactive recycling games",
+    "activities.nextLevel": "Next Level",
+    "activities.goHome": "Go Back Home",
+    "activities.completed": "All levels completed!",
+    "activities.restart": "Restart",
     "activities.game1.title": "Sorting Champion",
     "activities.game1.description": "Learn how to sort your waste correctly",
     "activities.game2.title": "A Gesture for the Planet",
