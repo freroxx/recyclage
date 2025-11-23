@@ -20,6 +20,7 @@ export default function Home() {
           alt="Ecole Maria"
           className="absolute inset-0 w-full h-full object-cover object-center transform transition-transform duration-700 hover:scale-105"
           loading="eager"
+          fetchPriority="high"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/60" />
 
