@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, Languages } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo.webp";
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
