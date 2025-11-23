@@ -4,7 +4,7 @@ import { Recycle, Users, Lightbulb } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
-import heroImage from "@/assets/hero-eco.jpg";
+import heroImage from "@/assets/hero-eco.webp";
 
 export default function Home() {
   const { t } = useLanguage();
