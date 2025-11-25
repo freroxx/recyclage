@@ -19,14 +19,17 @@ export default function Home() {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && !loadIframe) {
-            setLoadIframe(true);
+            // Delay iframe load to reduce FID impact on main thread
+            setTimeout(() => {
+              setLoadIframe(true);
+            }, 100);
             observer.disconnect();
           }
         });
       },
       {
-        rootMargin: '200px', // Start loading 200px before iframe comes into view
-        threshold: 0
+        rootMargin: '100px', // Load when closer to viewport
+        threshold: 0.1 // Load when 10% visible
       }
     );
 
