@@ -5,11 +5,22 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import heroImage from "@/assets/ecole-maria-hero.webp";
+import { useState, useEffect } from "react";
 
 export default function Home() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   useScrollReveal();
+  const [loadIframe, setLoadIframe] = useState(false);
+
+  useEffect(() => {
+    // Defer iframe loading until after initial page load
+    const timer = setTimeout(() => {
+      setLoadIframe(true);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -96,14 +107,22 @@ export default function Home() {
           
           <div className="relative scroll-reveal-delay-100">
             <div className="relative w-full h-0 pb-[56.25%] rounded-lg sm:rounded-xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 bg-card border border-border/50 hover:border-primary/20 will-animate">
-              <iframe
-                loading="lazy"
-                className="absolute w-full h-full top-0 left-0 border-0"
-                src="https://www.canva.com/design/DAG5CGlo4U8/e8TE7nOlF8W-8b7pUdDrPg/view?embed"
-                allowFullScreen
-                allow="fullscreen"
-                title="How To Recycle Waste Presentation"
-              />
+              {loadIframe ? (
+                <iframe
+                  loading="lazy"
+                  className="absolute w-full h-full top-0 left-0 border-0"
+                  src="https://www.canva.com/design/DAG5CGlo4U8/e8TE7nOlF8W-8b7pUdDrPg/view?embed"
+                  allowFullScreen
+                  allow="fullscreen"
+                  title="How To Recycle Waste Presentation"
+                />
+              ) : (
+                <div className="absolute w-full h-full top-0 left-0 flex items-center justify-center bg-muted">
+                  <div className="text-center">
+                    <div className="animate-pulse text-muted-foreground">Loading presentation...</div>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="text-center mt-3 sm:mt-4 px-4">
               <a
