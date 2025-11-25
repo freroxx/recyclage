@@ -9,7 +9,10 @@ import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { lazy, Suspense } from "react";
 
-// Lazy load pages for better performance
+// Import Vercel Analytics
+import { Analytics } from "@vercel/analytics/react";
+
+// Lazy load pages
 const Home = lazy(() => import("./pages/Home"));
 const Project = lazy(() => import("./pages/Project"));
 const AllAges = lazy(() => import("./pages/AllAges"));
@@ -60,6 +63,10 @@ const App = () => (
                 </Suspense>
               </main>
               <Footer />
+
+              {/* ✅ Analytics placé en bas (recommandé) */}
+              <Analytics />
+
             </div>
           </BrowserRouter>
         </TooltipProvider>
