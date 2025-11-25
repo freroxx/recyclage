@@ -18,6 +18,17 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     touch-action: manipulation;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  /* Font fallback optimization to prevent layout shifts */
+  @font-face {
+    font-family: 'Inter-fallback';
+    src: local('Arial');
+    size-adjust: 107%;
+    ascent-override: 90%;
+    descent-override: 22%;
+    line-gap-override: 0%;
   }
 
   /* Better touch targets for mobile */
@@ -72,6 +83,11 @@
   /* Better focus styles */
   .focus-ring {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+  }
+
+  /* Layout containment to prevent layout shifts */
+  .contain-layout {
+    contain: layout;
   }
 }
 

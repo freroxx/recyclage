@@ -18,6 +18,8 @@ export default function Home() {
         <img
           src={heroImage}
           alt="Ecole Maria - Recyclage"
+          width="1920"
+          height="1000"
           className="absolute inset-0 w-full h-full object-cover object-center transform transition-transform duration-700 hover:scale-105 will-animate"
           loading="eager"
           fetchPriority="high"
