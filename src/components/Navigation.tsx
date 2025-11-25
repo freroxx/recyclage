@@ -30,9 +30,7 @@ export function Navigation() {
           <NavLink to="/" className="flex items-center gap-2 sm:gap-3 group focus-ring rounded-lg px-2 -mx-2">
             <img 
               src={logo} 
-              alt="Recyclage Maria Logo"
-              width="40"
-              height="40"
+              alt="Recyclage Maria Logo" 
               className="w-9 h-9 sm:w-10 sm:h-10 object-contain transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
             />
             <span className="font-bold text-base sm:text-lg text-foreground transition-colors">Recyclage Maria</span>
