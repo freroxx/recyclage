@@ -4,7 +4,6 @@ import { Recycle, Users, Lightbulb } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
-import heroImage from "@/assets/ecole-maria-hero.webp";
 import { useState, useEffect, useRef } from "react";
 
 export default function Home() {
@@ -45,7 +44,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative h-[400px] sm:h-[500px] md:h-[600px] lg:h-[700px] flex items-center justify-center overflow-hidden will-animate">
         <img
-          src={heroImage}
+          src="/hero.webp"
           alt="Ecole Maria - Recyclage"
           className="absolute inset-0 w-full h-full object-cover object-center transform transition-transform duration-700 hover:scale-105 will-animate"
           loading="eager"
