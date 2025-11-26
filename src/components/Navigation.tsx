@@ -1,19 +1,20 @@
 import { useState } from "react";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Languages } from "lucide-react";
+import { Menu, X, Languages, Bot } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { AIChat } from "@/components/AIChat";
 import logo from "@/assets/logo-optimized.webp";
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
+  const [aiChatOpen, setAiChatOpen] = useState(false);
   const { language, setLanguage, t } = useLanguage();
 
-    const navItems = [
+  const navItems = [
     { key: "nav.home", path: "/" },
     { key: "nav.project", path: "/project" },
-    { key: "nav.allAges", path: "/all-ages" },
     { key: "nav.resources", path: "/resources" },
     { key: "nav.contact", path: "/contact" },
   ];
@@ -51,6 +52,16 @@ export function Navigation() {
               </NavLink>
             ))}
             <div className="flex items-center gap-1 ml-2 border-l border-border pl-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setAiChatOpen(true)}
+                className="gap-2 hover:bg-primary/5 focus-ring text-primary"
+                title="Assistant IA"
+              >
+                <Bot className="w-4 h-4" />
+                <span className="hidden lg:inline">IA</span>
+              </Button>
               <ThemeToggle />
               <Button
                 variant="ghost"
@@ -115,6 +126,8 @@ export function Navigation() {
           </div>
         </div>
       </div>
+
+      <AIChat open={aiChatOpen} onOpenChange={setAiChatOpen} />
     </nav>
   );
 }
