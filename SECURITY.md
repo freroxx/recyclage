@@ -2,7 +2,7 @@
 
 Nous prenons la sécurité très au sérieux. Si vous découvrez une vulnérabilité dans ce projet, veuillez nous en informer de manière responsable afin que nous puissions la corriger rapidement.
 
-Email pour signalement : recyclagemaria@gmail.com / https://recyclage.vercel.app/contact
+Email pour signalement : recyclagemaria@gmail.com
 
 Objet recommandé : [Sécurité] Description courte de la vulnérabilité
 
