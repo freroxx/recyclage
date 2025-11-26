@@ -11,11 +11,13 @@ export const useScrollReveal = () => {
     };
 
     const observer = new IntersectionObserver(observerCallback, {
-      threshold: 0.1,
-      rootMargin: "0px 0px -50px 0px",
+      threshold: 0.15,
+      rootMargin: "0px 0px -80px 0px",
     });
 
-    const elements = document.querySelectorAll(".scroll-reveal, .scroll-fade-left, .scroll-fade-right");
+    const elements = document.querySelectorAll(
+      ".scroll-reveal, .scroll-fade-left, .scroll-fade-right, .scroll-rotate-in"
+    );
     elements.forEach((el) => observer.observe(el));
 
     return () => {

@@ -68,14 +68,14 @@ export default function Project() {
         </div>
 
         {/* Goal Section */}
-        <div className="max-w-5xl mx-auto mb-20 scroll-reveal">
-          <Card className="border-2 border-primary/20 shadow-xl overflow-hidden">
-            <div className="bg-gradient-to-r from-primary/10 via-green-500/10 to-primary/10 p-8">
+        <div className="max-w-5xl mx-auto mb-20 scroll-rotate-in">
+          <Card className="border-2 border-primary/20 shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] group cursor-pointer">
+            <div className="bg-gradient-to-r from-primary/10 via-green-500/10 to-primary/10 p-8 transition-all duration-500 group-hover:from-primary/20 group-hover:via-green-500/20 group-hover:to-primary/20">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                  <Target className="w-6 h-6 text-primary" />
+                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center transition-all duration-500 group-hover:scale-125 group-hover:rotate-12 group-hover:bg-primary/30">
+                  <Target className="w-6 h-6 text-primary transition-transform duration-500 group-hover:scale-110" />
                 </div>
-                <h2 className="text-3xl font-bold">But du projet</h2>
+                <h2 className="text-3xl font-bold transition-colors duration-300 group-hover:text-primary">But du projet</h2>
               </div>
               <p className="text-lg leading-relaxed text-foreground/90">
                 Le principal objectif est de <span className="font-semibold text-primary">protéger l'environnement</span> en réduisant les déchets, en promouvant le recyclage et en inculquant aux jeunes générations l'importance de préserver la planète. Il s'agit également de développer un <span className="font-semibold text-primary">sens civique et écologique</span> chez chaque élève, afin qu'il devienne un acteur conscient et responsable dans sa vie quotidienne.
@@ -91,14 +91,14 @@ export default function Project() {
             {bins.map((bin, index) => (
               <Card
                 key={bin.label}
-                className="hover:shadow-xl transition-all duration-300 hover:-translate-y-2 scroll-reveal border-2"
+                className="hover:shadow-2xl transition-all duration-500 hover:-translate-y-3 hover:scale-105 scroll-reveal border-2 group cursor-pointer"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <CardContent className="pt-8 pb-6 text-center">
-                  <div className={`w-20 h-20 rounded-2xl ${bin.bg} flex items-center justify-center mx-auto mb-4 transition-transform duration-300 hover:scale-110`}>
-                    <bin.icon className={`w-10 h-10 ${bin.color}`} />
+                  <div className={`w-20 h-20 rounded-2xl ${bin.bg} flex items-center justify-center mx-auto mb-4 transition-all duration-500 group-hover:scale-125 group-hover:rotate-12`}>
+                    <bin.icon className={`w-10 h-10 ${bin.color} transition-transform duration-500`} />
                   </div>
-                  <h3 className="font-bold text-lg">{bin.label}</h3>
+                  <h3 className="font-bold text-lg transition-colors duration-300 group-hover:text-primary">{bin.label}</h3>
                 </CardContent>
               </Card>
             ))}
@@ -115,16 +115,16 @@ export default function Project() {
             {actions.map((action, index) => (
               <Card
                 key={action.title}
-                className={`scroll-reveal hover:shadow-xl transition-all duration-300 border-2 overflow-hidden group`}
+                className={`scroll-reveal hover:shadow-2xl transition-all duration-500 border-2 overflow-hidden group cursor-pointer hover:-translate-y-2`}
                 style={{ animationDelay: `${index * 150}ms` }}
               >
-                <div className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                <div className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-0 group-hover:opacity-100 transition-all duration-500`} />
                 <CardContent className="pt-8 pb-8 relative">
-                  <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${action.gradient} flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110`}>
-                    <action.icon className={`w-7 h-7 ${action.iconColor}`} />
+                  <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${action.gradient} flex items-center justify-center mb-4 transition-all duration-500 group-hover:scale-125 group-hover:rotate-6`}>
+                    <action.icon className={`w-7 h-7 ${action.iconColor} transition-transform duration-500 group-hover:scale-110`} />
                   </div>
-                  <h3 className="font-bold text-xl mb-3">{action.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed">{action.description}</p>
+                  <h3 className="font-bold text-xl mb-3 transition-colors duration-300 group-hover:text-primary">{action.title}</h3>
+                  <p className="text-muted-foreground leading-relaxed transition-colors duration-300 group-hover:text-foreground">{action.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -132,26 +132,26 @@ export default function Project() {
         </div>
 
         {/* Impact Section */}
-        <div className="max-w-5xl mx-auto mb-20 scroll-reveal">
-          <Card className="border-2 border-green-500/20 shadow-xl overflow-hidden">
-            <div className="bg-gradient-to-r from-green-500/10 via-emerald-500/10 to-green-500/10 p-8">
+        <div className="max-w-5xl mx-auto mb-20 scroll-fade-left">
+          <Card className="border-2 border-green-500/20 shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] group cursor-pointer">
+            <div className="bg-gradient-to-r from-green-500/10 via-emerald-500/10 to-green-500/10 p-8 transition-all duration-500 group-hover:from-green-500/20 group-hover:via-emerald-500/20 group-hover:to-green-500/20">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-green-600" />
+                <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center transition-all duration-500 group-hover:scale-125 group-hover:rotate-12 group-hover:bg-green-500/30">
+                  <TrendingUp className="w-6 h-6 text-green-600 transition-transform duration-500 group-hover:scale-110" />
                 </div>
-                <h2 className="text-3xl font-bold">Impact attendu</h2>
+                <h2 className="text-3xl font-bold transition-colors duration-300 group-hover:text-green-600">Impact attendu</h2>
               </div>
               <p className="text-lg mb-6 text-muted-foreground">Ce projet vise à :</p>
               <div className="space-y-4">
                 {impacts.map((impact, index) => (
                   <div
                     key={index}
-                    className="flex items-start gap-3 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-colors"
+                    className="flex items-start gap-3 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all duration-300 hover:scale-[1.02] hover:shadow-md cursor-pointer group"
                   >
-                    <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Leaf className="w-4 h-4 text-green-600" />
+                    <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all duration-300 group-hover:scale-125 group-hover:rotate-12 group-hover:bg-green-500/30">
+                      <Leaf className="w-4 h-4 text-green-600 transition-transform duration-300 group-hover:scale-110" />
                     </div>
-                    <p className="text-foreground/90 leading-relaxed">{impact}</p>
+                    <p className="text-foreground/90 leading-relaxed transition-colors duration-300 group-hover:text-foreground">{impact}</p>
                   </div>
                 ))}
               </div>
@@ -160,9 +160,9 @@ export default function Project() {
         </div>
 
         {/* Call to Action */}
-        <div className="max-w-4xl mx-auto text-center scroll-reveal">
-          <Card className="border-2 border-primary/30 shadow-2xl overflow-hidden">
-            <div className="bg-gradient-to-br from-primary/20 via-green-500/20 to-primary/20 p-12">
+        <div className="max-w-4xl mx-auto text-center scroll-fade-right">
+          <Card className="border-2 border-primary/30 shadow-2xl overflow-hidden hover:shadow-[0_0_60px_-15px_rgba(var(--primary),0.5)] transition-all duration-700 hover:scale-[1.03] group cursor-pointer">
+            <div className="bg-gradient-to-br from-primary/20 via-green-500/20 to-primary/20 p-12 transition-all duration-700 group-hover:from-primary/30 group-hover:via-green-500/30 group-hover:to-primary/30">
               <h2 className="text-4xl font-bold mb-6">Pourquoi participer ?</h2>
               <p className="text-lg leading-relaxed mb-6">
                 Le recyclage n'est pas seulement une action écologique, c'est un <span className="font-semibold text-primary">choix de vie durable</span>. En s'impliquant dans ce projet, chaque élève devient un acteur du changement et contribue à un avenir plus propre et plus respectueux de l'environnement.
