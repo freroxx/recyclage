@@ -13,7 +13,6 @@ const translations = {
     // Navigation
     "nav.home": "Accueil",
     "nav.project": "Le Projet",
-    "nav.allAges": "Pour Tous les Âges",
     "nav.resources": "Ressources",
     "nav.contact": "Contact",
     
@@ -41,11 +40,6 @@ const translations = {
     "project.awareness.desc": "Ateliers et activités éducatives sur le recyclage",
     "project.mobilization": "Mobilisation de toute l'école",
     "project.mobilization.desc": "Participation active de tous les membres de la communauté",
-    
-    // All Ages
-    "allAges.title": "Pour Tous les Âges",
-    "allAges.developing": "Cette page est encore en développement",
-    "allAges.coming": "Contenu à venir prochainement",
     
     // Resources
     "resources.title": "Ressources",
@@ -120,7 +114,6 @@ const translations = {
     // Navigation
     "nav.home": "Home",
     "nav.project": "The Project",
-    "nav.allAges": "For All Ages",
     "nav.resources": "Resources",
     "nav.contact": "Contact",
     
@@ -148,11 +141,6 @@ const translations = {
     "project.awareness.desc": "Workshops and educational activities on recycling",
     "project.mobilization": "Whole school involvement",
     "project.mobilization.desc": "Active participation from all community members",
-    
-    // All Ages
-    "allAges.title": "For All Ages",
-    "allAges.developing": "This page is still under development",
-    "allAges.coming": "Content coming soon",
     
     // Resources
     "resources.title": "Resources",

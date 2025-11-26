@@ -16,7 +16,6 @@ import { SpeedInsights } from "@vercel/speed-insights/react";
 // Lazy-loaded pages
 const Home = lazy(() => import("./pages/Home"));
 const Project = lazy(() => import("./pages/Project"));
-const AllAges = lazy(() => import("./pages/AllAges"));
 const Resources = lazy(() => import("./pages/Resources"));
 const Guide = lazy(() => import("./pages/Guide"));
 const Posters = lazy(() => import("./pages/Posters"));
@@ -53,7 +52,6 @@ const App = () => (
                   <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/project" element={<Project />} />
-                    <Route path="/all-ages" element={<AllAges />} />
                     <Route path="/resources" element={<Resources />} />
                     <Route path="/guide" element={<Guide />} />
                     <Route path="/posters" element={<Posters />} />
