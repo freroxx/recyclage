@@ -9,11 +9,11 @@ import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { lazy, Suspense } from "react";
 
-// Import Vercel Analytics
-import { SpeedInsights } from "@vercel/speed-insights/react";
+// Vercel Analytics + Speed Insights
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
-// Lazy load pages
+// Lazy-loaded pages
 const Home = lazy(() => import("./pages/Home"));
 const Project = lazy(() => import("./pages/Project"));
 const AllAges = lazy(() => import("./pages/AllAges"));
@@ -27,7 +27,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
-// Loading component
+// Loader
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[60vh]">
     <div className="flex flex-col items-center gap-4">
@@ -47,6 +47,7 @@ const App = () => (
           <BrowserRouter>
             <div className="min-h-screen flex flex-col bg-background">
               <Navigation />
+
               <main className="flex-1 pt-16 sm:pt-20">
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
@@ -63,11 +64,14 @@ const App = () => (
                   </Routes>
                 </Suspense>
               </main>
+
               <Footer />
 
-              {/* ✅ Analytics placé en bas (recommandé) */}
+              {/* Vercel Analytics */}
               <Analytics />
 
+              {/* Vercel Speed Insights */}
+              <SpeedInsights />
             </div>
           </BrowserRouter>
         </TooltipProvider>
