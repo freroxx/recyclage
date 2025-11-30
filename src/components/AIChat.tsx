@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -17,36 +17,74 @@ interface AIChatProps {
 
 export function AIChat({ open, onOpenChange }: AIChatProps) {
   const [isMaximized, setIsMaximized] = useState(false);
-  const [embedKey, setEmbedKey] = useState(0);
-  const { theme } = useTheme();
+  const [scriptLoaded, setScriptLoaded] = useState(false);
+  const { theme, resolvedTheme } = useTheme();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const scriptRef = useRef<HTMLScriptElement | null>(null);
 
-  useEffect(() => {
-    if (open) {
-      const existingScript = document.querySelector('script[src="https://studio.pickaxe.co/api/embed/bundle.js"]');
-      if (!existingScript) {
-        const script = document.createElement('script');
-        script.src = 'https://studio.pickaxe.co/api/embed/bundle.js';
-        script.defer = true;
-        script.onload = () => {
-          setEmbedKey(prev => prev + 1);
-        };
-        document.body.appendChild(script);
-      } else {
-        setEmbedKey(prev => prev + 1);
-      }
-    }
-  }, [open, theme]);
-
-  const deploymentId = theme === 'dark' 
+  const currentTheme = resolvedTheme || theme || 'light';
+  const deploymentId = currentTheme === 'dark'
     ? 'deployment-afcd3047-9cd1-4849-bea0-4a67ad07f5ec'
     : 'deployment-856e4e42-a135-4ce5-aeda-7a915c379947';
 
+  useEffect(() => {
+    if (!open) return;
+
+    const loadScript = () => {
+      const existingScript = document.querySelector('script[src="https://studio.pickaxe.co/api/embed/bundle.js"]');
+
+      if (existingScript) {
+        setScriptLoaded(true);
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = 'https://studio.pickaxe.co/api/embed/bundle.js';
+      script.defer = true;
+      script.onload = () => {
+        setScriptLoaded(true);
+      };
+      script.onerror = () => {
+        console.error('Failed to load Pickaxe embed script');
+      };
+
+      document.body.appendChild(script);
+      scriptRef.current = script;
+    };
+
+    loadScript();
+
+    return () => {
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
+      }
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !scriptLoaded || !containerRef.current) return;
+
+    const container = containerRef.current;
+    container.innerHTML = `<div id="${deploymentId}" class="w-full h-full"></div>`;
+
+    const timer = setTimeout(() => {
+      if (window.Pickaxe && window.Pickaxe.init) {
+        window.Pickaxe.init();
+      }
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      container.innerHTML = '';
+    };
+  }, [open, scriptLoaded, deploymentId, currentTheme]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
+      <DialogContent
         className={`p-0 gap-0 transition-all duration-300 ease-in-out flex flex-col ${
-          isMaximized 
-            ? 'max-w-[95vw] w-[95vw] h-[95vh]' 
+          isMaximized
+            ? 'max-w-[95vw] w-[95vw] h-[95vh]'
             : 'max-w-4xl w-full h-[85vh]'
         }`}
       >
@@ -78,13 +116,20 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
           </Button>
         </DialogHeader>
         <div className="flex-1 overflow-hidden min-h-0">
-          <div 
-            id={deploymentId}
+          <div
+            ref={containerRef}
             className="w-full h-full"
-            key={`${deploymentId}-${embedKey}`}
           />
         </div>
       </DialogContent>
     </Dialog>
   );
+}
+
+declare global {
+  interface Window {
+    Pickaxe?: {
+      init: () => void;
+    };
+  }
 }
