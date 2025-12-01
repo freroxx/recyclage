@@ -67,10 +67,10 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 pointer-events-none">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none" style={{ top: 0, left: 0, right: 0, bottom: 0 }}>
       <div
         ref={windowRef}
-        className="pointer-events-auto bg-background rounded-lg sm:rounded-lg shadow-2xl border border-border overflow-hidden transition-all duration-300 flex flex-col animate-in fade-in zoom-in-95"
+        className="pointer-events-auto bg-background rounded-lg shadow-2xl border border-border overflow-hidden transition-all duration-300 flex flex-col"
         style={{
           width: isMaximized ? '95vw' : `${dimensions.width}px`,
           height: isMaximized ? '95vh' : `${dimensions.height}px`,
@@ -78,6 +78,7 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
           minWidth: '400px',
           minHeight: '500px',
           maxHeight: '2500px',
+          animation: 'fadeInScale 0.3s ease-out',
         }}
       >
         <div className="flex items-center justify-between gap-3 px-5 py-4 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b border-border/50 shrink-0">
