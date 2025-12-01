@@ -13,7 +13,7 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
   const [isMaximized, setIsMaximized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [dimensions, setDimensions] = useState({ width: 600, height: 700 });
-  const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isResizing, setIsResizing] = useState<false | 'both' | 'height'>(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -22,6 +22,7 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
   const windowRef = useRef<HTMLDivElement>(null);
   const embedContainerRef = useRef<HTMLDivElement>(null);
   const scriptLoadedRef = useRef(false);
+  const isInitialMount = useRef(true);
 
   const currentTheme = resolvedTheme || theme || 'light';
   const deploymentId = currentTheme === 'dark'
@@ -53,6 +54,30 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
     };
   }, []);
 
+  // Center the popup when opened
+  useEffect(() => {
+    if (!open) return;
+
+    const calculateInitialPosition = () => {
+      const padding = 32;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+
+      const targetWidth = Math.min(600, vw - padding);
+      const targetHeight = Math.min(700, vh - padding);
+
+      const centerX = (vw - targetWidth) / 2;
+      const centerY = (vh - targetHeight) / 2;
+
+      setDimensions({ width: targetWidth, height: targetHeight });
+      setPosition({ x: centerX, y: centerY });
+      setIsMaximized(false);
+    };
+
+    // Small delay to ensure DOM is ready
+    setTimeout(calculateInitialPosition, 10);
+  }, [open]);
+
   // Re-render embed when theme changes or dialog opens
   useEffect(() => {
     if (!open || !embedContainerRef.current || !scriptLoadedRef.current) return;
@@ -74,42 +99,28 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
     return () => clearTimeout(timer);
   }, [open, deploymentId]);
 
-  // Reset position and size when opened for consistent centering
-  useEffect(() => {
-    if (!open) return;
-
-    const padding = 32; // 16px on each side
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-
-    const targetWidth = Math.min(600, vw - padding);
-    const targetHeight = Math.min(700, vh - padding);
-
-    setDimensions({ width: targetWidth, height: targetHeight });
-    setPosition(null);
-    setIsMaximized(false);
-  }, [open]);
-
   // Handle dragging
   useEffect(() => {
     if (!isDragging) return;
 
     const handleMouseMove = (e: MouseEvent) => {
+      e.preventDefault();
       if (!windowRef.current) return;
 
       const deltaX = e.clientX - dragStart.x;
       const deltaY = e.clientY - dragStart.y;
 
       setPosition(prev => {
-        if (!prev) return prev;
-
         const rect = windowRef.current!.getBoundingClientRect();
-        const maxX = window.innerWidth - rect.width - 32; // 32px for padding
-        const maxY = window.innerHeight - rect.height - 32;
+        const maxX = window.innerWidth - rect.width;
+        const maxY = window.innerHeight - rect.height;
+
+        const newX = Math.max(0, Math.min(prev.x + deltaX, maxX));
+        const newY = Math.max(0, Math.min(prev.y + deltaY, maxY));
 
         return {
-          x: Math.min(Math.max(prev.x + deltaX, 16), maxX),
-          y: Math.min(Math.max(prev.y + deltaY, 16), maxY),
+          x: newX,
+          y: newY,
         };
       });
 
@@ -118,12 +129,15 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
 
     const handleMouseUp = () => {
       setIsDragging(false);
+      document.body.style.userSelect = '';
     };
 
+    document.body.style.userSelect = 'none';
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
 
     return () => {
+      document.body.style.userSelect = '';
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
@@ -134,68 +148,102 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
     if (!isResizing) return;
 
     const handleMouseMove = (e: MouseEvent) => {
+      e.preventDefault();
       const deltaX = e.clientX - startPos.x;
       const deltaY = e.clientY - startPos.y;
 
-      setDimensions(prev => ({
-        width: Math.min(Math.max(prev.width + deltaX, 400), 2500),
-        height: Math.min(Math.max(prev.height + deltaY, 500), 2500),
-      }));
+      setDimensions(prev => {
+        const minWidth = 400;
+        const minHeight = 400;
+        const maxWidth = window.innerWidth - 32;
+        const maxHeight = window.innerHeight - 32;
+
+        const newWidth = Math.max(minWidth, Math.min(prev.width + deltaX, maxWidth));
+        const newHeight = Math.max(minHeight, Math.min(prev.height + deltaY, maxHeight));
+
+        // Adjust position to keep the window within bounds when resizing
+        if (windowRef.current && position) {
+          const rect = windowRef.current.getBoundingClientRect();
+          const maxX = window.innerWidth - newWidth;
+          const maxY = window.innerHeight - newHeight;
+          
+          setPosition(prevPos => ({
+            x: Math.min(prevPos.x, maxX),
+            y: Math.min(prevPos.y, maxY)
+          }));
+        }
+
+        return { width: newWidth, height: newHeight };
+      });
 
       setStartPos({ x: e.clientX, y: e.clientY });
     };
 
     const handleMouseUp = () => {
       setIsResizing(false);
+      document.body.style.userSelect = '';
     };
 
+    document.body.style.userSelect = 'none';
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
 
     return () => {
+      document.body.style.userSelect = '';
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isResizing, startPos]);
+  }, [isResizing, startPos, position]);
 
   const handleDragStart = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(true);
     setDragStart({ x: e.clientX, y: e.clientY });
-    
-    // Initialize position if not set
-    if (!position && windowRef.current) {
-      const rect = windowRef.current.getBoundingClientRect();
-      setPosition({ x: rect.left, y: rect.top });
-    }
   };
 
   const handleResizeStart = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsResizing('both');
     setStartPos({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleClose = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onOpenChange(false);
   };
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 pointer-events-none">
+    <>
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black/30 z-50 pointer-events-auto"
+        onClick={handleClose}
+      />
+      
+      {/* Chat Window */}
       <div
         ref={windowRef}
-        className="pointer-events-auto bg-background rounded-lg shadow-2xl border border-border overflow-hidden flex flex-col"
+        className="fixed z-50 bg-background rounded-lg shadow-2xl border border-border overflow-hidden flex flex-col pointer-events-auto"
         style={{
-          position: 'absolute',
-          left: isMaximized ? '1rem' : position ? `${position.x}px` : '50%',
-          top: isMaximized ? '1rem' : position ? `${position.y}px` : '50%',
-          transform: position ? 'none' : 'translate(-50%, -50%)',
+          left: isMaximized ? '1rem' : `${position.x}px`,
+          top: isMaximized ? '1rem' : `${position.y}px`,
           width: isMaximized ? 'calc(100vw - 2rem)' : `${dimensions.width}px`,
           height: isMaximized ? 'calc(100vh - 2rem)' : `${dimensions.height}px`,
+          minWidth: isMaximized ? 'auto' : '280px',
+          minHeight: isMaximized ? 'auto' : '400px',
           maxWidth: 'calc(100vw - 2rem)',
-          minWidth: '280px',
-          minHeight: '400px',
           maxHeight: 'calc(100vh - 2rem)',
-          animation: position ? 'none' : 'fadeInScale 0.3s ease-out',
-          transition: isDragging ? 'none' : 'width 0.3s, height 0.3s',
+          animation: isInitialMount.current ? 'fadeInScale 0.3s ease-out' : 'none',
+        }}
+        onMouseDown={(e) => {
+          // Bring window to front when clicked
+          if (windowRef.current) {
+            windowRef.current.style.zIndex = '51';
+          }
         }}
       >
         <div 
@@ -232,7 +280,7 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onOpenChange(false)}
+              onClick={handleClose}
               className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive transition-colors rounded-md"
               title="Fermer"
               onMouseDown={(e) => e.stopPropagation()}
@@ -259,14 +307,16 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
           style={{ minHeight: 0 }}
         />
 
-        <div
-          onMouseDown={handleResizeStart}
-          className="h-4 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-t border-border/50 cursor-nwse-resize hover:bg-gradient-to-r hover:from-primary/10 hover:via-primary/20 hover:to-primary/10 transition-colors flex items-center justify-center gap-1"
-          title="Redimensionner"
-        >
-          <GripVertical className="w-3 h-3 text-primary/40" />
-        </div>
+        {!isMaximized && (
+          <div
+            onMouseDown={handleResizeStart}
+            className="h-4 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-t border-border/50 cursor-nwse-resize hover:bg-gradient-to-r hover:from-primary/10 hover:via-primary/20 hover:to-primary/10 transition-colors flex items-center justify-center gap-1"
+            title="Redimensionner"
+          >
+            <GripVertical className="w-3 h-3 text-primary/40" />
+          </div>
+        )}
       </div>
-    </div>
+    </>
   );
 }
