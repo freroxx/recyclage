@@ -16,14 +16,59 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const { resolvedTheme, theme } = useTheme();
   const windowRef = useRef<HTMLDivElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const embedContainerRef = useRef<HTMLDivElement>(null);
+  const scriptLoadedRef = useRef(false);
 
   const currentTheme = resolvedTheme || theme || 'light';
   const deploymentId = currentTheme === 'dark'
     ? 'deployment-afcd3047-9cd1-4849-bea0-4a67ad07f5ec'
     : 'deployment-856e4e42-a135-4ce5-aeda-7a915c379947';
 
-  const embedUrl = `https://studio.pickaxe.co/api/embed?deploymentId=${deploymentId}`;
+  // Load Pickaxe script
+  useEffect(() => {
+    if (scriptLoadedRef.current) return;
+
+    const script = document.createElement('script');
+    script.src = 'https://studio.pickaxe.co/api/embed/bundle.js';
+    script.defer = true;
+    script.onload = () => {
+      scriptLoadedRef.current = true;
+      setIsLoading(false);
+    };
+    script.onerror = () => {
+      console.error('Failed to load Pickaxe embed script');
+      setIsLoading(false);
+    };
+    
+    document.body.appendChild(script);
+
+    return () => {
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+    };
+  }, []);
+
+  // Re-render embed when theme changes or dialog opens
+  useEffect(() => {
+    if (!open || !embedContainerRef.current || !scriptLoadedRef.current) return;
+
+    // Clear existing embed
+    embedContainerRef.current.innerHTML = '';
+
+    // Create new embed div
+    const embedDiv = document.createElement('div');
+    embedDiv.id = deploymentId;
+    embedDiv.className = 'w-full h-full';
+    embedContainerRef.current.appendChild(embedDiv);
+
+    // Small delay to ensure script picks up the new div
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [open, deploymentId]);
 
   useEffect(() => {
     if (!isResizing) return;
@@ -58,11 +103,6 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
     setIsResizing('both');
     setStartPos({ x: e.clientX, y: e.clientY });
   };
-
-  useEffect(() => {
-    if (!iframeRef.current) return;
-    setIsLoading(false);
-  }, [open]);
 
   if (!open) return null;
 
@@ -131,16 +171,10 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
           </div>
         )}
 
-        <iframe
-          ref={iframeRef}
-          src={embedUrl}
-          className={`flex-1 border-0 bg-background ${isLoading ? 'hidden' : ''}`}
-          title="AI Assistant"
-          style={{
-            minHeight: 0,
-            display: isLoading ? 'none' : 'block',
-          }}
-          onLoad={() => setIsLoading(false)}
+        <div 
+          ref={embedContainerRef}
+          className={`flex-1 overflow-hidden bg-background ${isLoading ? 'hidden' : ''}`}
+          style={{ minHeight: 0 }}
         />
 
         <div
