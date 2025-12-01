@@ -12,7 +12,10 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
   const [isMaximized, setIsMaximized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [dimensions, setDimensions] = useState({ width: 600, height: 700 });
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
   const [isResizing, setIsResizing] = useState<false | 'both' | 'height'>(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const { resolvedTheme, theme } = useTheme();
   const windowRef = useRef<HTMLDivElement>(null);
@@ -70,6 +73,46 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
     return () => clearTimeout(timer);
   }, [open, deploymentId]);
 
+  // Handle dragging
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!windowRef.current) return;
+
+      const deltaX = e.clientX - dragStart.x;
+      const deltaY = e.clientY - dragStart.y;
+
+      setPosition(prev => {
+        if (!prev) return prev;
+
+        const rect = windowRef.current!.getBoundingClientRect();
+        const maxX = window.innerWidth - rect.width - 32; // 32px for padding
+        const maxY = window.innerHeight - rect.height - 32;
+
+        return {
+          x: Math.min(Math.max(prev.x + deltaX, 16), maxX),
+          y: Math.min(Math.max(prev.y + deltaY, 16), maxY),
+        };
+      });
+
+      setDragStart({ x: e.clientX, y: e.clientY });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragStart]);
+
+  // Handle resizing
   useEffect(() => {
     if (!isResizing) return;
 
@@ -98,6 +141,18 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
     };
   }, [isResizing, startPos]);
 
+  const handleDragStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    setDragStart({ x: e.clientX, y: e.clientY });
+    
+    // Initialize position if not set
+    if (!position && windowRef.current) {
+      const rect = windowRef.current.getBoundingClientRect();
+      setPosition({ x: rect.left, y: rect.top });
+    }
+  };
+
   const handleResizeStart = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsResizing('both');
@@ -107,21 +162,29 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+    <div className="fixed inset-0 z-50 pointer-events-none">
       <div
         ref={windowRef}
-        className="pointer-events-auto bg-background rounded-lg shadow-2xl border border-border overflow-hidden transition-all duration-300 flex flex-col"
+        className="pointer-events-auto bg-background rounded-lg shadow-2xl border border-border overflow-hidden flex flex-col"
         style={{
+          position: 'absolute',
+          left: isMaximized ? '1rem' : position ? `${position.x}px` : '50%',
+          top: isMaximized ? '1rem' : position ? `${position.y}px` : '50%',
+          transform: position ? 'none' : 'translate(-50%, -50%)',
           width: isMaximized ? 'calc(100vw - 2rem)' : `${dimensions.width}px`,
           height: isMaximized ? 'calc(100vh - 2rem)' : `${dimensions.height}px`,
           maxWidth: 'calc(100vw - 2rem)',
           minWidth: '400px',
           minHeight: '500px',
           maxHeight: 'calc(100vh - 2rem)',
-          animation: 'fadeInScale 0.3s ease-out',
+          animation: position ? 'none' : 'fadeInScale 0.3s ease-out',
+          transition: isDragging ? 'none' : 'width 0.3s, height 0.3s',
         }}
       >
-        <div className="flex items-center justify-between gap-3 px-5 py-4 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b border-border/50 shrink-0">
+        <div 
+          className="flex items-center justify-between gap-3 px-5 py-4 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b border-border/50 shrink-0 cursor-move select-none"
+          onMouseDown={handleDragStart}
+        >
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
               <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -134,13 +197,14 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-1 flex-shrink-0">
+          <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsMaximized(!isMaximized)}
               className="h-8 w-8 p-0 hover:bg-primary/10 transition-colors rounded-md"
               title={isMaximized ? "Réduire" : "Agrandir"}
+              onMouseDown={(e) => e.stopPropagation()}
             >
               {isMaximized ? (
                 <Minimize2 className="w-4 h-4" />
@@ -154,6 +218,7 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
               onClick={() => onOpenChange(false)}
               className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive transition-colors rounded-md"
               title="Fermer"
+              onMouseDown={(e) => e.stopPropagation()}
             >
               <X className="w-4 h-4" />
             </Button>
