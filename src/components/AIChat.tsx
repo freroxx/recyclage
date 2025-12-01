@@ -67,10 +67,10 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 sm:p-6 pointer-events-none">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 pointer-events-none">
       <div
         ref={windowRef}
-        className="pointer-events-auto bg-background rounded-lg sm:rounded-lg shadow-2xl border border-border overflow-hidden transition-all duration-300 flex flex-col animate-in fade-in slide-in-from-bottom-8"
+        className="pointer-events-auto bg-background rounded-lg sm:rounded-lg shadow-2xl border border-border overflow-hidden transition-all duration-300 flex flex-col animate-in fade-in zoom-in-95"
         style={{
           width: isMaximized ? '95vw' : `${dimensions.width}px`,
           height: isMaximized ? '95vh' : `${dimensions.height}px`,
