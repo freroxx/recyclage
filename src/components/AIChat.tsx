@@ -9,6 +9,12 @@ interface AIChatProps {
   onOpenChange: (open: boolean) => void;
 }
 
+declare global {
+  interface Window {
+    PickaxeEmbed?: any;
+  }
+}
+
 export function AIChat({ open, onOpenChange }: AIChatProps) {
   const [isMaximized, setIsMaximized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -21,7 +27,7 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
   const { resolvedTheme, theme, setTheme } = useTheme();
   const windowRef = useRef<HTMLDivElement>(null);
   const embedContainerRef = useRef<HTMLDivElement>(null);
-  const scriptLoadedRef = useRef(false);
+  const scriptRef = useRef<HTMLScriptElement | null>(null);
   const currentDeploymentIdRef = useRef<string>('');
 
   const currentTheme = resolvedTheme || theme || 'light';
@@ -53,104 +59,97 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
     setTimeout(calculateInitialPosition, 10);
   }, [open]);
 
-  // Load Pickaxe script once
+  // Cleanup when closing
   useEffect(() => {
-    if (scriptLoadedRef.current) return;
-
-    const script = document.createElement('script');
-    script.src = 'https://studio.pickaxe.co/api/embed/bundle.js';
-    script.defer = true;
-    
-    script.onload = () => {
-      console.log('Pickaxe script loaded');
-      scriptLoadedRef.current = true;
-    };
-    
-    script.onerror = (error) => {
-      console.error('Failed to load Pickaxe embed script:', error);
-      setIsLoading(false);
-    };
-    
-    document.body.appendChild(script);
-
-    return () => {
-      // Don't remove the script, keep it loaded globally
-    };
-  }, []);
-
-  // Initialize or update embed when theme or open state changes
-  useEffect(() => {
-    if (!open || !embedContainerRef.current) {
-      setIsLoading(true);
-      return;
-    }
-
-    // If deployment hasn't changed and we're already loaded, skip
-    if (currentDeploymentIdRef.current === deploymentId && !isLoading) {
-      return;
-    }
-
-    const initializeEmbed = () => {
-      if (!embedContainerRef.current) return;
-
-      // Clear existing content
-      embedContainerRef.current.innerHTML = '';
-
-      // Create embed container
-      const container = document.createElement('div');
-      container.style.width = '100%';
-      container.style.height = '100%';
-      container.style.position = 'relative';
-      container.style.overflow = 'hidden';
-      
-      // Create the embed div
-      const embedDiv = document.createElement('div');
-      embedDiv.id = deploymentId;
-      embedDiv.style.width = '100%';
-      embedDiv.style.height = '100%';
-      embedDiv.style.minHeight = '0';
-      
-      container.appendChild(embedDiv);
-      embedContainerRef.current.appendChild(container);
-
-      currentDeploymentIdRef.current = deploymentId;
-      
-      // Check if script is loaded
-      if (!scriptLoadedRef.current) {
-        // Wait for script to load
-        const checkScript = setInterval(() => {
-          if (scriptLoadedRef.current) {
-            clearInterval(checkScript);
-            // Give a moment for the script to initialize
-            setTimeout(() => {
-              setIsLoading(false);
-            }, 500);
-          }
-        }, 100);
-
-        // Timeout after 5 seconds
-        setTimeout(() => {
-          clearInterval(checkScript);
-          setIsLoading(false);
-          console.warn('Pickaxe script loading timeout');
-        }, 5000);
-      } else {
-        // Script already loaded
-        setTimeout(() => {
-          setIsLoading(false);
-        }, 500);
-      }
-    };
-
-    initializeEmbed();
-
-    return () => {
-      // Clean up when component unmounts or before re-initializing
+    if (!open) {
+      // Clean up the embed container
       if (embedContainerRef.current) {
         embedContainerRef.current.innerHTML = '';
       }
+      setIsLoading(true);
+    }
+  }, [open]);
+
+  // Handle embed initialization
+  useEffect(() => {
+    if (!open || !embedContainerRef.current) {
+      return;
+    }
+
+    // If we're already showing the correct deployment, do nothing
+    if (currentDeploymentIdRef.current === deploymentId) {
+      setIsLoading(false);
+      return;
+    }
+
+    // Clean up previous embed
+    if (embedContainerRef.current) {
+      embedContainerRef.current.innerHTML = '';
+    }
+
+    // Create container for the embed
+    const container = document.createElement('div');
+    container.style.width = '100%';
+    container.style.height = '100%';
+    container.style.position = 'relative';
+    
+    // Create the embed div with the correct ID
+    const embedDiv = document.createElement('div');
+    embedDiv.id = deploymentId;
+    embedDiv.style.width = '100%';
+    embedDiv.style.height = '100%';
+    embedDiv.style.minHeight = '0';
+    
+    container.appendChild(embedDiv);
+    embedContainerRef.current.appendChild(container);
+    
+    // Update current deployment ID
+    currentDeploymentIdRef.current = deploymentId;
+    
+    // Load or reload the Pickaxe script
+    const loadPickaxeScript = () => {
+      // Remove existing script if present
+      const existingScript = document.querySelector('script[src*="pickaxe"]');
+      if (existingScript && existingScript.parentNode) {
+        existingScript.parentNode.removeChild(existingScript);
+      }
+      
+      // Create new script
+      const script = document.createElement('script');
+      script.src = 'https://studio.pickaxe.co/api/embed/bundle.js';
+      script.defer = true;
+      
+      script.onload = () => {
+        console.log('Pickaxe script loaded for:', deploymentId);
+        
+        // Wait a bit for the script to initialize the embed
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 1000);
+      };
+      
+      script.onerror = () => {
+        console.error('Failed to load Pickaxe script');
+        setIsLoading(false);
+      };
+      
+      document.body.appendChild(script);
+      scriptRef.current = script;
     };
-  }, [open, deploymentId, isLoading]);
+
+    // Load the script
+    loadPickaxeScript();
+
+    // Fallback timeout to hide loading
+    const fallbackTimeout = setTimeout(() => {
+      console.warn('Pickaxe loading timeout, hiding loader');
+      setIsLoading(false);
+    }, 3000);
+
+    return () => {
+      clearTimeout(fallbackTimeout);
+    };
+  }, [open, deploymentId]);
 
   // Handle dragging
   useEffect(() => {
@@ -211,7 +210,6 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
         const newWidth = Math.max(minWidth, Math.min(prev.width + deltaX, maxWidth));
         const newHeight = Math.max(minHeight, Math.min(prev.height + deltaY, maxHeight));
 
-        // Adjust position to keep window in bounds
         if (windowRef.current && position) {
           const rect = windowRef.current.getBoundingClientRect();
           const maxX = window.innerWidth - newWidth;
@@ -271,6 +269,19 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
     setTheme(newTheme);
   }, [isDark, setTheme]);
 
+  const handleRetryLoad = () => {
+    setIsLoading(true);
+    // Force re-initialization
+    currentDeploymentIdRef.current = '';
+    
+    // Small delay to allow state update
+    setTimeout(() => {
+      if (embedContainerRef.current) {
+        embedContainerRef.current.innerHTML = '';
+      }
+    }, 10);
+  };
+
   if (!open) return null;
 
   return (
@@ -294,11 +305,6 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
           minHeight: isMaximized ? 'auto' : '400px',
           maxWidth: 'calc(100vw - 2rem)',
           maxHeight: 'calc(100vh - 2rem)',
-        }}
-        onMouseDown={(e) => {
-          if (windowRef.current) {
-            windowRef.current.style.zIndex = '51';
-          }
         }}
       >
         {/* Header */}
@@ -374,20 +380,28 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
               </div>
               <div>
                 <p className="text-sm font-medium text-foreground mb-2">
-                  Chargement de l&apos;assistant...
+                  {isDark ? 'Chargement du mode sombre...' : 'Chargement du mode clair...'}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {isDark ? 'Mode sombre' : 'Mode clair'}
+                  L&apos;assistant Maria se prépare
                 </p>
               </div>
-              <div className="pt-2">
+              <div className="pt-2 flex gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setIsLoading(false)}
-                  className="text-xs"
+                  onClick={handleRetryLoad}
+                  className="text-xs flex-1"
                 >
-                  Annuler le chargement
+                  Réessayer
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsLoading(false)}
+                  className="text-xs flex-1"
+                >
+                  Continuer sans charger
                 </Button>
               </div>
             </div>
