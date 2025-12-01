@@ -41,8 +41,13 @@ const App = () => (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <LanguageProvider>
         <TooltipProvider>
+
+          {/* Shadcn Toaster */}
           <Toaster />
-          <Sonner />
+
+          {/* Sonner Toaster */}
+          <Sonner position="top-right" />
+
           <BrowserRouter>
             <div className="min-h-screen flex flex-col bg-background">
               <Navigation />
