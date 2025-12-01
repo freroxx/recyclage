@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import type React from "react";
-import { X, Maximize2, Minimize2, GripVertical } from "lucide-react";
+import { X, Maximize2, Minimize2, GripVertical, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 
@@ -18,43 +18,16 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
-  const { resolvedTheme, theme } = useTheme();
+  const { resolvedTheme, theme, setTheme } = useTheme();
   const windowRef = useRef<HTMLDivElement>(null);
   const embedContainerRef = useRef<HTMLDivElement>(null);
   const scriptLoadedRef = useRef(false);
-  const isInitialMount = useRef(true);
+  const embedInitializedRef = useRef(false);
 
   const currentTheme = resolvedTheme || theme || 'light';
-  const deploymentId = currentTheme === 'dark'
-    ? 'deployment-afcd3047-9cd1-4849-bea0-4a67ad07f5ec'
-    : 'deployment-856e4e42-a135-4ce5-aeda-7a915c379947';
+  const isDark = currentTheme === 'dark';
 
-  // Load Pickaxe script
-  useEffect(() => {
-    if (scriptLoadedRef.current) return;
-
-    const script = document.createElement('script');
-    script.src = 'https://studio.pickaxe.co/api/embed/bundle.js';
-    script.defer = true;
-    script.onload = () => {
-      scriptLoadedRef.current = true;
-      setIsLoading(false);
-    };
-    script.onerror = () => {
-      console.error('Failed to load Pickaxe embed script');
-      setIsLoading(false);
-    };
-    
-    document.body.appendChild(script);
-
-    return () => {
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-    };
-  }, []);
-
-  // Center the popup when opened
+  // Initialize position on open
   useEffect(() => {
     if (!open) return;
 
@@ -74,30 +47,99 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
       setIsMaximized(false);
     };
 
-    // Small delay to ensure DOM is ready
     setTimeout(calculateInitialPosition, 10);
   }, [open]);
 
-  // Re-render embed when theme changes or dialog opens
+  // Load Pickaxe script and initialize embed
   useEffect(() => {
-    if (!open || !embedContainerRef.current || !scriptLoadedRef.current) return;
+    if (!open) return;
 
-    // Clear existing embed
-    embedContainerRef.current.innerHTML = '';
+    let script: HTMLScriptElement | null = null;
 
-    // Create new embed div
-    const embedDiv = document.createElement('div');
-    embedDiv.id = deploymentId;
-    embedDiv.className = 'w-full h-full';
-    embedContainerRef.current.appendChild(embedDiv);
+    const initializeEmbed = () => {
+      if (!embedContainerRef.current) return;
 
-    // Small delay to ensure script picks up the new div
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
+      // Clear existing content
+      embedContainerRef.current.innerHTML = '';
 
-    return () => clearTimeout(timer);
-  }, [open, deploymentId]);
+      // Create new embed div
+      const embedDiv = document.createElement('div');
+      embedDiv.id = isDark 
+        ? 'deployment-afcd3047-9cd1-4849-bea0-4a67ad07f5ec'
+        : 'deployment-856e4e42-a135-4ce5-aeda-7a915c379947';
+      embedDiv.className = 'w-full h-full';
+      embedDiv.style.width = '100%';
+      embedDiv.style.height = '100%';
+      embedDiv.style.minHeight = '0';
+      
+      embedContainerRef.current.appendChild(embedDiv);
+
+      // If script is already loaded, check if we need to reinitialize
+      if (scriptLoadedRef.current && (window as any).PickaxeEmbed) {
+        const embedApi = (window as any).PickaxeEmbed;
+        
+        // Destroy any existing embed
+        if (embedInitializedRef.current) {
+          try {
+            embedApi.destroy(`#${embedDiv.id}`);
+          } catch (e) {
+            console.log('No existing embed to destroy');
+          }
+        }
+        
+        // Initialize new embed
+        setTimeout(() => {
+          try {
+            embedApi.initialize(`#${embedDiv.id}`);
+            embedInitializedRef.current = true;
+            setIsLoading(false);
+          } catch (error) {
+            console.error('Failed to initialize Pickaxe embed:', error);
+            setIsLoading(false);
+          }
+        }, 100);
+      }
+    };
+
+    if (!scriptLoadedRef.current) {
+      // Load script if not already loaded
+      script = document.createElement('script');
+      script.src = 'https://studio.pickaxe.co/api/embed/bundle.js';
+      script.defer = true;
+      script.onload = () => {
+        scriptLoadedRef.current = true;
+        setTimeout(() => {
+          initializeEmbed();
+        }, 100);
+      };
+      script.onerror = () => {
+        console.error('Failed to load Pickaxe embed script');
+        setIsLoading(false);
+      };
+      
+      document.body.appendChild(script);
+    } else {
+      // Script already loaded, just initialize embed
+      initializeEmbed();
+    }
+
+    return () => {
+      if (script && script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+    };
+  }, [open, isDark]);
+
+  // Cleanup when closing
+  useEffect(() => {
+    if (!open && embedInitializedRef.current) {
+      // Clean up embed when closing
+      embedInitializedRef.current = false;
+      if (embedContainerRef.current) {
+        embedContainerRef.current.innerHTML = '';
+      }
+    }
+  }, [open]);
 
   // Handle dragging
   useEffect(() => {
@@ -118,10 +160,7 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
         const newX = Math.max(0, Math.min(prev.x + deltaX, maxX));
         const newY = Math.max(0, Math.min(prev.y + deltaY, maxY));
 
-        return {
-          x: newX,
-          y: newY,
-        };
+        return { x: newX, y: newY };
       });
 
       setDragStart({ x: e.clientX, y: e.clientY });
@@ -161,7 +200,7 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
         const newWidth = Math.max(minWidth, Math.min(prev.width + deltaX, maxWidth));
         const newHeight = Math.max(minHeight, Math.min(prev.height + deltaY, maxHeight));
 
-        // Adjust position to keep the window within bounds when resizing
+        // Adjust position to keep window in bounds
         if (windowRef.current && position) {
           const rect = windowRef.current.getBoundingClientRect();
           const maxX = window.innerWidth - newWidth;
@@ -214,6 +253,11 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
     onOpenChange(false);
   };
 
+  const toggleTheme = useCallback(() => {
+    const newTheme = isDark ? 'light' : 'dark';
+    setTheme(newTheme);
+  }, [isDark, setTheme]);
+
   if (!open) return null;
 
   return (
@@ -237,7 +281,6 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
           minHeight: isMaximized ? 'auto' : '400px',
           maxWidth: 'calc(100vw - 2rem)',
           maxHeight: 'calc(100vh - 2rem)',
-          animation: isInitialMount.current ? 'fadeInScale 0.3s ease-out' : 'none',
         }}
         onMouseDown={(e) => {
           // Bring window to front when clicked
@@ -246,6 +289,7 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
           }
         }}
       >
+        {/* Header */}
         <div 
           className="flex items-center justify-between gap-3 px-4 py-3 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b border-border/50 shrink-0 cursor-move select-none"
           onMouseDown={handleDragStart}
@@ -263,6 +307,23 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
           </div>
 
           <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+            {/* Theme Toggle Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleTheme}
+              className="h-8 w-8 p-0 hover:bg-primary/10 transition-colors rounded-md"
+              title={isDark ? "Passer en mode clair" : "Passer en mode sombre"}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              {isDark ? (
+                <Sun className="w-4 h-4" />
+              ) : (
+                <Moon className="w-4 h-4" />
+              )}
+            </Button>
+
+            {/* Maximize/Minimize Button */}
             <Button
               variant="ghost"
               size="sm"
@@ -277,6 +338,8 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
                 <Maximize2 className="w-4 h-4" />
               )}
             </Button>
+
+            {/* Close Button */}
             <Button
               variant="ghost"
               size="sm"
@@ -290,23 +353,28 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
           </div>
         </div>
 
+        {/* Loading State */}
         {isLoading && (
           <div className="flex-1 flex items-center justify-center bg-background/50">
             <div className="space-y-3 text-center">
               <div className="flex justify-center">
                 <div className="w-8 h-8 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
               </div>
-              <p className="text-sm text-muted-foreground">Chargement de l&apos;assistant...</p>
+              <p className="text-sm text-muted-foreground">
+                {isDark ? 'Chargement du mode sombre...' : 'Chargement du mode clair...'}
+              </p>
             </div>
           </div>
         )}
 
+        {/* Embed Container */}
         <div 
           ref={embedContainerRef}
           className={`flex-1 overflow-hidden bg-background ${isLoading ? 'hidden' : ''}`}
           style={{ minHeight: 0 }}
         />
 
+        {/* Resize Handle */}
         {!isMaximized && (
           <div
             onMouseDown={handleResizeStart}
@@ -317,6 +385,37 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
           </div>
         )}
       </div>
+
+      {/* Global Styles for animation */}
+      <style jsx global>{`
+        @keyframes fadeInScale {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        
+        #deployment-afcd3047-9cd1-4849-bea0-4a67ad07f5ec,
+        #deployment-856e4e42-a135-4ce5-aeda-7a915c379947 {
+          width: 100% !important;
+          height: 100% !important;
+          min-height: 0 !important;
+        }
+      `}</style>
     </>
   );
+}
+
+// Extend Window interface for PickaxeEmbed
+declare global {
+  interface Window {
+    PickaxeEmbed?: {
+      initialize: (selector: string) => void;
+      destroy: (selector: string) => void;
+    };
+  }
 }
