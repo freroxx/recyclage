@@ -3,6 +3,7 @@ import type React from "react";
 import { X, Maximize2, Minimize2, GripVertical, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
+import { toast } from "sonner"; // or your preferred toast library
 
 interface AIChatProps {
   open: boolean;
@@ -17,8 +18,7 @@ declare global {
 
 export function AIChat({ open, onOpenChange }: AIChatProps) {
   const [isMaximized, setIsMaximized] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [dimensions, setDimensions] = useState({ width: 600, height: 700 });
+  const [dimensions, setDimensions] = useState({ width: 800, height: 700 }); // Increased default width
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isResizing, setIsResizing] = useState<false | 'both' | 'height'>(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -29,12 +29,32 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
   const embedContainerRef = useRef<HTMLDivElement>(null);
   const scriptRef = useRef<HTMLScriptElement | null>(null);
   const currentDeploymentIdRef = useRef<string>('');
+  const toastShownRef = useRef(false);
 
   const currentTheme = resolvedTheme || theme || 'light';
   const isDark = currentTheme === 'dark';
   const deploymentId = isDark 
     ? 'deployment-afcd3047-9cd1-4849-bea0-4a67ad07f5ec'
     : 'deployment-856e4e42-a135-4ce5-aeda-7a915c379947';
+
+  // Show toast notifications
+  const showLoadingToast = useCallback(() => {
+    const message = isDark 
+      ? "Chargement du mode sombre..." 
+      : "Chargement du mode clair...";
+    toast.info(message, {
+      duration: 2000,
+    });
+  }, [isDark]);
+
+  const showSuccessToast = useCallback(() => {
+    if (!toastShownRef.current) {
+      toast.success("L'assistant IA a été chargé avec succès", {
+        duration: 3000,
+      });
+      toastShownRef.current = true;
+    }
+  }, []);
 
   // Initialize position on open
   useEffect(() => {
@@ -45,7 +65,8 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
       const vw = window.innerWidth;
       const vh = window.innerHeight;
 
-      const targetWidth = Math.min(600, vw - padding);
+      // Use larger width for better embed display
+      const targetWidth = Math.min(800, vw - padding);
       const targetHeight = Math.min(700, vh - padding);
 
       const centerX = (vw - targetWidth) / 2;
@@ -66,7 +87,8 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
       if (embedContainerRef.current) {
         embedContainerRef.current.innerHTML = '';
       }
-      setIsLoading(true);
+      currentDeploymentIdRef.current = '';
+      toastShownRef.current = false;
     }
   }, [open]);
 
@@ -78,27 +100,33 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
 
     // If we're already showing the correct deployment, do nothing
     if (currentDeploymentIdRef.current === deploymentId) {
-      setIsLoading(false);
+      showSuccessToast();
       return;
     }
+
+    // Show loading toast
+    showLoadingToast();
 
     // Clean up previous embed
     if (embedContainerRef.current) {
       embedContainerRef.current.innerHTML = '';
     }
 
-    // Create container for the embed
+    // Create container for the embed with proper styling
     const container = document.createElement('div');
     container.style.width = '100%';
     container.style.height = '100%';
     container.style.position = 'relative';
+    container.style.overflow = 'hidden';
+    container.style.minWidth = '600px'; // Ensure minimum width for embed
     
     // Create the embed div with the correct ID
     const embedDiv = document.createElement('div');
     embedDiv.id = deploymentId;
     embedDiv.style.width = '100%';
     embedDiv.style.height = '100%';
-    embedDiv.style.minHeight = '0';
+    embedDiv.style.minHeight = '400px';
+    embedDiv.style.minWidth = '600px'; // Minimum width for better embed display
     
     container.appendChild(embedDiv);
     embedContainerRef.current.appendChild(container);
@@ -124,13 +152,13 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
         
         // Wait a bit for the script to initialize the embed
         setTimeout(() => {
-          setIsLoading(false);
-        }, 1000);
+          showSuccessToast();
+        }, 1500);
       };
       
       script.onerror = () => {
         console.error('Failed to load Pickaxe script');
-        setIsLoading(false);
+        toast.error("Erreur lors du chargement de l'assistant");
       };
       
       document.body.appendChild(script);
@@ -140,16 +168,10 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
     // Load the script
     loadPickaxeScript();
 
-    // Fallback timeout to hide loading
-    const fallbackTimeout = setTimeout(() => {
-      console.warn('Pickaxe loading timeout, hiding loader');
-      setIsLoading(false);
-    }, 3000);
-
     return () => {
-      clearTimeout(fallbackTimeout);
+      // Cleanup if component unmounts before script loads
     };
-  }, [open, deploymentId]);
+  }, [open, deploymentId, showLoadingToast, showSuccessToast]);
 
   // Handle dragging
   useEffect(() => {
@@ -202,8 +224,8 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
       const deltaY = e.clientY - startPos.y;
 
       setDimensions(prev => {
-        const minWidth = 400;
-        const minHeight = 400;
+        const minWidth = 600; // Increased minimum width for better embed display
+        const minHeight = 500;
         const maxWidth = window.innerWidth - 32;
         const maxHeight = window.innerHeight - 32;
 
@@ -263,24 +285,11 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
   };
 
   const toggleTheme = useCallback(() => {
-    // Force re-initialization when theme changes
-    setIsLoading(true);
+    // Reset toast shown flag when theme changes
+    toastShownRef.current = false;
     const newTheme = isDark ? 'light' : 'dark';
     setTheme(newTheme);
   }, [isDark, setTheme]);
-
-  const handleRetryLoad = () => {
-    setIsLoading(true);
-    // Force re-initialization
-    currentDeploymentIdRef.current = '';
-    
-    // Small delay to allow state update
-    setTimeout(() => {
-      if (embedContainerRef.current) {
-        embedContainerRef.current.innerHTML = '';
-      }
-    }, 10);
-  };
 
   if (!open) return null;
 
@@ -301,8 +310,8 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
           top: isMaximized ? '1rem' : `${position.y}px`,
           width: isMaximized ? 'calc(100vw - 2rem)' : `${dimensions.width}px`,
           height: isMaximized ? 'calc(100vh - 2rem)' : `${dimensions.height}px`,
-          minWidth: isMaximized ? 'auto' : '280px',
-          minHeight: isMaximized ? 'auto' : '400px',
+          minWidth: isMaximized ? 'auto' : '600px', // Increased minimum width
+          minHeight: isMaximized ? 'auto' : '500px',
           maxWidth: 'calc(100vw - 2rem)',
           maxHeight: 'calc(100vh - 2rem)',
         }}
@@ -371,52 +380,18 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
           </div>
         </div>
 
-        {/* Loading State */}
-        {isLoading && (
-          <div className="flex-1 flex flex-col items-center justify-center bg-background/50 p-4">
-            <div className="space-y-4 text-center max-w-xs">
-              <div className="flex justify-center">
-                <div className="w-12 h-12 rounded-full border-3 border-primary/30 border-t-primary animate-spin" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-foreground mb-2">
-                  {isDark ? 'Chargement du mode sombre...' : 'Chargement du mode clair...'}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  L&apos;assistant Maria se prépare
-                </p>
-              </div>
-              <div className="pt-2 flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleRetryLoad}
-                  className="text-xs flex-1"
-                >
-                  Réessayer
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsLoading(false)}
-                  className="text-xs flex-1"
-                >
-                  Continuer sans charger
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Embed Container */}
+        {/* Embed Container - Always visible */}
         <div 
           ref={embedContainerRef}
-          className={`flex-1 w-full h-full ${isLoading ? 'hidden' : 'block'}`}
-          style={{ minHeight: 0 }}
+          className="flex-1 w-full h-full bg-background"
+          style={{ 
+            minHeight: '400px',
+            minWidth: '600px'
+          }}
         />
 
         {/* Resize Handle */}
-        {!isMaximized && !isLoading && (
+        {!isMaximized && (
           <div
             onMouseDown={handleResizeStart}
             className="h-4 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-t border-border/50 cursor-nwse-resize hover:bg-gradient-to-r hover:from-primary/10 hover:via-primary/20 hover:to-primary/10 transition-colors flex items-center justify-center gap-1 shrink-0"
