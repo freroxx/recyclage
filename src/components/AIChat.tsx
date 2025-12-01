@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import type React from "react";
 import { X, Maximize2, Minimize2, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
@@ -72,6 +73,22 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
 
     return () => clearTimeout(timer);
   }, [open, deploymentId]);
+
+  // Reset position and size when opened for consistent centering
+  useEffect(() => {
+    if (!open) return;
+
+    const padding = 32; // 16px on each side
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    const targetWidth = Math.min(600, vw - padding);
+    const targetHeight = Math.min(700, vh - padding);
+
+    setDimensions({ width: targetWidth, height: targetHeight });
+    setPosition(null);
+    setIsMaximized(false);
+  }, [open]);
 
   // Handle dragging
   useEffect(() => {
@@ -174,19 +191,19 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
           width: isMaximized ? 'calc(100vw - 2rem)' : `${dimensions.width}px`,
           height: isMaximized ? 'calc(100vh - 2rem)' : `${dimensions.height}px`,
           maxWidth: 'calc(100vw - 2rem)',
-          minWidth: '400px',
-          minHeight: '500px',
+          minWidth: '280px',
+          minHeight: '400px',
           maxHeight: 'calc(100vh - 2rem)',
           animation: position ? 'none' : 'fadeInScale 0.3s ease-out',
           transition: isDragging ? 'none' : 'width 0.3s, height 0.3s',
         }}
       >
         <div 
-          className="flex items-center justify-between gap-3 px-5 py-4 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b border-border/50 shrink-0 cursor-move select-none"
+          className="flex items-center justify-between gap-3 px-4 py-3 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b border-border/50 shrink-0 cursor-move select-none"
           onMouseDown={handleDragStart}
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
               <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
