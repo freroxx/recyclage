@@ -1,46 +1,50 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <title>Recyclage École Maria - Initiative de recyclage scolaire</title>
-    <meta name="description" content="Découvrez le projet de recyclage de l’école Maria à Agadir : sensibilisation des élèves, installation de bacs de tri et actions concrètes pour protéger l’environnement local.">
-    <meta name="author" content="École Maria" />
-    <meta name="keywords" content="recyclage, école, maria, environnement, écologie, tri, déchets, éducation, agadir, yahia, ikni">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+  <meta name="author" content="École Maria" />
+  <meta name="description" content="Découvrez le projet de recyclage de l’école Maria à Agadir : sensibilisation des élèves, installation de bacs de tri et actions concrètes pour protéger l’environnement local." />
+  <meta name="keywords" content="recyclage, école, maria, environnement, écologie, tri, déchets, éducation, agadir, yahia, ikni" />
 
-    <!-- Open Graph pour Instagram/Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="Recyclage Maria" />
-    <meta property="og:description" content="Découvrez le projet de recyclage de l'école Maria" />
-    <meta property="og:image" content="https://i.ibb.co/SXCn8nLp/image-7.png" />
-    <meta property="og:url" content="https://recyclage.vercel.app" />
+  <title>Recyclage École Maria - Initiative de recyclage scolaire</title>
+  
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://recyclage.vercel.app" />
 
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Recyclage Maria" />
-    <meta name="twitter:description" content="Découvrez le projet de recyclage de l'école Maria" />
-    <meta name="twitter:image" content="https://i.ibb.co/SXCn8nLp/image-7.png" />
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Recyclage Maria" />
+  <meta property="og:description" content="Découvrez le projet de recyclage de l'école Maria à Agadir" />
+  <meta property="og:image" content="https://i.ibb.co/SXCn8nLp/image-7.png" />
+  <meta property="og:url" content="https://recyclage.vercel.app" />
 
-    <!-- Preload critical hero image for LCP optimization -->
-    <link rel="preload" as="image" href="/hero.webp" type="image/webp" fetchpriority="high">
-    
-    <!-- Fonts - Loaded asynchronously to avoid render blocking -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
-    
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6418144328904526"
-     crossorigin="anonymous"></script>
-  </head>
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Recyclage Maria" />
+  <meta name="twitter:description" content="Découvrez le projet de recyclage de l'école Maria à Agadir" />
+  <meta name="twitter:image" content="https://i.ibb.co/SXCn8nLp/image-7.png" />
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+  <!-- Mobile App Capabilities -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
+  <!-- Preload hero image for LCP -->
+  <link rel="preload" as="image" href="/hero.webp" type="image/webp" fetchpriority="high">
+
+  <!-- Fonts - Non-blocking -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
+
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6418144328904526" crossorigin="anonymous"></script>
+</head>
+<body>
+  <main id="root" role="main"></main>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
 </html>
