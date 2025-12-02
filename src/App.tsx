@@ -7,6 +7,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
+import { ScrollToTop } from "@/components/ScrollToTop";
 import { lazy, Suspense } from "react";
 
 // Vercel Analytics + Speed Insights
@@ -69,6 +70,7 @@ const App = () => (
               </main>
 
               <Footer />
+              <ScrollToTop />
 
               {/* Vercel Analytics */}
               <Analytics />
