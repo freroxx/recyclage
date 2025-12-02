@@ -3,42 +3,34 @@
 
   <url>
     <loc>https://recyclage.vercel.app/</loc>
-    <priority>1.0</priority>
   </url>
 
   <url>
     <loc>https://recyclage.vercel.app/project</loc>
-    <priority>0.9</priority>
   </url>
 
   <url>
     <loc>https://recyclage.vercel.app/ressources</loc>
-    <priority>0.9</priority>
   </url>
 
   <url>
     <loc>https://recyclage.vercel.app/contact</loc>
-    <priority>0.8</priority>
   </url>
 
   <url>
     <loc>https://recyclage.vercel.app/posters</loc>
-    <priority>0.8</priority>
   </url>
 
   <url>
     <loc>https://recyclage.vercel.app/videos</loc>
-    <priority>0.8</priority>
   </url>
 
   <url>
     <loc>https://recyclage.vercel.app/activities</loc>
-    <priority>0.8</priority>
   </url>
 
   <url>
     <loc>https://recyclage.vercel.app/guide</loc>
-    <priority>0.8</priority>
   </url>
 
 </urlset>
