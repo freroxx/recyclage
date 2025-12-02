@@ -8,13 +8,13 @@
     "css": "src/index.css",
     "baseColor": "slate",
     "cssVariables": true,
-    "prefix": ""
+    "prefix": ""  // Laisser vide pour ne pas ajouter de préfixe aux classes
   },
   "aliases": {
     "components": "@/components",
-    "utils": "@/lib/utils",
     "ui": "@/components/ui",
+    "hooks": "@/hooks",
     "lib": "@/lib",
-    "hooks": "@/hooks"
+    "utils": "@/lib/utils"
   }
 }
