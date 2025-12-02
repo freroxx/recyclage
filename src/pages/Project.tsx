@@ -1,7 +1,9 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
-import { Trash2, FileText, Apple, Package, Target, Users, Lightbulb, TrendingUp, Leaf, Recycle } from "lucide-react";
+import { Trash2, FileText, Apple, Package, Target, Users, Lightbulb, TrendingUp, Leaf, Recycle, CheckCircle2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Link } from "react-router-dom";
 
 export default function Project() {
   const { t } = useLanguage();
@@ -163,13 +165,13 @@ export default function Project() {
 
         {/* Call to Action */}
         <div className="max-w-4xl mx-auto text-center scroll-fade-right">
-          <Card className="border-2 border-primary/30 shadow-2xl overflow-hidden hover:shadow-[0_0_60px_-15px_rgba(var(--primary),0.5)] transition-all duration-700 hover:scale-[1.03] group cursor-pointer">
+          <Card className="border-2 border-primary/30 shadow-2xl overflow-hidden hover:shadow-[0_0_60px_-15px_rgba(var(--primary),0.5)] transition-all duration-700 hover:scale-[1.03] group">
             <div className="bg-gradient-to-br from-primary/20 via-green-500/20 to-primary/20 p-12 transition-all duration-700 group-hover:from-primary/30 group-hover:via-green-500/30 group-hover:to-primary/30">
               <h2 className="text-4xl font-bold mb-6">{t("project.why.title")}</h2>
               <p className="text-lg leading-relaxed mb-6">
                 {t("project.why.text")}
               </p>
-              <div className="bg-background/50 backdrop-blur-sm rounded-xl p-6 inline-block">
+              <div className="bg-background/50 backdrop-blur-sm rounded-xl p-6 mb-8">
                 <p className="text-xl font-semibold text-primary mb-2">
                   {t("project.why.join") || "Rejoignez le mouvement !"}
                 </p>
@@ -177,6 +179,12 @@ export default function Project() {
                   {t("project.why.invite") || "L'École Maria invite tous ses élèves, enseignants et parents à rejoindre cette initiative et à faire partie d'un mouvement positif pour Agadir et notre planète."}
                 </p>
               </div>
+              <Link to="/guide">
+                <Button size="lg" className="animate-bounce-in">
+                  <CheckCircle2 className="w-5 h-5 mr-2" />
+                  {t("project.startLearning") || "Commencer à apprendre"}
+                </Button>
+              </Link>
             </div>
           </Card>
         </div>
