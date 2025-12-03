@@ -233,7 +233,6 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
         const newHeight = Math.max(minHeight, Math.min(prev.height + deltaY, maxHeight));
 
         if (windowRef.current && position) {
-          const rect = windowRef.current.getBoundingClientRect();
           const maxX = window.innerWidth - newWidth;
           const maxY = window.innerHeight - newHeight;
           
