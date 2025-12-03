@@ -37,10 +37,5 @@ export default defineConfig(({ mode }) => {
     optimizeDeps: {
       include: ["react", "react-dom"],
     },
-    esbuild: {
-      jsxFactory: "React.createElement",
-      jsxFragment: "React.Fragment",
-      jsxInject: `import React from 'react'`,
-    },
   };
 });
