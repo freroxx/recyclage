@@ -1,4 +1,3 @@
-import React from "react"; // Needed for JSX to work in some setups
 import { Link } from "react-router-dom";
 
 const Index = () => {
