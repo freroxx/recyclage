@@ -91,11 +91,11 @@ export default function Project() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 overflow-hidden">
-      {/* Floating background elements */}
+      {/* Enhanced background animations with smooth floats */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute top-40 right-20 w-96 h-96 bg-green-500/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute bottom-40 left-1/4 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/8 rounded-full blur-3xl animate-soft-float animate-glow-pulse" />
+        <div className="absolute top-40 right-20 w-96 h-96 bg-green-500/8 rounded-full blur-3xl animate-soft-float animate-glow-pulse" style={{ animationDelay: '1.2s' }} />
+        <div className="absolute bottom-40 left-1/4 w-64 h-64 bg-amber-500/8 rounded-full blur-3xl animate-soft-float animate-glow-pulse" style={{ animationDelay: '2.4s' }} />
       </div>
 
       <div className="container mx-auto px-4 py-12 md:py-16 relative z-10">
@@ -120,18 +120,19 @@ export default function Project() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in" style={{ animationDelay: '0.4s' }}>
             <Link to="/guide">
-              <Button size="lg" className="group relative overflow-hidden px-8 py-6 text-lg shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 hover:scale-105">
-                <span className="absolute inset-0 bg-gradient-to-r from-primary to-green-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <Button size="lg" className="group relative overflow-hidden px-8 py-6 text-lg shadow-lg shadow-primary/30 hover:shadow-2xl hover:shadow-primary/40 transition-all duration-300 hover:scale-110 active:scale-95">
+                <span className="absolute inset-0 bg-gradient-to-r from-primary via-green-600 to-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <span className="absolute inset-0 bg-gradient-to-r from-primary to-green-600 opacity-100 group-hover:opacity-0 transition-opacity duration-500" />
                 <span className="relative flex items-center gap-2">
-                  <Play className="w-5 h-5" />
+                  <Play className="w-5 h-5 group-hover:animate-pulse" />
                   {language === "fr" ? "Découvrir le projet" : "Discover the project"}
-                  <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                  <ArrowRight className="w-5 h-5 transition-all duration-300 group-hover:translate-x-2 group-hover:animate-float" />
                 </span>
               </Button>
             </Link>
             <Link to="/resources">
-              <Button variant="outline" size="lg" className="group px-8 py-6 text-lg border-2 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 hover:scale-105">
-                <ExternalLink className="w-5 h-5 mr-2 transition-transform group-hover:rotate-12" />
+              <Button variant="outline" size="lg" className="group relative px-8 py-6 text-lg border-2 border-primary/30 hover:border-primary/60 bg-background hover:bg-primary/8 transition-all duration-300 hover:scale-110 active:scale-95">
+                <ExternalLink className="w-5 h-5 mr-2 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-125" />
                 {language === "fr" ? "Voir les ressources" : "View resources"}
               </Button>
             </Link>
@@ -181,18 +182,21 @@ export default function Project() {
               return (
                 <Card
                   key={bin.label}
-                  className={`relative hover:shadow-2xl transition-all duration-500 scroll-reveal border-2 ${bin.borderColor} group cursor-pointer overflow-hidden ${isActive ? `shadow-xl ${bin.glowColor} -translate-y-2 scale-105` : 'hover:-translate-y-3'}`}
+                  className={`relative hover:shadow-2xl transition-all duration-500 scroll-reveal border-2 ${bin.borderColor} group cursor-pointer overflow-hidden ${isActive ? `shadow-2xl ${bin.glowColor} -translate-y-4 scale-110` : 'hover:-translate-y-4'}`}
                   style={{ animationDelay: `${index * 150}ms` }}
                   onMouseEnter={() => setActiveIndex(index)}
                 >
                   <div className={`absolute inset-0 bg-gradient-to-b ${bin.bg} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-                  <CardContent className="pt-8 pb-8 text-center relative">
-                    <div className={`w-20 h-20 md:w-24 md:h-24 rounded-3xl ${bin.bg} flex items-center justify-center mx-auto mb-5 transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 ${isActive ? 'scale-110 rotate-6' : ''}`}>
-                      <BinIcon className={`w-10 h-10 md:w-12 md:h-12 ${bin.color} transition-all duration-300`} />
+                  {isActive && (
+                    <div className={`absolute inset-0 ${bin.glowColor} blur-2xl opacity-30`} />
+                  )}
+                  <CardContent className="pt-8 pb-8 text-center relative z-10">
+                    <div className={`w-20 h-20 md:w-24 md:h-24 rounded-3xl ${bin.bg} flex items-center justify-center mx-auto mb-5 transition-all duration-500 group-hover:scale-120 group-hover:rotate-12 ${isActive ? 'scale-120 rotate-12 shadow-lg' : ''}`} style={{ boxShadow: isActive ? `0 0 30px ${bin.color}` : 'none' }}>
+                      <BinIcon className={`w-10 h-10 md:w-12 md:h-12 ${bin.color} transition-all duration-300 ${isActive ? 'animate-pulse' : ''}`} />
                     </div>
                     <h3 className="font-bold text-base md:text-lg">{bin.label}</h3>
-                    <div className={`h-1 w-12 mx-auto mt-3 rounded-full ${bin.bg} transition-all duration-500 group-hover:w-20 ${isActive ? 'w-20' : ''}`} 
-                         style={{ backgroundColor: bin.color.replace('text-', '') }} />
+                    <div className={`h-1 w-12 mx-auto mt-3 rounded-full transition-all duration-500 group-hover:w-20 ${isActive ? 'w-20 shadow-lg' : ''}`}
+                         style={{ backgroundColor: bin.color.replace('text-', ''), boxShadow: isActive ? `0 0 15px ${bin.color}` : 'none' }} />
                   </CardContent>
                 </Card>
               );
@@ -282,30 +286,32 @@ export default function Project() {
               <p className="text-muted-foreground leading-relaxed mb-8 max-w-2xl mx-auto text-lg">
                 {t("project.why.text")}
               </p>
-              <div className="bg-secondary/50 rounded-2xl p-7 mb-10 max-w-xl mx-auto border border-primary/10 backdrop-blur-sm">
-                <p className="text-xl font-bold text-primary mb-3">
+              <div className="bg-gradient-to-br from-primary/10 via-green-500/10 to-primary/10 rounded-2xl p-8 mb-10 max-w-xl mx-auto border-2 border-primary/20 backdrop-blur-md hover:border-primary/40 hover:shadow-xl hover:shadow-primary/20 transition-all duration-500 group">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-transparent to-green-500/20 opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity duration-500" />
+                <p className="text-xl font-bold bg-gradient-to-r from-primary to-green-600 bg-clip-text text-transparent mb-3 relative">
                   {t("project.why.join") || (language === "fr" ? "Rejoignez le mouvement !" : "Join the movement!")}
                 </p>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {t("project.why.invite") || (language === "fr" 
+                <p className="text-sm text-muted-foreground leading-relaxed relative">
+                  {t("project.why.invite") || (language === "fr"
                     ? "L'École Maria invite tous ses élèves, enseignants et parents à rejoindre cette initiative."
                     : "École Maria invites all its students, teachers and parents to join this initiative.")}
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link to="/guide">
-                  <Button size="lg" className="group/btn relative overflow-hidden px-10 py-7 text-lg shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/30 transition-all duration-300 hover:scale-105">
-                    <span className="absolute inset-0 bg-gradient-to-r from-green-600 to-primary opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
+                  <Button size="lg" className="group/btn relative overflow-hidden px-10 py-7 text-lg shadow-xl shadow-primary/30 hover:shadow-2xl hover:shadow-primary/40 transition-all duration-300 hover:scale-110 active:scale-95">
+                    <span className="absolute inset-0 bg-gradient-to-r from-green-600 via-primary to-emerald-500 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-500" />
+                    <span className="absolute inset-0 bg-gradient-to-r from-green-600 to-primary opacity-100 group-hover/btn:opacity-0 transition-opacity duration-500" />
                     <span className="relative flex items-center gap-2">
-                      <Sparkles className="w-5 h-5" />
+                      <Sparkles className="w-5 h-5 group-hover/btn:animate-spin" />
                       {t("project.startLearning") || (language === "fr" ? "Commencer à apprendre" : "Start learning")}
-                      <ArrowRight className="w-5 h-5 transition-transform group-hover/btn:translate-x-1" />
+                      <ArrowRight className="w-5 h-5 transition-all duration-300 group-hover/btn:translate-x-2 group-hover/btn:animate-float" />
                     </span>
                   </Button>
                 </Link>
                 <Link to="/activities">
-                  <Button variant="outline" size="lg" className="px-10 py-7 text-lg border-2 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 hover:scale-105">
-                    <Play className="w-5 h-5 mr-2" />
+                  <Button variant="outline" size="lg" className="group/outline relative px-10 py-7 text-lg border-2 border-primary/30 hover:border-primary/60 bg-background hover:bg-primary/8 transition-all duration-300 hover:scale-110 active:scale-95">
+                    <Play className="w-5 h-5 mr-2 transition-transform duration-300 group-hover/outline:scale-125" />
                     {language === "fr" ? "Jouer aux jeux" : "Play games"}
                   </Button>
                 </Link>
