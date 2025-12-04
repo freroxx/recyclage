@@ -169,12 +169,11 @@ export default function Project() {
               return (
                 <Card
                   key={bin.label}
-                  className={`scroll-reveal hover:shadow-xl transition-all duration-300 border-2 ${bin.borderColor} group cursor-pointer overflow-hidden ${isActive ? 'shadow-xl scale-105 -translate-y-2' : 'hover:-translate-y-2'}`}
+                  className={`scroll-reveal hover:shadow-xl transition-all duration-300 border-2 ${bin.borderColor} group cursor-pointer ${isActive ? 'shadow-xl scale-105 -translate-y-2' : 'hover:scale-105 hover:-translate-y-2'}`}
                   style={{ animationDelay: `${index * 100}ms` }}
                   onMouseEnter={() => setActiveIndex(index)}
                 >
-                  <div className={`absolute inset-0 ${bin.bg} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-                  <CardContent className="pt-8 pb-8 text-center relative z-10">
+                  <CardContent className="pt-8 pb-8 text-center">
                     <div className={`w-20 h-20 md:w-24 md:h-24 rounded-3xl ${bin.bg} flex items-center justify-center mx-auto mb-5 transition-all duration-300 group-hover:scale-110 ${isActive ? 'scale-110' : ''}`}>
                       <BinIcon className={`w-10 h-10 md:w-12 md:h-12 ${bin.color}`} />
                     </div>
