@@ -28,19 +28,18 @@ export default function Project() {
   useScrollReveal();
   const [activeIndex, setActiveIndex] = useState(0);
 
-  // Auto-cycle through bins for visual interest
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % 4);
-    }, 2000);
+    }, 2500);
     return () => clearInterval(interval);
   }, []);
 
   const bins = [
-    { icon: FileText, color: "text-amber-500", bg: "bg-amber-500/10", borderColor: "border-amber-500/30", glowColor: "shadow-amber-500/20", label: t("project.bins.paper") },
-    { icon: Package, color: "text-blue-500", bg: "bg-blue-500/10", borderColor: "border-blue-500/30", glowColor: "shadow-blue-500/20", label: t("project.bins.plastic") },
-    { icon: Trash2, color: "text-gray-500", bg: "bg-gray-500/10", borderColor: "border-gray-500/30", glowColor: "shadow-gray-500/20", label: t("project.bins.metal") },
-    { icon: Apple, color: "text-green-500", bg: "bg-green-500/10", borderColor: "border-green-500/30", glowColor: "shadow-green-500/20", label: t("project.bins.organic") },
+    { icon: FileText, color: "text-amber-500", bg: "bg-amber-500/10", borderColor: "border-amber-500/30", label: t("project.bins.paper") },
+    { icon: Package, color: "text-blue-500", bg: "bg-blue-500/10", borderColor: "border-blue-500/30", label: t("project.bins.plastic") },
+    { icon: Trash2, color: "text-gray-500", bg: "bg-gray-500/10", borderColor: "border-gray-500/30", label: t("project.bins.metal") },
+    { icon: Apple, color: "text-green-500", bg: "bg-green-500/10", borderColor: "border-green-500/30", label: t("project.bins.organic") },
   ];
 
   const actions = [
@@ -50,8 +49,7 @@ export default function Project() {
       description: t("project.bins.text"),
       gradient: "from-blue-500/10 to-cyan-500/10",
       iconColor: "text-blue-500",
-      borderColor: "border-blue-500/20",
-      hoverGlow: "hover:shadow-blue-500/20"
+      borderColor: "border-blue-500/20"
     },
     {
       icon: Lightbulb,
@@ -59,8 +57,7 @@ export default function Project() {
       description: t("project.campaigns.text"),
       gradient: "from-amber-500/10 to-orange-500/10",
       iconColor: "text-amber-500",
-      borderColor: "border-amber-500/20",
-      hoverGlow: "hover:shadow-amber-500/20"
+      borderColor: "border-amber-500/20"
     },
     {
       icon: Users,
@@ -68,8 +65,7 @@ export default function Project() {
       description: t("project.workshops.text"),
       gradient: "from-purple-500/10 to-pink-500/10",
       iconColor: "text-purple-500",
-      borderColor: "border-purple-500/20",
-      hoverGlow: "hover:shadow-purple-500/20"
+      borderColor: "border-purple-500/20"
     },
     {
       icon: TrendingUp,
@@ -77,8 +73,7 @@ export default function Project() {
       description: t("project.monitoring.text"),
       gradient: "from-green-500/10 to-emerald-500/10",
       iconColor: "text-green-500",
-      borderColor: "border-green-500/20",
-      hoverGlow: "hover:shadow-green-500/20"
+      borderColor: "border-green-500/20"
     }
   ];
 
@@ -91,70 +86,62 @@ export default function Project() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 overflow-hidden">
-      {/* Enhanced background animations with smooth floats */}
+      {/* Background decorations */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/8 rounded-full blur-3xl animate-soft-float animate-glow-pulse" />
-        <div className="absolute top-40 right-20 w-96 h-96 bg-green-500/8 rounded-full blur-3xl animate-soft-float animate-glow-pulse" style={{ animationDelay: '1.2s' }} />
-        <div className="absolute bottom-40 left-1/4 w-64 h-64 bg-amber-500/8 rounded-full blur-3xl animate-soft-float animate-glow-pulse" style={{ animationDelay: '2.4s' }} />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-40 right-20 w-96 h-96 bg-green-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute bottom-40 left-1/4 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
       <div className="container mx-auto px-4 py-12 md:py-16 relative z-10">
-        {/* Hero Section - Enhanced */}
+        {/* Hero Section */}
         <div className="max-w-5xl mx-auto text-center mb-16 md:mb-24">
-          <div 
-            className="inline-flex items-center gap-2 bg-primary/10 text-primary px-5 py-2.5 rounded-full text-sm font-medium mb-8 border border-primary/20 backdrop-blur-sm animate-bounce-in"
-          >
-            <Sparkles className="w-4 h-4 animate-pulse" />
+          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-5 py-2.5 rounded-full text-sm font-medium mb-8 border border-primary/20 backdrop-blur-sm animate-fade-in">
+            <Sparkles className="w-4 h-4" />
             <span>{language === "fr" ? "Initiative Écologique" : "Ecological Initiative"}</span>
           </div>
           
-          <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold mb-8 leading-tight animate-fade-in">
-            <span className="bg-gradient-to-r from-primary via-green-600 to-emerald-500 bg-clip-text text-transparent bg-[length:200%_auto] animate-[shimmer_3s_linear_infinite]">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-8 leading-tight animate-fade-in">
+            <span className="bg-gradient-to-r from-primary via-green-600 to-emerald-500 bg-clip-text text-transparent">
               {t("project.title")}
             </span>
           </h1>
           
-          <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-3xl mx-auto mb-10 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-3xl mx-auto mb-10 animate-fade-in" style={{ animationDelay: '0.1s' }}>
             {t("project.intro")}
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in" style={{ animationDelay: '0.4s' }}>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in" style={{ animationDelay: '0.2s' }}>
             <Link to="/guide">
-              <Button size="lg" className="group relative overflow-hidden px-8 py-6 text-lg shadow-lg shadow-primary/30 hover:shadow-2xl hover:shadow-primary/40 transition-all duration-300 hover:scale-110 active:scale-95">
-                <span className="absolute inset-0 bg-gradient-to-r from-primary via-green-600 to-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <span className="absolute inset-0 bg-gradient-to-r from-primary to-green-600 opacity-100 group-hover:opacity-0 transition-opacity duration-500" />
-                <span className="relative flex items-center gap-2">
-                  <Play className="w-5 h-5 group-hover:animate-pulse" />
-                  {language === "fr" ? "Découvrir le projet" : "Discover the project"}
-                  <ArrowRight className="w-5 h-5 transition-all duration-300 group-hover:translate-x-2 group-hover:animate-float" />
-                </span>
+              <Button size="lg" className="group px-8 py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95">
+                <Play className="w-5 h-5 mr-2" />
+                {language === "fr" ? "Découvrir le projet" : "Discover the project"}
+                <ArrowRight className="w-5 h-5 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
               </Button>
             </Link>
             <Link to="/resources">
-              <Button variant="outline" size="lg" className="group relative px-8 py-6 text-lg border-2 border-primary/30 hover:border-primary/60 bg-background hover:bg-primary/8 transition-all duration-300 hover:scale-110 active:scale-95">
-                <ExternalLink className="w-5 h-5 mr-2 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-125" />
+              <Button variant="outline" size="lg" className="group px-8 py-6 text-lg border-2 hover:bg-primary/5 transition-all duration-300 hover:scale-105 active:scale-95">
+                <ExternalLink className="w-5 h-5 mr-2" />
                 {language === "fr" ? "Voir les ressources" : "View resources"}
               </Button>
             </Link>
           </div>
 
-          {/* Scroll indicator */}
-          <div className="mt-16 animate-bounce">
+          <div className="mt-12 animate-bounce">
             <ChevronDown className="w-6 h-6 mx-auto text-muted-foreground" />
           </div>
         </div>
 
-        {/* Goal Section - Enhanced */}
-        <div className="max-w-5xl mx-auto mb-16 md:mb-24 scroll-rotate-in">
-          <Card className="border-2 border-primary/20 shadow-2xl overflow-hidden group relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-            <div className="bg-gradient-to-r from-primary/10 via-green-500/10 to-primary/10 p-8 md:p-10 transition-all duration-500 relative">
-              <div className="flex items-center gap-5 mb-8">
-                <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 group-hover:bg-primary/30 shadow-lg shadow-primary/20">
+        {/* Goal Section */}
+        <div className="max-w-5xl mx-auto mb-16 md:mb-24 scroll-reveal">
+          <Card className="border-2 border-primary/20 shadow-xl overflow-hidden group hover:shadow-2xl transition-shadow duration-300">
+            <div className="bg-gradient-to-r from-primary/10 via-green-500/10 to-primary/10 p-8 md:p-10">
+              <div className="flex items-center gap-5 mb-6">
+                <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-lg">
                   <Target className="w-8 h-8 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-2xl md:text-4xl font-bold">{t("project.goal.title")}</h2>
+                  <h2 className="text-2xl md:text-3xl font-bold">{t("project.goal.title")}</h2>
                   <p className="text-muted-foreground text-sm mt-1">{language === "fr" ? "Notre mission principale" : "Our main mission"}</p>
                 </div>
               </div>
@@ -165,7 +152,7 @@ export default function Project() {
           </Card>
         </div>
 
-        {/* Sorting Bins - Enhanced with animation */}
+        {/* Sorting Bins */}
         <div className="max-w-5xl mx-auto mb-16 md:mb-24">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold scroll-reveal mb-3">
@@ -175,28 +162,24 @@ export default function Project() {
               {language === "fr" ? "4 types de déchets, 4 bacs de couleurs" : "4 types of waste, 4 colored bins"}
             </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             {bins.map((bin, index) => {
               const BinIcon = bin.icon;
               const isActive = index === activeIndex;
               return (
                 <Card
                   key={bin.label}
-                  className={`relative hover:shadow-2xl transition-all duration-500 scroll-reveal border-2 ${bin.borderColor} group cursor-pointer overflow-hidden ${isActive ? `shadow-2xl ${bin.glowColor} -translate-y-4 scale-110` : 'hover:-translate-y-4'}`}
-                  style={{ animationDelay: `${index * 150}ms` }}
+                  className={`scroll-reveal hover:shadow-xl transition-all duration-300 border-2 ${bin.borderColor} group cursor-pointer overflow-hidden ${isActive ? 'shadow-xl scale-105 -translate-y-2' : 'hover:-translate-y-2'}`}
+                  style={{ animationDelay: `${index * 100}ms` }}
                   onMouseEnter={() => setActiveIndex(index)}
                 >
-                  <div className={`absolute inset-0 bg-gradient-to-b ${bin.bg} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-                  {isActive && (
-                    <div className={`absolute inset-0 ${bin.glowColor} blur-2xl opacity-30`} />
-                  )}
+                  <div className={`absolute inset-0 ${bin.bg} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
                   <CardContent className="pt-8 pb-8 text-center relative z-10">
-                    <div className={`w-20 h-20 md:w-24 md:h-24 rounded-3xl ${bin.bg} flex items-center justify-center mx-auto mb-5 transition-all duration-500 group-hover:scale-120 group-hover:rotate-12 ${isActive ? 'scale-120 rotate-12 shadow-lg' : ''}`} style={{ boxShadow: isActive ? `0 0 30px ${bin.color}` : 'none' }}>
-                      <BinIcon className={`w-10 h-10 md:w-12 md:h-12 ${bin.color} transition-all duration-300 ${isActive ? 'animate-pulse' : ''}`} />
+                    <div className={`w-20 h-20 md:w-24 md:h-24 rounded-3xl ${bin.bg} flex items-center justify-center mx-auto mb-5 transition-all duration-300 group-hover:scale-110 ${isActive ? 'scale-110' : ''}`}>
+                      <BinIcon className={`w-10 h-10 md:w-12 md:h-12 ${bin.color}`} />
                     </div>
                     <h3 className="font-bold text-base md:text-lg">{bin.label}</h3>
-                    <div className={`h-1 w-12 mx-auto mt-3 rounded-full transition-all duration-500 group-hover:w-20 ${isActive ? 'w-20 shadow-lg' : ''}`}
-                         style={{ backgroundColor: bin.color.replace('text-', ''), boxShadow: isActive ? `0 0 15px ${bin.color}` : 'none' }} />
+                    <div className={`h-1 w-12 mx-auto mt-3 rounded-full transition-all duration-300 ${bin.bg} ${isActive ? 'w-16' : 'group-hover:w-16'}`} />
                   </CardContent>
                 </Card>
               );
@@ -204,7 +187,7 @@ export default function Project() {
           </div>
         </div>
 
-        {/* Actions Section - Enhanced */}
+        {/* Actions Section */}
         <div className="max-w-5xl mx-auto mb-16 md:mb-24">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold scroll-reveal mb-3">{t("project.actions.title")}</h2>
@@ -212,23 +195,23 @@ export default function Project() {
               {language === "fr" ? "Découvrez comment nous agissons au quotidien" : "Discover how we act every day"}
             </p>
           </div>
-          <div className="grid md:grid-cols-2 gap-6 md:gap-8">
+          <div className="grid md:grid-cols-2 gap-6">
             {actions.map((action, index) => {
               const ActionIcon = action.icon;
               return (
                 <Card
                   key={action.title}
-                  className={`scroll-reveal hover:shadow-2xl ${action.hoverGlow} transition-all duration-500 border-2 ${action.borderColor} overflow-hidden group hover:-translate-y-2 cursor-pointer relative`}
-                  style={{ animationDelay: `${index * 150}ms` }}
+                  className={`scroll-reveal hover:shadow-xl transition-all duration-300 border-2 ${action.borderColor} overflow-hidden group hover:-translate-y-2 cursor-pointer`}
+                  style={{ animationDelay: `${index * 100}ms` }}
                 >
-                  <div className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-30 group-hover:opacity-60 transition-opacity duration-500`} />
-                  <CardContent className="p-7 md:p-9 relative">
+                  <div className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-30 group-hover:opacity-50 transition-opacity duration-300`} />
+                  <CardContent className="p-7 md:p-8 relative">
                     <div className="flex items-start gap-5">
-                      <div className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br ${action.gradient} flex items-center justify-center flex-shrink-0 transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 shadow-lg`}>
-                        <ActionIcon className={`w-7 h-7 md:w-8 md:h-8 ${action.iconColor}`} />
+                      <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${action.gradient} flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110 shadow-lg`}>
+                        <ActionIcon className={`w-7 h-7 ${action.iconColor}`} />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-bold text-xl md:text-2xl mb-3 group-hover:text-primary transition-colors duration-300">{action.title}</h3>
+                        <h3 className="font-bold text-xl mb-2 group-hover:text-primary transition-colors duration-300">{action.title}</h3>
                         <p className="text-muted-foreground text-sm md:text-base leading-relaxed">{action.description}</p>
                       </div>
                     </div>
@@ -242,17 +225,16 @@ export default function Project() {
           </div>
         </div>
 
-        {/* Impact Section - Enhanced */}
-        <div className="max-w-5xl mx-auto mb-16 md:mb-24 scroll-fade-left">
-          <Card className="border-2 border-green-500/20 shadow-2xl overflow-hidden group relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-green-500/5 via-transparent to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-            <div className="bg-gradient-to-r from-green-500/10 via-emerald-500/10 to-green-500/10 p-8 md:p-10 relative">
+        {/* Impact Section */}
+        <div className="max-w-5xl mx-auto mb-16 md:mb-24 scroll-reveal">
+          <Card className="border-2 border-green-500/20 shadow-xl overflow-hidden group hover:shadow-2xl transition-shadow duration-300">
+            <div className="bg-gradient-to-r from-green-500/10 via-emerald-500/10 to-green-500/10 p-8 md:p-10">
               <div className="flex items-center gap-5 mb-8">
-                <div className="w-16 h-16 rounded-2xl bg-green-500/20 flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:-rotate-3 shadow-lg shadow-green-500/20">
+                <div className="w-16 h-16 rounded-2xl bg-green-500/20 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-lg">
                   <TrendingUp className="w-8 h-8 text-green-600" />
                 </div>
                 <div>
-                  <h2 className="text-2xl md:text-4xl font-bold">{t("project.impact.title")}</h2>
+                  <h2 className="text-2xl md:text-3xl font-bold">{t("project.impact.title")}</h2>
                   <p className="text-muted-foreground text-sm mt-1">{t("project.impact.text")}</p>
                 </div>
               </div>
@@ -260,13 +242,12 @@ export default function Project() {
                 {impacts.map((impact, index) => (
                   <div
                     key={index}
-                    className="flex items-start gap-4 p-5 rounded-2xl bg-background/60 hover:bg-background/90 transition-all duration-300 group/item hover:shadow-lg hover:-translate-x-1 cursor-default"
-                    style={{ animationDelay: `${index * 100}ms` }}
+                    className="flex items-start gap-4 p-4 rounded-xl bg-background/60 hover:bg-background/80 transition-all duration-300 group/item hover:shadow-md"
                   >
-                    <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover/item:scale-110 group-hover/item:bg-green-500/30">
+                    <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover/item:scale-110">
                       <Leaf className="w-5 h-5 text-green-600" />
                     </div>
-                    <p className="text-foreground/90 leading-relaxed text-sm md:text-base pt-1.5">{impact}</p>
+                    <p className="text-foreground/90 leading-relaxed text-sm md:text-base pt-2">{impact}</p>
                   </div>
                 ))}
               </div>
@@ -274,24 +255,23 @@ export default function Project() {
           </Card>
         </div>
 
-        {/* Call to Action - Enhanced */}
-        <div className="max-w-4xl mx-auto text-center scroll-fade-right">
-          <Card className="border-2 border-primary/30 shadow-2xl overflow-hidden relative group">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-green-500/10 to-amber-500/10 opacity-50 group-hover:opacity-70 transition-opacity duration-700" />
-            <CardContent className="p-10 md:p-14 relative">
-              <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-8 transition-all duration-500 group-hover:scale-110 group-hover:rotate-12 shadow-xl shadow-primary/20">
+        {/* Call to Action */}
+        <div className="max-w-4xl mx-auto text-center scroll-reveal">
+          <Card className="border-2 border-primary/30 shadow-xl overflow-hidden group hover:shadow-2xl transition-shadow duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-green-500/5 to-amber-500/5 opacity-50" />
+            <CardContent className="p-10 md:p-12 relative">
+              <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-8 transition-transform duration-300 group-hover:scale-110 shadow-xl">
                 <CheckCircle2 className="w-10 h-10 text-primary" />
               </div>
-              <h2 className="text-3xl md:text-4xl font-bold mb-5">{t("project.why.title")}</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">{t("project.why.title")}</h2>
               <p className="text-muted-foreground leading-relaxed mb-8 max-w-2xl mx-auto text-lg">
                 {t("project.why.text")}
               </p>
-              <div className="bg-gradient-to-br from-primary/10 via-green-500/10 to-primary/10 rounded-2xl p-8 mb-10 max-w-xl mx-auto border-2 border-primary/20 backdrop-blur-md hover:border-primary/40 hover:shadow-xl hover:shadow-primary/20 transition-all duration-500 group">
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-transparent to-green-500/20 opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity duration-500" />
-                <p className="text-xl font-bold bg-gradient-to-r from-primary to-green-600 bg-clip-text text-transparent mb-3 relative">
+              <div className="bg-gradient-to-br from-primary/10 via-green-500/10 to-primary/10 rounded-2xl p-6 mb-8 max-w-xl mx-auto border border-primary/20">
+                <p className="text-lg font-bold text-primary mb-2">
                   {t("project.why.join") || (language === "fr" ? "Rejoignez le mouvement !" : "Join the movement!")}
                 </p>
-                <p className="text-sm text-muted-foreground leading-relaxed relative">
+                <p className="text-sm text-muted-foreground leading-relaxed">
                   {t("project.why.invite") || (language === "fr"
                     ? "L'École Maria invite tous ses élèves, enseignants et parents à rejoindre cette initiative."
                     : "École Maria invites all its students, teachers and parents to join this initiative.")}
@@ -299,19 +279,15 @@ export default function Project() {
               </div>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link to="/guide">
-                  <Button size="lg" className="group/btn relative overflow-hidden px-10 py-7 text-lg shadow-xl shadow-primary/30 hover:shadow-2xl hover:shadow-primary/40 transition-all duration-300 hover:scale-110 active:scale-95">
-                    <span className="absolute inset-0 bg-gradient-to-r from-green-600 via-primary to-emerald-500 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-500" />
-                    <span className="absolute inset-0 bg-gradient-to-r from-green-600 to-primary opacity-100 group-hover/btn:opacity-0 transition-opacity duration-500" />
-                    <span className="relative flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 group-hover/btn:animate-spin" />
-                      {t("project.startLearning") || (language === "fr" ? "Commencer à apprendre" : "Start learning")}
-                      <ArrowRight className="w-5 h-5 transition-all duration-300 group-hover/btn:translate-x-2 group-hover/btn:animate-float" />
-                    </span>
+                  <Button size="lg" className="group/btn px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95">
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    {t("project.startLearning") || (language === "fr" ? "Commencer à apprendre" : "Start learning")}
+                    <ArrowRight className="w-5 h-5 ml-2 transition-transform duration-300 group-hover/btn:translate-x-1" />
                   </Button>
                 </Link>
                 <Link to="/activities">
-                  <Button variant="outline" size="lg" className="group/outline relative px-10 py-7 text-lg border-2 border-primary/30 hover:border-primary/60 bg-background hover:bg-primary/8 transition-all duration-300 hover:scale-110 active:scale-95">
-                    <Play className="w-5 h-5 mr-2 transition-transform duration-300 group-hover/outline:scale-125" />
+                  <Button variant="outline" size="lg" className="px-10 py-6 text-lg border-2 hover:bg-primary/5 transition-all duration-300 hover:scale-105 active:scale-95">
+                    <Play className="w-5 h-5 mr-2" />
                     {language === "fr" ? "Jouer aux jeux" : "Play games"}
                   </Button>
                 </Link>
