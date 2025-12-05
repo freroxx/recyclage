@@ -5,14 +5,12 @@ import { Menu, X, Languages, Bot } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AIChat } from "@/components/AIChat";
-import { useIsMobile } from "@/hooks/use-mobile";
 import logo from "@/assets/logo-optimized.webp";
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const [aiChatOpen, setAiChatOpen] = useState(false);
   const { language, setLanguage, t } = useLanguage();
-  const isMobile = useIsMobile();
 
   const navItems = [
     { key: "nav.home", path: "/" },
@@ -138,7 +136,7 @@ export function Navigation() {
         </div>
       </div>
 
-      <AIChat open={aiChatOpen} onOpenChange={setAiChatOpen} isMobile={isMobile} />
+      <AIChat open={aiChatOpen} onOpenChange={setAiChatOpen} />
     </nav>
   );
 }

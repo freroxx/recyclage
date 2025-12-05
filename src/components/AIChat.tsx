@@ -3,12 +3,12 @@ import type React from "react";
 import { X, Maximize2, Minimize2, GripVertical, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
-import { toast } from "sonner"; // or your preferred toast library
+import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AIChatProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  isMobile?: boolean;
 }
 
 declare global {
@@ -17,8 +17,9 @@ declare global {
   }
 }
 
-export function AIChat({ open, onOpenChange, isMobile = false }: AIChatProps) {
-  const [isMaximized, setIsMaximized] = useState(isMobile);
+export function AIChat({ open, onOpenChange }: AIChatProps) {
+  const isMobile = useIsMobile();
+  const [isMaximized, setIsMaximized] = useState(false);
   const [dimensions, setDimensions] = useState({ width: 800, height: 700 }); // Increased default width
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isResizing, setIsResizing] = useState<false | 'both' | 'height'>(false);
