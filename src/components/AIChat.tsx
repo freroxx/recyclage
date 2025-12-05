@@ -8,6 +8,7 @@ import { toast } from "sonner"; // or your preferred toast library
 interface AIChatProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  isMobile?: boolean;
 }
 
 declare global {
@@ -16,8 +17,8 @@ declare global {
   }
 }
 
-export function AIChat({ open, onOpenChange }: AIChatProps) {
-  const [isMaximized, setIsMaximized] = useState(false);
+export function AIChat({ open, onOpenChange, isMobile = false }: AIChatProps) {
+  const [isMaximized, setIsMaximized] = useState(isMobile);
   const [dimensions, setDimensions] = useState({ width: 800, height: 700 }); // Increased default width
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isResizing, setIsResizing] = useState<false | 'both' | 'height'>(false);
@@ -60,6 +61,12 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
   useEffect(() => {
     if (!open) return;
 
+    // On mobile, always start maximized (fullscreen)
+    if (isMobile) {
+      setIsMaximized(true);
+      return;
+    }
+
     const calculateInitialPosition = () => {
       const padding = 32;
       const vw = window.innerWidth;
@@ -78,7 +85,7 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
     };
 
     setTimeout(calculateInitialPosition, 10);
-  }, [open]);
+  }, [open, isMobile]);
 
   // Cleanup when closing
   useEffect(() => {
@@ -117,16 +124,20 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
     container.style.width = '100%';
     container.style.height = '100%';
     container.style.position = 'relative';
-    container.style.overflow = 'hidden';
-    container.style.minWidth = '600px'; // Ensure minimum width for embed
+    container.style.overflow = isMobile ? 'auto' : 'hidden';
+    if (!isMobile) {
+      container.style.minWidth = '600px';
+    }
     
     // Create the embed div with the correct ID
     const embedDiv = document.createElement('div');
     embedDiv.id = deploymentId;
     embedDiv.style.width = '100%';
     embedDiv.style.height = '100%';
-    embedDiv.style.minHeight = '400px';
-    embedDiv.style.minWidth = '600px'; // Minimum width for better embed display
+    embedDiv.style.minHeight = isMobile ? '300px' : '400px';
+    if (!isMobile) {
+      embedDiv.style.minWidth = '600px';
+    }
     
     container.appendChild(embedDiv);
     embedContainerRef.current.appendChild(container);
@@ -171,7 +182,7 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
     return () => {
       // Cleanup if component unmounts before script loads
     };
-  }, [open, deploymentId, showLoadingToast, showSuccessToast]);
+  }, [open, deploymentId, showLoadingToast, showSuccessToast, isMobile]);
 
   // Handle dragging
   useEffect(() => {
@@ -303,22 +314,22 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
       {/* Chat Window */}
       <div
         ref={windowRef}
-        className="fixed z-50 bg-background rounded-lg shadow-2xl border border-border overflow-hidden flex flex-col pointer-events-auto"
+        className={`fixed z-50 bg-background shadow-2xl border border-border overflow-hidden flex flex-col pointer-events-auto ${isMobile ? 'rounded-none' : 'rounded-lg'}`}
         style={{
-          left: isMaximized ? '1rem' : `${position.x}px`,
-          top: isMaximized ? '1rem' : `${position.y}px`,
-          width: isMaximized ? 'calc(100vw - 2rem)' : `${dimensions.width}px`,
-          height: isMaximized ? 'calc(100vh - 2rem)' : `${dimensions.height}px`,
-          minWidth: isMaximized ? 'auto' : '600px', // Increased minimum width
-          minHeight: isMaximized ? 'auto' : '500px',
-          maxWidth: 'calc(100vw - 2rem)',
-          maxHeight: 'calc(100vh - 2rem)',
+          left: isMaximized ? (isMobile ? '0' : '1rem') : `${position.x}px`,
+          top: isMaximized ? (isMobile ? '0' : '1rem') : `${position.y}px`,
+          width: isMaximized ? (isMobile ? '100vw' : 'calc(100vw - 2rem)') : `${dimensions.width}px`,
+          height: isMaximized ? (isMobile ? '100vh' : 'calc(100vh - 2rem)') : `${dimensions.height}px`,
+          minWidth: isMaximized || isMobile ? 'auto' : '600px',
+          minHeight: isMaximized || isMobile ? 'auto' : '500px',
+          maxWidth: isMobile ? '100vw' : 'calc(100vw - 2rem)',
+          maxHeight: isMobile ? '100vh' : 'calc(100vh - 2rem)',
         }}
       >
         {/* Header */}
         <div 
-          className="flex items-center justify-between gap-3 px-4 py-3 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b border-border/50 shrink-0 cursor-move select-none"
-          onMouseDown={handleDragStart}
+          className={`flex items-center justify-between gap-3 px-4 py-3 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b border-border/50 shrink-0 select-none ${isMobile ? '' : 'cursor-move'}`}
+          onMouseDown={isMobile ? undefined : handleDragStart}
         >
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
@@ -349,21 +360,23 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
               )}
             </Button>
 
-            {/* Maximize/Minimize Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsMaximized(!isMaximized)}
-              className="h-8 w-8 p-0 hover:bg-primary/10 transition-colors rounded-md"
-              title={isMaximized ? "Réduire" : "Agrandir"}
-              onMouseDown={(e) => e.stopPropagation()}
-            >
-              {isMaximized ? (
-                <Minimize2 className="w-4 h-4" />
-              ) : (
-                <Maximize2 className="w-4 h-4" />
-              )}
-            </Button>
+            {/* Maximize/Minimize Button - hide on mobile */}
+            {!isMobile && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsMaximized(!isMaximized)}
+                className="h-8 w-8 p-0 hover:bg-primary/10 transition-colors rounded-md"
+                title={isMaximized ? "Réduire" : "Agrandir"}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                {isMaximized ? (
+                  <Minimize2 className="w-4 h-4" />
+                ) : (
+                  <Maximize2 className="w-4 h-4" />
+                )}
+              </Button>
+            )}
 
             {/* Close Button */}
             <Button
@@ -382,15 +395,15 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
         {/* Embed Container - Always visible */}
         <div 
           ref={embedContainerRef}
-          className="flex-1 w-full h-full bg-background"
+          className="flex-1 w-full h-full bg-background overflow-auto"
           style={{ 
-            minHeight: '400px',
-            minWidth: '600px'
+            minHeight: isMobile ? '200px' : '400px',
+            minWidth: isMobile ? 'auto' : '600px'
           }}
         />
 
-        {/* Resize Handle */}
-        {!isMaximized && (
+        {/* Resize Handle - hide on mobile */}
+        {!isMaximized && !isMobile && (
           <div
             onMouseDown={handleResizeStart}
             className="h-4 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-t border-border/50 cursor-nwse-resize hover:bg-gradient-to-r hover:from-primary/10 hover:via-primary/20 hover:to-primary/10 transition-colors flex items-center justify-center gap-1 shrink-0"
