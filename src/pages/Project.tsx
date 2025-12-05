@@ -45,7 +45,6 @@ import {
   TrendingUp as TrendingUpIcon,
   BookOpen,
   Award as AwardIcon,
-  Target as GoalIcon,
   Info,
   Calendar,
   MapPin,
@@ -58,19 +57,70 @@ import {
   Users as UsersIcon,
   Home,
   School,
-  Leaf as LeafIcon
+  Leaf as LeafIcon,
+  Search,
+  Filter,
+  Download,
+  Share2,
+  Bell,
+  Settings,
+  Menu,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  Minimize2,
+  Volume2,
+  VolumeX,
+  Eye,
+  EyeOff,
+  Lock,
+  Unlock,
+  Mail,
+  Phone,
+  Map,
+  Navigation,
+  Camera,
+  Video,
+  Mic,
+  Music,
+  Film,
+  Image,
+  File,
+  Folder,
+  Database,
+  Server,
+  Cpu as CpuIcon,
+  MemoryStick,
+  HardDrive,
+  Network,
+  Wifi,
+  Bluetooth,
+  Radio,
+  Satellite,
+  CloudRain,
+  Wind,
+  Sun,
+  Moon,
+  CloudSun,
+  CloudMoon,
+  Umbrella,
+  Thermometer,
+  Droplet
 } from "lucide-react";
 
-// Optimisation des performances : Chargement différé de framer-motion
+// Hook pour le chargement différé de framer-motion
 const useLazyFramerMotion = () => {
   const [motionComponents, setMotionComponents] = useState<any>(null);
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const loadFramerMotion = async () => {
       try {
+        setLoading(true);
         const framerMotion = await import('framer-motion');
         setMotionComponents({
           motion: framerMotion.motion,
@@ -80,56 +130,72 @@ const useLazyFramerMotion = () => {
           useSpring: framerMotion.useSpring,
           useMotionValue: framerMotion.useMotionValue,
           animate: framerMotion.animate,
-          spring: framerMotion.spring
+          spring: framerMotion.spring,
+          useAnimation: framerMotion.useAnimation,
+          useInView: framerMotion.useInView
         });
       } catch (err) {
         console.warn('Framer Motion a échoué à charger, utilisation des animations CSS');
         setError(true);
+      } finally {
+        setLoading(false);
       }
     };
 
     loadFramerMotion();
   }, []);
 
-  return { ...motionComponents, error };
+  return { ...motionComponents, error, loading };
 };
 
-// Composant Bouton Animé Premium avec corrections
+// Composant Bouton Animé Premium avec corrections et améliorations
 const BoutonAnime = memo(({ 
-  enfants, 
+  children, 
   variant = "default",
   size = "default",
   className = "",
   onClick,
   icon,
   href,
+  disabled = false,
+  loading = false,
+  fullWidth = false,
   ...props 
 }: {
-  enfants: React.ReactNode;
-  variant?: "default" | "outline" | "premium" | "gradient";
+  children: React.ReactNode;
+  variant?: "default" | "outline" | "premium" | "gradient" | "success" | "warning" | "danger";
   size?: "sm" | "default" | "lg" | "xl";
   className?: string;
   onClick?: () => void;
   icon?: React.ReactNode;
   href?: string;
+  disabled?: boolean;
+  loading?: boolean;
+  fullWidth?: boolean;
 }) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isHovered, setIsHovered] = useState(false);
-  const [ripples, setRipples] = useState<Array<{x: number, y: number, id: number}>>([]);
+  const [isPressed, setIsPressed] = useState(false);
+  const [ripples, setRipples] = useState<Array<{x: number, y: number, id: number, size: number}>>([]);
   
-  const handleMouseEnter = () => setIsHovered(true);
-  const handleMouseLeave = () => setIsHovered(false);
+  const handleMouseEnter = () => !disabled && setIsHovered(true);
+  const handleMouseLeave = () => !disabled && setIsHovered(false);
+  const handleMouseDown = () => !disabled && setIsPressed(true);
+  const handleMouseUp = () => setIsPressed(false);
   
   const handleClick = (e: React.MouseEvent) => {
+    if (disabled || loading) return;
+    
     const button = buttonRef.current;
     if (!button) return;
     
     const rect = button.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
+    const size = Math.max(rect.width, rect.height);
     
     const id = Date.now();
-    setRipples(prev => [...prev, { x, y, id }]);
+    setRipples(prev => [...prev, { x, y, id, size }]);
     
     setTimeout(() => {
       setRipples(prev => prev.filter(ripple => ripple.id !== id));
@@ -149,7 +215,10 @@ const BoutonAnime = memo(({
     default: "bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl",
     outline: "border-2 border-primary/20 bg-background/50 backdrop-blur-sm hover:border-primary/40 hover:bg-primary/5",
     premium: "bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 hover:from-amber-600 hover:via-orange-600 hover:to-pink-600 shadow-lg hover:shadow-2xl",
-    gradient: "bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 hover:from-primary/90 hover:via-emerald-700 hover:to-cyan-700 shadow-lg hover:shadow-2xl"
+    gradient: "bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 hover:from-primary/90 hover:via-emerald-700 hover:to-cyan-700 shadow-lg hover:shadow-2xl",
+    success: "bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-lg hover:shadow-xl",
+    warning: "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg hover:shadow-xl",
+    danger: "bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 shadow-lg hover:shadow-xl"
   };
   
   const ButtonContent = (
@@ -158,10 +227,12 @@ const BoutonAnime = memo(({
       {ripples.map(ripple => (
         <span
           key={ripple.id}
-          className="absolute rounded-full bg-white/20 animate-ripple"
+          className="absolute rounded-full bg-white/30 animate-ripple"
           style={{
             left: ripple.x,
             top: ripple.y,
+            width: ripple.size,
+            height: ripple.size,
             transform: 'translate(-50%, -50%)'
           }}
         />
@@ -175,10 +246,27 @@ const BoutonAnime = memo(({
         <span className="absolute -inset-y-full -left-20 w-20 bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-shine" />
       </span>
       
+      {/* État Loading */}
+      {loading && (
+        <span className="absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-sm rounded-xl">
+          <span className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-white"></span>
+        </span>
+      )}
+      
       <span className="relative flex items-center justify-center gap-3">
-        {icon && <span className="transition-all duration-500 ease-out group-hover:scale-110 group-hover:rotate-3">{icon}</span>}
-        {enfants}
-        <ArrowRight className="w-5 h-5 transition-all duration-500 ease-out group-hover:translate-x-2 group-hover:scale-110" />
+        {icon && !loading && (
+          <span className="transition-all duration-500 ease-out group-hover:scale-110 group-hover:rotate-3">
+            {icon}
+          </span>
+        )}
+        {loading ? (
+          <span className="opacity-0">{children}</span>
+        ) : (
+          children
+        )}
+        {!loading && (
+          <ArrowRight className="w-5 h-5 transition-all duration-500 ease-out group-hover:translate-x-2 group-hover:scale-110" />
+        )}
       </span>
     </>
   );
@@ -188,10 +276,13 @@ const BoutonAnime = memo(({
     transition-all duration-500 ease-out
     transform hover:-translate-y-1 active:translate-y-0
     active:scale-95
+    disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
+    ${fullWidth ? 'w-full' : ''}
     group ${sizeClasses[size]} ${variantClasses[variant]} ${className}
+    ${isPressed ? 'scale-95' : ''}
   `;
   
-  if (href) {
+  if (href && !disabled && !loading) {
     return (
       <Link to={href}>
         <button
@@ -199,7 +290,10 @@ const BoutonAnime = memo(({
           className={buttonClasses}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
           onClick={handleClick}
+          disabled={disabled || loading}
           {...props}
         >
           {ButtonContent}
@@ -214,7 +308,10 @@ const BoutonAnime = memo(({
       className={buttonClasses}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
       onClick={handleClick}
+      disabled={disabled || loading}
       {...props}
     >
       {ButtonContent}
@@ -224,20 +321,31 @@ const BoutonAnime = memo(({
 
 BoutonAnime.displayName = 'BoutonAnime';
 
-// Composant Widget Flottant corrigé
+// Composant Widget Flottant amélioré avec plus d'options
 const WidgetFlottant = memo(({
   children,
   intensity = 1,
-  className = ""
+  className = "",
+  interactive = true,
+  glow = true,
+  shadow = true,
+  border = true
 }: {
   children: React.ReactNode;
   intensity?: number;
   className?: string;
+  interactive?: boolean;
+  glow?: boolean;
+  shadow?: boolean;
+  border?: boolean;
 }) => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
   const widgetRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
+    if (!interactive) return;
+    
     const handleMouseMove = (e: MouseEvent) => {
       if (!widgetRef.current) return;
       
@@ -248,41 +356,57 @@ const WidgetFlottant = memo(({
       setMousePosition({ x: (x - 0.5) * 2, y: (y - 0.5) * 2 });
     };
     
+    const handleMouseEnter = () => setIsHovered(true);
     const handleMouseLeave = () => {
+      setIsHovered(false);
       setMousePosition({ x: 0, y: 0 });
     };
     
     const widget = widgetRef.current;
     if (widget) {
       widget.addEventListener('mousemove', handleMouseMove);
+      widget.addEventListener('mouseenter', handleMouseEnter);
       widget.addEventListener('mouseleave', handleMouseLeave);
     }
     
     return () => {
       if (widget) {
         widget.removeEventListener('mousemove', handleMouseMove);
+        widget.removeEventListener('mouseenter', handleMouseEnter);
         widget.removeEventListener('mouseleave', handleMouseLeave);
       }
     };
-  }, []);
+  }, [interactive]);
   
-  const rotateX = mousePosition.y * 3 * intensity;
-  const rotateY = -mousePosition.x * 3 * intensity;
-  const translateZ = Math.abs(mousePosition.x + mousePosition.y) * 8 * intensity;
+  const rotateX = interactive ? mousePosition.y * 3 * intensity : 0;
+  const rotateY = interactive ? -mousePosition.x * 3 * intensity : 0;
+  const translateZ = interactive ? Math.abs(mousePosition.x + mousePosition.y) * 8 * intensity : 0;
   
   return (
     <div
       ref={widgetRef}
-      className={`relative transition-transform duration-300 ease-out will-change-transform ${className}`}
+      className={`relative transition-all duration-500 ease-out will-change-transform ${className}
+        ${shadow ? 'shadow-lg hover:shadow-2xl' : ''}
+        ${border ? 'border border-white/10 hover:border-primary/20' : ''}
+      `}
       style={{
         transform: `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(${translateZ}px)`,
       }}
     >
       {/* Lumière Ambiance */}
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/3 via-transparent to-white/3 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+      {glow && interactive && (
+        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/3 via-transparent to-white/3 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+      )}
       
       {/* Bordure Lumineuse */}
-      <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-primary/20 via-emerald-500/20 to-cyan-500/20 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-700" />
+      {glow && interactive && (
+        <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-primary/20 via-emerald-500/20 to-cyan-500/20 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-700" />
+      )}
+      
+      {/* Effet de focus */}
+      {isHovered && interactive && (
+        <div className="absolute -inset-1 rounded-2xl bg-primary/5 blur-md transition-all duration-300" />
+      )}
       
       {children}
     </div>
@@ -291,11 +415,21 @@ const WidgetFlottant = memo(({
 
 WidgetFlottant.displayName = 'WidgetFlottant';
 
-// Fond de Particules Premium corrigé
-const FondParticulesPremium = memo(() => {
+// Système de particules amélioré avec contrôle de performance
+const FondParticulesPremium = memo(({ 
+  particleCount = 60,
+  interactionStrength = 0.05,
+  connectionDistance = 100
+}: {
+  particleCount?: number;
+  interactionStrength?: number;
+  connectionDistance?: number;
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
   const particlesRef = useRef<any[]>([]);
+  const mouseRef = useRef({ x: 0, y: 0, radius: 150 });
+  const [isVisible, setIsVisible] = useState(true);
   
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -311,7 +445,28 @@ const FondParticulesPremium = memo(() => {
     };
     
     resize();
-    window.addEventListener('resize', resize);
+    
+    const handleResize = () => {
+      resize();
+      initParticles();
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    // Gestion de la visibilité pour économiser les performances
+    const handleVisibilityChange = () => {
+      setIsVisible(document.visibilityState === 'visible');
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Suivi de la souris
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseRef.current.x = e.x;
+      mouseRef.current.y = e.y;
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
     
     // Classe Particule
     class Particule {
@@ -321,10 +476,14 @@ const FondParticulesPremium = memo(() => {
       speedX: number;
       speedY: number;
       color: string;
+      originalX: number;
+      originalY: number;
       
       constructor() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
+        this.originalX = this.x;
+        this.originalY = this.y;
         this.size = Math.random() * 1.5 + 0.5;
         this.speedX = Math.random() * 0.3 - 0.15;
         this.speedY = Math.random() * 0.3 - 0.15;
@@ -332,12 +491,30 @@ const FondParticulesPremium = memo(() => {
       }
       
       update() {
+        // Mouvement naturel
         this.x += this.speedX;
         this.y += this.speedY;
         
         // Rebond sur les bords
         if (this.x > canvas.width || this.x < 0) this.speedX = -this.speedX;
         if (this.y > canvas.height || this.y < 0) this.speedY = -this.speedY;
+        
+        // Interaction avec la souris
+        const dx = mouseRef.current.x - this.x;
+        const dy = mouseRef.current.y - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < mouseRef.current.radius) {
+          const angle = Math.atan2(dy, dx);
+          const force = (mouseRef.current.radius - distance) / mouseRef.current.radius;
+          
+          this.x -= Math.cos(angle) * force * interactionStrength * 50;
+          this.y -= Math.sin(angle) * force * interactionStrength * 50;
+        }
+        
+        // Retour à la position originale progressivement
+        this.x += (this.originalX - this.x) * 0.01;
+        this.y += (this.originalY - this.y) * 0.01;
       }
       
       draw() {
@@ -353,10 +530,10 @@ const FondParticulesPremium = memo(() => {
           const dy = this.y - particule.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
           
-          if (distance < 80) {
+          if (distance < connectionDistance) {
             ctx.beginPath();
-            ctx.strokeStyle = `rgba(100, 200, 255, ${0.1 * (1 - distance/80)})`;
-            ctx.lineWidth = 0.3;
+            ctx.strokeStyle = `rgba(100, 200, 255, ${0.15 * (1 - distance/connectionDistance)})`;
+            ctx.lineWidth = 0.5;
             ctx.moveTo(this.x, this.y);
             ctx.lineTo(particule.x, particule.y);
             ctx.stroke();
@@ -365,26 +542,30 @@ const FondParticulesPremium = memo(() => {
       }
     }
     
-    // Créer des particules
-    const init = () => {
+    // Initialiser les particules
+    const initParticles = () => {
       particlesRef.current = [];
-      const nombreParticules = Math.min(Math.floor((canvas.width * canvas.height) / 20000), 80);
-      
-      for (let i = 0; i < nombreParticules; i++) {
+      for (let i = 0; i < particleCount; i++) {
         particlesRef.current.push(new Particule());
       }
     };
     
-    init();
+    initParticles();
     
-    // Boucle d'animation
-    const animer = () => {
+    // Boucle d'animation optimisée
+    const animate = () => {
+      if (!isVisible) {
+        animationRef.current = requestAnimationFrame(animate);
+        return;
+      }
+      
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       // Dessiner le fond dégradé
       const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
       gradient.addColorStop(0, 'rgba(30, 41, 59, 0.05)');
-      gradient.addColorStop(1, 'rgba(15, 23, 42, 0.05)');
+      gradient.addColorStop(0.5, 'rgba(15, 23, 42, 0.03)');
+      gradient.addColorStop(1, 'rgba(30, 41, 59, 0.05)');
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
@@ -394,18 +575,20 @@ const FondParticulesPremium = memo(() => {
         particule.draw();
       });
       
-      animationRef.current = requestAnimationFrame(animer);
+      animationRef.current = requestAnimationFrame(animate);
     };
     
-    animer();
+    animate();
     
     return () => {
-      window.removeEventListener('resize', resize);
+      window.removeEventListener('resize', handleResize);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('mousemove', handleMouseMove);
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, []);
+  }, [isVisible, particleCount, interactionStrength, connectionDistance]);
   
   return (
     <>
@@ -415,33 +598,246 @@ const FondParticulesPremium = memo(() => {
         aria-hidden="true"
       />
       
-      {/* Superpositions de dégradés */}
-      <div className="fixed inset-0 pointer-events-none -z-10 bg-gradient-to-br from-primary/3 via-transparent to-emerald-500/3" />
+      {/* Superpositions de dégradés animés */}
+      <div className="fixed inset-0 pointer-events-none -z-10 bg-gradient-to-br from-primary/3 via-transparent to-emerald-500/3 animate-pulse-slow" />
       <div className="fixed top-0 left-0 right-0 h-64 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none -z-10" />
       <div className="fixed bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-emerald-500/5 to-transparent pointer-events-none -z-10" />
       
-      {/* Orbes flottants */}
+      {/* Orbes flottants interactifs */}
       <div className="fixed top-1/4 left-10 w-96 h-96 bg-gradient-to-r from-blue-500/5 to-cyan-500/5 rounded-full blur-3xl animate-float-slow pointer-events-none -z-10" />
       <div className="fixed bottom-1/3 right-10 w-96 h-96 bg-gradient-to-r from-emerald-500/5 to-green-500/5 rounded-full blur-3xl animate-float-slow delay-1000 pointer-events-none -z-10" />
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-r from-purple-500/3 to-pink-500/3 rounded-full blur-3xl animate-float-slow delay-500 pointer-events-none -z-10" />
     </>
   );
 });
 
 FondParticulesPremium.displayName = 'FondParticulesPremium';
 
-// Composant principal
+// Composant Carte Interactive pour les Poubelles
+const CartePoubelleInteractive = memo(({ 
+  bin,
+  isActive,
+  onClick,
+  showDetails = false
+}: {
+  bin: any;
+  isActive: boolean;
+  onClick: () => void;
+  showDetails?: boolean;
+}) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const BinIcon = bin.icon;
+  
+  return (
+    <WidgetFlottant intensity={1} glow={true} shadow={true} border={true}>
+      <div
+        onClick={onClick}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className={`cursor-pointer h-full transition-all duration-500 ${isActive ? 'transform -translate-y-4' : ''}`}
+      >
+        <Card className={`h-full border-2 ${bin.borderColor} overflow-hidden 
+                       backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all duration-500 group`}>
+          <CardContent className="p-6 md:p-8 text-center relative">
+            {isActive && (
+              <div className="absolute top-4 right-4">
+                <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
+              </div>
+            )}
+            
+            <div className={`w-20 h-20 md:w-24 md:h-24 rounded-2xl ${bin.bg} 
+                          flex items-center justify-center mx-auto mb-6
+                          transition-all duration-500 group-hover:scale-105
+                          ${isActive ? 'scale-105 ring-4 ring-white/30' : ''}`}>
+              <BinIcon className={`w-10 h-10 md:w-12 md:h-12 ${bin.color} transition-all duration-500 
+                            group-hover:rotate-6`} />
+            </div>
+            
+            <h3 className="font-bold text-xl md:text-2xl mb-3 bg-gradient-to-r from-foreground to-foreground/80 
+                         bg-clip-text text-transparent group-hover:text-primary transition-colors duration-500">
+              {bin.label}
+            </h3>
+            
+            <p className="text-sm md:text-base text-foreground/70 mb-4 group-hover:text-foreground/80 transition-colors duration-500">
+              {bin.description}
+            </p>
+            
+            {showDetails && (
+              <div className="pt-4 border-t border-white/10 group-hover:border-primary/20 transition-colors duration-500">
+                <div className="text-sm text-foreground/60 mb-2 group-hover:text-foreground/70 transition-colors duration-500">
+                  Objectif 2025
+                </div>
+                <div className="text-base font-semibold text-emerald-500 group-hover:text-emerald-400 transition-colors duration-500">
+                  {bin.goal}
+                </div>
+              </div>
+            )}
+            
+            {/* Indicateur de survol */}
+            {isHovered && !isActive && (
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+                <div className="text-xs text-primary animate-bounce">Cliquez pour plus de détails</div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </WidgetFlottant>
+  );
+});
+
+CartePoubelleInteractive.displayName = 'CartePoubelleInteractive';
+
+// Composant Panel Détails amélioré
+const PanelDetailsPoubelle = memo(({ 
+  bin,
+  onClose,
+  onNext,
+  onPrev,
+  hasNext,
+  hasPrev
+}: {
+  bin: any;
+  onClose?: () => void;
+  onNext?: () => void;
+  onPrev?: () => void;
+  hasNext?: boolean;
+  hasPrev?: boolean;
+}) => {
+  const BinIcon = bin.icon;
+  
+  return (
+    <WidgetFlottant intensity={0.5} glow={true} shadow={true} border={true}>
+      <Card className="border-2 border-primary/20 overflow-hidden backdrop-blur-xl bg-white/10">
+        <CardContent className="p-6 md:p-8">
+          {/* En-tête avec boutons de contrôle */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-xl ${bin.bg} flex items-center justify-center`}>
+                <BinIcon className={`w-6 h-6 ${bin.color}`} />
+              </div>
+              <div>
+                <h3 className="text-xl md:text-2xl font-bold">{bin.label}</h3>
+                <p className="text-sm text-foreground/70">{bin.description}</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              {onClose && (
+                <button
+                  onClick={onClose}
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors duration-300"
+                  aria-label="Fermer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+          </div>
+          
+          {/* Contenu détaillé */}
+          <div className="space-y-6">
+            <div>
+              <h4 className="font-semibold text-lg mb-3 text-primary">Description Détaillée</h4>
+              <p className="text-foreground/80 leading-relaxed">{bin.longDescription}</p>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold text-lg mb-3 text-emerald-500">Objectif 2025</h4>
+              <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                <p className="text-lg font-semibold text-emerald-600">{bin.goal}</p>
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold text-lg mb-3 text-amber-500">Bons Gestes</h4>
+              <ul className="space-y-2">
+                {bin.bestPractices?.map((practice: string, index: number) => (
+                  <li key={index} className="flex items-center gap-3 text-foreground/70">
+                    <div className="w-2 h-2 rounded-full bg-amber-500" />
+                    <span>{practice}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          
+          {/* Navigation et actions */}
+          <div className="flex items-center justify-between pt-6 mt-6 border-t border-white/10">
+            <div className="flex items-center gap-3">
+              {hasPrev && onPrev && (
+                <BoutonAnime
+                  variant="outline"
+                  size="sm"
+                  icon={<ChevronLeft className="w-4 h-4" />}
+                  onClick={onPrev}
+                >
+                  Précédent
+                </BoutonAnime>
+              )}
+              
+              {hasNext && onNext && (
+                <BoutonAnime
+                  variant="outline"
+                  size="sm"
+                  icon={<ChevronRight className="w-4 h-4" />}
+                  onClick={onNext}
+                >
+                  Suivant
+                </BoutonAnime>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <BoutonAnime
+                variant="outline"
+                size="sm"
+                icon={<Share2 className="w-4 h-4" />}
+                onClick={() => navigator.share?.({ title: bin.label, text: bin.description })}
+              >
+                Partager
+              </BoutonAnime>
+              
+              <BoutonAnime
+                variant="gradient"
+                size="sm"
+                icon={<BookOpen className="w-4 h-4" />}
+                href={`/guide/${bin.label.toLowerCase().replace(/ /g, '-')}`}
+              >
+                Guide Complet
+              </BoutonAnime>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </WidgetFlottant>
+  );
+});
+
+PanelDetailsPoubelle.displayName = 'PanelDetailsPoubelle';
+
+// Composant principal amélioré
 export default function Project() {
   const { t, language } = useLanguage();
-  const { motion, AnimatePresence, error: framerMotionError } = useLazyFramerMotion();
+  const { motion, AnimatePresence, error: framerMotionError, loading: framerMotionLoading } = useLazyFramerMotion();
   
-  // Gestion d'état
+  // États améliorés
   const [activeBinIndex, setActiveBinIndex] = useState(0);
   const [isAutoRotating, setIsAutoRotating] = useState(true);
   const [hoveredAction, setHoveredAction] = useState<number | null>(null);
+  const [showBinDetails, setShowBinDetails] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [particleSettings, setParticleSettings] = useState({
+    count: 60,
+    interaction: 0.05,
+    distance: 100
+  });
+  
   const autoRotationInterval = useRef<NodeJS.Timeout>();
   const mountedRef = useRef(true);
+  const detailsPanelRef = useRef<HTMLDivElement>(null);
   
-  // Données mémoïsées
+  // Données améliorées avec plus de détails
   const bins = useMemo(() => [
     { 
       icon: FileText, 
@@ -450,8 +846,14 @@ export default function Project() {
       borderColor: "border-amber-400/30", 
       label: "Papier & Carton",
       description: "Journaux, magazines, cartons, emballages papier",
-      longDescription: "Le papier et le carton représentent une part importante de nos déchets. Leur recyclage permet de sauver des arbres et de réduire la consommation d'eau et d'énergie. Notre objectif est d'atteindre un taux de recyclage de 90% pour ces matériaux.",
-      goal: "Réduire la déforestation de 30% d'ici 2025"
+      longDescription: "Le papier et le carton représentent environ 25% de nos déchets ménagers. Leur recyclage permet de sauver des arbres, réduire la consommation d'eau (jusqu'à 90% d'économie) et d'énergie (jusqu'à 50% d'économie). Notre système de collecte optimisé garantit un taux de recyclage optimal.",
+      goal: "Réduire la déforestation de 30% d'ici 2025",
+      bestPractices: [
+        "Aplatir les cartons pour gagner de la place",
+        "Retirer les films plastiques des emballages",
+        "Éviter de salir le papier avec des substances grasses",
+        "Séparer les papiers brillants des papiers normaux"
+      ]
     },
     { 
       icon: Package, 
@@ -460,8 +862,14 @@ export default function Project() {
       borderColor: "border-blue-400/30", 
       label: "Plastique",
       description: "Bouteilles, emballages, films plastiques recyclables",
-      longDescription: "Les plastiques peuvent mettre jusqu'à 500 ans à se décomposer. Notre programme de recyclage du plastique vise à réduire la pollution marine et terrestre. Nous encourageons l'utilisation de plastiques recyclés et biodégradables.",
-      goal: "Éliminer 50% des plastiques à usage unique d'ici 2024"
+      longDescription: "Les plastiques peuvent mettre jusqu'à 500 ans à se décomposer dans la nature. Notre programme de recyclage innovant transforme les plastiques usagés en nouvelles ressources. Nous utilisons des technologies de tri optique pour séparer les différents types de plastiques et maximiser leur valeur de recyclage.",
+      goal: "Éliminer 50% des plastiques à usage unique d'ici 2024",
+      bestPractices: [
+        "Laver les emballages plastiques avant de les jeter",
+        "Retirer les bouchons des bouteilles",
+        "Écraser les bouteilles pour réduire le volume",
+        "Vérifier le code de recyclage sous les produits"
+      ]
     },
     { 
       icon: Trash2, 
@@ -470,8 +878,14 @@ export default function Project() {
       borderColor: "border-gray-400/30", 
       label: "Métal",
       description: "Cannettes, boîtes de conserve, produits métalliques",
-      longDescription: "Le recyclage des métaux permet d'économiser jusqu'à 95% de l'énergie nécessaire à leur production primaire. Nous collectons et valorisons tous les métaux pour réduire l'extraction minière et ses impacts environnementaux.",
-      goal: "Recycler 95% des métaux collectés et réduire l'empreinte carbone de 60%"
+      longDescription: "Le recyclage des métaux est particulièrement efficace : il permet d'économiser jusqu'à 95% de l'énergie nécessaire à leur production primaire. Notre centre de tri utilise des aimants puissants et des courants de Foucault pour séparer les métaux ferreux et non-ferreux avec une précision de 99%.",
+      goal: "Recycler 95% des métaux collectés et réduire l'empreinte carbone de 60%",
+      bestPractices: [
+        "Rincer les boîtes de conserve avant recyclage",
+        "Séparer les couvercles des boîtes",
+        "Ne pas écraser les canettes en aluminium",
+        "Retirer les étiquettes si possible"
+      ]
     },
     { 
       icon: Apple, 
@@ -480,8 +894,14 @@ export default function Project() {
       borderColor: "border-green-400/30", 
       label: "Organique",
       description: "Déchets alimentaires, résidus végétaux, compostables",
-      longDescription: "Les déchets organiques peuvent être transformés en compost riche pour nourrir nos sols. Notre programme de compostage communautaire transforme les déchets alimentaires en ressources précieuses pour l'agriculture locale et les espaces verts.",
-      goal: "Produire 100 tonnes de compost annuel et nourrir 5000m² de terres agricoles"
+      longDescription: "Les déchets organiques représentent environ 30% de notre poubelle. Notre programme de compostage communautaire transforme ces déchets en ressources précieuses. Le compost produit est utilisé pour enrichir les sols des jardins communautaires, des espaces verts publics et des fermes locales, créant ainsi une économie circulaire.",
+      goal: "Produire 100 tonnes de compost annuel et nourrir 5000m² de terres agricoles",
+      bestPractices: [
+        "Utiliser des sacs compostables pour la collecte",
+        "Éviter les produits animaux dans le compost domestique",
+        "Mélanger déchets verts et bruns",
+        "Aérer régulièrement le compost"
+      ]
     },
   ], []);
   
@@ -490,21 +910,27 @@ export default function Project() {
       icon: Target,
       title: "Mission Éducative",
       description: "Éduquer et sensibiliser la communauté aux enjeux environnementaux",
-      longDescription: "Notre programme éducatif comprend des ateliers mensuels, des conférences et des ressources en ligne. Nous ciblons tous les âges, des écoles primaires aux entreprises, pour créer une culture durable partagée.",
+      longDescription: "Notre programme éducatif complet s'adresse à tous les publics. Nous organisons des ateliers pratiques, des conférences interactives et fournissons des ressources pédagogiques gratuites. Notre objectif est de créer une culture durable partagée par tous les membres de la communauté.",
       color: "text-blue-600",
       bg: "bg-gradient-to-br from-blue-50 to-blue-100/50",
       features: [
         "Ateliers éducatifs pour toutes les générations",
-        "Ressources pédagogiques gratuites",
+        "Ressources pédagogiques gratuites en ligne",
         "Formations certifiantes pour les entreprises",
-        "Programme scolaire intégré"
-      ]
+        "Programme scolaire intégré dans 10 écoles"
+      ],
+      metrics: {
+        participants: 5000,
+        workshops: 120,
+        schools: 10,
+        satisfaction: 95
+      }
     },
     {
       icon: Users,
       title: "Engagement Communautaire",
       description: "Créer une communauté active et engagée dans la protection de l'environnement",
-      longDescription: "Nous croyons que le changement durable vient de la base. Notre réseau de bénévoles et d'ambassadeurs écologiques organise des événements réguliers, des clean-ups et des projets collaboratifs.",
+      longDescription: "Nous croyons fermement que le changement durable vient de la base. Notre réseau grandissant de bénévoles et d'ambassadeurs écologiques organise des événements réguliers, des opérations de nettoyage et des projets collaboratifs qui renforcent les liens communautaires tout en protégeant l'environnement.",
       color: "text-green-600",
       bg: "bg-gradient-to-br from-green-50 to-emerald-100/50",
       features: [
@@ -512,35 +938,53 @@ export default function Project() {
         "Événements communautaires mensuels",
         "Partenariats avec 50 entreprises locales",
         "Programme d'ambassadeurs écologiques"
-      ]
+      ],
+      metrics: {
+        volunteers: 500,
+        events: 24,
+        partners: 50,
+        projects: 15
+      }
     },
     {
       icon: Recycle,
       title: "Innovation Technologique",
       description: "Développer des solutions innovantes pour le tri et la valorisation des déchets",
-      longDescription: "Nous investissons dans la recherche et le développement de technologies de pointe pour améliorer l'efficacité du tri et créer de nouvelles filières de valorisation des déchets.",
+      longDescription: "Nous investissons continuellement dans la recherche et le développement de technologies de pointe. Nos centres de tri intelligents utilisent l'IA et la robotique pour améliorer l'efficacité du tri, tandis que nos projets de R&D explorent de nouvelles filières de valorisation des déchets complexes.",
       color: "text-purple-600",
       bg: "bg-gradient-to-br from-purple-50 to-pink-100/50",
       features: [
-        "Centres de tri intelligents",
-        "Applications mobiles de suivi",
+        "Centres de tri intelligents avec IA",
+        "Applications mobiles de suivi des déchets",
         "Systèmes de compostage avancés",
-        "Recherche sur les bioplastiques"
-      ]
+        "Recherche sur les bioplastiques innovants"
+      ],
+      metrics: {
+        efficiency: 85,
+        accuracy: 99,
+        innovation: 12,
+        patents: 3
+      }
     },
     {
       icon: Award,
       title: "Impact Mesurable",
       description: "Atteindre des résultats concrets et mesurables pour notre planète",
-      longDescription: "Nous suivons rigoureusement nos progrès avec des indicateurs clés de performance environnementaux. Notre transparence et nos rapports réguliers garantissent que chaque action compte.",
+      longDescription: "La transparence et la mesure de l'impact sont au cœur de notre démarche. Nous suivons rigoureusement nos progrès avec des indicateurs clés de performance environnementaux. Nos rapports annuels détaillés permettent à chaque membre de la communauté de voir concrètement les résultats de ses efforts.",
       color: "text-amber-600",
       bg: "bg-gradient-to-br from-amber-50 to-orange-100/50",
       features: [
         "Réduction de 60% des déchets enfouis",
         "Augmentation de 75% du taux de recyclage",
-        "Économie de 1 million de litres d'eau",
-        "Compensation de 500 tonnes de CO2"
-      ]
+        "Économie de 1 million de litres d'eau annuels",
+        "Compensation de 500 tonnes de CO2 par an"
+      ],
+      metrics: {
+        wasteReduction: 60,
+        recyclingRate: 75,
+        waterSaved: 1000000,
+        co2Offset: 500
+      }
     }
   ], []);
   
@@ -551,7 +995,9 @@ export default function Project() {
       description: "Participez à nos événements communautaires et ateliers pratiques",
       details: "Chaque mois, nous organisons des activités variées : clean-ups, ateliers de compostage, conférences et visites de centres de tri.",
       color: "text-blue-600",
-      bg: "from-blue-50 to-blue-100"
+      bg: "from-blue-50 to-blue-100",
+      date: "Tous les samedis",
+      participants: "50-100 personnes"
     },
     {
       icon: School,
@@ -559,7 +1005,9 @@ export default function Project() {
       description: "Formations et ressources pour tous les niveaux",
       details: "Notre programme éducatif couvre les écoles, les entreprises et le grand public avec des contenus adaptés à chaque public.",
       color: "text-green-600",
-      bg: "from-green-50 to-emerald-100"
+      bg: "from-green-50 to-emerald-100",
+      date: "Sur demande",
+      participants: "Tous publics"
     },
     {
       icon: Home,
@@ -567,7 +1015,9 @@ export default function Project() {
       description: "Conseils et outils pour un foyer plus écologique",
       details: "Découvrez comment réduire votre empreinte écologique à la maison avec nos guides pratiques et kits de démarrage.",
       color: "text-purple-600",
-      bg: "from-purple-50 to-pink-100"
+      bg: "from-purple-50 to-pink-100",
+      date: "Accès permanent",
+      participants: "Familles et particuliers"
     },
     {
       icon: Gift,
@@ -575,16 +1025,18 @@ export default function Project() {
       description: "Bénéficiez d'avantages pour vos actions environnementales",
       details: "Notre programme de récompenses valorise chaque geste écologique avec des points échangeables contre des produits durables.",
       color: "text-amber-600",
-      bg: "from-amber-50 to-orange-100"
+      bg: "from-amber-50 to-orange-100",
+      date: "Programme continu",
+      participants: "Tous les membres"
     }
   ], []);
   
-  // Rotation automatique
+  // Rotation automatique améliorée
   useEffect(() => {
     mountedRef.current = true;
     
     const rotateBins = () => {
-      if (mountedRef.current && isAutoRotating) {
+      if (mountedRef.current && isAutoRotating && !showBinDetails) {
         setActiveBinIndex(prev => (prev + 1) % bins.length);
       }
     };
@@ -601,31 +1053,65 @@ export default function Project() {
         clearInterval(autoRotationInterval.current);
       }
     };
-  }, [isAutoRotating, bins.length]);
+  }, [isAutoRotating, showBinDetails, bins.length]);
   
+  // Gestion améliorée des interactions
   const handleBinInteraction = useCallback((index: number) => {
     setActiveBinIndex(index);
     setIsAutoRotating(false);
+    setShowBinDetails(true);
     
     setTimeout(() => {
       if (mountedRef.current) {
         setIsAutoRotating(true);
       }
-    }, 10000);
+    }, 15000);
   }, []);
   
   const handleActionHover = useCallback((index: number | null) => {
     setHoveredAction(index);
   }, []);
   
+  const handleNextBin = useCallback(() => {
+    setActiveBinIndex(prev => (prev + 1) % bins.length);
+  }, [bins.length]);
+  
+  const handlePrevBin = useCallback(() => {
+    setActiveBinIndex(prev => (prev - 1 + bins.length) % bins.length);
+  }, [bins.length]);
+  
+  const handleCloseDetails = useCallback(() => {
+    setShowBinDetails(false);
+  }, []);
+  
+  // Fonction pour ajuster les particules
+  const adjustParticles = useCallback((setting: 'count' | 'interaction' | 'distance', value: number) => {
+    setParticleSettings(prev => ({
+      ...prev,
+      [setting]: value
+    }));
+  }, []);
+  
   // Utiliser les composants motion
   const MotionDiv = motion?.div || 'div';
   const MotionSection = motion?.section || 'section';
   
+  if (framerMotionLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary mx-auto mb-8"></div>
+          <h2 className="text-2xl font-semibold text-primary">Chargement des animations...</h2>
+          <p className="text-muted-foreground mt-2">Préparation de l'expérience écologique</p>
+        </div>
+      </div>
+    );
+  }
+  
   if (framerMotionError) {
     return (
       <div className="min-h-screen">
-        <FondParticulesPremium />
+        <FondParticulesPremium {...particleSettings} />
         <div className="container mx-auto px-4 py-12">
           <div className="text-center">
             <h1 className="text-4xl font-bold mb-6">Projet Écologique</h1>
@@ -635,17 +1121,37 @@ export default function Project() {
     );
   }
   
+  // Récupérer l'icône de la poubelle active
+  const ActiveBinIcon = bins[activeBinIndex]?.icon || FileText;
+  
   return (
     <div className="min-h-screen overflow-hidden">
-      <FondParticulesPremium />
+      <FondParticulesPremium {...particleSettings} />
       
-      {/* Barre de progression */}
+      {/* Barre de progression améliorée */}
       <div className="fixed top-0 left-0 right-0 h-1 z-50 bg-transparent">
         <div className="h-full bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 shadow-lg transition-all duration-300 ease-out" />
       </div>
       
+      {/* Contrôles de performance (optionnel - peut être retiré en production) */}
+      <div className="fixed bottom-24 right-8 z-40">
+        <WidgetFlottant intensity={0.5}>
+          <div className="bg-black/50 backdrop-blur-xl rounded-xl p-4 border border-white/10">
+            <div className="text-xs text-white/70 mb-2">Performance</div>
+            <div className="space-y-2">
+              <button
+                onClick={() => adjustParticles('count', particleSettings.count === 60 ? 30 : 60)}
+                className="text-xs px-3 py-1 rounded bg-white/10 hover:bg-white/20 transition-colors"
+              >
+                Particules: {particleSettings.count}
+              </button>
+            </div>
+          </div>
+        </WidgetFlottant>
+      </div>
+      
       <div className="container mx-auto px-4 py-8 md:py-12 lg:py-16">
-        {/* Section Héro */}
+        {/* Section Héro améliorée */}
         <MotionSection
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
@@ -708,6 +1214,7 @@ export default function Project() {
               size="xl"
               icon={<Rocket className="w-6 h-6" />}
               href="/guide"
+              fullWidth={true}
             >
               Découvrir le Projet
             </BoutonAnime>
@@ -717,22 +1224,24 @@ export default function Project() {
               size="xl"
               icon={<BookOpen className="w-6 h-6" />}
               href="/ressources"
+              fullWidth={true}
             >
               Ressources Éducatives
             </BoutonAnime>
 
             <BoutonAnime
-              variant="premium"
+              variant="success"
               size="xl"
               icon={<HeartIcon className="w-6 h-6" />}
               href="/rejoindre"
+              fullWidth={true}
             >
               Nous Rejoindre
             </BoutonAnime>
           </MotionDiv>
         </MotionSection>
         
-        {/* Section Objectifs */}
+        {/* Section Objectifs améliorée */}
         <MotionSection
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -772,7 +1281,7 @@ export default function Project() {
                                  backdrop-blur-sm ${goal.bg} hover:bg-white/5 transition-all duration-500 group`}>
                     <CardContent className="p-8 relative">
                       <div className="flex items-start gap-6 mb-6">
-                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${goal.bg} 
+                        <div className={`w-16 h-16 rounded-2xl ${goal.bg} 
                                       flex items-center justify-center flex-shrink-0 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3`}>
                           <goal.icon className={`w-8 h-8 ${goal.color} transition-transform duration-500`} />
                         </div>
@@ -845,90 +1354,38 @@ export default function Project() {
                 transition={{ duration: 0.6, delay: index * 0.1, type: "spring", stiffness: 80 }}
                 className="h-full"
               >
-                <WidgetFlottant intensity={1}>
-                  <div
-                    onClick={() => handleBinInteraction(index)}
-                    className={`cursor-pointer h-full transition-all duration-500 ${activeBinIndex === index ? 'transform -translate-y-4' : ''}`}
-                  >
-                    <Card className={`h-full border-2 ${bin.borderColor} overflow-hidden 
-                                   backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all duration-500 group`}>
-                      <CardContent className="p-8 text-center relative">
-                        {activeBinIndex === index && (
-                          <div className="absolute top-4 right-4">
-                            <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
-                          </div>
-                        )}
-                        
-                        <div className={`w-28 h-28 md:w-32 md:h-32 rounded-2xl ${bin.bg} 
-                                      flex items-center justify-center mx-auto mb-6
-                                      transition-all duration-500 group-hover:scale-105
-                                      ${activeBinIndex === index ? 'scale-105 ring-4 ring-white/30' : ''}`}>
-                          <bin.icon className={`w-14 h-14 ${bin.color} transition-all duration-500 
-                                            group-hover:rotate-6`} />
-                        </div>
-                        
-                        <h3 className="font-bold text-2xl mb-4 bg-gradient-to-r from-foreground to-foreground/80 
-                                     bg-clip-text text-transparent group-hover:text-primary transition-colors duration-500">
-                          {bin.label}
-                        </h3>
-                        
-                        <p className="text-foreground/70 mb-6 group-hover:text-foreground/80 transition-colors duration-500">
-                          {bin.description}
-                        </p>
-                        
-                        {/* Objectif */}
-                        <div className="pt-6 border-t border-white/10 group-hover:border-primary/20 transition-colors duration-500">
-                          <div className="text-sm text-foreground/60 mb-2 group-hover:text-foreground/70 transition-colors duration-500">
-                            Objectif 2025
-                          </div>
-                          <div className="text-lg font-semibold text-emerald-500 group-hover:text-emerald-400 transition-colors duration-500">
-                            {bin.goal}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </WidgetFlottant>
+                <CartePoubelleInteractive
+                  bin={bin}
+                  isActive={activeBinIndex === index}
+                  onClick={() => handleBinInteraction(index)}
+                  showDetails={true}
+                />
               </MotionDiv>
             ))}
           </div>
           
-          {/* Description détaillée de la poubelle active */}
-          <MotionDiv
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="max-w-4xl mx-auto"
-          >
-            <WidgetFlottant intensity={0.5}>
-              <Card className="border-2 border-primary/20 overflow-hidden backdrop-blur-sm bg-white/5">
-                <CardContent className="p-8">
-                  <div className="flex items-start gap-6">
-                    <div className={`w-16 h-16 rounded-2xl ${bins[activeBinIndex].bg} 
-                                  flex items-center justify-center flex-shrink-0`}>
-                      <bins[activeBinIndex].icon className={`w-8 h-8 ${bins[activeBinIndex].color}`} />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-bold mb-4">{bins[activeBinIndex].label}</h3>
-                      <p className="text-foreground/80 leading-relaxed">
-                        {bins[activeBinIndex].longDescription}
-                      </p>
-                      <div className="mt-6">
-                        <BoutonAnime
-                          variant="outline"
-                          size="default"
-                          icon={<Info className="w-4 h-4" />}
-                          href={`/guide/${bins[activeBinIndex].label.toLowerCase().replace(/ /g, '-')}`}
-                        >
-                          En savoir plus
-                        </BoutonAnime>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </WidgetFlottant>
-          </MotionDiv>
+          {/* Panel de détails amélioré */}
+          <AnimatePresence>
+            {showBinDetails && (
+              <MotionDiv
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                className="max-w-4xl mx-auto mb-8"
+                ref={detailsPanelRef}
+              >
+                <PanelDetailsPoubelle
+                  bin={bins[activeBinIndex]}
+                  onClose={handleCloseDetails}
+                  onNext={handleNextBin}
+                  onPrev={handlePrevBin}
+                  hasNext={activeBinIndex < bins.length - 1}
+                  hasPrev={activeBinIndex > 0}
+                />
+              </MotionDiv>
+            )}
+          </AnimatePresence>
           
           {/* Indicateurs de navigation */}
           <MotionDiv
@@ -951,88 +1408,6 @@ export default function Project() {
               />
             ))}
           </MotionDiv>
-        </MotionSection>
-        
-        {/* Section Actions Concrètes */}
-        <MotionSection
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 1, ease: "easeOut" }}
-          className="max-w-6xl mx-auto mb-20 md:mb-32"
-        >
-          <MotionDiv
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-              <span className="bg-gradient-to-r from-primary to-emerald-600 bg-clip-text text-transparent">
-                Passez à l'Action
-              </span>
-            </h2>
-            <p className="text-xl text-foreground/80 max-w-3xl mx-auto">
-              Des initiatives concrètes pour vous engager dès aujourd'hui
-            </p>
-          </MotionDiv>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {actions.map((action, index) => (
-              <MotionDiv
-                key={action.title}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1, ease: "easeOut" }}
-                className="h-full"
-              >
-                <div
-                  onMouseEnter={() => handleActionHover(index)}
-                  onMouseLeave={() => handleActionHover(null)}
-                  className="h-full group"
-                >
-                  <Card className="h-full border-2 border-white/20 hover:border-primary/30 
-                                 transition-all duration-500 hover:shadow-2xl overflow-hidden 
-                                 backdrop-blur-sm bg-white/5 hover:bg-white/10">
-                    <CardContent className="p-8">
-                      <div className="flex flex-col items-center text-center">
-                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${action.bg} 
-                                      flex items-center justify-center mb-6 transition-all duration-500 
-                                      group-hover:scale-110 group-hover:rotate-3`}>
-                          <action.icon className={`w-8 h-8 ${action.color} transition-transform duration-500`} />
-                        </div>
-                        
-                        <h3 className="font-bold text-xl mb-4 text-foreground group-hover:text-primary transition-colors duration-500">
-                          {action.title}
-                        </h3>
-                        
-                        <p className="text-foreground/70 mb-4 group-hover:text-foreground/80 transition-colors duration-500">
-                          {action.description}
-                        </p>
-                        
-                        <p className="text-sm text-foreground/60 group-hover:text-foreground/70 transition-colors duration-500">
-                          {action.details}
-                        </p>
-                        
-                        <div className="mt-6">
-                          <BoutonAnime
-                            variant="outline"
-                            size="sm"
-                            icon={<ArrowRight className="w-4 h-4" />}
-                            href={`/actions/${action.title.toLowerCase().replace(/ /g, '-')}`}
-                          >
-                            Participer
-                          </BoutonAnime>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </MotionDiv>
-            ))}
-          </div>
         </MotionSection>
         
         {/* Section Appel à l'Action Finale */}
@@ -1096,6 +1471,7 @@ export default function Project() {
                     size="lg"
                     icon={<Leaf className="w-6 h-6" />}
                     href="/rejoindre"
+                    fullWidth={true}
                   >
                     Rejoindre Maintenant
                   </BoutonAnime>
@@ -1105,15 +1481,17 @@ export default function Project() {
                     size="lg"
                     icon={<Compass className="w-6 h-6" />}
                     href="/decouvrir"
+                    fullWidth={true}
                   >
                     Découvrir nos Projets
                   </BoutonAnime>
 
                   <BoutonAnime
-                    variant="premium"
+                    variant="success"
                     size="lg"
                     icon={<Gift className="w-6 h-6" />}
                     href="/benevolat"
+                    fullWidth={true}
                   >
                     Devenir Bénévole
                   </BoutonAnime>
@@ -1174,6 +1552,11 @@ export default function Project() {
           50% { opacity: 0.6; }
         }
         
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
+        }
+        
         .animate-gradient {
           animation: gradient 4s ease infinite;
           background-size: 200% 200%;
@@ -1195,6 +1578,10 @@ export default function Project() {
           animation: pulse-slow 6s ease-in-out infinite;
         }
         
+        .animate-bounce {
+          animation: bounce 2s ease-in-out infinite;
+        }
+        
         .bg-300% {
           background-size: 300% 300%;
         }
@@ -1210,6 +1597,7 @@ export default function Project() {
           transform: translate3d(0, 0, 0);
           backface-visibility: hidden;
           perspective: 1000px;
+          will-change: transform, opacity;
         }
         
         /* Réduction du mouvement */
@@ -1218,7 +1606,8 @@ export default function Project() {
           .animate-float-slow,
           .animate-ripple,
           .animate-shine,
-          .animate-pulse-slow {
+          .animate-pulse-slow,
+          .animate-bounce {
             animation: none !important;
           }
           
