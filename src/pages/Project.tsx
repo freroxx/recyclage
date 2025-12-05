@@ -169,16 +169,16 @@ export default function Project() {
               return (
                 <Card
                   key={bin.label}
-                  className={`scroll-reveal hover:shadow-xl transition-all duration-300 border-2 ${bin.borderColor} group cursor-pointer ${isActive ? 'shadow-xl scale-105 -translate-y-2' : 'hover:scale-105 hover:-translate-y-2'}`}
+                  className={`scroll-reveal transition-all duration-300 border-2 ${bin.borderColor} cursor-pointer bg-card ${isActive ? 'shadow-xl scale-105 -translate-y-2 border-primary/40' : 'hover:shadow-xl hover:scale-105 hover:-translate-y-2'}`}
                   style={{ animationDelay: `${index * 100}ms` }}
                   onMouseEnter={() => setActiveIndex(index)}
                 >
-                  <CardContent className="pt-8 pb-8 text-center">
-                    <div className={`w-20 h-20 md:w-24 md:h-24 rounded-3xl ${bin.bg} flex items-center justify-center mx-auto mb-5 transition-all duration-300 group-hover:scale-110 ${isActive ? 'scale-110' : ''}`}>
-                      <BinIcon className={`w-10 h-10 md:w-12 md:h-12 ${bin.color}`} />
+                  <CardContent className="pt-6 pb-6 md:pt-8 md:pb-8 text-center relative z-10">
+                    <div className={`w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-2xl md:rounded-3xl ${bin.bg} flex items-center justify-center mx-auto mb-4 md:mb-5 transition-transform duration-300 ${isActive ? 'scale-110' : 'hover:scale-110'}`}>
+                      <BinIcon className={`w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 ${bin.color}`} />
                     </div>
-                    <h3 className="font-bold text-base md:text-lg">{bin.label}</h3>
-                    <div className={`h-1 w-12 mx-auto mt-3 rounded-full transition-all duration-300 ${bin.bg} ${isActive ? 'w-16' : 'group-hover:w-16'}`} />
+                    <h3 className="font-bold text-sm md:text-base lg:text-lg text-foreground">{bin.label}</h3>
+                    <div className={`h-1 w-10 md:w-12 mx-auto mt-3 rounded-full transition-all duration-300 ${bin.bg} ${isActive ? 'w-14 md:w-16' : ''}`} />
                   </CardContent>
                 </Card>
               );
