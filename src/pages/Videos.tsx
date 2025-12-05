@@ -29,38 +29,38 @@ export default function Videos() {
   const videos: Video[] = useMemo(() => [
     {
       id: "1",
-      title: t("videos.video1.title"),
-      description: t("videos.video1.description"),
+      title: "Introduction au Recyclage",
+      description: "Découvrez les bases du recyclage, son importance pour l'environnement et comment participer activement à la préservation de notre planète.",
       youtubeId: "c5sPRL0YKUw",
       duration: "5:42",
       publishDate: "2024-01-15",
-      category: t("videos.categories.tutorial"),
+      category: "Éducation",
       views: "124K",
-      tags: ["React", "Tutorial", "Beginners"]
+      tags: ["Recyclage", "Environnement", "Débutant", "Écologie"]
     },
     {
       id: "2",
-      title: "Advanced React Patterns",
-      description: "Learn advanced React patterns and best practices for building scalable applications with modern React features.",
+      title: "Le Recyclage Du Papier Et Du Carton - Comment ça marche ?",
+      description: "Explorez le processus complet du recyclage du papier et du carton, de la collecte à la transformation en nouveaux produits.",
       youtubeId: "s003IbGz-rA",
       duration: "18:25",
       publishDate: "2024-02-10",
-      category: t("videos.categories.advanced"),
+      category: "Processus",
       views: "89K",
-      tags: ["React", "Patterns", "Advanced", "Performance"]
+      tags: ["Papier", "Carton", "Processus", "Transformation", "Déchets"]
     },
     {
       id: "3",
-      title: "TypeScript Masterclass",
-      description: "Deep dive into TypeScript features, advanced types, and best practices for type-safe development.",
+      title: "Voyage au cœur du tri - Que se passe-t-il avec les déchets recyclables ?",
+      description: "Suivez le parcours des déchets recyclables depuis le tri sélectif jusqu'à leur transformation en nouvelles matières premières.",
       youtubeId: "p67EWIamCIw",
       duration: "32:10",
       publishDate: "2024-03-05",
-      category: t("videos.categories.tutorial"),
+      category: "Documentaire",
       views: "156K",
-      tags: ["TypeScript", "Tutorial", "Advanced"]
+      tags: ["Tri", "Centre de tri", "Déchets", "Recyclables", "Parcours"]
     }
-  ], [t]);
+  ], []);
 
   useEffect(() => {
     if (selectedVideo) {
@@ -78,10 +78,10 @@ export default function Videos() {
     window.open(`https://www.youtube.com/watch?v=${youtubeId}`, '_blank', 'noopener,noreferrer');
   };
 
-  // Format date for display
+  // Formater la date pour l'affichage
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString('fr-FR', {
       month: 'short',
       day: 'numeric',
       year: 'numeric'
@@ -90,19 +90,20 @@ export default function Videos() {
 
   const formatModalDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    const options: Intl.DateTimeFormatOptions = {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric'
-    });
+    };
+    return date.toLocaleDateString('fr-FR', options);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-secondary/5">
       <div className="container mx-auto px-4 py-12 md:py-16 lg:py-20">
         <div className="max-w-7xl mx-auto">
-          {/* Header Section */}
+          {/* Section En-tête */}
           <div 
             className="text-center mb-12 md:mb-16 lg:mb-20 animate-fade-in-up"
             style={{ animationDelay: "0.1s" }}
@@ -117,13 +118,13 @@ export default function Videos() {
               className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent animate-fade-in-up"
               style={{ animationDelay: "0.2s" }}
             >
-              {t("videos.title")}
+              Vidéos Éducatives
             </h1>
             <p 
               className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 animate-fade-in-up"
               style={{ animationDelay: "0.3s" }}
             >
-              {t("videos.subtitle")}
+              Découvrez notre collection de vidéos sur le recyclage et la gestion des déchets
             </p>
             <div 
               className="flex flex-wrap items-center justify-center gap-3 animate-fade-in-up"
@@ -134,19 +135,19 @@ export default function Videos() {
                 className="text-sm px-4 py-2 backdrop-blur-sm bg-secondary/50"
               >
                 <Users className="w-3 h-3 mr-2" />
-                {videos.length} {t("videos.totalVideos")}
+                {videos.length} Vidéos disponibles
               </Badge>
               <Badge 
                 variant="outline" 
                 className="text-sm px-4 py-2 backdrop-blur-sm border-primary/20"
               >
                 <TrendingUp className="w-3 h-3 mr-2" />
-                {t("videos.updatedWeekly")}
+                Mise à jour régulière
               </Badge>
             </div>
           </div>
 
-          {/* Video Grid */}
+          {/* Grille de Vidéos */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {videos.map((video, index) => (
               <div
@@ -163,11 +164,11 @@ export default function Videos() {
                   onMouseLeave={() => setHoveredVideo(null)}
                   onClick={() => setSelectedVideo(video)}
                 >
-                  {/* Glow Effect */}
+                  {/* Effet de Lueur */}
                   <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   
                   <CardContent className="p-0">
-                    {/* Thumbnail Container */}
+                    {/* Conteneur de Miniature */}
                     <div className="relative aspect-video overflow-hidden">
                       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-secondary/10 to-accent/5 z-0" />
                       <img
@@ -181,13 +182,13 @@ export default function Videos() {
                         }}
                       />
                       
-                      {/* Animated Gradient Overlay */}
+                      {/* Superposition de Dégradé Animé */}
                       <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
                       
-                      {/* Animated Play Button */}
+                      {/* Bouton Lecture Animé */}
                       <div className="absolute inset-0 z-30 flex items-center justify-center">
                         <div className="relative">
-                          {/* Outer Ring Pulse Effect */}
+                          {/* Effet de Pulsation de l'Anneau Extérieur */}
                           <div className="absolute inset-0 w-20 h-20 bg-primary/30 rounded-full animate-ping-slow" />
                           <div className="relative w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-primary to-primary/80 rounded-full flex items-center justify-center shadow-2xl shadow-primary/40 transition-transform duration-300 group-hover:scale-110">
                             <Play className="w-8 h-8 text-white ml-1" fill="white" />
@@ -195,14 +196,14 @@ export default function Videos() {
                         </div>
                       </div>
 
-                      {/* Top Badges */}
+                      {/* Badges Supérieurs */}
                       <div className="absolute top-3 left-3 z-30">
                         <Badge className="bg-black/80 backdrop-blur-sm text-white border-0 shadow-lg">
                           {video.category}
                         </Badge>
                       </div>
 
-                      {/* Duration Badge */}
+                      {/* Badge de Durée */}
                       {video.duration && (
                         <div className="absolute bottom-3 right-3 z-30 bg-black/80 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-md">
                           {video.duration}
@@ -210,7 +211,7 @@ export default function Videos() {
                       )}
                     </div>
 
-                    {/* Content */}
+                    {/* Contenu */}
                     <div className="p-5 md:p-6 relative z-20">
                       <div className="space-y-3">
                         <div className="flex items-start justify-between gap-3">
@@ -236,7 +237,7 @@ export default function Videos() {
                           {video.description}
                         </p>
                         
-                        {/* Tags */}
+                        {/* Étiquettes */}
                         {video.tags && video.tags.length > 0 && (
                           <div className="flex flex-wrap gap-2">
                             {video.tags.slice(0, 2).map((tag) => (
@@ -255,11 +256,11 @@ export default function Videos() {
                           </div>
                         )}
                         
-                        {/* Metadata */}
+                        {/* Métadonnées */}
                         <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border/50">
                           <div className="flex items-center gap-1">
                             <Eye className="w-3 h-3" />
-                            <span>{video.views}</span>
+                            <span>{video.views} vues</span>
                           </div>
                           {video.publishDate && (
                             <div className="flex items-center gap-1">
@@ -276,13 +277,13 @@ export default function Videos() {
             ))}
           </div>
 
-          {/* YouTube Link */}
+          {/* Lien YouTube */}
           <div 
             className="text-center mt-12 md:mt-16 animate-fade-in-up"
             style={{ animationDelay: "0.8s" }}
           >
             <p className="text-muted-foreground mb-6">
-              {t("videos.moreVideos")}
+              Plus de vidéos disponibles sur notre chaîne
             </p>
             <div className="inline-block hover:scale-105 active:scale-95 transition-transform duration-300">
               <Button
@@ -294,14 +295,14 @@ export default function Videos() {
                 <span className="animate-spin-slow group-hover:rotate-12 transition-transform duration-300">
                   <ExternalLink className="w-5 h-5" />
                 </span>
-                {t("videos.visitChannel")}
+                Visiter la chaîne YouTube
               </Button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Video Modal */}
+      {/* Modal Vidéo */}
       <Dialog open={isModalOpen} onOpenChange={() => setSelectedVideo(null)}>
         <DialogContent className="max-w-5xl w-full max-h-[90vh] overflow-y-auto border-border/50 shadow-2xl animate-modal-in">
           <div className="bg-background rounded-xl">
@@ -314,9 +315,9 @@ export default function Videos() {
               </DialogDescription>
             </DialogHeader>
 
-            {/* Video Embed with Details Below */}
+            {/* Intégration Vidéo avec Détails en Dessous */}
             <div className="space-y-6 p-6">
-              {/* Video Player */}
+              {/* Lecteur Vidéo */}
               <div 
                 className="aspect-video w-full rounded-xl overflow-hidden bg-black shadow-2xl animate-scale-in"
                 style={{ animationDelay: "0.2s" }}
@@ -335,19 +336,19 @@ export default function Videos() {
                 )}
               </div>
 
-              {/* Video Details Below Embed */}
+              {/* Détails de la Vidéo sous l'Intégration */}
               <div 
                 className="space-y-4 animate-fade-in-up"
                 style={{ animationDelay: "0.3s" }}
               >
-                {/* Stats Row */}
+                {/* Ligne de Statistiques */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-secondary/10 rounded-lg border border-border/30">
                   <div className="flex items-center gap-2">
                     <div className="p-2 bg-primary/10 rounded-lg">
                       <Eye className="w-4 h-4 text-primary" />
                     </div>
                     <div>
-                      <div className="text-sm text-muted-foreground">Views</div>
+                      <div className="text-sm text-muted-foreground">Vues</div>
                       <div className="font-semibold">{selectedVideo?.views}</div>
                     </div>
                   </div>
@@ -357,7 +358,7 @@ export default function Videos() {
                       <Clock className="w-4 h-4 text-primary" />
                     </div>
                     <div>
-                      <div className="text-sm text-muted-foreground">Duration</div>
+                      <div className="text-sm text-muted-foreground">Durée</div>
                       <div className="font-semibold">{selectedVideo?.duration}</div>
                     </div>
                   </div>
@@ -367,7 +368,7 @@ export default function Videos() {
                       <Calendar className="w-4 h-4 text-primary" />
                     </div>
                     <div>
-                      <div className="text-sm text-muted-foreground">Published</div>
+                      <div className="text-sm text-muted-foreground">Publié le</div>
                       <div className="font-semibold">
                         {selectedVideo?.publishDate && formatModalDate(selectedVideo.publishDate)}
                       </div>
@@ -379,16 +380,16 @@ export default function Videos() {
                       <Tag className="w-4 h-4 text-primary" />
                     </div>
                     <div>
-                      <div className="text-sm text-muted-foreground">Category</div>
+                      <div className="text-sm text-muted-foreground">Catégorie</div>
                       <div className="font-semibold">{selectedVideo?.category}</div>
                     </div>
                   </div>
                 </div>
 
-                {/* Tags */}
+                {/* Étiquettes */}
                 {selectedVideo?.tags && selectedVideo.tags.length > 0 && (
                   <div className="space-y-2 animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
-                    <h4 className="font-semibold text-foreground">Tags</h4>
+                    <h4 className="font-semibold text-foreground">Étiquettes</h4>
                     <div className="flex flex-wrap gap-2">
                       {selectedVideo.tags.map((tag) => (
                         <Badge 
@@ -404,7 +405,7 @@ export default function Videos() {
                   </div>
                 )}
 
-                {/* Action Buttons */}
+                {/* Boutons d'Action */}
                 <div 
                   className="flex flex-col sm:flex-row items-center gap-3 pt-4 border-t border-border/30 animate-fade-in-up"
                   style={{ animationDelay: "0.6s" }}
@@ -415,7 +416,7 @@ export default function Videos() {
                       onClick={() => selectedVideo && openInYouTube(selectedVideo.youtubeId)}
                     >
                       <ExternalLink className="w-4 h-4" />
-                      {t("videos.watchOnYouTube")}
+                      Regarder sur YouTube
                     </Button>
                   </div>
                   <div className="w-full sm:w-auto hover:scale-105 active:scale-95 transition-transform duration-300">
@@ -424,7 +425,7 @@ export default function Videos() {
                       className="w-full"
                       onClick={() => setSelectedVideo(null)}
                     >
-                      {t("videos.close")}
+                      Fermer
                     </Button>
                   </div>
                 </div>
@@ -434,7 +435,7 @@ export default function Videos() {
         </DialogContent>
       </Dialog>
 
-      {/* Add custom animations to global CSS */}
+      {/* Ajouter des animations CSS personnalisées */}
       <style jsx>{`
         @keyframes fadeInUp {
           from {
