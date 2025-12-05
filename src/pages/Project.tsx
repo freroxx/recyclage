@@ -4,8 +4,7 @@ import {
   useMemo, 
   useCallback, 
   useRef,
-  Suspense,
-  lazy 
+  Suspense
 } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -99,23 +98,6 @@ function ProjectSkeleton() {
 
 // Background Decorations with cleanup
 const BackgroundDecorations = () => {
-  const animationRef = useRef<number>();
-
-  useEffect(() => {
-    const animate = () => {
-      // Animation logic if needed
-      animationRef.current = requestAnimationFrame(animate);
-    };
-    
-    animationRef.current = requestAnimationFrame(animate);
-    
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, []);
-
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden">
       <div 
@@ -266,28 +248,13 @@ function ProjectContent() {
   const scrollRevealRef = useScrollReveal();
   const [activeBinIndex, setActiveBinIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const startTimeRef = useRef(performance.now());
+  const startTimeRef = useRef(Date.now());
 
   // Performance tracking
   useEffect(() => {
-    const measureTime = () => {
-      const endTime = performance.now();
-      const loadTime = endTime - startTimeRef.current;
-      
-      // Log or send to analytics
-      console.log(`Project component loaded in ${loadTime.toFixed(2)}ms`);
-      
-      if (typeof window.gtag !== 'undefined') {
-        window.gtag('event', 'timing_complete', {
-          name: 'project_page_load',
-          value: Math.round(loadTime),
-          event_category: 'Performance'
-        });
-      }
-    };
-
     if (!isLoading) {
-      measureTime();
+      const loadTime = Date.now() - startTimeRef.current;
+      console.log(`Project component loaded in ${loadTime}ms`);
     }
   }, [isLoading]);
 
@@ -396,15 +363,7 @@ function ProjectContent() {
   // Event handlers
   const handleBinSelect = useCallback((index: number) => {
     setActiveBinIndex(index);
-    
-    // Analytics tracking
-    if (typeof window.gtag !== 'undefined') {
-      window.gtag('event', 'select_bin', {
-        bin_type: bins[index].label,
-        index
-      });
-    }
-  }, [bins]);
+  }, []);
 
   // Bin rotation effect
   useEffect(() => {
