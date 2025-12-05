@@ -28,9 +28,8 @@ import {
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-// REMOVED: import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { ErrorBoundary } from "react-error-boundary";
+// REMOVED: import { ErrorBoundary } from "react-error-boundary";
 import { Helmet } from "react-helmet-async";
 
 // Types
@@ -55,25 +54,54 @@ interface ActionItem {
 const BIN_ROTATION_INTERVAL = 2500;
 const ANIMATION_DELAY_INCREMENT = 100;
 
-// Error Fallback Component
-function ErrorFallback({ error, resetErrorBoundary }: { 
-  error: Error; 
-  resetErrorBoundary: () => void 
-}) {
+// Simple Error Fallback Component
+function SimpleErrorFallback() {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="max-w-md w-full">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+      <Card className="max-w-md w-full border-2 border-red-200">
         <CardContent className="p-6 text-center">
           <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
             <Trash2 className="w-8 h-8 text-red-600" />
           </div>
-          <h2 className="text-xl font-bold mb-2">Something went wrong</h2>
-          <p className="text-muted-foreground mb-4">{error.message}</p>
-          <Button onClick={resetErrorBoundary}>Try again</Button>
+          <h2 className="text-xl font-bold mb-2 text-foreground">Something went wrong</h2>
+          <p className="text-muted-foreground mb-4">Please refresh the page or try again later.</p>
+          <Button 
+            onClick={() => window.location.reload()} 
+            className="bg-red-600 hover:bg-red-700 text-white"
+          >
+            Refresh Page
+          </Button>
         </CardContent>
       </Card>
     </div>
   );
+}
+
+// Simple Error Boundary Component
+class SimpleErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("Error caught by boundary:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <SimpleErrorFallback />;
+    }
+
+    return this.props.children;
+  }
 }
 
 // Loading Skeleton
@@ -242,27 +270,19 @@ const SectionHeader = ({ title, subtitle }: { title: string; subtitle: string })
   </header>
 );
 
-// Main Project Component
+// Main Project Component with local error handling
 function ProjectContent() {
   const { t, language } = useLanguage();
-  const containerRef = useRef<HTMLDivElement>(null); // Simple ref instead of useScrollReveal
+  const containerRef = useRef<HTMLDivElement>(null);
   const [activeBinIndex, setActiveBinIndex] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const startTimeRef = useRef(Date.now());
-
-  // Performance tracking
-  useEffect(() => {
-    if (!isLoading) {
-      const loadTime = Date.now() - startTimeRef.current;
-      console.log(`Project component loaded in ${loadTime}ms`);
-    }
-  }, [isLoading]);
 
   // Safe translation function with fallback
   const safeT = useCallback((key: string, fallback?: string) => {
     try {
       const translation = t(key);
-      // Check if translation exists (not the key itself)
       return translation && translation !== key ? translation : (fallback || key);
     } catch (error) {
       console.warn(`Translation error for key "${key}":`, error);
@@ -270,79 +290,100 @@ function ProjectContent() {
     }
   }, [t]);
 
-  // Memoized data
-  const bins = useMemo((): BinItem[] => [
-    { 
-      icon: FileText, 
-      color: "text-amber-500 dark:text-amber-400", 
-      bg: "bg-amber-500/10 dark:bg-amber-400/10", 
-      borderColor: "border-amber-500/30 dark:border-amber-400/30", 
-      label: safeT("project.bins.paper", "Paper") 
-    },
-    { 
-      icon: Package, 
-      color: "text-blue-500 dark:text-blue-400", 
-      bg: "bg-blue-500/10 dark:bg-blue-400/10", 
-      borderColor: "border-blue-500/30 dark:border-blue-400/30", 
-      label: safeT("project.bins.plastic", "Plastic") 
-    },
-    { 
-      icon: Trash2, 
-      color: "text-gray-500 dark:text-gray-400", 
-      bg: "bg-gray-500/10 dark:bg-gray-400/10", 
-      borderColor: "border-gray-500/30 dark:border-gray-400/30", 
-      label: safeT("project.bins.metal", "Metal") 
-    },
-    { 
-      icon: Apple, 
-      color: "text-green-500 dark:text-green-400", 
-      bg: "bg-green-500/10 dark:bg-green-400/10", 
-      borderColor: "border-green-500/30 dark:border-green-400/30", 
-      label: safeT("project.bins.organic", "Organic") 
-    },
-  ], [safeT]);
-
-  const actions = useMemo((): ActionItem[] => [
-    {
-      icon: Recycle,
-      title: safeT("project.bins.title", "Smart Sorting Bins"),
-      description: safeT("project.bins.text", "Learn about our innovative waste sorting system"),
-      gradient: "from-blue-500/10 to-cyan-500/10 dark:from-blue-400/10 dark:to-cyan-400/10",
-      iconColor: "text-blue-500 dark:text-blue-400",
-      borderColor: "border-blue-500/20 dark:border-blue-400/20"
-    },
-    {
-      icon: Lightbulb,
-      title: safeT("project.campaigns.title", "Awareness Campaigns"),
-      description: safeT("project.campaigns.text", "Educational initiatives to promote sustainability"),
-      gradient: "from-amber-500/10 to-orange-500/10 dark:from-amber-400/10 dark:to-orange-400/10",
-      iconColor: "text-amber-500 dark:text-amber-400",
-      borderColor: "border-amber-500/20 dark:border-amber-400/20"
-    },
-    {
-      icon: Users,
-      title: safeT("project.workshops.title", "Interactive Workshops"),
-      description: safeT("project.workshops.text", "Hands-on learning experiences for all ages"),
-      gradient: "from-purple-500/10 to-pink-500/10 dark:from-purple-400/10 dark:to-pink-400/10",
-      iconColor: "text-purple-500 dark:text-purple-400",
-      borderColor: "border-purple-500/20 dark:border-purple-400/20"
-    },
-    {
-      icon: TrendingUp,
-      title: safeT("project.monitoring.title", "Progress Monitoring"),
-      description: safeT("project.monitoring.text", "Track our environmental impact over time"),
-      gradient: "from-green-500/10 to-emerald-500/10 dark:from-green-400/10 dark:to-emerald-400/10",
-      iconColor: "text-green-500 dark:text-green-400",
-      borderColor: "border-green-500/20 dark:border-green-400/20"
+  // Memoized data with error handling
+  const bins = useMemo((): BinItem[] => {
+    try {
+      return [
+        { 
+          icon: FileText, 
+          color: "text-amber-500 dark:text-amber-400", 
+          bg: "bg-amber-500/10 dark:bg-amber-400/10", 
+          borderColor: "border-amber-500/30 dark:border-amber-400/30", 
+          label: safeT("project.bins.paper", "Paper") 
+        },
+        { 
+          icon: Package, 
+          color: "text-blue-500 dark:text-blue-400", 
+          bg: "bg-blue-500/10 dark:bg-blue-400/10", 
+          borderColor: "border-blue-500/30 dark:border-blue-400/30", 
+          label: safeT("project.bins.plastic", "Plastic") 
+        },
+        { 
+          icon: Trash2, 
+          color: "text-gray-500 dark:text-gray-400", 
+          bg: "bg-gray-500/10 dark:bg-gray-400/10", 
+          borderColor: "border-gray-500/30 dark:border-gray-400/30", 
+          label: safeT("project.bins.metal", "Metal") 
+        },
+        { 
+          icon: Apple, 
+          color: "text-green-500 dark:text-green-400", 
+          bg: "bg-green-500/10 dark:bg-green-400/10", 
+          borderColor: "border-green-500/30 dark:border-green-400/30", 
+          label: safeT("project.bins.organic", "Organic") 
+        },
+      ];
+    } catch (error) {
+      console.error("Error loading bins:", error);
+      return [];
     }
-  ], [safeT]);
+  }, [safeT]);
 
-  const impacts = useMemo(() => [
-    safeT("project.impact.1", "Reduced waste sent to landfills by 40%"),
-    safeT("project.impact.2", "Increased recycling rates by 65%"),
-    safeT("project.impact.3", "Educated over 500 students and community members"),
-    safeT("project.impact.4", "Saved approximately 15 tons of CO2 emissions")
-  ], [safeT]);
+  const actions = useMemo((): ActionItem[] => {
+    try {
+      return [
+        {
+          icon: Recycle,
+          title: safeT("project.bins.title", "Smart Sorting Bins"),
+          description: safeT("project.bins.text", "Learn about our innovative waste sorting system"),
+          gradient: "from-blue-500/10 to-cyan-500/10 dark:from-blue-400/10 dark:to-cyan-400/10",
+          iconColor: "text-blue-500 dark:text-blue-400",
+          borderColor: "border-blue-500/20 dark:border-blue-400/20"
+        },
+        {
+          icon: Lightbulb,
+          title: safeT("project.campaigns.title", "Awareness Campaigns"),
+          description: safeT("project.campaigns.text", "Educational initiatives to promote sustainability"),
+          gradient: "from-amber-500/10 to-orange-500/10 dark:from-amber-400/10 dark:to-orange-400/10",
+          iconColor: "text-amber-500 dark:text-amber-400",
+          borderColor: "border-amber-500/20 dark:border-amber-400/20"
+        },
+        {
+          icon: Users,
+          title: safeT("project.workshops.title", "Interactive Workshops"),
+          description: safeT("project.workshops.text", "Hands-on learning experiences for all ages"),
+          gradient: "from-purple-500/10 to-pink-500/10 dark:from-purple-400/10 dark:to-pink-400/10",
+          iconColor: "text-purple-500 dark:text-purple-400",
+          borderColor: "border-purple-500/20 dark:border-purple-400/20"
+        },
+        {
+          icon: TrendingUp,
+          title: safeT("project.monitoring.title", "Progress Monitoring"),
+          description: safeT("project.monitoring.text", "Track our environmental impact over time"),
+          gradient: "from-green-500/10 to-emerald-500/10 dark:from-green-400/10 dark:to-emerald-400/10",
+          iconColor: "text-green-500 dark:text-green-400",
+          borderColor: "border-green-500/20 dark:border-green-400/20"
+        }
+      ];
+    } catch (error) {
+      console.error("Error loading actions:", error);
+      return [];
+    }
+  }, [safeT]);
+
+  const impacts = useMemo(() => {
+    try {
+      return [
+        safeT("project.impact.1", "Reduced waste sent to landfills by 40%"),
+        safeT("project.impact.2", "Increased recycling rates by 65%"),
+        safeT("project.impact.3", "Educated over 500 students and community members"),
+        safeT("project.impact.4", "Saved approximately 15 tons of CO2 emissions")
+      ];
+    } catch (error) {
+      console.error("Error loading impacts:", error);
+      return [];
+    }
+  }, [safeT]);
 
   // Computed values
   const initiativeLabel = useMemo(() => 
@@ -365,17 +406,46 @@ function ProjectContent() {
     setActiveBinIndex(index);
   }, []);
 
+  // Load data with error handling
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        // Simulate data loading
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        if (!bins.length || !actions.length) {
+          throw new Error("Failed to load data");
+        }
+        
+        const loadTime = Date.now() - startTimeRef.current;
+        console.log(`Project component loaded in ${loadTime}ms`);
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Failed to load project data:", error);
+        setHasError(true);
+      }
+    };
+
+    loadData();
+  }, [bins.length, actions.length]);
+
   // Bin rotation effect
   useEffect(() => {
+    if (hasError || !bins.length) return;
+    
     const interval = setInterval(() => {
       setActiveBinIndex(prev => (prev + 1) % bins.length);
     }, BIN_ROTATION_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [bins.length]);
+  }, [bins.length, hasError]);
 
   // Keyboard navigation
   useEffect(() => {
+    if (hasError || !bins.length) return;
+    
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight') {
         e.preventDefault();
@@ -394,27 +464,34 @@ function ProjectContent() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [bins.length]);
+  }, [bins.length, hasError]);
 
-  // Load data
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        // Simulate data loading
-        await new Promise(resolve => setTimeout(resolve, 500));
-      } catch (error) {
-        console.error("Failed to load project data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Show error state
+  if (hasError) {
+    return <SimpleErrorFallback />;
+  }
 
-    loadData();
-  }, []);
-
+  // Show loading state
   if (isLoading) {
     return <ProjectSkeleton />;
+  }
+
+  // Show empty state if no data
+  if (!bins.length || !actions.length) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="p-6 text-center">
+            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="w-8 h-8 text-gray-600" />
+            </div>
+            <h2 className="text-xl font-bold mb-2">No data available</h2>
+            <p className="text-muted-foreground mb-4">Please check your connection and try again.</p>
+            <Button onClick={() => window.location.reload()}>Retry</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -661,16 +738,11 @@ function ProjectContent() {
   );
 }
 
-// Main exported component with error boundary
+// Simple wrapper component
 export default function Project() {
   return (
-    <ErrorBoundary
-      FallbackComponent={ErrorFallback}
-      onReset={() => window.location.reload()}
-    >
-      <Suspense fallback={<ProjectSkeleton />}>
-        <ProjectContent />
-      </Suspense>
-    </ErrorBoundary>
+    <Suspense fallback={<ProjectSkeleton />}>
+      <ProjectContent />
+    </Suspense>
   );
 }
