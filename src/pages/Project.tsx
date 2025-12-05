@@ -45,7 +45,20 @@ import {
   TrendingUp as TrendingUpIcon,
   BookOpen,
   Award as AwardIcon,
-  Target as GoalIcon
+  Target as GoalIcon,
+  Info,
+  Calendar,
+  MapPin,
+  Gift,
+  Coffee,
+  Clock as ClockIcon,
+  ThumbsUp,
+  ShieldCheck,
+  Heart as HeartIcon,
+  Users as UsersIcon,
+  Home,
+  School,
+  Leaf as LeafIcon
 } from "lucide-react";
 
 // Optimisation des performances : Chargement différé de framer-motion
@@ -81,74 +94,74 @@ const useLazyFramerMotion = () => {
   return { ...motionComponents, error };
 };
 
-// Composant Bouton Animé Premium
+// Composant Bouton Animé Premium avec corrections
 const BoutonAnime = memo(({ 
   enfants, 
-  variante = "default",
-  taille = "default",
+  variant = "default",
+  size = "default",
   className = "",
   onClick,
-  icone,
+  icon,
   href,
   ...props 
 }: {
   enfants: React.ReactNode;
-  variante?: "default" | "outline" | "premium" | "gradient";
-  taille?: "sm" | "default" | "lg" | "xl";
+  variant?: "default" | "outline" | "premium" | "gradient";
+  size?: "sm" | "default" | "lg" | "xl";
   className?: string;
   onClick?: () => void;
-  icone?: React.ReactNode;
+  icon?: React.ReactNode;
   href?: string;
 }) => {
-  const boutonRef = useRef<HTMLButtonElement>(null);
-  const [estSurvole, setEstSurvole] = useState(false);
-  const [ondulations, setOndulations] = useState<Array<{x: number, y: number, id: number}>>([]);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const [ripples, setRipples] = useState<Array<{x: number, y: number, id: number}>>([]);
   
-  const handleMouseEnter = () => setEstSurvole(true);
-  const handleMouseLeave = () => setEstSurvole(false);
+  const handleMouseEnter = () => setIsHovered(true);
+  const handleMouseLeave = () => setIsHovered(false);
   
   const handleClick = (e: React.MouseEvent) => {
-    const bouton = boutonRef.current;
-    if (!bouton) return;
+    const button = buttonRef.current;
+    if (!button) return;
     
-    const rect = bouton.getBoundingClientRect();
+    const rect = button.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
     const id = Date.now();
-    setOndulations(prev => [...prev, { x, y, id }]);
+    setRipples(prev => [...prev, { x, y, id }]);
     
     setTimeout(() => {
-      setOndulations(prev => prev.filter(ondulation => ondulation.id !== id));
-    }, 800); // Animation plus longue pour plus de fluidité
+      setRipples(prev => prev.filter(ripple => ripple.id !== id));
+    }, 800);
     
     if (onClick) onClick();
   };
   
-  const classesTaille = {
+  const sizeClasses = {
     sm: "px-4 py-2 text-sm",
     default: "px-6 py-3",
     lg: "px-8 py-4 text-lg",
     xl: "px-12 py-6 text-xl"
   };
   
-  const classesVariante = {
+  const variantClasses = {
     default: "bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl",
     outline: "border-2 border-primary/20 bg-background/50 backdrop-blur-sm hover:border-primary/40 hover:bg-primary/5",
     premium: "bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 hover:from-amber-600 hover:via-orange-600 hover:to-pink-600 shadow-lg hover:shadow-2xl",
     gradient: "bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 hover:from-primary/90 hover:via-emerald-700 hover:to-cyan-700 shadow-lg hover:shadow-2xl"
   };
   
-  const ContenuBouton = (
+  const ButtonContent = (
     <>
       {/* Effets d'Ondulation */}
-      {ondulations.map(ondulation => (
+      {ripples.map(ripple => (
         <span
-          key={ondulation.id}
-          className="absolute rounded-full bg-white/20 animate-ondulation"
+          key={ripple.id}
+          className="absolute rounded-full bg-white/20 animate-ripple"
           style={{
-            left: ondulation.x,
-            top: ondulation.y,
+            left: ripple.x,
+            top: ripple.y,
             transform: 'translate(-50%, -50%)'
           }}
         />
@@ -159,37 +172,37 @@ const BoutonAnime = memo(({
       
       {/* Effet de Brillance */}
       <span className="absolute inset-0 overflow-hidden rounded-xl">
-        <span className="absolute -inset-y-full -left-20 w-20 bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-brillance" />
+        <span className="absolute -inset-y-full -left-20 w-20 bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-shine" />
       </span>
       
       <span className="relative flex items-center justify-center gap-3">
-        {icone && <span className="transition-all duration-500 ease-out group-hover:scale-110 group-hover:rotate-3">{icone}</span>}
+        {icon && <span className="transition-all duration-500 ease-out group-hover:scale-110 group-hover:rotate-3">{icon}</span>}
         {enfants}
         <ArrowRight className="w-5 h-5 transition-all duration-500 ease-out group-hover:translate-x-2 group-hover:scale-110" />
       </span>
     </>
   );
   
-  const classesBouton = `
+  const buttonClasses = `
     relative overflow-hidden rounded-xl font-semibold
     transition-all duration-500 ease-out
     transform hover:-translate-y-1 active:translate-y-0
     active:scale-95
-    group ${classesTaille[taille]} ${classesVariante[variante]} ${className}
+    group ${sizeClasses[size]} ${variantClasses[variant]} ${className}
   `;
   
   if (href) {
     return (
       <Link to={href}>
         <button
-          ref={boutonRef}
-          className={classesBouton}
+          ref={buttonRef}
+          className={buttonClasses}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           onClick={handleClick}
           {...props}
         >
-          {ContenuBouton}
+          {ButtonContent}
         </button>
       </Link>
     );
@@ -197,31 +210,31 @@ const BoutonAnime = memo(({
   
   return (
     <button
-      ref={boutonRef}
-      className={classesBouton}
+      ref={buttonRef}
+      className={buttonClasses}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
       {...props}
     >
-      {ContenuBouton}
+      {ButtonContent}
     </button>
   );
 });
 
 BoutonAnime.displayName = 'BoutonAnime';
 
-// Composant Widget Flottant
+// Composant Widget Flottant corrigé
 const WidgetFlottant = memo(({
-  enfants,
-  intensite = 1,
+  children,
+  intensity = 1,
   className = ""
 }: {
-  enfants: React.ReactNode;
-  intensite?: number;
+  children: React.ReactNode;
+  intensity?: number;
   className?: string;
 }) => {
-  const [positionSouris, setPositionSouris] = useState({ x: 0, y: 0 });
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const widgetRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
@@ -232,11 +245,11 @@ const WidgetFlottant = memo(({
       const x = (e.clientX - rect.left) / rect.width;
       const y = (e.clientY - rect.top) / rect.height;
       
-      setPositionSouris({ x: (x - 0.5) * 2, y: (y - 0.5) * 2 });
+      setMousePosition({ x: (x - 0.5) * 2, y: (y - 0.5) * 2 });
     };
     
     const handleMouseLeave = () => {
-      setPositionSouris({ x: 0, y: 0 });
+      setMousePosition({ x: 0, y: 0 });
     };
     
     const widget = widgetRef.current;
@@ -253,9 +266,9 @@ const WidgetFlottant = memo(({
     };
   }, []);
   
-  const rotateX = positionSouris.y * 3 * intensite; // Réduit pour plus de douceur
-  const rotateY = -positionSouris.x * 3 * intensite;
-  const translateZ = Math.abs(positionSouris.x + positionSouris.y) * 8 * intensite;
+  const rotateX = mousePosition.y * 3 * intensity;
+  const rotateY = -mousePosition.x * 3 * intensity;
+  const translateZ = Math.abs(mousePosition.x + mousePosition.y) * 8 * intensity;
   
   return (
     <div
@@ -271,18 +284,18 @@ const WidgetFlottant = memo(({
       {/* Bordure Lumineuse */}
       <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-primary/20 via-emerald-500/20 to-cyan-500/20 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-700" />
       
-      {enfants}
+      {children}
     </div>
   );
 });
 
 WidgetFlottant.displayName = 'WidgetFlottant';
 
-// Fond de Particules Premium
+// Fond de Particules Premium corrigé
 const FondParticulesPremium = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
-  const particulesRef = useRef<any[]>([]);
+  const particlesRef = useRef<any[]>([]);
   
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -312,8 +325,8 @@ const FondParticulesPremium = memo(() => {
       constructor() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 1.5 + 0.5; // Particules plus petites
-        this.speedX = Math.random() * 0.3 - 0.15; // Mouvement plus lent
+        this.size = Math.random() * 1.5 + 0.5;
+        this.speedX = Math.random() * 0.3 - 0.15;
         this.speedY = Math.random() * 0.3 - 0.15;
         this.color = `rgba(${Math.floor(Math.random() * 100 + 155)}, ${Math.floor(Math.random() * 200 + 55)}, 255, ${Math.random() * 0.2 + 0.05})`;
       }
@@ -335,12 +348,12 @@ const FondParticulesPremium = memo(() => {
         ctx.fill();
         
         // Dessiner les connexions
-        particulesRef.current.forEach(particule => {
+        particlesRef.current.forEach(particule => {
           const dx = this.x - particule.x;
           const dy = this.y - particule.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
           
-          if (distance < 80) { // Distance réduite
+          if (distance < 80) {
             ctx.beginPath();
             ctx.strokeStyle = `rgba(100, 200, 255, ${0.1 * (1 - distance/80)})`;
             ctx.lineWidth = 0.3;
@@ -354,11 +367,11 @@ const FondParticulesPremium = memo(() => {
     
     // Créer des particules
     const init = () => {
-      particulesRef.current = [];
-      const nombreParticules = Math.min(Math.floor((canvas.width * canvas.height) / 20000), 80); // Moins de particules
+      particlesRef.current = [];
+      const nombreParticules = Math.min(Math.floor((canvas.width * canvas.height) / 20000), 80);
       
       for (let i = 0; i < nombreParticules; i++) {
-        particulesRef.current.push(new Particule());
+        particlesRef.current.push(new Particule());
       }
     };
     
@@ -376,7 +389,7 @@ const FondParticulesPremium = memo(() => {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
       // Mettre à jour et dessiner les particules
-      particulesRef.current.forEach(particule => {
+      particlesRef.current.forEach(particule => {
         particule.update();
         particule.draw();
       });
@@ -408,8 +421,8 @@ const FondParticulesPremium = memo(() => {
       <div className="fixed bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-emerald-500/5 to-transparent pointer-events-none -z-10" />
       
       {/* Orbes flottants */}
-      <div className="fixed top-1/4 left-10 w-96 h-96 bg-gradient-to-r from-blue-500/5 to-cyan-500/5 rounded-full blur-3xl animate-flottement-lent pointer-events-none -z-10" />
-      <div className="fixed bottom-1/3 right-10 w-96 h-96 bg-gradient-to-r from-emerald-500/5 to-green-500/5 rounded-full blur-3xl animate-flottement-lent delay-1000 pointer-events-none -z-10" />
+      <div className="fixed top-1/4 left-10 w-96 h-96 bg-gradient-to-r from-blue-500/5 to-cyan-500/5 rounded-full blur-3xl animate-float-slow pointer-events-none -z-10" />
+      <div className="fixed bottom-1/3 right-10 w-96 h-96 bg-gradient-to-r from-emerald-500/5 to-green-500/5 rounded-full blur-3xl animate-float-slow delay-1000 pointer-events-none -z-10" />
     </>
   );
 });
@@ -422,131 +435,187 @@ export default function Project() {
   const { motion, AnimatePresence, error: framerMotionError } = useLazyFramerMotion();
   
   // Gestion d'état
-  const [indexPoubelleActive, setIndexPoubelleActive] = useState(0);
-  const [rotationAuto, setRotationAuto] = useState(true);
-  const intervalleRotation = useRef<NodeJS.Timeout>();
-  const monteRef = useRef(true);
+  const [activeBinIndex, setActiveBinIndex] = useState(0);
+  const [isAutoRotating, setIsAutoRotating] = useState(true);
+  const [hoveredAction, setHoveredAction] = useState<number | null>(null);
+  const autoRotationInterval = useRef<NodeJS.Timeout>();
+  const mountedRef = useRef(true);
   
   // Données mémoïsées
-  const poubelles = useMemo(() => [
+  const bins = useMemo(() => [
     { 
-      icone: FileText, 
-      couleur: "text-amber-600", 
+      icon: FileText, 
+      color: "text-amber-600", 
       bg: "bg-gradient-to-br from-amber-500/20 to-amber-600/10", 
-      bordure: "border-amber-400/30", 
+      borderColor: "border-amber-400/30", 
       label: "Papier & Carton",
       description: "Journaux, magazines, cartons, emballages papier",
-      objectif: "Réduire la déforestation de 30%"
+      longDescription: "Le papier et le carton représentent une part importante de nos déchets. Leur recyclage permet de sauver des arbres et de réduire la consommation d'eau et d'énergie. Notre objectif est d'atteindre un taux de recyclage de 90% pour ces matériaux.",
+      goal: "Réduire la déforestation de 30% d'ici 2025"
     },
     { 
-      icone: Package, 
-      couleur: "text-blue-600", 
+      icon: Package, 
+      color: "text-blue-600", 
       bg: "bg-gradient-to-br from-blue-500/20 to-cyan-600/10", 
-      bordure: "border-blue-400/30", 
+      borderColor: "border-blue-400/30", 
       label: "Plastique",
       description: "Bouteilles, emballages, films plastiques recyclables",
-      objectif: "Éliminer 50% des plastiques à usage unique"
+      longDescription: "Les plastiques peuvent mettre jusqu'à 500 ans à se décomposer. Notre programme de recyclage du plastique vise à réduire la pollution marine et terrestre. Nous encourageons l'utilisation de plastiques recyclés et biodégradables.",
+      goal: "Éliminer 50% des plastiques à usage unique d'ici 2024"
     },
     { 
-      icone: Trash2, 
-      couleur: "text-gray-600", 
+      icon: Trash2, 
+      color: "text-gray-600", 
       bg: "bg-gradient-to-br from-gray-500/20 to-gray-600/10", 
-      bordure: "border-gray-400/30", 
+      borderColor: "border-gray-400/30", 
       label: "Métal",
       description: "Cannettes, boîtes de conserve, produits métalliques",
-      objectif: "Recycler 90% des métaux collectés"
+      longDescription: "Le recyclage des métaux permet d'économiser jusqu'à 95% de l'énergie nécessaire à leur production primaire. Nous collectons et valorisons tous les métaux pour réduire l'extraction minière et ses impacts environnementaux.",
+      goal: "Recycler 95% des métaux collectés et réduire l'empreinte carbone de 60%"
     },
     { 
-      icone: Apple, 
-      couleur: "text-green-600", 
+      icon: Apple, 
+      color: "text-green-600", 
       bg: "bg-gradient-to-br from-green-500/20 to-emerald-600/10", 
-      bordure: "border-green-400/30", 
+      borderColor: "border-green-400/30", 
       label: "Organique",
       description: "Déchets alimentaires, résidus végétaux, compostables",
-      objectif: "Produire 100 tonnes de compost annuel"
+      longDescription: "Les déchets organiques peuvent être transformés en compost riche pour nourrir nos sols. Notre programme de compostage communautaire transforme les déchets alimentaires en ressources précieuses pour l'agriculture locale et les espaces verts.",
+      goal: "Produire 100 tonnes de compost annuel et nourrir 5000m² de terres agricoles"
     },
   ], []);
   
-  const objectifs = useMemo(() => [
+  const goals = useMemo(() => [
     {
-      icone: Target,
-      titre: "Sensibilisation Environnementale",
-      description: "Éduquer la communauté sur l'importance du tri sélectif et du recyclage",
-      couleur: "from-blue-500/20 to-cyan-500/20",
-      details: [
-        "Ateliers éducatifs mensuels",
-        "Campagnes de sensibilisation",
-        "Ressources pédagogiques"
+      icon: Target,
+      title: "Mission Éducative",
+      description: "Éduquer et sensibiliser la communauté aux enjeux environnementaux",
+      longDescription: "Notre programme éducatif comprend des ateliers mensuels, des conférences et des ressources en ligne. Nous ciblons tous les âges, des écoles primaires aux entreprises, pour créer une culture durable partagée.",
+      color: "text-blue-600",
+      bg: "bg-gradient-to-br from-blue-50 to-blue-100/50",
+      features: [
+        "Ateliers éducatifs pour toutes les générations",
+        "Ressources pédagogiques gratuites",
+        "Formations certifiantes pour les entreprises",
+        "Programme scolaire intégré"
       ]
     },
     {
-      icone: Users,
-      titre: "Engagement Communautaire",
-      description: "Impliquer tous les membres de la communauté dans notre mission écologique",
-      couleur: "from-green-500/20 to-emerald-500/20",
-      details: [
-        "Programmes de bénévolat",
-        "Événements communautaires",
-        "Partenariats locaux"
+      icon: Users,
+      title: "Engagement Communautaire",
+      description: "Créer une communauté active et engagée dans la protection de l'environnement",
+      longDescription: "Nous croyons que le changement durable vient de la base. Notre réseau de bénévoles et d'ambassadeurs écologiques organise des événements réguliers, des clean-ups et des projets collaboratifs.",
+      color: "text-green-600",
+      bg: "bg-gradient-to-br from-green-50 to-emerald-100/50",
+      features: [
+        "Réseau de 500+ bénévoles actifs",
+        "Événements communautaires mensuels",
+        "Partenariats avec 50 entreprises locales",
+        "Programme d'ambassadeurs écologiques"
       ]
     },
     {
-      icone: Recycle,
-      titre: "Réduction des Déchets",
-      description: "Diminuer significativement notre empreinte écologique collective",
-      couleur: "from-purple-500/20 to-pink-500/20",
-      details: [
-        "Objectif: -60% de déchets",
-        "Compostage systématique",
-        "Valorisation énergétique"
+      icon: Recycle,
+      title: "Innovation Technologique",
+      description: "Développer des solutions innovantes pour le tri et la valorisation des déchets",
+      longDescription: "Nous investissons dans la recherche et le développement de technologies de pointe pour améliorer l'efficacité du tri et créer de nouvelles filières de valorisation des déchets.",
+      color: "text-purple-600",
+      bg: "bg-gradient-to-br from-purple-50 to-pink-100/50",
+      features: [
+        "Centres de tri intelligents",
+        "Applications mobiles de suivi",
+        "Systèmes de compostage avancés",
+        "Recherche sur les bioplastiques"
       ]
     },
     {
-      icone: Award,
-      titre: "Certification Écologique",
-      description: "Obtenir la certification environnementale pour notre communauté",
-      couleur: "from-amber-500/20 to-orange-500/20",
-      details: [
-        "Normes internationales",
-        "Audits réguliers",
-        "Amélioration continue"
+      icon: Award,
+      title: "Impact Mesurable",
+      description: "Atteindre des résultats concrets et mesurables pour notre planète",
+      longDescription: "Nous suivons rigoureusement nos progrès avec des indicateurs clés de performance environnementaux. Notre transparence et nos rapports réguliers garantissent que chaque action compte.",
+      color: "text-amber-600",
+      bg: "bg-gradient-to-br from-amber-50 to-orange-100/50",
+      features: [
+        "Réduction de 60% des déchets enfouis",
+        "Augmentation de 75% du taux de recyclage",
+        "Économie de 1 million de litres d'eau",
+        "Compensation de 500 tonnes de CO2"
       ]
+    }
+  ], []);
+  
+  const actions = useMemo(() => [
+    {
+      icon: Calendar,
+      title: "Événements Réguliers",
+      description: "Participez à nos événements communautaires et ateliers pratiques",
+      details: "Chaque mois, nous organisons des activités variées : clean-ups, ateliers de compostage, conférences et visites de centres de tri.",
+      color: "text-blue-600",
+      bg: "from-blue-50 to-blue-100"
+    },
+    {
+      icon: School,
+      title: "Programme Éducatif",
+      description: "Formations et ressources pour tous les niveaux",
+      details: "Notre programme éducatif couvre les écoles, les entreprises et le grand public avec des contenus adaptés à chaque public.",
+      color: "text-green-600",
+      bg: "from-green-50 to-emerald-100"
+    },
+    {
+      icon: Home,
+      title: "Solutions Domestiques",
+      description: "Conseils et outils pour un foyer plus écologique",
+      details: "Découvrez comment réduire votre empreinte écologique à la maison avec nos guides pratiques et kits de démarrage.",
+      color: "text-purple-600",
+      bg: "from-purple-50 to-pink-100"
+    },
+    {
+      icon: Gift,
+      title: "Récompenses Écologiques",
+      description: "Bénéficiez d'avantages pour vos actions environnementales",
+      details: "Notre programme de récompenses valorise chaque geste écologique avec des points échangeables contre des produits durables.",
+      color: "text-amber-600",
+      bg: "from-amber-50 to-orange-100"
     }
   ], []);
   
   // Rotation automatique
   useEffect(() => {
-    monteRef.current = true;
+    mountedRef.current = true;
     
-    const faireTourner = () => {
-      if (monteRef.current && rotationAuto) {
-        setIndexPoubelleActive(prev => (prev + 1) % poubelles.length);
+    const rotateBins = () => {
+      if (mountedRef.current && isAutoRotating) {
+        setActiveBinIndex(prev => (prev + 1) % bins.length);
       }
     };
     
-    if (intervalleRotation.current) {
-      clearInterval(intervalleRotation.current);
+    if (autoRotationInterval.current) {
+      clearInterval(autoRotationInterval.current);
     }
     
-    intervalleRotation.current = setInterval(faireTourner, 4000); // Rotation plus lente
+    autoRotationInterval.current = setInterval(rotateBins, 4000);
     
     return () => {
-      monteRef.current = false;
-      if (intervalleRotation.current) {
-        clearInterval(intervalleRotation.current);
+      mountedRef.current = false;
+      if (autoRotationInterval.current) {
+        clearInterval(autoRotationInterval.current);
       }
     };
-  }, [rotationAuto, poubelles.length]);
+  }, [isAutoRotating, bins.length]);
   
-  const gererInteractionPoubelle = useCallback((index: number) => {
-    setIndexPoubelleActive(index);
-    setRotationAuto(false);
+  const handleBinInteraction = useCallback((index: number) => {
+    setActiveBinIndex(index);
+    setIsAutoRotating(false);
     
     setTimeout(() => {
-      if (monteRef.current) {
-        setRotationAuto(true);
+      if (mountedRef.current) {
+        setIsAutoRotating(true);
       }
     }, 10000);
+  }, []);
+  
+  const handleActionHover = useCallback((index: number | null) => {
+    setHoveredAction(index);
   }, []);
   
   // Utiliser les composants motion
@@ -572,8 +641,7 @@ export default function Project() {
       
       {/* Barre de progression */}
       <div className="fixed top-0 left-0 right-0 h-1 z-50 bg-transparent">
-        <div className="h-full bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 shadow-lg transition-all duration-300 ease-out" 
-             style={{ width: '0%' }} />
+        <div className="h-full bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 shadow-lg transition-all duration-300 ease-out" />
       </div>
       
       <div className="container mx-auto px-4 py-8 md:py-12 lg:py-16">
@@ -606,8 +674,8 @@ export default function Project() {
           >
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-8 tracking-tight">
               <span className="bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 bg-clip-text text-transparent 
-                            animate-degrade bg-300% leading-tight">
-                Projet Écologique
+                            animate-gradient bg-300% leading-tight">
+                Ensemble pour la Planète
               </span>
             </h1>
           </MotionDiv>
@@ -618,9 +686,14 @@ export default function Project() {
             transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
             className="max-w-3xl mx-auto mb-12"
           >
-            <p className="text-xl md:text-2xl text-foreground/90 leading-relaxed font-light">
-              Rejoignez notre mouvement pour un avenir plus vert. Ensemble, transformons 
-              nos habitudes et protégeons notre planète pour les générations futures.
+            <p className="text-xl md:text-2xl text-foreground/90 leading-relaxed font-light mb-6">
+              Bienvenue dans notre mouvement écologique communautaire. Nous croyons fermement que chaque petit geste compte 
+              et que, collectivement, nous pouvons créer un impact significatif pour préserver notre belle planète.
+            </p>
+            <p className="text-lg text-foreground/80 leading-relaxed">
+              Depuis notre création, nous avons sensibilisé plus de 10 000 personnes, recyclé des centaines de tonnes 
+              de déchets et créé une communauté engagée qui grandit chaque jour. Rejoignez-nous dans cette aventure 
+              passionnante vers un avenir plus vert et durable.
             </p>
           </MotionDiv>
           
@@ -631,21 +704,30 @@ export default function Project() {
             className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16"
           >
             <BoutonAnime
-              variante="gradient"
-              taille="xl"
-              icone={<Rocket className="w-6 h-6" />}
+              variant="gradient"
+              size="xl"
+              icon={<Rocket className="w-6 h-6" />}
               href="/guide"
             >
               Découvrir le Projet
             </BoutonAnime>
             
             <BoutonAnime
-              variante="outline"
-              taille="xl"
-              icone={<BookOpen className="w-6 h-6" />}
+              variant="outline"
+              size="xl"
+              icon={<BookOpen className="w-6 h-6" />}
               href="/ressources"
             >
               Ressources Éducatives
+            </BoutonAnime>
+
+            <BoutonAnime
+              variant="premium"
+              size="xl"
+              icon={<HeartIcon className="w-6 h-6" />}
+              href="/rejoindre"
+            >
+              Nous Rejoindre
             </BoutonAnime>
           </MotionDiv>
         </MotionSection>
@@ -667,49 +749,52 @@ export default function Project() {
           >
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
               <span className="bg-gradient-to-r from-primary to-emerald-600 bg-clip-text text-transparent">
-                Nos Objectifs
+                Nos Objectifs Stratégiques
               </span>
             </h2>
             <p className="text-xl text-foreground/80 max-w-3xl mx-auto">
-              Une vision claire pour un impact environnemental significatif
+              Une vision claire et des objectifs ambitieux pour un impact environnemental significatif et durable
             </p>
           </MotionDiv>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {objectifs.map((objectif, index) => (
+            {goals.map((goal, index) => (
               <MotionDiv
-                key={objectif.titre}
+                key={goal.title}
                 initial={{ opacity: 0, y: 50, scale: 0.9 }}
                 whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: index * 0.1, type: "spring", stiffness: 80 }}
                 className="h-full"
               >
-                <WidgetFlottant intensite={0.8}>
+                <WidgetFlottant intensity={0.8}>
                   <Card className={`h-full border-2 border-white/20 overflow-hidden 
-                                 backdrop-blur-sm bg-gradient-to-br ${objectif.couleur} hover:bg-white/5 transition-all duration-500`}>
+                                 backdrop-blur-sm ${goal.bg} hover:bg-white/5 transition-all duration-500 group`}>
                     <CardContent className="p-8 relative">
                       <div className="flex items-start gap-6 mb-6">
-                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${objectif.couleur} 
-                                      flex items-center justify-center flex-shrink-0 transition-transform duration-500 group-hover:scale-110`}>
-                          <objectif.icone className="w-8 h-8 text-white" />
+                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${goal.bg} 
+                                      flex items-center justify-center flex-shrink-0 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3`}>
+                          <goal.icon className={`w-8 h-8 ${goal.color} transition-transform duration-500`} />
                         </div>
                         <div className="flex-1">
                           <h3 className="font-bold text-2xl mb-3 bg-gradient-to-r from-foreground to-foreground/80 
-                                       bg-clip-text text-transparent">
-                            {objectif.titre}
+                                       bg-clip-text text-transparent group-hover:text-primary transition-colors duration-500">
+                            {goal.title}
                           </h3>
-                          <p className="text-foreground/80">
-                            {objectif.description}
+                          <p className="text-foreground/80 mb-4 group-hover:text-foreground/90 transition-colors duration-500">
+                            {goal.description}
+                          </p>
+                          <p className="text-sm text-foreground/70 group-hover:text-foreground/80 transition-colors duration-500">
+                            {goal.longDescription}
                           </p>
                         </div>
                       </div>
                       
-                      <ul className="space-y-3 pt-6 border-t border-white/10">
-                        {objectif.details.map((detail, i) => (
-                          <li key={i} className="flex items-center gap-3 text-foreground/70">
-                            <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                            <span>{detail}</span>
+                      <ul className="space-y-3 pt-6 border-t border-white/10 group-hover:border-primary/20 transition-colors duration-500">
+                        {goal.features.map((feature, i) => (
+                          <li key={i} className="flex items-center gap-3 text-foreground/70 group-hover:text-foreground/80 transition-colors duration-500">
+                            <div className="w-2 h-2 rounded-full bg-emerald-500 group-hover:scale-125 transition-transform duration-500" />
+                            <span>{feature}</span>
                           </li>
                         ))}
                       </ul>
@@ -721,7 +806,7 @@ export default function Project() {
           </div>
         </MotionSection>
         
-        {/* Section Tri Sélectif */}
+        {/* Section Tri Sélectif avec Description Détaillée */}
         <MotionSection
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -741,58 +826,63 @@ export default function Project() {
                 Système de Tri Intelligent
               </span>
             </h2>
-            <p className="text-xl text-foreground/80 max-w-3xl mx-auto">
-              Apprenez à trier correctement vos déchets pour maximiser le recyclage
+            <p className="text-xl text-foreground/80 max-w-3xl mx-auto mb-4">
+              Apprenez à trier correctement vos déchets pour maximiser le recyclage et minimiser l'impact environnemental
+            </p>
+            <p className="text-lg text-foreground/70 max-w-4xl mx-auto">
+              Notre système de tri a été conçu pour être simple, efficace et accessible à tous. Chaque catégorie de déchets 
+              a son propre circuit de valorisation, permettant de réutiliser au maximum les ressources et de réduire notre empreinte écologique.
             </p>
           </MotionDiv>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {poubelles.map((poubelle, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+            {bins.map((bin, index) => (
               <MotionDiv
-                key={poubelle.label}
+                key={bin.label}
                 initial={{ opacity: 0, y: 50, scale: 0.9 }}
                 whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: index * 0.1, type: "spring", stiffness: 80 }}
                 className="h-full"
               >
-                <WidgetFlottant intensite={1}>
+                <WidgetFlottant intensity={1}>
                   <div
-                    onClick={() => gererInteractionPoubelle(index)}
-                    className={`cursor-pointer h-full transition-all duration-500 ${indexPoubelleActive === index ? 'transform -translate-y-4' : ''}`}
+                    onClick={() => handleBinInteraction(index)}
+                    className={`cursor-pointer h-full transition-all duration-500 ${activeBinIndex === index ? 'transform -translate-y-4' : ''}`}
                   >
-                    <Card className={`h-full border-2 ${poubelle.bordure} overflow-hidden 
-                                   backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all duration-500`}>
+                    <Card className={`h-full border-2 ${bin.borderColor} overflow-hidden 
+                                   backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all duration-500 group`}>
                       <CardContent className="p-8 text-center relative">
-                        {/* Indicateur d'activité */}
-                        {indexPoubelleActive === index && (
+                        {activeBinIndex === index && (
                           <div className="absolute top-4 right-4">
                             <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
                           </div>
                         )}
                         
-                        <div className={`w-28 h-28 md:w-32 md:h-32 rounded-2xl ${poubelle.bg} 
+                        <div className={`w-28 h-28 md:w-32 md:h-32 rounded-2xl ${bin.bg} 
                                       flex items-center justify-center mx-auto mb-6
                                       transition-all duration-500 group-hover:scale-105
-                                      ${indexPoubelleActive === index ? 'scale-105 ring-4 ring-white/30' : ''}`}>
-                          <poubelle.icone className={`w-14 h-14 ${poubelle.couleur} transition-all duration-500 
+                                      ${activeBinIndex === index ? 'scale-105 ring-4 ring-white/30' : ''}`}>
+                          <bin.icon className={`w-14 h-14 ${bin.color} transition-all duration-500 
                                             group-hover:rotate-6`} />
                         </div>
                         
                         <h3 className="font-bold text-2xl mb-4 bg-gradient-to-r from-foreground to-foreground/80 
-                                     bg-clip-text text-transparent">
-                          {poubelle.label}
+                                     bg-clip-text text-transparent group-hover:text-primary transition-colors duration-500">
+                          {bin.label}
                         </h3>
                         
-                        <p className="text-foreground/70 mb-6">
-                          {poubelle.description}
+                        <p className="text-foreground/70 mb-6 group-hover:text-foreground/80 transition-colors duration-500">
+                          {bin.description}
                         </p>
                         
                         {/* Objectif */}
-                        <div className="pt-6 border-t border-white/10">
-                          <div className="text-sm text-foreground/60 mb-2">Objectif</div>
-                          <div className="text-lg font-semibold text-emerald-500">
-                            {poubelle.objectif}
+                        <div className="pt-6 border-t border-white/10 group-hover:border-primary/20 transition-colors duration-500">
+                          <div className="text-sm text-foreground/60 mb-2 group-hover:text-foreground/70 transition-colors duration-500">
+                            Objectif 2025
+                          </div>
+                          <div className="text-lg font-semibold text-emerald-500 group-hover:text-emerald-400 transition-colors duration-500">
+                            {bin.goal}
                           </div>
                         </div>
                       </CardContent>
@@ -803,6 +893,43 @@ export default function Project() {
             ))}
           </div>
           
+          {/* Description détaillée de la poubelle active */}
+          <MotionDiv
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="max-w-4xl mx-auto"
+          >
+            <WidgetFlottant intensity={0.5}>
+              <Card className="border-2 border-primary/20 overflow-hidden backdrop-blur-sm bg-white/5">
+                <CardContent className="p-8">
+                  <div className="flex items-start gap-6">
+                    <div className={`w-16 h-16 rounded-2xl ${bins[activeBinIndex].bg} 
+                                  flex items-center justify-center flex-shrink-0`}>
+                      <bins[activeBinIndex].icon className={`w-8 h-8 ${bins[activeBinIndex].color}`} />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold mb-4">{bins[activeBinIndex].label}</h3>
+                      <p className="text-foreground/80 leading-relaxed">
+                        {bins[activeBinIndex].longDescription}
+                      </p>
+                      <div className="mt-6">
+                        <BoutonAnime
+                          variant="outline"
+                          size="default"
+                          icon={<Info className="w-4 h-4" />}
+                          href={`/guide/${bins[activeBinIndex].label.toLowerCase().replace(/ /g, '-')}`}
+                        >
+                          En savoir plus
+                        </BoutonAnime>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </WidgetFlottant>
+          </MotionDiv>
+          
           {/* Indicateurs de navigation */}
           <MotionDiv
             initial={{ opacity: 0 }}
@@ -811,22 +938,104 @@ export default function Project() {
             transition={{ duration: 0.5, delay: 0.5, ease: "easeOut" }}
             className="flex justify-center gap-3 mt-12"
           >
-            {poubelles.map((_, index) => (
+            {bins.map((_, index) => (
               <button
                 key={index}
-                onClick={() => gererInteractionPoubelle(index)}
+                onClick={() => handleBinInteraction(index)}
                 className={`w-3 h-3 rounded-full transition-all duration-500 ease-out ${
-                  index === indexPoubelleActive 
+                  index === activeBinIndex 
                     ? 'w-8 bg-gradient-to-r from-primary to-emerald-600' 
                     : 'bg-muted hover:bg-primary/50'
                 }`}
-                aria-label={`Aller à ${poubelles[index].label}`}
+                aria-label={`Aller à ${bins[index].label}`}
               />
             ))}
           </MotionDiv>
         </MotionSection>
         
-        {/* Section Appel à l'Action */}
+        {/* Section Actions Concrètes */}
+        <MotionSection
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1, ease: "easeOut" }}
+          className="max-w-6xl mx-auto mb-20 md:mb-32"
+        >
+          <MotionDiv
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+              <span className="bg-gradient-to-r from-primary to-emerald-600 bg-clip-text text-transparent">
+                Passez à l'Action
+              </span>
+            </h2>
+            <p className="text-xl text-foreground/80 max-w-3xl mx-auto">
+              Des initiatives concrètes pour vous engager dès aujourd'hui
+            </p>
+          </MotionDiv>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {actions.map((action, index) => (
+              <MotionDiv
+                key={action.title}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: index * 0.1, ease: "easeOut" }}
+                className="h-full"
+              >
+                <div
+                  onMouseEnter={() => handleActionHover(index)}
+                  onMouseLeave={() => handleActionHover(null)}
+                  className="h-full group"
+                >
+                  <Card className="h-full border-2 border-white/20 hover:border-primary/30 
+                                 transition-all duration-500 hover:shadow-2xl overflow-hidden 
+                                 backdrop-blur-sm bg-white/5 hover:bg-white/10">
+                    <CardContent className="p-8">
+                      <div className="flex flex-col items-center text-center">
+                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${action.bg} 
+                                      flex items-center justify-center mb-6 transition-all duration-500 
+                                      group-hover:scale-110 group-hover:rotate-3`}>
+                          <action.icon className={`w-8 h-8 ${action.color} transition-transform duration-500`} />
+                        </div>
+                        
+                        <h3 className="font-bold text-xl mb-4 text-foreground group-hover:text-primary transition-colors duration-500">
+                          {action.title}
+                        </h3>
+                        
+                        <p className="text-foreground/70 mb-4 group-hover:text-foreground/80 transition-colors duration-500">
+                          {action.description}
+                        </p>
+                        
+                        <p className="text-sm text-foreground/60 group-hover:text-foreground/70 transition-colors duration-500">
+                          {action.details}
+                        </p>
+                        
+                        <div className="mt-6">
+                          <BoutonAnime
+                            variant="outline"
+                            size="sm"
+                            icon={<ArrowRight className="w-4 h-4" />}
+                            href={`/actions/${action.title.toLowerCase().replace(/ /g, '-')}`}
+                          >
+                            Participer
+                          </BoutonAnime>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </MotionDiv>
+            ))}
+          </div>
+        </MotionSection>
+        
+        {/* Section Appel à l'Action Finale */}
         <MotionSection
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -834,15 +1043,15 @@ export default function Project() {
           transition={{ duration: 1, ease: "easeOut" }}
           className="max-w-4xl mx-auto"
         >
-          <WidgetFlottant intensite={1.2}>
+          <WidgetFlottant intensity={1.2}>
             <Card className="border-2 border-white/20 overflow-hidden backdrop-blur-xl 
                            bg-gradient-to-br from-primary/10 via-emerald-500/10 to-cyan-500/10">
               <CardContent className="p-12 md:p-16 text-center relative overflow-hidden">
                 {/* Éléments de fond animés */}
                 <div className="absolute -top-20 -right-20 w-64 h-64 bg-gradient-to-r from-primary/15 to-emerald-500/15 
-                              rounded-full blur-3xl animate-pulse-lent" />
+                              rounded-full blur-3xl animate-pulse-slow" />
                 <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-gradient-to-r from-emerald-500/15 to-cyan-500/15 
-                              rounded-full blur-3xl animate-pulse-lent delay-1000" />
+                              rounded-full blur-3xl animate-pulse-slow delay-1000" />
                 
                 <MotionDiv
                   initial={{ scale: 0, rotate: -180 }}
@@ -862,32 +1071,51 @@ export default function Project() {
                 <h2 className="text-4xl md:text-5xl font-bold mb-8 relative z-10">
                   <span className="bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 
                                  bg-clip-text text-transparent">
-                    Rejoignez la Révolution Verte
+                    Votre Engagement Compte
                   </span>
                 </h2>
                 
-                <p className="text-xl text-foreground/90 leading-relaxed mb-10 max-w-2xl mx-auto relative z-10">
-                  Ensemble, nous pouvons créer un impact significatif. Chaque geste compte, 
-                  chaque action contribue à préserver notre planète pour les générations futures.
-                </p>
+                <div className="text-xl text-foreground/90 leading-relaxed mb-10 max-w-2xl mx-auto relative z-10 space-y-4">
+                  <p>
+                    Chaque geste que vous posez pour l'environnement a un impact réel. En triant vos déchets, 
+                    en réduisant votre consommation, en participant à nos événements, vous contribuez activement 
+                    à la préservation de notre planète.
+                  </p>
+                  <p>
+                    Notre communauté compte déjà des milliers de membres engagés qui font la différence chaque jour. 
+                    Ensemble, nous avons déjà accompli de grandes choses, mais il reste encore beaucoup à faire.
+                  </p>
+                  <p className="font-semibold text-primary">
+                    Rejoignez-nous aujourd'hui et faites partie de la solution !
+                  </p>
+                </div>
                 
                 <div className="flex flex-col sm:flex-row gap-6 justify-center relative z-10">
                   <BoutonAnime
-                    variante="gradient"
-                    taille="lg"
-                    icone={<Leaf className="w-6 h-6" />}
+                    variant="gradient"
+                    size="lg"
+                    icon={<Leaf className="w-6 h-6" />}
                     href="/rejoindre"
                   >
                     Rejoindre Maintenant
                   </BoutonAnime>
                   
                   <BoutonAnime
-                    variante="outline"
-                    taille="lg"
-                    icone={<Compass className="w-6 h-6" />}
+                    variant="outline"
+                    size="lg"
+                    icon={<Compass className="w-6 h-6" />}
                     href="/decouvrir"
                   >
-                    En Savoir Plus
+                    Découvrir nos Projets
+                  </BoutonAnime>
+
+                  <BoutonAnime
+                    variant="premium"
+                    size="lg"
+                    icon={<Gift className="w-6 h-6" />}
+                    href="/benevolat"
+                  >
+                    Devenir Bénévole
                   </BoutonAnime>
                 </div>
               </CardContent>
@@ -903,66 +1131,68 @@ export default function Project() {
         transition={{ delay: 1, duration: 0.8, ease: "easeOut" }}
         className="fixed bottom-8 right-8 z-40"
       >
-        <WidgetFlottant intensite={1.5}>
+        <WidgetFlottant intensity={1.5}>
           <BoutonAnime
-            variante="gradient"
-            taille="lg"
-            icone={<ChevronDown className="w-5 h-5" />}
+            variant="gradient"
+            size="lg"
+            icon={<ChevronDown className="w-5 h-5" />}
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="rounded-full w-16 h-16 p-0"
             aria-label="Retour en haut"
-          />
+          >
+            <ChevronDown className="w-6 h-6 rotate-180" />
+          </BoutonAnime>
         </WidgetFlottant>
       </MotionDiv>
       
       {/* Styles globaux pour les animations */}
       <style jsx>{`
-        @keyframes degrade {
+        @keyframes gradient {
           0%, 100% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
         }
         
-        @keyframes flottement-lent {
+        @keyframes float-slow {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
           25% { transform: translateY(-15px) rotate(1deg); }
           50% { transform: translateY(0px) rotate(0deg); }
           75% { transform: translateY(15px) rotate(-1deg); }
         }
         
-        @keyframes ondulation {
+        @keyframes ripple {
           0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
           100% { transform: translate(-50%, -50%) scale(4); opacity: 0; }
         }
         
-        @keyframes brillance {
+        @keyframes shine {
           0% { transform: translateX(-100%) rotate(30deg); }
           100% { transform: translateX(300%) rotate(30deg); }
         }
         
-        @keyframes pulse-lent {
+        @keyframes pulse-slow {
           0%, 100% { opacity: 0.3; }
           50% { opacity: 0.6; }
         }
         
-        .animate-degrade {
-          animation: degrade 4s ease infinite;
+        .animate-gradient {
+          animation: gradient 4s ease infinite;
           background-size: 200% 200%;
         }
         
-        .animate-flottement-lent {
-          animation: flottement-lent 25s ease-in-out infinite;
+        .animate-float-slow {
+          animation: float-slow 25s ease-in-out infinite;
         }
         
-        .animate-ondulation {
-          animation: ondulation 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        .animate-ripple {
+          animation: ripple 0.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
-        .animate-brillance {
-          animation: brillance 2s ease-in-out;
+        .animate-shine {
+          animation: shine 2s ease-in-out;
         }
         
-        .animate-pulse-lent {
-          animation: pulse-lent 6s ease-in-out infinite;
+        .animate-pulse-slow {
+          animation: pulse-slow 6s ease-in-out infinite;
         }
         
         .bg-300% {
@@ -984,11 +1214,11 @@ export default function Project() {
         
         /* Réduction du mouvement */
         @media (prefers-reduced-motion: reduce) {
-          .animate-degrade,
-          .animate-flottement-lent,
-          .animate-ondulation,
-          .animate-brillance,
-          .animate-pulse-lent {
+          .animate-gradient,
+          .animate-float-slow,
+          .animate-ripple,
+          .animate-shine,
+          .animate-pulse-slow {
             animation: none !important;
           }
           
@@ -1008,6 +1238,35 @@ export default function Project() {
           outline: 3px solid var(--primary);
           outline-offset: 3px;
           border-radius: 0.5rem;
+        }
+
+        /* Animations de survol ultra-fluides */
+        .smooth-hover {
+          transition: all 500ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hover-lift {
+          transition: transform 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .hover-lift:hover {
+          transform: translateY(-8px);
+        }
+
+        .hover-scale {
+          transition: transform 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .hover-scale:hover {
+          transform: scale(1.05);
+        }
+
+        .hover-glow {
+          transition: box-shadow 500ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hover-glow:hover {
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
       `}</style>
     </div>
