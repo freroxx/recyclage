@@ -23,90 +23,17 @@ import {
   Globe,
   Shield,
   Award,
-  BarChart3,
-  Cpu,
-  Zap,
-  Clock,
-  Heart,
-  TreePine,
-  Battery,
-  Truck,
-  Star,
-  Cloud,
-  Droplets,
-  Factory,
-  Compass,
-  Gem,
-  Rocket,
-  Target as TargetIcon,
-  Zap as ZapIcon,
-  Shield as ShieldIcon,
-  Globe as GlobeIcon,
-  TrendingUp as TrendingUpIcon,
   BookOpen,
-  Award as AwardIcon,
+  Heart as HeartIcon,
   Info,
   Calendar,
-  MapPin,
-  Gift,
-  Coffee,
-  Clock as ClockIcon,
-  ThumbsUp,
-  ShieldCheck,
-  Heart as HeartIcon,
-  Users as UsersIcon,
   Home,
-  School,
-  Leaf as LeafIcon,
-  Search,
-  Filter,
-  Download,
-  Share2,
-  Bell,
-  Settings,
-  Menu,
-  X,
+  Gift,
   ChevronLeft,
   ChevronRight,
-  Maximize2,
-  Minimize2,
-  Volume2,
-  VolumeX,
-  Eye,
-  EyeOff,
-  Lock,
-  Unlock,
-  Mail,
-  Phone,
-  Map,
-  Navigation,
-  Camera,
-  Video,
-  Mic,
-  Music,
-  Film,
-  Image,
-  File,
-  Folder,
-  Database,
-  Server,
-  Cpu as CpuIcon,
-  MemoryStick,
-  HardDrive,
-  Network,
-  Wifi,
-  Bluetooth,
-  Radio,
-  Satellite,
-  CloudRain,
-  Wind,
-  Sun,
-  Moon,
-  CloudSun,
-  CloudMoon,
-  Umbrella,
-  Thermometer,
-  Droplet
+  X,
+  Share2,
+  Rocket
 } from "lucide-react";
 
 // Hook pour le chargement différé de framer-motion
@@ -130,9 +57,7 @@ const useLazyFramerMotion = () => {
           useSpring: framerMotion.useSpring,
           useMotionValue: framerMotion.useMotionValue,
           animate: framerMotion.animate,
-          spring: framerMotion.spring,
-          useAnimation: framerMotion.useAnimation,
-          useInView: framerMotion.useInView
+          spring: framerMotion.spring
         });
       } catch (err) {
         console.warn('Framer Motion a échoué à charger, utilisation des animations CSS');
@@ -148,7 +73,7 @@ const useLazyFramerMotion = () => {
   return { ...motionComponents, error, loading };
 };
 
-// Composant Bouton Animé Premium avec corrections et améliorations
+// Composant Bouton Animé Premium avec animations fluides
 const BoutonAnime = memo(({ 
   children, 
   variant = "default",
@@ -163,7 +88,7 @@ const BoutonAnime = memo(({
   ...props 
 }: {
   children: React.ReactNode;
-  variant?: "default" | "outline" | "premium" | "gradient" | "success" | "warning" | "danger";
+  variant?: "default" | "outline" | "premium" | "gradient" | "success";
   size?: "sm" | "default" | "lg" | "xl";
   className?: string;
   onClick?: () => void;
@@ -175,15 +100,19 @@ const BoutonAnime = memo(({
 }) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isHovered, setIsHovered] = useState(false);
-  const [isPressed, setIsPressed] = useState(false);
   const [ripples, setRipples] = useState<Array<{x: number, y: number, id: number, size: number}>>([]);
   
-  const handleMouseEnter = () => !disabled && setIsHovered(true);
-  const handleMouseLeave = () => !disabled && setIsHovered(false);
-  const handleMouseDown = () => !disabled && setIsPressed(true);
-  const handleMouseUp = () => setIsPressed(false);
+  const handleMouseEnter = useCallback(() => {
+    if (!disabled && !loading) {
+      setIsHovered(true);
+    }
+  }, [disabled, loading]);
   
-  const handleClick = (e: React.MouseEvent) => {
+  const handleMouseLeave = useCallback(() => {
+    setIsHovered(false);
+  }, []);
+  
+  const handleClick = useCallback((e: React.MouseEvent) => {
     if (disabled || loading) return;
     
     const button = buttonRef.current;
@@ -199,26 +128,24 @@ const BoutonAnime = memo(({
     
     setTimeout(() => {
       setRipples(prev => prev.filter(ripple => ripple.id !== id));
-    }, 800);
+    }, 600);
     
     if (onClick) onClick();
-  };
+  }, [disabled, loading, onClick]);
   
   const sizeClasses = {
-    sm: "px-4 py-2 text-sm",
-    default: "px-6 py-3",
-    lg: "px-8 py-4 text-lg",
-    xl: "px-12 py-6 text-xl"
+    sm: "px-4 py-2.5 text-sm rounded-xl",
+    default: "px-6 py-3 rounded-xl",
+    lg: "px-8 py-4 text-lg rounded-xl",
+    xl: "px-12 py-6 text-xl rounded-xl"
   };
   
   const variantClasses = {
     default: "bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl",
-    outline: "border-2 border-primary/20 bg-background/50 backdrop-blur-sm hover:border-primary/40 hover:bg-primary/5",
+    outline: "border-2 border-primary/20 bg-background/80 backdrop-blur-sm hover:border-primary/40 hover:bg-primary/5",
     premium: "bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 hover:from-amber-600 hover:via-orange-600 hover:to-pink-600 shadow-lg hover:shadow-2xl",
     gradient: "bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 hover:from-primary/90 hover:via-emerald-700 hover:to-cyan-700 shadow-lg hover:shadow-2xl",
-    success: "bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-lg hover:shadow-xl",
-    warning: "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg hover:shadow-xl",
-    danger: "bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 shadow-lg hover:shadow-xl"
+    success: "bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-lg hover:shadow-xl"
   };
   
   const ButtonContent = (
@@ -238,12 +165,9 @@ const BoutonAnime = memo(({
         />
       ))}
       
-      {/* Effet de Lueur */}
-      <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-      
-      {/* Effet de Brillance */}
+      {/* Effet de Brillance au survol */}
       <span className="absolute inset-0 overflow-hidden rounded-xl">
-        <span className="absolute -inset-y-full -left-20 w-20 bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-shine" />
+        <span className="absolute -inset-y-full -left-20 w-20 bg-gradient-to-r from-transparent via-white/30 to-transparent group-hover:animate-shine transition-all duration-700" />
       </span>
       
       {/* État Loading */}
@@ -279,7 +203,7 @@ const BoutonAnime = memo(({
     disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
     ${fullWidth ? 'w-full' : ''}
     group ${sizeClasses[size]} ${variantClasses[variant]} ${className}
-    ${isPressed ? 'scale-95' : ''}
+    ${isHovered ? 'shadow-2xl' : ''}
   `;
   
   if (href && !disabled && !loading) {
@@ -290,8 +214,6 @@ const BoutonAnime = memo(({
           className={buttonClasses}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
-          onMouseDown={handleMouseDown}
-          onMouseUp={handleMouseUp}
           onClick={handleClick}
           disabled={disabled || loading}
           {...props}
@@ -308,8 +230,6 @@ const BoutonAnime = memo(({
       className={buttonClasses}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
       onClick={handleClick}
       disabled={disabled || loading}
       {...props}
@@ -321,23 +241,19 @@ const BoutonAnime = memo(({
 
 BoutonAnime.displayName = 'BoutonAnime';
 
-// Composant Widget Flottant amélioré avec plus d'options
+// Composant Widget Flottant avec bords arrondis et animations fluides
 const WidgetFlottant = memo(({
   children,
   intensity = 1,
   className = "",
   interactive = true,
-  glow = true,
-  shadow = true,
-  border = true
+  glow = true
 }: {
   children: React.ReactNode;
   intensity?: number;
   className?: string;
   interactive?: boolean;
   glow?: boolean;
-  shadow?: boolean;
-  border?: boolean;
 }) => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
@@ -353,7 +269,9 @@ const WidgetFlottant = memo(({
       const x = (e.clientX - rect.left) / rect.width;
       const y = (e.clientY - rect.top) / rect.height;
       
-      setMousePosition({ x: (x - 0.5) * 2, y: (y - 0.5) * 2 });
+      requestAnimationFrame(() => {
+        setMousePosition({ x: (x - 0.5) * 2, y: (y - 0.5) * 2 });
+      });
     };
     
     const handleMouseEnter = () => setIsHovered(true);
@@ -378,16 +296,15 @@ const WidgetFlottant = memo(({
     };
   }, [interactive]);
   
-  const rotateX = interactive ? mousePosition.y * 3 * intensity : 0;
-  const rotateY = interactive ? -mousePosition.x * 3 * intensity : 0;
-  const translateZ = interactive ? Math.abs(mousePosition.x + mousePosition.y) * 8 * intensity : 0;
+  const rotateX = interactive ? mousePosition.y * 2 * intensity : 0;
+  const rotateY = interactive ? -mousePosition.x * 2 * intensity : 0;
+  const translateZ = interactive ? Math.abs(mousePosition.x + mousePosition.y) * 5 * intensity : 0;
   
   return (
     <div
       ref={widgetRef}
-      className={`relative transition-all duration-500 ease-out will-change-transform ${className}
-        ${shadow ? 'shadow-lg hover:shadow-2xl' : ''}
-        ${border ? 'border border-white/10 hover:border-primary/20' : ''}
+      className={`relative transition-all duration-500 ease-out will-change-transform rounded-2xl ${className}
+        shadow-lg hover:shadow-2xl border border-white/10 hover:border-primary/20
       `}
       style={{
         transform: `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(${translateZ}px)`,
@@ -398,7 +315,7 @@ const WidgetFlottant = memo(({
         <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/3 via-transparent to-white/3 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
       )}
       
-      {/* Bordure Lumineuse */}
+      {/* Bordure Lumineuse au survol */}
       {glow && interactive && (
         <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-primary/20 via-emerald-500/20 to-cyan-500/20 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-700" />
       )}
@@ -415,21 +332,11 @@ const WidgetFlottant = memo(({
 
 WidgetFlottant.displayName = 'WidgetFlottant';
 
-// Système de particules amélioré avec contrôle de performance
-const FondParticulesPremium = memo(({ 
-  particleCount = 60,
-  interactionStrength = 0.05,
-  connectionDistance = 100
-}: {
-  particleCount?: number;
-  interactionStrength?: number;
-  connectionDistance?: number;
-}) => {
+// Système de particules optimisé
+const FondParticulesPremium = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
   const particlesRef = useRef<any[]>([]);
-  const mouseRef = useRef({ x: 0, y: 0, radius: 150 });
-  const [isVisible, setIsVisible] = useState(true);
   
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -445,28 +352,7 @@ const FondParticulesPremium = memo(({
     };
     
     resize();
-    
-    const handleResize = () => {
-      resize();
-      initParticles();
-    };
-    
-    window.addEventListener('resize', handleResize);
-    
-    // Gestion de la visibilité pour économiser les performances
-    const handleVisibilityChange = () => {
-      setIsVisible(document.visibilityState === 'visible');
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    // Suivi de la souris
-    const handleMouseMove = (e: MouseEvent) => {
-      mouseRef.current.x = e.x;
-      mouseRef.current.y = e.y;
-    };
-    
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('resize', resize);
     
     // Classe Particule
     class Particule {
@@ -476,14 +362,10 @@ const FondParticulesPremium = memo(({
       speedX: number;
       speedY: number;
       color: string;
-      originalX: number;
-      originalY: number;
       
       constructor() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        this.originalX = this.x;
-        this.originalY = this.y;
         this.size = Math.random() * 1.5 + 0.5;
         this.speedX = Math.random() * 0.3 - 0.15;
         this.speedY = Math.random() * 0.3 - 0.15;
@@ -491,30 +373,12 @@ const FondParticulesPremium = memo(({
       }
       
       update() {
-        // Mouvement naturel
         this.x += this.speedX;
         this.y += this.speedY;
         
         // Rebond sur les bords
         if (this.x > canvas.width || this.x < 0) this.speedX = -this.speedX;
         if (this.y > canvas.height || this.y < 0) this.speedY = -this.speedY;
-        
-        // Interaction avec la souris
-        const dx = mouseRef.current.x - this.x;
-        const dy = mouseRef.current.y - this.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance < mouseRef.current.radius) {
-          const angle = Math.atan2(dy, dx);
-          const force = (mouseRef.current.radius - distance) / mouseRef.current.radius;
-          
-          this.x -= Math.cos(angle) * force * interactionStrength * 50;
-          this.y -= Math.sin(angle) * force * interactionStrength * 50;
-        }
-        
-        // Retour à la position originale progressivement
-        this.x += (this.originalX - this.x) * 0.01;
-        this.y += (this.originalY - this.y) * 0.01;
       }
       
       draw() {
@@ -530,10 +394,10 @@ const FondParticulesPremium = memo(({
           const dy = this.y - particule.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
           
-          if (distance < connectionDistance) {
+          if (distance < 80) {
             ctx.beginPath();
-            ctx.strokeStyle = `rgba(100, 200, 255, ${0.15 * (1 - distance/connectionDistance)})`;
-            ctx.lineWidth = 0.5;
+            ctx.strokeStyle = `rgba(100, 200, 255, ${0.1 * (1 - distance/80)})`;
+            ctx.lineWidth = 0.3;
             ctx.moveTo(this.x, this.y);
             ctx.lineTo(particule.x, particule.y);
             ctx.stroke();
@@ -542,9 +406,11 @@ const FondParticulesPremium = memo(({
       }
     }
     
-    // Initialiser les particules
+    // Créer des particules
     const initParticles = () => {
       particlesRef.current = [];
+      const particleCount = Math.min(Math.floor((canvas.width * canvas.height) / 20000), 60);
+      
       for (let i = 0; i < particleCount; i++) {
         particlesRef.current.push(new Particule());
       }
@@ -554,18 +420,12 @@ const FondParticulesPremium = memo(({
     
     // Boucle d'animation optimisée
     const animate = () => {
-      if (!isVisible) {
-        animationRef.current = requestAnimationFrame(animate);
-        return;
-      }
-      
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       // Dessiner le fond dégradé
       const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
       gradient.addColorStop(0, 'rgba(30, 41, 59, 0.05)');
-      gradient.addColorStop(0.5, 'rgba(15, 23, 42, 0.03)');
-      gradient.addColorStop(1, 'rgba(30, 41, 59, 0.05)');
+      gradient.addColorStop(1, 'rgba(15, 23, 42, 0.05)');
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
@@ -581,14 +441,12 @@ const FondParticulesPremium = memo(({
     animate();
     
     return () => {
-      window.removeEventListener('resize', handleResize);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('resize', resize);
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isVisible, particleCount, interactionStrength, connectionDistance]);
+  }, []);
   
   return (
     <>
@@ -598,46 +456,43 @@ const FondParticulesPremium = memo(({
         aria-hidden="true"
       />
       
-      {/* Superpositions de dégradés animés */}
-      <div className="fixed inset-0 pointer-events-none -z-10 bg-gradient-to-br from-primary/3 via-transparent to-emerald-500/3 animate-pulse-slow" />
+      {/* Superpositions de dégradés */}
+      <div className="fixed inset-0 pointer-events-none -z-10 bg-gradient-to-br from-primary/3 via-transparent to-emerald-500/3" />
       <div className="fixed top-0 left-0 right-0 h-64 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none -z-10" />
       <div className="fixed bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-emerald-500/5 to-transparent pointer-events-none -z-10" />
       
-      {/* Orbes flottants interactifs */}
+      {/* Orbes flottants */}
       <div className="fixed top-1/4 left-10 w-96 h-96 bg-gradient-to-r from-blue-500/5 to-cyan-500/5 rounded-full blur-3xl animate-float-slow pointer-events-none -z-10" />
       <div className="fixed bottom-1/3 right-10 w-96 h-96 bg-gradient-to-r from-emerald-500/5 to-green-500/5 rounded-full blur-3xl animate-float-slow delay-1000 pointer-events-none -z-10" />
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-r from-purple-500/3 to-pink-500/3 rounded-full blur-3xl animate-float-slow delay-500 pointer-events-none -z-10" />
     </>
   );
 });
 
 FondParticulesPremium.displayName = 'FondParticulesPremium';
 
-// Composant Carte Interactive pour les Poubelles
+// Composant Carte Interactive pour les Poubelles avec animations fluides
 const CartePoubelleInteractive = memo(({ 
   bin,
   isActive,
-  onClick,
-  showDetails = false
+  onClick
 }: {
   bin: any;
   isActive: boolean;
   onClick: () => void;
-  showDetails?: boolean;
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const BinIcon = bin.icon;
   
   return (
-    <WidgetFlottant intensity={1} glow={true} shadow={true} border={true}>
+    <WidgetFlottant intensity={1} glow={true}>
       <div
         onClick={onClick}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className={`cursor-pointer h-full transition-all duration-500 ${isActive ? 'transform -translate-y-4' : ''}`}
+        className={`cursor-pointer h-full transition-all duration-500 ${isActive ? 'transform -translate-y-2' : ''}`}
       >
         <Card className={`h-full border-2 ${bin.borderColor} overflow-hidden 
-                       backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all duration-500 group`}>
+                       backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all duration-500 rounded-2xl group`}>
           <CardContent className="p-6 md:p-8 text-center relative">
             {isActive && (
               <div className="absolute top-4 right-4">
@@ -662,23 +517,14 @@ const CartePoubelleInteractive = memo(({
               {bin.description}
             </p>
             
-            {showDetails && (
-              <div className="pt-4 border-t border-white/10 group-hover:border-primary/20 transition-colors duration-500">
-                <div className="text-sm text-foreground/60 mb-2 group-hover:text-foreground/70 transition-colors duration-500">
-                  Objectif 2025
-                </div>
-                <div className="text-base font-semibold text-emerald-500 group-hover:text-emerald-400 transition-colors duration-500">
-                  {bin.goal}
-                </div>
+            <div className="pt-4 border-t border-white/10 group-hover:border-primary/20 transition-colors duration-500">
+              <div className="text-sm text-foreground/60 mb-2 group-hover:text-foreground/70 transition-colors duration-500">
+                Objectif 2025
               </div>
-            )}
-            
-            {/* Indicateur de survol */}
-            {isHovered && !isActive && (
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-                <div className="text-xs text-primary animate-bounce">Cliquez pour plus de détails</div>
+              <div className="text-base font-semibold text-emerald-500 group-hover:text-emerald-400 transition-colors duration-500">
+                {bin.goal}
               </div>
-            )}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -707,13 +553,13 @@ const PanelDetailsPoubelle = memo(({
   const BinIcon = bin.icon;
   
   return (
-    <WidgetFlottant intensity={0.5} glow={true} shadow={true} border={true}>
-      <Card className="border-2 border-primary/20 overflow-hidden backdrop-blur-xl bg-white/10">
+    <WidgetFlottant intensity={0.5} glow={true}>
+      <Card className="border-2 border-primary/20 overflow-hidden backdrop-blur-xl bg-white/10 rounded-2xl">
         <CardContent className="p-6 md:p-8">
           {/* En-tête avec boutons de contrôle */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-xl ${bin.bg} flex items-center justify-center`}>
+              <div className={`w-12 h-12 rounded-xl ${bin.bg} flex items-center justify-center transition-all duration-500 hover:scale-110`}>
                 <BinIcon className={`w-6 h-6 ${bin.color}`} />
               </div>
               <div>
@@ -726,7 +572,7 @@ const PanelDetailsPoubelle = memo(({
               {onClose && (
                 <button
                   onClick={onClose}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors duration-300"
+                  className="p-2 hover:bg-white/10 rounded-lg transition-all duration-300 hover:scale-110"
                   aria-label="Fermer"
                 >
                   <X className="w-5 h-5" />
@@ -744,7 +590,7 @@ const PanelDetailsPoubelle = memo(({
             
             <div>
               <h4 className="font-semibold text-lg mb-3 text-emerald-500">Objectif 2025</h4>
-              <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 transition-all duration-500 hover:bg-emerald-500/15">
                 <p className="text-lg font-semibold text-emerald-600">{bin.goal}</p>
               </div>
             </div>
@@ -753,8 +599,8 @@ const PanelDetailsPoubelle = memo(({
               <h4 className="font-semibold text-lg mb-3 text-amber-500">Bons Gestes</h4>
               <ul className="space-y-2">
                 {bin.bestPractices?.map((practice: string, index: number) => (
-                  <li key={index} className="flex items-center gap-3 text-foreground/70">
-                    <div className="w-2 h-2 rounded-full bg-amber-500" />
+                  <li key={index} className="flex items-center gap-3 text-foreground/70 transition-all duration-300 hover:text-foreground/90 hover:translate-x-1">
+                    <div className="w-2 h-2 rounded-full bg-amber-500 transition-all duration-300 group-hover:scale-125" />
                     <span>{practice}</span>
                   </li>
                 ))}
@@ -816,28 +662,20 @@ const PanelDetailsPoubelle = memo(({
 
 PanelDetailsPoubelle.displayName = 'PanelDetailsPoubelle';
 
-// Composant principal amélioré
+// Composant principal
 export default function Project() {
   const { t, language } = useLanguage();
-  const { motion, AnimatePresence, error: framerMotionError, loading: framerMotionLoading } = useLazyFramerMotion();
+  const { motion, error: framerMotionError, loading: framerMotionLoading } = useLazyFramerMotion();
   
   // États améliorés
   const [activeBinIndex, setActiveBinIndex] = useState(0);
   const [isAutoRotating, setIsAutoRotating] = useState(true);
-  const [hoveredAction, setHoveredAction] = useState<number | null>(null);
   const [showBinDetails, setShowBinDetails] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [particleSettings, setParticleSettings] = useState({
-    count: 60,
-    interaction: 0.05,
-    distance: 100
-  });
   
   const autoRotationInterval = useRef<NodeJS.Timeout>();
   const mountedRef = useRef(true);
-  const detailsPanelRef = useRef<HTMLDivElement>(null);
   
-  // Données améliorées avec plus de détails
+  // Données
   const bins = useMemo(() => [
     { 
       icon: FileText, 
@@ -918,13 +756,7 @@ export default function Project() {
         "Ressources pédagogiques gratuites en ligne",
         "Formations certifiantes pour les entreprises",
         "Programme scolaire intégré dans 10 écoles"
-      ],
-      metrics: {
-        participants: 5000,
-        workshops: 120,
-        schools: 10,
-        satisfaction: 95
-      }
+      ]
     },
     {
       icon: Users,
@@ -938,13 +770,7 @@ export default function Project() {
         "Événements communautaires mensuels",
         "Partenariats avec 50 entreprises locales",
         "Programme d'ambassadeurs écologiques"
-      ],
-      metrics: {
-        volunteers: 500,
-        events: 24,
-        partners: 50,
-        projects: 15
-      }
+      ]
     },
     {
       icon: Recycle,
@@ -958,13 +784,7 @@ export default function Project() {
         "Applications mobiles de suivi des déchets",
         "Systèmes de compostage avancés",
         "Recherche sur les bioplastiques innovants"
-      ],
-      metrics: {
-        efficiency: 85,
-        accuracy: 99,
-        innovation: 12,
-        patents: 3
-      }
+      ]
     },
     {
       icon: Award,
@@ -978,13 +798,7 @@ export default function Project() {
         "Augmentation de 75% du taux de recyclage",
         "Économie de 1 million de litres d'eau annuels",
         "Compensation de 500 tonnes de CO2 par an"
-      ],
-      metrics: {
-        wasteReduction: 60,
-        recyclingRate: 75,
-        waterSaved: 1000000,
-        co2Offset: 500
-      }
+      ]
     }
   ], []);
   
@@ -995,19 +809,15 @@ export default function Project() {
       description: "Participez à nos événements communautaires et ateliers pratiques",
       details: "Chaque mois, nous organisons des activités variées : clean-ups, ateliers de compostage, conférences et visites de centres de tri.",
       color: "text-blue-600",
-      bg: "from-blue-50 to-blue-100",
-      date: "Tous les samedis",
-      participants: "50-100 personnes"
+      bg: "from-blue-50 to-blue-100"
     },
     {
-      icon: School,
+      icon: BookOpen,
       title: "Programme Éducatif",
       description: "Formations et ressources pour tous les niveaux",
       details: "Notre programme éducatif couvre les écoles, les entreprises et le grand public avec des contenus adaptés à chaque public.",
       color: "text-green-600",
-      bg: "from-green-50 to-emerald-100",
-      date: "Sur demande",
-      participants: "Tous publics"
+      bg: "from-green-50 to-emerald-100"
     },
     {
       icon: Home,
@@ -1015,23 +825,19 @@ export default function Project() {
       description: "Conseils et outils pour un foyer plus écologique",
       details: "Découvrez comment réduire votre empreinte écologique à la maison avec nos guides pratiques et kits de démarrage.",
       color: "text-purple-600",
-      bg: "from-purple-50 to-pink-100",
-      date: "Accès permanent",
-      participants: "Familles et particuliers"
+      bg: "from-purple-50 to-pink-100"
     },
     {
-      icon: Gift,
-      title: "Récompenses Écologiques",
-      description: "Bénéficiez d'avantages pour vos actions environnementales",
-      details: "Notre programme de récompenses valorise chaque geste écologique avec des points échangeables contre des produits durables.",
+      icon: Award,
+      title: "Certification Écologique",
+      description: "Obtenir la certification environnementale pour notre communauté",
+      details: "Notre programme de certification valorise les entreprises et individus qui s'engagent concrètement pour l'environnement.",
       color: "text-amber-600",
-      bg: "from-amber-50 to-orange-100",
-      date: "Programme continu",
-      participants: "Tous les membres"
+      bg: "from-amber-50 to-orange-100"
     }
   ], []);
   
-  // Rotation automatique améliorée
+  // Rotation automatique
   useEffect(() => {
     mountedRef.current = true;
     
@@ -1055,7 +861,7 @@ export default function Project() {
     };
   }, [isAutoRotating, showBinDetails, bins.length]);
   
-  // Gestion améliorée des interactions
+  // Gestion des interactions
   const handleBinInteraction = useCallback((index: number) => {
     setActiveBinIndex(index);
     setIsAutoRotating(false);
@@ -1066,10 +872,6 @@ export default function Project() {
         setIsAutoRotating(true);
       }
     }, 15000);
-  }, []);
-  
-  const handleActionHover = useCallback((index: number | null) => {
-    setHoveredAction(index);
   }, []);
   
   const handleNextBin = useCallback(() => {
@@ -1084,17 +886,10 @@ export default function Project() {
     setShowBinDetails(false);
   }, []);
   
-  // Fonction pour ajuster les particules
-  const adjustParticles = useCallback((setting: 'count' | 'interaction' | 'distance', value: number) => {
-    setParticleSettings(prev => ({
-      ...prev,
-      [setting]: value
-    }));
-  }, []);
-  
   // Utiliser les composants motion
   const MotionDiv = motion?.div || 'div';
   const MotionSection = motion?.section || 'section';
+  const AnimatePresence = motion?.AnimatePresence || 'div';
   
   if (framerMotionLoading) {
     return (
@@ -1102,7 +897,6 @@ export default function Project() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary mx-auto mb-8"></div>
           <h2 className="text-2xl font-semibold text-primary">Chargement des animations...</h2>
-          <p className="text-muted-foreground mt-2">Préparation de l'expérience écologique</p>
         </div>
       </div>
     );
@@ -1111,7 +905,7 @@ export default function Project() {
   if (framerMotionError) {
     return (
       <div className="min-h-screen">
-        <FondParticulesPremium {...particleSettings} />
+        <FondParticulesPremium />
         <div className="container mx-auto px-4 py-12">
           <div className="text-center">
             <h1 className="text-4xl font-bold mb-6">Projet Écologique</h1>
@@ -1121,37 +915,12 @@ export default function Project() {
     );
   }
   
-  // Récupérer l'icône de la poubelle active
-  const ActiveBinIcon = bins[activeBinIndex]?.icon || FileText;
-  
   return (
     <div className="min-h-screen overflow-hidden">
-      <FondParticulesPremium {...particleSettings} />
-      
-      {/* Barre de progression améliorée */}
-      <div className="fixed top-0 left-0 right-0 h-1 z-50 bg-transparent">
-        <div className="h-full bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 shadow-lg transition-all duration-300 ease-out" />
-      </div>
-      
-      {/* Contrôles de performance (optionnel - peut être retiré en production) */}
-      <div className="fixed bottom-24 right-8 z-40">
-        <WidgetFlottant intensity={0.5}>
-          <div className="bg-black/50 backdrop-blur-xl rounded-xl p-4 border border-white/10">
-            <div className="text-xs text-white/70 mb-2">Performance</div>
-            <div className="space-y-2">
-              <button
-                onClick={() => adjustParticles('count', particleSettings.count === 60 ? 30 : 60)}
-                className="text-xs px-3 py-1 rounded bg-white/10 hover:bg-white/20 transition-colors"
-              >
-                Particules: {particleSettings.count}
-              </button>
-            </div>
-          </div>
-        </WidgetFlottant>
-      </div>
+      <FondParticulesPremium />
       
       <div className="container mx-auto px-4 py-8 md:py-12 lg:py-16">
-        {/* Section Héro améliorée */}
+        {/* Section Héro */}
         <MotionSection
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
@@ -1164,7 +933,7 @@ export default function Project() {
             transition={{ type: "spring", stiffness: 200, damping: 20 }}
             className="inline-flex items-center gap-3 bg-gradient-to-r from-primary/20 via-emerald-500/20 to-cyan-500/20 
                        text-primary px-6 py-3 rounded-full text-sm font-medium mb-10 
-                       border border-white/20 backdrop-blur-xl shadow-lg"
+                       border border-white/20 backdrop-blur-xl shadow-lg transition-all duration-500 hover:scale-105"
           >
             <Sparkles className="w-4 h-4" />
             <span className="bg-gradient-to-r from-primary to-emerald-600 bg-clip-text text-transparent">
@@ -1241,7 +1010,7 @@ export default function Project() {
           </MotionDiv>
         </MotionSection>
         
-        {/* Section Objectifs améliorée */}
+        {/* Section Objectifs */}
         <MotionSection
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -1278,7 +1047,7 @@ export default function Project() {
               >
                 <WidgetFlottant intensity={0.8}>
                   <Card className={`h-full border-2 border-white/20 overflow-hidden 
-                                 backdrop-blur-sm ${goal.bg} hover:bg-white/5 transition-all duration-500 group`}>
+                                 backdrop-blur-sm ${goal.bg} hover:bg-white/5 transition-all duration-500 rounded-2xl group`}>
                     <CardContent className="p-8 relative">
                       <div className="flex items-start gap-6 mb-6">
                         <div className={`w-16 h-16 rounded-2xl ${goal.bg} 
@@ -1315,7 +1084,7 @@ export default function Project() {
           </div>
         </MotionSection>
         
-        {/* Section Tri Sélectif avec Description Détaillée */}
+        {/* Section Tri Sélectif */}
         <MotionSection
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -1358,13 +1127,12 @@ export default function Project() {
                   bin={bin}
                   isActive={activeBinIndex === index}
                   onClick={() => handleBinInteraction(index)}
-                  showDetails={true}
                 />
               </MotionDiv>
             ))}
           </div>
           
-          {/* Panel de détails amélioré */}
+          {/* Panel de détails */}
           <AnimatePresence>
             {showBinDetails && (
               <MotionDiv
@@ -1373,7 +1141,6 @@ export default function Project() {
                 exit={{ opacity: 0, y: 20, scale: 0.95 }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
                 className="max-w-4xl mx-auto mb-8"
-                ref={detailsPanelRef}
               >
                 <PanelDetailsPoubelle
                   bin={bins[activeBinIndex]}
@@ -1399,7 +1166,7 @@ export default function Project() {
               <button
                 key={index}
                 onClick={() => handleBinInteraction(index)}
-                className={`w-3 h-3 rounded-full transition-all duration-500 ease-out ${
+                className={`w-3 h-3 rounded-full transition-all duration-500 ease-out hover:scale-125 ${
                   index === activeBinIndex 
                     ? 'w-8 bg-gradient-to-r from-primary to-emerald-600' 
                     : 'bg-muted hover:bg-primary/50'
@@ -1408,6 +1175,86 @@ export default function Project() {
               />
             ))}
           </MotionDiv>
+        </MotionSection>
+        
+        {/* Section Actions */}
+        <MotionSection
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1, ease: "easeOut" }}
+          className="max-w-6xl mx-auto mb-20 md:mb-32"
+        >
+          <MotionDiv
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+              <span className="bg-gradient-to-r from-primary to-emerald-600 bg-clip-text text-transparent">
+                Passez à l'Action
+              </span>
+            </h2>
+            <p className="text-xl text-foreground/80 max-w-3xl mx-auto">
+              Des initiatives concrètes pour vous engager dès aujourd'hui
+            </p>
+          </MotionDiv>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {actions.map((action, index) => (
+              <MotionDiv
+                key={action.title}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: index * 0.1, ease: "easeOut" }}
+                className="h-full"
+              >
+                <WidgetFlottant intensity={0.6}>
+                  <div className="h-full group">
+                    <Card className="h-full border-2 border-white/20 hover:border-primary/30 
+                                   transition-all duration-500 hover:shadow-2xl overflow-hidden 
+                                   backdrop-blur-sm bg-white/5 hover:bg-white/10 rounded-2xl">
+                      <CardContent className="p-8">
+                        <div className="flex flex-col items-center text-center">
+                          <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${action.bg} 
+                                        flex items-center justify-center mb-6 transition-all duration-500 
+                                        group-hover:scale-110 group-hover:rotate-3`}>
+                            <action.icon className={`w-8 h-8 ${action.color} transition-transform duration-500`} />
+                          </div>
+                          
+                          <h3 className="font-bold text-xl mb-4 text-foreground group-hover:text-primary transition-colors duration-500">
+                            {action.title}
+                          </h3>
+                          
+                          <p className="text-foreground/70 mb-4 group-hover:text-foreground/80 transition-colors duration-500">
+                            {action.description}
+                          </p>
+                          
+                          <p className="text-sm text-foreground/60 group-hover:text-foreground/70 transition-colors duration-500">
+                            {action.details}
+                          </p>
+                          
+                          <div className="mt-6">
+                            <BoutonAnime
+                              variant="outline"
+                              size="sm"
+                              icon={<ArrowRight className="w-4 h-4" />}
+                              href={`/actions/${action.title.toLowerCase().replace(/ /g, '-')}`}
+                            >
+                              Participer
+                            </BoutonAnime>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </WidgetFlottant>
+              </MotionDiv>
+            ))}
+          </div>
         </MotionSection>
         
         {/* Section Appel à l'Action Finale */}
@@ -1420,7 +1267,7 @@ export default function Project() {
         >
           <WidgetFlottant intensity={1.2}>
             <Card className="border-2 border-white/20 overflow-hidden backdrop-blur-xl 
-                           bg-gradient-to-br from-primary/10 via-emerald-500/10 to-cyan-500/10">
+                           bg-gradient-to-br from-primary/10 via-emerald-500/10 to-cyan-500/10 rounded-2xl">
               <CardContent className="p-12 md:p-16 text-center relative overflow-hidden">
                 {/* Éléments de fond animés */}
                 <div className="absolute -top-20 -right-20 w-64 h-64 bg-gradient-to-r from-primary/15 to-emerald-500/15 
@@ -1479,21 +1326,11 @@ export default function Project() {
                   <BoutonAnime
                     variant="outline"
                     size="lg"
-                    icon={<Compass className="w-6 h-6" />}
+                    icon={<BookOpen className="w-6 h-6" />}
                     href="/decouvrir"
                     fullWidth={true}
                   >
                     Découvrir nos Projets
-                  </BoutonAnime>
-
-                  <BoutonAnime
-                    variant="success"
-                    size="lg"
-                    icon={<Gift className="w-6 h-6" />}
-                    href="/benevolat"
-                    fullWidth={true}
-                  >
-                    Devenir Bénévole
                   </BoutonAnime>
                 </div>
               </CardContent>
@@ -1501,27 +1338,6 @@ export default function Project() {
           </WidgetFlottant>
         </MotionSection>
       </div>
-      
-      {/* Bouton d'Action Flottant */}
-      <MotionDiv
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1, duration: 0.8, ease: "easeOut" }}
-        className="fixed bottom-8 right-8 z-40"
-      >
-        <WidgetFlottant intensity={1.5}>
-          <BoutonAnime
-            variant="gradient"
-            size="lg"
-            icon={<ChevronDown className="w-5 h-5" />}
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="rounded-full w-16 h-16 p-0"
-            aria-label="Retour en haut"
-          >
-            <ChevronDown className="w-6 h-6 rotate-180" />
-          </BoutonAnime>
-        </WidgetFlottant>
-      </MotionDiv>
       
       {/* Styles globaux pour les animations */}
       <style jsx>{`
@@ -1532,9 +1348,9 @@ export default function Project() {
         
         @keyframes float-slow {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
-          25% { transform: translateY(-15px) rotate(1deg); }
+          25% { transform: translateY(-10px) rotate(0.5deg); }
           50% { transform: translateY(0px) rotate(0deg); }
-          75% { transform: translateY(15px) rotate(-1deg); }
+          75% { transform: translateY(10px) rotate(-0.5deg); }
         }
         
         @keyframes ripple {
@@ -1552,34 +1368,25 @@ export default function Project() {
           50% { opacity: 0.6; }
         }
         
-        @keyframes bounce {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
-        }
-        
         .animate-gradient {
           animation: gradient 4s ease infinite;
           background-size: 200% 200%;
         }
         
         .animate-float-slow {
-          animation: float-slow 25s ease-in-out infinite;
+          animation: float-slow 20s ease-in-out infinite;
         }
         
         .animate-ripple {
-          animation: ripple 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+          animation: ripple 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         .animate-shine {
-          animation: shine 2s ease-in-out;
+          animation: shine 1.5s ease-in-out;
         }
         
         .animate-pulse-slow {
           animation: pulse-slow 6s ease-in-out infinite;
-        }
-        
-        .animate-bounce {
-          animation: bounce 2s ease-in-out infinite;
         }
         
         .bg-300% {
@@ -1592,22 +1399,13 @@ export default function Project() {
           -moz-osx-font-smoothing: grayscale;
         }
         
-        /* Accélération matérielle */
-        .performance-layer {
-          transform: translate3d(0, 0, 0);
-          backface-visibility: hidden;
-          perspective: 1000px;
-          will-change: transform, opacity;
-        }
-        
         /* Réduction du mouvement */
         @media (prefers-reduced-motion: reduce) {
           .animate-gradient,
           .animate-float-slow,
           .animate-ripple,
           .animate-shine,
-          .animate-pulse-slow,
-          .animate-bounce {
+          .animate-pulse-slow {
             animation: none !important;
           }
           
@@ -1638,24 +1436,8 @@ export default function Project() {
           transition: transform 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        .hover-lift:hover {
-          transform: translateY(-8px);
-        }
-
         .hover-scale {
           transition: transform 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .hover-scale:hover {
-          transform: scale(1.05);
-        }
-
-        .hover-glow {
-          transition: box-shadow 500ms cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .hover-glow:hover {
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
       `}</style>
     </div>
