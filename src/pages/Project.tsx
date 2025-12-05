@@ -1,12 +1,14 @@
-import { 
+import React, { 
   useState, 
   useEffect, 
   useMemo, 
   useCallback, 
   useRef,
-  Suspense
+  Suspense 
 } from "react";
 import { Link } from "react-router-dom";
+
+// Import icons from lucide-react - only what we need
 import {
   Trash2,
   FileText,
@@ -24,15 +26,23 @@ import {
   Play,
   ExternalLink,
   ChevronDown,
-  LucideIcon
+  type LucideIcon
 } from "lucide-react";
+
+// Import UI components
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+
+// Import custom hooks and context
 import { useLanguage } from "@/contexts/LanguageContext";
-// REMOVED: import { ErrorBoundary } from "react-error-boundary";
+
+// Import SEO component
 import { Helmet } from "react-helmet-async";
 
-// Types
+// ============================================================================
+// TYPES AND INTERFACES
+// ============================================================================
+
 interface BinItem {
   icon: LucideIcon;
   color: string;
@@ -50,84 +60,78 @@ interface ActionItem {
   borderColor: string;
 }
 
-// Constants
-const BIN_ROTATION_INTERVAL = 2500;
-const ANIMATION_DELAY_INCREMENT = 100;
+// ============================================================================
+// CONSTANTS
+// ============================================================================
 
-// Simple Error Fallback Component
-function SimpleErrorFallback() {
+const BIN_ROTATION_INTERVAL = 3000; // Increased from 2500 for better UX
+const ANIMATION_DELAY_INCREMENT = 100;
+const INITIAL_LOAD_DELAY = 500;
+
+// ============================================================================
+// ERROR FALLBACK COMPONENT
+// ============================================================================
+
+const ErrorFallback = ({ 
+  error, 
+  resetErrorBoundary 
+}: { 
+  error: Error; 
+  resetErrorBoundary: () => void;
+}) => {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-      <Card className="max-w-md w-full border-2 border-red-200">
-        <CardContent className="p-6 text-center">
-          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-            <Trash2 className="w-8 h-8 text-red-600" />
-          </div>
-          <h2 className="text-xl font-bold mb-2 text-foreground">Something went wrong</h2>
-          <p className="text-muted-foreground mb-4">Please refresh the page or try again later.</p>
-          <Button 
-            onClick={() => window.location.reload()} 
-            className="bg-red-600 hover:bg-red-700 text-white"
-          >
-            Refresh Page
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="max-w-md w-full p-6 text-center">
+        <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+          <Trash2 className="w-8 h-8 text-red-600" />
+        </div>
+        <h2 className="text-xl font-bold mb-2 text-foreground">
+          Something went wrong
+        </h2>
+        <p className="text-muted-foreground mb-4">
+          {error.message || "An unexpected error occurred"}
+        </p>
+        <Button 
+          onClick={resetErrorBoundary}
+          className="bg-primary hover:bg-primary/90 text-primary-foreground"
+        >
+          Try again
+        </Button>
+      </div>
     </div>
   );
-}
+};
 
-// Simple Error Boundary Component
-class SimpleErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean }
-> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
-  }
+// ============================================================================
+// LOADING SKELETON
+// ============================================================================
 
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("Error caught by boundary:", error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return <SimpleErrorFallback />;
-    }
-
-    return this.props.children;
-  }
-}
-
-// Loading Skeleton
-function ProjectSkeleton() {
+const ProjectSkeleton = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
       <div className="container mx-auto px-4 py-12 md:py-16">
         {/* Hero Section Skeleton */}
         <div className="max-w-5xl mx-auto text-center mb-16">
-          <div className="h-8 w-48 bg-gray-200 rounded-full mx-auto mb-8 animate-pulse" />
-          <div className="h-16 bg-gray-200 rounded-lg mb-8 animate-pulse" />
-          <div className="h-4 bg-gray-200 rounded mb-10 max-w-3xl mx-auto animate-pulse" />
+          <div className="h-8 w-48 bg-muted rounded-full mx-auto mb-8 animate-pulse" />
+          <div className="h-16 bg-muted rounded-lg mb-8 animate-pulse" />
+          <div className="h-4 bg-muted rounded mb-10 max-w-3xl mx-auto animate-pulse" />
           <div className="flex gap-4 justify-center">
-            <div className="h-12 w-48 bg-gray-200 rounded animate-pulse" />
-            <div className="h-12 w-48 bg-gray-200 rounded animate-pulse" />
+            <div className="h-12 w-48 bg-muted rounded animate-pulse" />
+            <div className="h-12 w-48 bg-muted rounded animate-pulse" />
           </div>
         </div>
       </div>
     </div>
   );
-}
+};
 
-// Background Decorations with cleanup
+// ============================================================================
+// BACKGROUND DECORATIONS
+// ============================================================================
+
 const BackgroundDecorations = () => {
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden">
+    <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
       <div 
         className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse" 
         aria-hidden="true"
@@ -146,17 +150,22 @@ const BackgroundDecorations = () => {
   );
 };
 
-// Bin Card Component with keyboard support
-const BinCard = ({ 
-  bin, 
-  index, 
-  isActive, 
-  onSelect 
-}: { 
+// ============================================================================
+// BIN CARD COMPONENT
+// ============================================================================
+
+interface BinCardProps {
   bin: BinItem;
   index: number;
   isActive: boolean;
   onSelect: (index: number) => void;
+}
+
+const BinCard: React.FC<BinCardProps> = ({ 
+  bin, 
+  index, 
+  isActive, 
+  onSelect 
 }) => {
   const Icon = bin.icon;
   
@@ -169,11 +178,14 @@ const BinCard = ({
 
   return (
     <Card
-      className={`transition-all duration-300 border-2 ${bin.borderColor} cursor-pointer bg-card ${
-        isActive 
+      className={`
+        transition-all duration-300 border-2 ${bin.borderColor} 
+        cursor-pointer bg-card/50 backdrop-blur-sm
+        ${isActive 
           ? 'shadow-xl scale-105 -translate-y-2 border-primary/40 ring-2 ring-primary/20' 
           : 'hover:shadow-xl hover:scale-105 hover:-translate-y-2'
-      }`}
+        }
+      `}
       style={{ animationDelay: `${index * ANIMATION_DELAY_INCREMENT}ms` }}
       onClick={() => onSelect(index)}
       onKeyDown={handleKeyDown}
@@ -182,84 +194,103 @@ const BinCard = ({
       aria-label={`Select ${bin.label} bin`}
       aria-pressed={isActive}
     >
-      <CardContent className="pt-6 pb-6 md:pt-8 md:pb-8 text-center relative z-10">
+      <CardContent className="p-6 text-center">
         <div className={`
-          w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 
-          rounded-2xl md:rounded-3xl ${bin.bg} 
-          flex items-center justify-center mx-auto mb-4 md:mb-5 
-          transition-transform duration-300 ${isActive ? 'scale-110' : 'hover:scale-110'}
+          w-16 h-16 md:w-20 md:h-20 rounded-2xl ${bin.bg} 
+          flex items-center justify-center mx-auto mb-4
+          transition-transform duration-300 ${isActive ? 'scale-110' : ''}
+          group-hover:scale-110
         `}>
           <Icon 
-            className={`w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 ${bin.color}`}
+            className={`w-8 h-8 md:w-10 md:h-10 ${bin.color}`}
             aria-hidden="true"
           />
         </div>
-        <h3 className="font-bold text-sm md:text-base lg:text-lg text-foreground">
+        <h3 className="font-bold text-base text-foreground">
           {bin.label}
         </h3>
         <div className={`
-          h-1 w-10 md:w-12 mx-auto mt-3 rounded-full 
-          transition-all duration-300 ${bin.bg} 
-          ${isActive ? 'w-14 md:w-16' : ''}
+          h-1 w-10 mx-auto mt-3 rounded-full transition-all duration-300 ${bin.bg} 
+          ${isActive ? 'w-14' : ''}
         `} />
       </CardContent>
     </Card>
   );
 };
 
-// Action Card Component
-const ActionCard = ({ action, index }: { action: ActionItem; index: number }) => {
+// ============================================================================
+// ACTION CARD COMPONENT
+// ============================================================================
+
+interface ActionCardProps {
+  action: ActionItem;
+  index: number;
+}
+
+const ActionCard: React.FC<ActionCardProps> = ({ action, index }) => {
   const Icon = action.icon;
   
   return (
     <Card
-      className={`hover:shadow-xl transition-all duration-300 
+      className={`
+        hover:shadow-xl transition-all duration-300 
         border-2 ${action.borderColor} overflow-hidden 
-        group hover:-translate-y-2 cursor-pointer focus-within:ring-2 focus-within:ring-primary/20`}
+        group hover:-translate-y-1 cursor-pointer
+        bg-card/50 backdrop-blur-sm
+      `}
       style={{ animationDelay: `${index * ANIMATION_DELAY_INCREMENT}ms` }}
       role="article"
       tabIndex={0}
     >
-      <div className={`
-        absolute inset-0 bg-gradient-to-br ${action.gradient} 
-        opacity-30 group-hover:opacity-50 transition-opacity duration-300
-      `} 
+      <div 
+        className={`
+          absolute inset-0 bg-gradient-to-br ${action.gradient} 
+          opacity-30 group-hover:opacity-50 transition-opacity duration-300
+        `} 
         aria-hidden="true"
       />
-      <CardContent className="p-7 md:p-8 relative">
-        <div className="flex items-start gap-5">
+      <CardContent className="p-6 relative">
+        <div className="flex items-start gap-4">
           <div className={`
-            w-14 h-14 rounded-2xl bg-gradient-to-br ${action.gradient} 
+            w-12 h-12 rounded-xl bg-gradient-to-br ${action.gradient} 
             flex items-center justify-center flex-shrink-0 
             transition-transform duration-300 group-hover:scale-110 shadow-lg
           `}>
             <Icon 
-              className={`w-7 h-7 ${action.iconColor}`}
+              className={`w-6 h-6 ${action.iconColor}`}
               aria-hidden="true"
             />
           </div>
           <div className="flex-1">
-            <h3 className="font-bold text-xl mb-2 group-hover:text-primary transition-colors duration-300">
+            <h3 className="font-bold text-lg mb-2 group-hover:text-primary transition-colors duration-300">
               {action.title}
             </h3>
-            <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
+            <p className="text-muted-foreground text-sm leading-relaxed">
               {action.description}
             </p>
           </div>
         </div>
         <div 
-          className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0"
+          className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300"
           aria-hidden="true"
         >
-          <ArrowRight className={`w-5 h-5 ${action.iconColor}`} />
+          <ArrowRight className={`w-4 h-4 ${action.iconColor}`} />
         </div>
       </CardContent>
     </Card>
   );
 };
 
-// Section Header Component
-const SectionHeader = ({ title, subtitle }: { title: string; subtitle: string }) => (
+// ============================================================================
+// SECTION HEADER COMPONENT
+// ============================================================================
+
+interface SectionHeaderProps {
+  title: string;
+  subtitle: string;
+}
+
+const SectionHeader: React.FC<SectionHeaderProps> = ({ title, subtitle }) => (
   <header className="text-center mb-12">
     <h2 className="text-3xl md:text-4xl font-bold mb-3">
       {title}
@@ -270,8 +301,12 @@ const SectionHeader = ({ title, subtitle }: { title: string; subtitle: string })
   </header>
 );
 
-// Main Project Component with local error handling
-function ProjectContent() {
+// ============================================================================
+// MAIN PROJECT CONTENT COMPONENT
+// ============================================================================
+
+const ProjectContent: React.FC = () => {
+  // Hooks and state
   const { t, language } = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeBinIndex, setActiveBinIndex] = useState(0);
@@ -280,144 +315,116 @@ function ProjectContent() {
   const startTimeRef = useRef(Date.now());
 
   // Safe translation function with fallback
-  const safeT = useCallback((key: string, fallback?: string) => {
+  const safeT = useCallback((key: string, fallback: string = ""): string => {
     try {
       const translation = t(key);
-      return translation && translation !== key ? translation : (fallback || key);
+      return translation || fallback || key;
     } catch (error) {
       console.warn(`Translation error for key "${key}":`, error);
       return fallback || key;
     }
   }, [t]);
 
-  // Memoized data with error handling
-  const bins = useMemo((): BinItem[] => {
-    try {
-      return [
-        { 
-          icon: FileText, 
-          color: "text-amber-500 dark:text-amber-400", 
-          bg: "bg-amber-500/10 dark:bg-amber-400/10", 
-          borderColor: "border-amber-500/30 dark:border-amber-400/30", 
-          label: safeT("project.bins.paper", "Paper") 
-        },
-        { 
-          icon: Package, 
-          color: "text-blue-500 dark:text-blue-400", 
-          bg: "bg-blue-500/10 dark:bg-blue-400/10", 
-          borderColor: "border-blue-500/30 dark:border-blue-400/30", 
-          label: safeT("project.bins.plastic", "Plastic") 
-        },
-        { 
-          icon: Trash2, 
-          color: "text-gray-500 dark:text-gray-400", 
-          bg: "bg-gray-500/10 dark:bg-gray-400/10", 
-          borderColor: "border-gray-500/30 dark:border-gray-400/30", 
-          label: safeT("project.bins.metal", "Metal") 
-        },
-        { 
-          icon: Apple, 
-          color: "text-green-500 dark:text-green-400", 
-          bg: "bg-green-500/10 dark:bg-green-400/10", 
-          borderColor: "border-green-500/30 dark:border-green-400/30", 
-          label: safeT("project.bins.organic", "Organic") 
-        },
-      ];
-    } catch (error) {
-      console.error("Error loading bins:", error);
-      return [];
-    }
-  }, [safeT]);
+  // Memoized data with fallbacks
+  const bins = useMemo((): BinItem[] => [
+    { 
+      icon: FileText, 
+      color: "text-amber-500 dark:text-amber-400", 
+      bg: "bg-amber-500/10 dark:bg-amber-400/10", 
+      borderColor: "border-amber-500/30 dark:border-amber-400/30", 
+      label: safeT("project.bins.paper", "Paper") 
+    },
+    { 
+      icon: Package, 
+      color: "text-blue-500 dark:text-blue-400", 
+      bg: "bg-blue-500/10 dark:bg-blue-400/10", 
+      borderColor: "border-blue-500/30 dark:border-blue-400/30", 
+      label: safeT("project.bins.plastic", "Plastic") 
+    },
+    { 
+      icon: Trash2, 
+      color: "text-gray-500 dark:text-gray-400", 
+      bg: "bg-gray-500/10 dark:bg-gray-400/10", 
+      borderColor: "border-gray-500/30 dark:border-gray-400/30", 
+      label: safeT("project.bins.metal", "Metal") 
+    },
+    { 
+      icon: Apple, 
+      color: "text-green-500 dark:text-green-400", 
+      bg: "bg-green-500/10 dark:bg-green-400/10", 
+      borderColor: "border-green-500/30 dark:border-green-400/30", 
+      label: safeT("project.bins.organic", "Organic") 
+    },
+  ], [safeT]);
 
-  const actions = useMemo((): ActionItem[] => {
-    try {
-      return [
-        {
-          icon: Recycle,
-          title: safeT("project.bins.title", "Smart Sorting Bins"),
-          description: safeT("project.bins.text", "Learn about our innovative waste sorting system"),
-          gradient: "from-blue-500/10 to-cyan-500/10 dark:from-blue-400/10 dark:to-cyan-400/10",
-          iconColor: "text-blue-500 dark:text-blue-400",
-          borderColor: "border-blue-500/20 dark:border-blue-400/20"
-        },
-        {
-          icon: Lightbulb,
-          title: safeT("project.campaigns.title", "Awareness Campaigns"),
-          description: safeT("project.campaigns.text", "Educational initiatives to promote sustainability"),
-          gradient: "from-amber-500/10 to-orange-500/10 dark:from-amber-400/10 dark:to-orange-400/10",
-          iconColor: "text-amber-500 dark:text-amber-400",
-          borderColor: "border-amber-500/20 dark:border-amber-400/20"
-        },
-        {
-          icon: Users,
-          title: safeT("project.workshops.title", "Interactive Workshops"),
-          description: safeT("project.workshops.text", "Hands-on learning experiences for all ages"),
-          gradient: "from-purple-500/10 to-pink-500/10 dark:from-purple-400/10 dark:to-pink-400/10",
-          iconColor: "text-purple-500 dark:text-purple-400",
-          borderColor: "border-purple-500/20 dark:border-purple-400/20"
-        },
-        {
-          icon: TrendingUp,
-          title: safeT("project.monitoring.title", "Progress Monitoring"),
-          description: safeT("project.monitoring.text", "Track our environmental impact over time"),
-          gradient: "from-green-500/10 to-emerald-500/10 dark:from-green-400/10 dark:to-emerald-400/10",
-          iconColor: "text-green-500 dark:text-green-400",
-          borderColor: "border-green-500/20 dark:border-green-400/20"
-        }
-      ];
-    } catch (error) {
-      console.error("Error loading actions:", error);
-      return [];
+  const actions = useMemo((): ActionItem[] => [
+    {
+      icon: Recycle,
+      title: safeT("project.bins.title", "Smart Sorting Bins"),
+      description: safeT("project.bins.text", "Learn about our innovative waste sorting system"),
+      gradient: "from-blue-500/10 to-cyan-500/10 dark:from-blue-400/10 dark:to-cyan-400/10",
+      iconColor: "text-blue-500 dark:text-blue-400",
+      borderColor: "border-blue-500/20 dark:border-blue-400/20"
+    },
+    {
+      icon: Lightbulb,
+      title: safeT("project.campaigns.title", "Awareness Campaigns"),
+      description: safeT("project.campaigns.text", "Educational initiatives to promote sustainability"),
+      gradient: "from-amber-500/10 to-orange-500/10 dark:from-amber-400/10 dark:to-orange-400/10",
+      iconColor: "text-amber-500 dark:text-amber-400",
+      borderColor: "border-amber-500/20 dark:border-amber-400/20"
+    },
+    {
+      icon: Users,
+      title: safeT("project.workshops.title", "Interactive Workshops"),
+      description: safeT("project.workshops.text", "Hands-on learning experiences for all ages"),
+      gradient: "from-purple-500/10 to-pink-500/10 dark:from-purple-400/10 dark:to-pink-400/10",
+      iconColor: "text-purple-500 dark:text-purple-400",
+      borderColor: "border-purple-500/20 dark:border-purple-400/20"
+    },
+    {
+      icon: TrendingUp,
+      title: safeT("project.monitoring.title", "Progress Monitoring"),
+      description: safeT("project.monitoring.text", "Track our environmental impact over time"),
+      gradient: "from-green-500/10 to-emerald-500/10 dark:from-green-400/10 dark:to-emerald-400/10",
+      iconColor: "text-green-500 dark:text-green-400",
+      borderColor: "border-green-500/20 dark:border-green-400/20"
     }
-  }, [safeT]);
+  ], [safeT]);
 
-  const impacts = useMemo(() => {
-    try {
-      return [
-        safeT("project.impact.1", "Reduced waste sent to landfills by 40%"),
-        safeT("project.impact.2", "Increased recycling rates by 65%"),
-        safeT("project.impact.3", "Educated over 500 students and community members"),
-        safeT("project.impact.4", "Saved approximately 15 tons of CO2 emissions")
-      ];
-    } catch (error) {
-      console.error("Error loading impacts:", error);
-      return [];
-    }
-  }, [safeT]);
+  const impacts = useMemo(() => [
+    safeT("project.impact.1", "Reduced waste sent to landfills by 40%"),
+    safeT("project.impact.2", "Increased recycling rates by 65%"),
+    safeT("project.impact.3", "Educated over 500 students and community members"),
+    safeT("project.impact.4", "Saved approximately 15 tons of CO2 emissions")
+  ], [safeT]);
 
   // Computed values
   const initiativeLabel = useMemo(() => 
     language === "fr" ? "Initiative Écologique" : "Ecological Initiative",
-    [language]
-  );
+  [language]);
 
   const sortingBinsTitle = useMemo(() =>
     safeT("project.bins.title", language === "fr" ? "Nos Bacs de Tri" : "Our Sorting Bins"),
-    [safeT, language]
-  );
+  [safeT, language]);
 
   const sortingBinsSubtitle = useMemo(() =>
     language === "fr" ? "4 types de déchets, 4 bacs de couleurs" : "4 types of waste, 4 colored bins",
-    [language]
-  );
+  [language]);
 
   // Event handlers
   const handleBinSelect = useCallback((index: number) => {
     setActiveBinIndex(index);
   }, []);
 
-  // Load data with error handling
+  // Load data effect
   useEffect(() => {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        // Simulate data loading
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, INITIAL_LOAD_DELAY));
         
-        if (!bins.length || !actions.length) {
-          throw new Error("Failed to load data");
-        }
-        
+        // Performance logging
         const loadTime = Date.now() - startTimeRef.current;
         console.log(`Project component loaded in ${loadTime}ms`);
         
@@ -425,26 +432,27 @@ function ProjectContent() {
       } catch (error) {
         console.error("Failed to load project data:", error);
         setHasError(true);
+        setIsLoading(false);
       }
     };
 
     loadData();
-  }, [bins.length, actions.length]);
+  }, []);
 
   // Bin rotation effect
   useEffect(() => {
-    if (hasError || !bins.length) return;
+    if (isLoading || hasError) return;
     
     const interval = setInterval(() => {
       setActiveBinIndex(prev => (prev + 1) % bins.length);
     }, BIN_ROTATION_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [bins.length, hasError]);
+  }, [bins.length, isLoading, hasError]);
 
-  // Keyboard navigation
+  // Keyboard navigation effect
   useEffect(() => {
-    if (hasError || !bins.length) return;
+    if (isLoading || hasError) return;
     
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight') {
@@ -464,11 +472,29 @@ function ProjectContent() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [bins.length, hasError]);
+  }, [bins.length, isLoading, hasError]);
 
   // Show error state
   if (hasError) {
-    return <SimpleErrorFallback />;
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="max-w-md w-full p-6 text-center">
+          <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+            <Trash2 className="w-8 h-8 text-destructive" />
+          </div>
+          <h2 className="text-xl font-bold mb-2">Unable to load project</h2>
+          <p className="text-muted-foreground mb-4">
+            Please check your connection and try again.
+          </p>
+          <Button 
+            onClick={() => window.location.reload()}
+            variant="outline"
+          >
+            Refresh Page
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   // Show loading state
@@ -476,35 +502,23 @@ function ProjectContent() {
     return <ProjectSkeleton />;
   }
 
-  // Show empty state if no data
-  if (!bins.length || !actions.length) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
-          <CardContent className="p-6 text-center">
-            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
-              <Trash2 className="w-8 h-8 text-gray-600" />
-            </div>
-            <h2 className="text-xl font-bold mb-2">No data available</h2>
-            <p className="text-muted-foreground mb-4">Please check your connection and try again.</p>
-            <Button onClick={() => window.location.reload()}>Retry</Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <>
       <Helmet>
         <title>{safeT("project.title", "Eco Project")} | Eco Initiative</title>
-        <meta name="description" content={safeT("project.intro", "Sustainable waste management initiative")} />
+        <meta 
+          name="description" 
+          content={safeT("project.intro", "Sustainable waste management initiative")} 
+        />
         <meta property="og:title" content={safeT("project.title", "Eco Project")} />
-        <meta property="og:description" content={safeT("project.intro", "Sustainable waste management initiative")} />
+        <meta 
+          property="og:description" 
+          content={safeT("project.intro", "Sustainable waste management initiative")} 
+        />
         <meta name="twitter:card" content="summary_large_image" />
       </Helmet>
 
-      <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
         <BackgroundDecorations />
         
         <div ref={containerRef} className="container mx-auto px-4 py-12 md:py-16 relative z-10">
@@ -572,7 +586,7 @@ function ProjectContent() {
 
           {/* Goal Section */}
           <section className="max-w-5xl mx-auto mb-16 md:mb-24">
-            <Card className="border-2 border-primary/20 shadow-xl overflow-hidden group hover:shadow-2xl transition-shadow duration-300">
+            <Card className="border-2 border-primary/20 shadow-xl overflow-hidden group hover:shadow-2xl transition-shadow duration-300 bg-card/50 backdrop-blur-sm">
               <div className="bg-gradient-to-r from-primary/10 via-green-500/10 to-primary/10 p-8 md:p-10">
                 <div className="flex items-center gap-5 mb-6">
                   <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-lg">
@@ -639,7 +653,7 @@ function ProjectContent() {
 
           {/* Impact Section */}
           <section className="max-w-5xl mx-auto mb-16 md:mb-24">
-            <Card className="border-2 border-green-500/20 shadow-xl overflow-hidden group hover:shadow-2xl transition-shadow duration-300">
+            <Card className="border-2 border-green-500/20 shadow-xl overflow-hidden group hover:shadow-2xl transition-shadow duration-300 bg-card/50 backdrop-blur-sm">
               <div className="bg-gradient-to-r from-green-500/10 via-emerald-500/10 to-green-500/10 p-8 md:p-10">
                 <div className="flex items-center gap-5 mb-8">
                   <div className="w-16 h-16 rounded-2xl bg-green-500/20 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-lg">
@@ -664,7 +678,7 @@ function ProjectContent() {
                       <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover/item:scale-110">
                         <Leaf className="w-5 h-5 text-green-600" aria-hidden="true" />
                       </div>
-                      <p className="text-foreground/90 leading-relaxed text-sm md:text-base pt-2">
+                      <p className="text-foreground/90 leading-relaxed pt-2">
                         {impact}
                       </p>
                     </div>
@@ -676,7 +690,7 @@ function ProjectContent() {
 
           {/* Call to Action */}
           <section className="max-w-4xl mx-auto text-center">
-            <Card className="border-2 border-primary/30 shadow-xl overflow-hidden group hover:shadow-2xl transition-shadow duration-300">
+            <Card className="border-2 border-primary/30 shadow-xl overflow-hidden group hover:shadow-2xl transition-shadow duration-300 bg-card/50 backdrop-blur-sm">
               <div 
                 className="absolute inset-0 bg-gradient-to-br from-primary/5 via-green-500/5 to-amber-500/5 opacity-50"
                 aria-hidden="true"
@@ -736,13 +750,18 @@ function ProjectContent() {
       </div>
     </>
   );
-}
+};
 
-// Simple wrapper component
-export default function Project() {
+// ============================================================================
+// MAIN EXPORTED COMPONENT
+// ============================================================================
+
+const Project: React.FC = () => {
   return (
     <Suspense fallback={<ProjectSkeleton />}>
       <ProjectContent />
     </Suspense>
   );
-}
+};
+
+export default Project;
