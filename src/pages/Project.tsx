@@ -141,7 +141,7 @@ const BinCard = ({
 
   return (
     <Card
-      className={`scroll-reveal transition-all duration-300 border-2 ${bin.borderColor} cursor-pointer bg-card ${
+      className={`transition-all duration-300 border-2 ${bin.borderColor} cursor-pointer bg-card ${
         isActive 
           ? 'shadow-xl scale-105 -translate-y-2 border-primary/40 ring-2 ring-primary/20' 
           : 'hover:shadow-xl hover:scale-105 hover:-translate-y-2'
@@ -185,7 +185,7 @@ const ActionCard = ({ action, index }: { action: ActionItem; index: number }) =>
   
   return (
     <Card
-      className={`scroll-reveal hover:shadow-xl transition-all duration-300 
+      className={`transition-all duration-300 
         border-2 ${action.borderColor} overflow-hidden 
         group hover:-translate-y-2 cursor-pointer focus-within:ring-2 focus-within:ring-primary/20`}
       style={{ animationDelay: `${index * ANIMATION_DELAY_INCREMENT}ms` }}
@@ -233,10 +233,10 @@ const ActionCard = ({ action, index }: { action: ActionItem; index: number }) =>
 // Section Header Component
 const SectionHeader = ({ title, subtitle }: { title: string; subtitle: string }) => (
   <header className="text-center mb-12">
-    <h2 className="text-3xl md:text-4xl font-bold scroll-reveal mb-3">
+    <h2 className="text-3xl md:text-4xl font-bold mb-3">
       {title}
     </h2>
-    <p className="text-muted-foreground scroll-reveal text-lg">
+    <p className="text-muted-foreground text-lg">
       {subtitle}
     </p>
   </header>
@@ -494,7 +494,7 @@ function ProjectContent() {
           </section>
 
           {/* Goal Section */}
-          <section className="max-w-5xl mx-auto mb-16 md:mb-24 scroll-reveal">
+          <section className="max-w-5xl mx-auto mb-16 md:mb-24">
             <Card className="border-2 border-primary/20 shadow-xl overflow-hidden group hover:shadow-2xl transition-shadow duration-300">
               <div className="bg-gradient-to-r from-primary/10 via-green-500/10 to-primary/10 p-8 md:p-10">
                 <div className="flex items-center gap-5 mb-6">
@@ -561,7 +561,7 @@ function ProjectContent() {
           </section>
 
           {/* Impact Section */}
-          <section className="max-w-5xl mx-auto mb-16 md:mb-24 scroll-reveal">
+          <section className="max-w-5xl mx-auto mb-16 md:mb-24">
             <Card className="border-2 border-green-500/20 shadow-xl overflow-hidden group hover:shadow-2xl transition-shadow duration-300">
               <div className="bg-gradient-to-r from-green-500/10 via-emerald-500/10 to-green-500/10 p-8 md:p-10">
                 <div className="flex items-center gap-5 mb-8">
@@ -598,7 +598,7 @@ function ProjectContent() {
           </section>
 
           {/* Call to Action */}
-          <section className="max-w-4xl mx-auto text-center scroll-reveal">
+          <section className="max-w-4xl mx-auto text-center">
             <Card className="border-2 border-primary/30 shadow-xl overflow-hidden group hover:shadow-2xl transition-shadow duration-300">
               <div 
                 className="absolute inset-0 bg-gradient-to-br from-primary/5 via-green-500/5 to-amber-500/5 opacity-50"
