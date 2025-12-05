@@ -28,7 +28,8 @@ import {
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useScrollReveal } from "@/hooks/useScrollReveal";
+// Remove problematic import
+// import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ErrorBoundary } from "react-error-boundary";
 import { Helmet } from "react-helmet-async";
@@ -54,6 +55,47 @@ interface ActionItem {
 // Constants
 const BIN_ROTATION_INTERVAL = 2500;
 const ANIMATION_DELAY_INCREMENT = 100;
+
+// Custom hook to replace problematic useScrollReveal
+const useSafeScrollReveal = () => {
+  const ref = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    if (!ref.current) return;
+    
+    const observerCallback = (entries: IntersectionObserverEntry[]) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate-fade-in');
+        }
+      });
+    };
+    
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.1
+    };
+    
+    let observer: IntersectionObserver | null = null;
+    
+    try {
+      observer = new IntersectionObserver(observerCallback, observerOptions);
+      const elements = ref.current.querySelectorAll('.scroll-reveal');
+      elements.forEach(el => observer?.observe(el));
+    } catch (error) {
+      console.warn('IntersectionObserver not supported or failed:', error);
+    }
+    
+    return () => {
+      if (observer) {
+        observer.disconnect();
+      }
+    };
+  }, []);
+  
+  return ref;
+};
 
 // Error Fallback Component
 function ErrorFallback({ error, resetErrorBoundary }: { 
@@ -141,7 +183,7 @@ const BinCard = ({
 
   return (
     <Card
-      className={`transition-all duration-300 border-2 ${bin.borderColor} cursor-pointer bg-card ${
+      className={`scroll-reveal transition-all duration-300 border-2 ${bin.borderColor} cursor-pointer bg-card ${
         isActive 
           ? 'shadow-xl scale-105 -translate-y-2 border-primary/40 ring-2 ring-primary/20' 
           : 'hover:shadow-xl hover:scale-105 hover:-translate-y-2'
@@ -185,7 +227,7 @@ const ActionCard = ({ action, index }: { action: ActionItem; index: number }) =>
   
   return (
     <Card
-      className={`transition-all duration-300 
+      className={`scroll-reveal hover:shadow-xl transition-all duration-300 
         border-2 ${action.borderColor} overflow-hidden 
         group hover:-translate-y-2 cursor-pointer focus-within:ring-2 focus-within:ring-primary/20`}
       style={{ animationDelay: `${index * ANIMATION_DELAY_INCREMENT}ms` }}
@@ -233,10 +275,10 @@ const ActionCard = ({ action, index }: { action: ActionItem; index: number }) =>
 // Section Header Component
 const SectionHeader = ({ title, subtitle }: { title: string; subtitle: string }) => (
   <header className="text-center mb-12">
-    <h2 className="text-3xl md:text-4xl font-bold mb-3">
+    <h2 className="text-3xl md:text-4xl font-bold scroll-reveal mb-3">
       {title}
     </h2>
-    <p className="text-muted-foreground text-lg">
+    <p className="text-muted-foreground scroll-reveal text-lg">
       {subtitle}
     </p>
   </header>
@@ -245,7 +287,8 @@ const SectionHeader = ({ title, subtitle }: { title: string; subtitle: string })
 // Main Project Component
 function ProjectContent() {
   const { t, language } = useLanguage();
-  const scrollRevealRef = useScrollReveal();
+  // Replace problematic hook with safe version
+  const scrollRevealRef = useSafeScrollReveal();
   const [activeBinIndex, setActiveBinIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const startTimeRef = useRef(Date.now());
@@ -413,6 +456,37 @@ function ProjectContent() {
     loadData();
   }, []);
 
+  // Add CSS animation styles
+  useEffect(() => {
+    // Add fade-in animation styles if not already present
+    const styleId = 'scroll-reveal-styles';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .animate-fade-in {
+          animation: fadeIn 0.6s ease-out forwards;
+        }
+        
+        .scroll-reveal {
+          opacity: 0;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
+
   if (isLoading) {
     return <ProjectSkeleton />;
   }
@@ -494,7 +568,7 @@ function ProjectContent() {
           </section>
 
           {/* Goal Section */}
-          <section className="max-w-5xl mx-auto mb-16 md:mb-24">
+          <section className="max-w-5xl mx-auto mb-16 md:mb-24 scroll-reveal">
             <Card className="border-2 border-primary/20 shadow-xl overflow-hidden group hover:shadow-2xl transition-shadow duration-300">
               <div className="bg-gradient-to-r from-primary/10 via-green-500/10 to-primary/10 p-8 md:p-10">
                 <div className="flex items-center gap-5 mb-6">
@@ -561,7 +635,7 @@ function ProjectContent() {
           </section>
 
           {/* Impact Section */}
-          <section className="max-w-5xl mx-auto mb-16 md:mb-24">
+          <section className="max-w-5xl mx-auto mb-16 md:mb-24 scroll-reveal">
             <Card className="border-2 border-green-500/20 shadow-xl overflow-hidden group hover:shadow-2xl transition-shadow duration-300">
               <div className="bg-gradient-to-r from-green-500/10 via-emerald-500/10 to-green-500/10 p-8 md:p-10">
                 <div className="flex items-center gap-5 mb-8">
@@ -598,7 +672,7 @@ function ProjectContent() {
           </section>
 
           {/* Call to Action */}
-          <section className="max-w-4xl mx-auto text-center">
+          <section className="max-w-4xl mx-auto text-center scroll-reveal">
             <Card className="border-2 border-primary/30 shadow-xl overflow-hidden group hover:shadow-2xl transition-shadow duration-300">
               <div 
                 className="absolute inset-0 bg-gradient-to-br from-primary/5 via-green-500/5 to-amber-500/5 opacity-50"
