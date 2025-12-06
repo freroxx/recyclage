@@ -15,7 +15,8 @@ import {
   X,
   Trophy,
   BookOpen,
-  RotateCw
+  RotateCw,
+  Sparkles
 } from "lucide-react";
 import { ResizablePanelGroup, ResizablePanel } from "@/components/ui/resizable";
 import { useNavigate } from "react-router-dom";
@@ -72,6 +73,8 @@ export default function Activities() {
     width: window.innerWidth, 
     height: window.innerHeight 
   });
+  const [confettiRecycle, setConfettiRecycle] = useState(true);
+  const [confettiPieces, setConfettiPieces] = useState(0);
 
   const iframeContainerRef = useRef<HTMLDivElement>(null);
 
@@ -101,6 +104,23 @@ export default function Activities() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Trigger confetti when popup opens
+  useEffect(() => {
+    if (showCompletionPopup) {
+      setConfettiPieces(300);
+      setConfettiRecycle(true);
+      
+      // Stop confetti after 5 seconds
+      const timer = setTimeout(() => {
+        setConfettiRecycle(false);
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    } else {
+      setConfettiPieces(0);
+    }
+  }, [showCompletionPopup]);
 
   const handleNextLevel = useCallback(() => {
     if (!isLastLevel) {
@@ -148,15 +168,24 @@ export default function Activities() {
   }, [t]);
 
   const handleCompletionClick = () => {
-    setShowCompletionPopup(true);
+    // Exit fullscreen if active
+    if (document.fullscreenElement) {
+      document.exitFullscreen().then(() => {
+        setIsFullscreen(false);
+        setTimeout(() => setShowCompletionPopup(true), 100);
+      });
+    } else {
+      setShowCompletionPopup(true);
+    }
   };
 
   const handleClosePopup = () => {
     setShowCompletionPopup(false);
+    setConfettiPieces(0);
   };
 
   const handleRestart = () => {
-    window.location.reload(); // Reloads the page and resets progression
+    window.location.reload();
   };
 
   const handleLearnMore = () => {
@@ -164,87 +193,123 @@ export default function Activities() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 sm:py-8">
+    <div className="container mx-auto px-4 py-6 sm:py-8 relative">
       <div className="max-w-7xl mx-auto">
         {/* Confetti Animation */}
         {showCompletionPopup && (
           <Confetti
             width={windowDimensions.width}
             height={windowDimensions.height}
-            recycle={false}
-            numberOfPieces={200}
+            recycle={confettiRecycle}
+            numberOfPieces={confettiPieces}
             gravity={0.1}
-            initialVelocityX={4}
-            initialVelocityY={10}
-            colors={['#FFC700', '#FF0000', '#2E3192', '#41B883', '#DD1B16']}
-            style={{ position: 'fixed', top: 0, left: 0, zIndex: 9998 }}
+            initialVelocityX={6}
+            initialVelocityY={12}
+            colors={['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6']}
+            style={{ 
+              position: 'fixed', 
+              top: 0, 
+              left: 0, 
+              width: '100%', 
+              height: '100%', 
+              zIndex: 1000,
+              pointerEvents: 'none'
+            }}
+            confettiSource={{
+              x: 0,
+              y: windowDimensions.height,
+              w: windowDimensions.width,
+              h: 0
+            }}
           />
         )}
 
-        {/* Completion Popup */}
+        {/* Completion Popup Overlay */}
         {showCompletionPopup && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-9999 flex items-center justify-center p-4">
-            <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in">
-              <div className="flex justify-between items-start mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-                    <Trophy className="w-6 h-6 text-white" />
+          <div 
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[1001] flex items-center justify-center p-4"
+            onClick={handleClosePopup}
+          >
+            <Card 
+              className="max-w-md w-full border-2 shadow-2xl animate-scale-in"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <CardHeader className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent pb-4">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+                      <Trophy className="w-7 h-7 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-2xl flex items-center gap-2">
+                        Félicitations ! 
+                        <Sparkles className="w-5 h-5 text-yellow-500" />
+                      </CardTitle>
+                      <CardDescription className="text-base">
+                        Tu as terminé tous les niveaux
+                      </CardDescription>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                      Félicitations ! 🎉
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                      Tu as terminé tous les niveaux
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleClosePopup}
+                    className="rounded-full hover:bg-muted"
+                  >
+                    <X className="w-5 h-5" />
+                  </Button>
+                </div>
+              </CardHeader>
+
+              <CardContent className="pt-6">
+                <div className="space-y-6">
+                  <div className="text-center space-y-2">
+                    <p className="text-xl font-semibold text-foreground">
+                      Bravo, nous te félicitons pour ton excellent travail !
+                    </p>
+                    <p className="text-muted-foreground">
+                      Tu as démontré tes compétences en recyclage et écologie.
+                    </p>
+                  </div>
+
+                  <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-5 rounded-xl border border-primary/20">
+                    <p className="text-center text-foreground font-medium">
+                      Tu es maintenant un véritable expert en gestion des déchets !
+                    </p>
+                    <p className="text-sm text-muted-foreground text-center mt-2">
+                      Continue à apprendre et à partager tes connaissances avec tes amis.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-4">
+                    <Button
+                      onClick={handleRestart}
+                      size="lg"
+                      variant="outline"
+                      className="w-full h-12 gap-2 border-2 hover:bg-muted"
+                    >
+                      <RotateCw className="w-5 h-5" />
+                      Recommencer les activités
+                    </Button>
+                    <Button
+                      onClick={handleLearnMore}
+                      size="lg"
+                      className="w-full h-12 gap-2 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary"
+                    >
+                      <BookOpen className="w-5 h-5" />
+                      En savoir plus sur le recyclage
+                    </Button>
+                  </div>
+
+                  <div className="text-center pt-4 border-t">
+                    <p className="text-sm text-muted-foreground">
+                      Clique sur "Recommencer" pour refaire tous les jeux ou 
+                      "En savoir plus" pour découvrir d'autres ressources.
                     </p>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleClosePopup}
-                  className="rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
-                >
-                  <X className="w-5 h-5" />
-                </Button>
-              </div>
-
-              <div className="mb-8">
-                <p className="text-lg text-center font-medium text-gray-800 dark:text-gray-200 mb-6">
-                  Bravo, nous te félicitons pour ton excellent travail !
-                </p>
-                <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-4 rounded-xl border border-primary/20">
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
-                    Tu as montré que tu es un vrai champion du recyclage. 
-                    Continue à apprendre et à partager tes connaissances !
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                <Button
-                  onClick={handleRestart}
-                  size="lg"
-                  variant="outline"
-                  className="w-full gap-2 border-2 hover:bg-gray-100 dark:hover:bg-gray-800"
-                >
-                  <RotateCw className="w-5 h-5" />
-                  Recommencer
-                </Button>
-                <Button
-                  onClick={handleLearnMore}
-                  size="lg"
-                  className="w-full gap-2 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary"
-                >
-                  <BookOpen className="w-5 h-5" />
-                  En savoir plus
-                </Button>
-              </div>
-
-              <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-6">
-                Clique sur "Recommencer" pour refaire tous les jeux
-              </p>
-            </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 
@@ -277,7 +342,7 @@ export default function Activities() {
         </header>
 
         {/* Carte principale du jeu */}
-        <Card className="overflow-hidden border-2 shadow-2xl">
+        <Card className="overflow-hidden border-2 shadow-2xl relative z-10">
           <CardHeader className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent pb-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-start sm:items-center gap-4">
@@ -400,7 +465,7 @@ export default function Activities() {
                     <Button
                       size="lg"
                       onClick={handleCompletionClick}
-                      className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white gap-2"
+                      className="bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white gap-2 shadow-lg"
                     >
                       <Trophy className="w-5 h-5" />
                       J'ai terminé
