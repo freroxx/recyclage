@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef, memo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef, memo, ReactNode } from "react";
 import { 
   Trash2, 
   FileText, 
@@ -43,24 +43,32 @@ import {
   PieChart,
   ChevronRight,
   Pause,
-  Play
+  Play,
+  LucideIcon
 } from "lucide-react";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 
-// Simple Card components (replacing shadcn/ui dependency)
-const Card = ({ children, className = "" }) => (
-  <div className={`rounded-lg border bg-card text-card-foreground shadow-sm ${className}`}>
+// Simple Card components
+const Card = ({ children, className = "", style }: { children: ReactNode; className?: string; style?: React.CSSProperties }) => (
+  <div className={`rounded-lg border bg-card text-card-foreground shadow-sm ${className}`} style={style}>
     {children}
   </div>
 );
 
-const CardContent = ({ children, className = "" }) => (
+const CardContent = ({ children, className = "" }: { children: ReactNode; className?: string }) => (
   <div className={`p-6 ${className}`}>
     {children}
   </div>
 );
 
-// Simple Link component (replacing react-router-dom)
-const Link = ({ to, children, className = "", onMouseEnter, onMouseLeave }) => (
+// Simple Link component
+const Link = ({ to, children, className = "", onMouseEnter, onMouseLeave }: { 
+  to: string; 
+  children: ReactNode; 
+  className?: string;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+}) => (
   <a 
     href={to} 
     className={className}
@@ -201,6 +209,22 @@ const LoadingScreenPremium = memo(() => {
 
 LoadingScreenPremium.displayName = 'LoadingScreenPremium';
 
+// Types for button component
+interface BoutonAnimePremiumProps {
+  children: ReactNode;
+  variant?: "default" | "outline" | "premium" | "gradient" | "success" | "eco" | "warning";
+  size?: "sm" | "default" | "lg" | "xl" | "2xl";
+  className?: string;
+  onClick?: () => void;
+  icon?: ReactNode;
+  href?: string;
+  disabled?: boolean;
+  loading?: boolean;
+  fullWidth?: boolean;
+  glow?: boolean;
+  pulse?: boolean;
+}
+
 // Composant Bouton Animé Premium avec animations ultra-fluides
 const BoutonAnimePremium = memo(({ 
   children, 
@@ -215,13 +239,12 @@ const BoutonAnimePremium = memo(({
   fullWidth = false,
   glow = true,
   pulse = false,
-  ...props 
-}) => {
-  const buttonRef = useRef(null);
+}: BoutonAnimePremiumProps) => {
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const [ripples, setRipples] = useState([]);
+  const [ripples, setRipples] = useState<Array<{ x: number; y: number; id: number; size: number; color: string }>>([]);
   
   const handleMouseEnter = useCallback(() => {
     if (!disabled && !loading) {
@@ -254,7 +277,7 @@ const BoutonAnimePremium = memo(({
     setIsFocused(false);
   }, []);
   
-  const handleClick = useCallback((e) => {
+  const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     if (disabled || loading) return;
     
     const button = buttonRef.current;
@@ -280,7 +303,7 @@ const BoutonAnimePremium = memo(({
     if (onClick) onClick();
   }, [disabled, loading, onClick, variant]);
   
-  const sizeClasses = {
+  const sizeClasses: Record<string, string> = {
     sm: "px-5 py-2.5 text-sm",
     default: "px-7 py-3.5 text-base",
     lg: "px-9 py-4 text-lg",
@@ -288,7 +311,7 @@ const BoutonAnimePremium = memo(({
     "2xl": "px-16 py-7 text-2xl"
   };
   
-  const variantClasses = {
+  const variantClasses: Record<string, string> = {
     default: "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-600 shadow-xl hover:shadow-blue-500/40",
     outline: "border-2 border-blue-400/40 bg-slate-900/90 backdrop-blur-sm hover:border-blue-400/80 hover:bg-blue-500/15 hover:shadow-blue-500/30",
     premium: "bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 hover:from-amber-600 hover:via-orange-600 hover:to-pink-600 shadow-xl hover:shadow-orange-500/40",
@@ -401,7 +424,6 @@ const BoutonAnimePremium = memo(({
           onBlur={handleBlur}
           onClick={handleClick}
           disabled={disabled || loading}
-          {...props}
         >
           {ButtonContent}
         </button>
@@ -421,7 +443,6 @@ const BoutonAnimePremium = memo(({
       onBlur={handleBlur}
       onClick={handleClick}
       disabled={disabled || loading}
-      {...props}
     >
       {ButtonContent}
     </button>
@@ -429,6 +450,20 @@ const BoutonAnimePremium = memo(({
 });
 
 BoutonAnimePremium.displayName = 'BoutonAnimePremium';
+
+// Types for widget
+interface WidgetFlottantPremiumProps {
+  children: ReactNode;
+  intensity?: number;
+  className?: string;
+  interactive?: boolean;
+  glow?: boolean;
+  minHeight?: string;
+  equalSize?: boolean;
+  onHoverChange?: (isHovered: boolean) => void;
+  delay?: number;
+  scrollReveal?: boolean;
+}
 
 // Composant Widget Flottant
 const WidgetFlottantPremium = memo(({
@@ -442,11 +477,11 @@ const WidgetFlottantPremium = memo(({
   onHoverChange,
   delay = 0,
   scrollReveal = true,
-}) => {
+}: WidgetFlottantPremiumProps) => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
   const [isVisible, setIsVisible] = useState(!scrollReveal);
-  const widgetRef = useRef(null);
+  const widgetRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     if (!scrollReveal || !widgetRef.current) return;
@@ -472,8 +507,8 @@ const WidgetFlottantPremium = memo(({
   useEffect(() => {
     if (!interactive || !widgetRef.current) return;
     
-    const handleMouseMove = (e) => {
-      const rect = widgetRef.current.getBoundingClientRect();
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = widgetRef.current!.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width;
       const y = (e.clientY - rect.top) / rect.height;
       
@@ -576,12 +611,150 @@ WidgetFlottantPremium.displayName = 'WidgetFlottantPremium';
 
 // Système de particules optimisé
 const FondParticulesUltra = memo(() => {
-  const canvasRef = useRef(null);
-  const animationRef = useRef();
-  const particlesRef = useRef([]);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationRef = useRef<number>();
+  const particlesRef = useRef<Particule[]>([]);
   const mouseRef = useRef({ x: 0, y: 0 });
   const timeRef = useRef(0);
   const mountedRef = useRef(true);
+
+  class Particule {
+    x: number;
+    y: number;
+    size: number;
+    speedX: number;
+    speedY: number;
+    color: string;
+    alpha: number;
+    pulseSpeed: number;
+    distanceFromMouse: number;
+    orbitRadius: number;
+    orbitSpeed: number;
+    orbitAngle: number;
+    type: string;
+
+    constructor(canvasWidth: number, canvasHeight: number) {
+      this.x = Math.random() * canvasWidth;
+      this.y = Math.random() * canvasHeight;
+      this.size = Math.random() * 3 + 0.5;
+      this.speedX = Math.random() * 0.6 - 0.3;
+      this.speedY = Math.random() * 0.6 - 0.3;
+      this.color = this.getRandomColor();
+      this.alpha = Math.random() * 0.4 + 0.1;
+      this.pulseSpeed = Math.random() * 0.02 + 0.01;
+      this.distanceFromMouse = 0;
+      this.orbitRadius = Math.random() * 50 + 20;
+      this.orbitSpeed = Math.random() * 0.02 + 0.01;
+      this.orbitAngle = Math.random() * Math.PI * 2;
+      this.type = Math.random() > 0.9 ? 'sparkle' : Math.random() > 0.8 ? 'orb' : 'normal';
+    }
+    
+    getRandomColor() {
+      const colors = [
+        `rgb(100, 200, 255)`,
+        `rgb(100, 255, 200)`,
+        `rgb(255, 200, 100)`,
+        `rgb(200, 100, 255)`,
+        `rgb(255, 100, 200)`,
+        `rgb(100, 255, 255)`,
+      ];
+      return colors[Math.floor(Math.random() * colors.length)];
+    }
+    
+    update(time: number, canvasWidth: number, canvasHeight: number) {
+      if (this.type === 'orb') {
+        this.orbitAngle += this.orbitSpeed;
+        this.x = mouseRef.current.x + Math.cos(this.orbitAngle) * this.orbitRadius;
+        this.y = mouseRef.current.y + Math.sin(this.orbitAngle) * this.orbitRadius;
+      } else {
+        this.x += this.speedX;
+        this.y += this.speedY;
+      }
+      
+      if (this.x > canvasWidth) this.x = 0;
+      if (this.x < 0) this.x = canvasWidth;
+      if (this.y > canvasHeight) this.y = 0;
+      if (this.y < 0) this.y = canvasHeight;
+      
+      this.alpha = 0.15 + Math.sin(time * this.pulseSpeed) * 0.25;
+      
+      const dx = this.x - mouseRef.current.x;
+      const dy = this.y - mouseRef.current.y;
+      this.distanceFromMouse = Math.sqrt(dx * dx + dy * dy);
+      
+      if (this.distanceFromMouse < 150 && this.type !== 'orb') {
+        const angle = Math.atan2(dy, dx);
+        const force = (150 - this.distanceFromMouse) / 150;
+        this.x += Math.cos(angle) * force * 2;
+        this.y += Math.sin(angle) * force * 2;
+      }
+    }
+    
+    draw(ctx: CanvasRenderingContext2D, particles: Particule[]) {
+      ctx.save();
+      
+      if (this.type === 'sparkle') {
+        ctx.globalAlpha = this.alpha * 0.7;
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        
+        for (let i = 0; i < 4; i++) {
+          ctx.beginPath();
+          ctx.moveTo(this.x, this.y);
+          ctx.lineTo(
+            this.x + Math.cos(i * Math.PI / 2) * this.size * 3,
+            this.y + Math.sin(i * Math.PI / 2) * this.size * 3
+          );
+          ctx.strokeStyle = `rgba(255, 255, 255, ${this.alpha * 0.5})`;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      } else {
+        ctx.globalAlpha = this.alpha;
+        
+        if (this.type === 'orb') {
+          const gradient = ctx.createRadialGradient(
+            this.x, this.y, 0,
+            this.x, this.y, this.size * 2
+          );
+          gradient.addColorStop(0, this.color.replace('rgb', 'rgba').replace(')', ', 0.8)'));
+          gradient.addColorStop(1, this.color.replace('rgb', 'rgba').replace(')', ', 0)'));
+          ctx.fillStyle = gradient;
+        } else {
+          ctx.fillStyle = this.color;
+        }
+        
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        
+        particles.forEach(particule => {
+          if (particule === this) return;
+          const dx = this.x - particule.x;
+          const dy = this.y - particule.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < 120) {
+            ctx.beginPath();
+            const gradient = ctx.createLinearGradient(
+              this.x, this.y,
+              particule.x, particule.y
+            );
+            gradient.addColorStop(0, this.color.replace('rgb', 'rgba').replace(')', `, ${0.3 * (1 - distance/120)})`));
+            gradient.addColorStop(1, particule.color.replace('rgb', 'rgba').replace(')', `, ${0.3 * (1 - distance/120)})`));
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 0.8 * (1 - distance/120);
+            ctx.moveTo(this.x, this.y);
+            ctx.lineTo(particule.x, particule.y);
+            ctx.stroke();
+          }
+        });
+      }
+      ctx.restore();
+    }
+  }
   
   useEffect(() => {
     mountedRef.current = true;
@@ -604,139 +777,15 @@ const FondParticulesUltra = memo(() => {
       initParticles();
     };
     
-    const handleMouseMove = (e) => {
+    const handleMouseMove = (e: MouseEvent) => {
       mouseRef.current = { x: e.clientX, y: e.clientY };
     };
     
-    const handleTouchMove = (e) => {
+    const handleTouchMove = (e: TouchEvent) => {
       if (e.touches.length > 0) {
         mouseRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
       }
     };
-    
-    class Particule {
-      constructor(canvasWidth, canvasHeight) {
-        this.x = Math.random() * canvasWidth;
-        this.y = Math.random() * canvasHeight;
-        this.size = Math.random() * 3 + 0.5;
-        this.speedX = Math.random() * 0.6 - 0.3;
-        this.speedY = Math.random() * 0.6 - 0.3;
-        this.color = this.getRandomColor();
-        this.alpha = Math.random() * 0.4 + 0.1;
-        this.pulseSpeed = Math.random() * 0.02 + 0.01;
-        this.distanceFromMouse = 0;
-        this.orbitRadius = Math.random() * 50 + 20;
-        this.orbitSpeed = Math.random() * 0.02 + 0.01;
-        this.orbitAngle = Math.random() * Math.PI * 2;
-        this.type = Math.random() > 0.9 ? 'sparkle' : Math.random() > 0.8 ? 'orb' : 'normal';
-      }
-      
-      getRandomColor() {
-        const colors = [
-          `rgb(100, 200, 255)`,
-          `rgb(100, 255, 200)`,
-          `rgb(255, 200, 100)`,
-          `rgb(200, 100, 255)`,
-          `rgb(255, 100, 200)`,
-          `rgb(100, 255, 255)`,
-        ];
-        return colors[Math.floor(Math.random() * colors.length)];
-      }
-      
-      update(time, canvasWidth, canvasHeight) {
-        if (this.type === 'orb') {
-          this.orbitAngle += this.orbitSpeed;
-          this.x = mouseRef.current.x + Math.cos(this.orbitAngle) * this.orbitRadius;
-          this.y = mouseRef.current.y + Math.sin(this.orbitAngle) * this.orbitRadius;
-        } else {
-          this.x += this.speedX;
-          this.y += this.speedY;
-        }
-        
-        if (this.x > canvasWidth) this.x = 0;
-        if (this.x < 0) this.x = canvasWidth;
-        if (this.y > canvasHeight) this.y = 0;
-        if (this.y < 0) this.y = canvasHeight;
-        
-        this.alpha = 0.15 + Math.sin(time * this.pulseSpeed) * 0.25;
-        
-        const dx = this.x - mouseRef.current.x;
-        const dy = this.y - mouseRef.current.y;
-        this.distanceFromMouse = Math.sqrt(dx * dx + dy * dy);
-        
-        if (this.distanceFromMouse < 150 && this.type !== 'orb') {
-          const angle = Math.atan2(dy, dx);
-          const force = (150 - this.distanceFromMouse) / 150;
-          this.x += Math.cos(angle) * force * 2;
-          this.y += Math.sin(angle) * force * 2;
-        }
-      }
-      
-      draw(ctx, particles) {
-        ctx.save();
-        
-        if (this.type === 'sparkle') {
-          ctx.globalAlpha = this.alpha * 0.7;
-          ctx.fillStyle = 'white';
-          ctx.beginPath();
-          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-          ctx.fill();
-          
-          for (let i = 0; i < 4; i++) {
-            ctx.beginPath();
-            ctx.moveTo(this.x, this.y);
-            ctx.lineTo(
-              this.x + Math.cos(i * Math.PI / 2) * this.size * 3,
-              this.y + Math.sin(i * Math.PI / 2) * this.size * 3
-            );
-            ctx.strokeStyle = `rgba(255, 255, 255, ${this.alpha * 0.5})`;
-            ctx.lineWidth = 1;
-            ctx.stroke();
-          }
-        } else {
-          ctx.globalAlpha = this.alpha;
-          
-          if (this.type === 'orb') {
-            const gradient = ctx.createRadialGradient(
-              this.x, this.y, 0,
-              this.x, this.y, this.size * 2
-            );
-            gradient.addColorStop(0, this.color.replace('rgb', 'rgba').replace(')', ', 0.8)'));
-            gradient.addColorStop(1, this.color.replace('rgb', 'rgba').replace(')', ', 0)'));
-            ctx.fillStyle = gradient;
-          } else {
-            ctx.fillStyle = this.color;
-          }
-          
-          ctx.beginPath();
-          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-          ctx.fill();
-          
-          particles.forEach(particule => {
-            if (particule === this) return;
-            const dx = this.x - particule.x;
-            const dy = this.y - particule.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            if (distance < 120) {
-              ctx.beginPath();
-              const gradient = ctx.createLinearGradient(
-                this.x, this.y,
-                particule.x, particule.y
-              );
-              gradient.addColorStop(0, this.color.replace('rgb', 'rgba').replace(')', `, ${0.3 * (1 - distance/120)})`));
-              gradient.addColorStop(1, particule.color.replace('rgb', 'rgba').replace(')', `, ${0.3 * (1 - distance/120)})`));
-              ctx.strokeStyle = gradient;
-              ctx.lineWidth = 0.8 * (1 - distance/120);
-              ctx.moveTo(this.x, this.y);
-              ctx.lineTo(particule.x, particule.y);
-              ctx.stroke();
-            }
-          });
-        }
-        ctx.restore();
-      }
-    }
     
     const initParticles = () => {
       particlesRef.current = [];
@@ -869,6 +918,21 @@ const FondParticulesUltra = memo(() => {
 
 FondParticulesUltra.displayName = 'FondParticulesUltra';
 
+// Types for card
+interface CarteInteractiveUltraProps {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  color?: string;
+  bg?: string;
+  border?: string;
+  onClick?: () => void;
+  isActive?: boolean;
+  equalSize?: boolean;
+  delay?: number;
+  tags?: string[];
+}
+
 // Composant Carte Interactive ultra améliorée
 const CarteInteractiveUltra = memo(({ 
   icon: Icon,
@@ -882,11 +946,11 @@ const CarteInteractiveUltra = memo(({
   equalSize = true,
   delay = 0,
   tags = [],
-}) => {
+}: CarteInteractiveUltraProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  const cardRef = useRef(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -977,9 +1041,6 @@ const CarteInteractiveUltra = memo(({
                       className="px-3 py-1 text-xs font-medium rounded-full bg-blue-500/10 text-blue-400 backdrop-blur-sm border border-blue-500/20"
                       style={{
                         animationDelay: `${index * 100}ms`,
-                        opacity: isVisible ? 1 : 0,
-                        transform: isVisible ? 'translateX(0)' : 'translateX(-20px)',
-                        transition: `all 600ms cubic-bezier(0.34, 1.56, 0.64, 1) ${delay + index * 100}ms`
                       }}
                     >
                       {tag}
@@ -987,17 +1048,6 @@ const CarteInteractiveUltra = memo(({
                   ))}
                 </div>
               )}
-              
-              <div className={`absolute inset-0 overflow-hidden rounded-3xl`}>
-                <div className={`absolute -top-24 -right-24 w-48 h-48 rounded-full ${bg} transition-all duration-1000 ${isHovered ? 'scale-150 opacity-70' : 'scale-100 opacity-30'}`} />
-                <div className={`absolute -bottom-24 -left-24 w-48 h-48 rounded-full ${bg} transition-all duration-1000 delay-200 ${isHovered ? 'scale-150 opacity-70' : 'scale-100 opacity-30'}`} />
-                
-                <div className="absolute inset-0 opacity-5">
-                  <div className="absolute top-1/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-current to-transparent" />
-                  <div className="absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-current to-transparent" />
-                  <div className="absolute top-3/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-current to-transparent" />
-                </div>
-              </div>
               
               <div className={`relative w-28 h-28 md:w-32 md:h-32 rounded-3xl ${bg} 
                             flex items-center justify-center mx-auto mb-8 overflow-hidden
@@ -1095,6 +1145,20 @@ const CarteInteractiveUltra = memo(({
 
 CarteInteractiveUltra.displayName = 'CarteInteractiveUltra';
 
+// Types for panel
+interface PanelDetailsUltraProps {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  details: string;
+  color?: string;
+  bg?: string;
+  border?: string;
+  onClose?: () => void;
+  equalSize?: boolean;
+  stats?: Array<{ label: string; value: string; icon: LucideIcon }>;
+}
+
 // Composant Panel Détails amélioré avec animations
 const PanelDetailsUltra = memo(({ 
   icon: Icon,
@@ -1107,18 +1171,7 @@ const PanelDetailsUltra = memo(({
   onClose,
   equalSize = true,
   stats = [],
-}: {
-  icon: any;
-  title: string;
-  description: string;
-  details: string;
-  color?: string;
-  bg?: string;
-  border?: string;
-  onClose?: () => void;
-  equalSize?: boolean;
-  stats?: Array<{ label: string; value: string; icon: any }>;
-}) => {
+}: PanelDetailsUltraProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -1313,16 +1366,19 @@ const PanelDetailsUltra = memo(({
 
 PanelDetailsUltra.displayName = 'PanelDetailsUltra';
 
+// Types for navigation
+interface ScrollNavigationProps {
+  sections: Array<{ id: string; label: string; icon: LucideIcon }>;
+  activeSection: string;
+  onSectionClick: (id: string) => void;
+}
+
 // Composant de navigation par scroll amélioré
 const ScrollNavigation = memo(({ 
   sections,
   activeSection,
   onSectionClick
-}: {
-  sections: Array<{ id: string; label: string; icon: any }>;
-  activeSection: string;
-  onSectionClick: (id: string) => void;
-}) => {
+}: ScrollNavigationProps) => {
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
   
@@ -1339,10 +1395,10 @@ const ScrollNavigation = memo(({
   
   return (
     <div 
-      className={`fixed right-8 top-1/2 -translate-y-1/2 z-40 transition-all duration-500 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-20'}`}
+      className={`fixed right-8 top-1/2 -translate-y-1/2 z-40 transition-all duration-500 hidden lg:block ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-20'}`}
     >
       <div className="flex flex-col items-center gap-4 p-4 rounded-2xl bg-background/80 backdrop-blur-xl border border-white/10 shadow-2xl">
-        {sections.map((section, index) => (
+        {sections.map((section) => (
           <button
             key={section.id}
             onClick={() => onSectionClick(section.id)}
@@ -1391,7 +1447,6 @@ ScrollNavigation.displayName = 'ScrollNavigation';
 // Composant principal ultra amélioré
 export default function ProjectUltra() {
   useLanguage();
-  const { motion, error: framerMotionError, loading: framerMotionLoading } = useLazyFramerMotion();
   
   // États améliorés
   const [activeBinIndex, setActiveBinIndex] = useState(0);
@@ -1612,8 +1667,8 @@ export default function ProjectUltra() {
       setScrollProgress(progress);
       
       // Détection de la section active
-      const sections = ['hero', 'goals', 'bins', 'actions', 'cta'];
-      for (const sectionId of sections) {
+      const sectionIds = ['hero', 'goals', 'bins', 'actions', 'cta'];
+      for (const sectionId of sectionIds) {
         const element = sectionsRef.current[sectionId];
         if (element) {
           const rect = element.getBoundingClientRect();
@@ -1684,38 +1739,12 @@ export default function ProjectUltra() {
     }
   }, []);
   
-  // Utiliser les composants motion
-  const MotionDiv = motion?.div || 'div';
-  const MotionSection = motion?.section || 'section';
-  const AnimatePresence = motion?.AnimatePresence || 'div';
-  
-  // Animations de scroll avec Framer Motion
-  const { scrollYProgress } = motion?.useScroll?.() || { scrollYProgress: { get: () => 0 } };
-  const scaleX = motion?.useTransform?.(scrollYProgress, [0, 1], [0, 1]) || scrollProgress / 100;
-  
-  if (framerMotionLoading) {
-    return <LoadingScreenPremium />;
-  }
-  
-  if (framerMotionError) {
-    return (
-      <div className="min-h-screen">
-        <FondParticulesUltra />
-        <div className="container mx-auto px-4 py-12">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold mb-6">Projet Écologique</h1>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
   return (
     <div className="min-h-screen overflow-hidden" ref={containerRef}>
       <FondParticulesUltra />
       
       {/* Curseur personnalisé amélioré */}
-      <div className="fixed inset-0 pointer-events-none z-50">
+      <div className="fixed inset-0 pointer-events-none z-50 hidden lg:block">
         <div 
           className={`absolute w-8 h-8 rounded-full -translate-x-1/2 -translate-y-1/2 transition-all duration-150 ${
             cursorVariant === 'pointer' 
@@ -1756,7 +1785,7 @@ export default function ProjectUltra() {
       
       <div className="container mx-auto px-4 py-8 md:py-12 lg:py-16">
         {/* Section Héro avec animations avancées */}
-        <MotionSection
+        <motion.section
           ref={(el: HTMLDivElement | null) => { if (el) sectionsRef.current.hero = el; }}
           id="hero"
           initial={{ opacity: 0 }}
@@ -1764,7 +1793,7 @@ export default function ProjectUltra() {
           transition={{ duration: 1.5, ease: "easeOut" }}
           className="max-w-6xl mx-auto text-center mb-16 md:mb-24 lg:mb-32 pt-16"
         >
-          <MotionDiv
+          <motion.div
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.2 }}
@@ -1777,9 +1806,9 @@ export default function ProjectUltra() {
               Initiative Écologique Excellence 2024
             </span>
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          </MotionDiv>
+          </motion.div>
           
-          <MotionDiv
+          <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, delay: 0.4, ease: "easeOut" }}
@@ -1798,9 +1827,9 @@ export default function ProjectUltra() {
                 Notre Planète, Notre Avenir
               </h2>
             </div>
-          </MotionDiv>
+          </motion.div>
           
-          <MotionDiv
+          <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.6, ease: "easeOut" }}
@@ -1810,25 +1839,25 @@ export default function ProjectUltra() {
               Bienvenue dans notre mouvement écologique communautaire. Chaque geste compte, chaque action a un impact, 
               et ensemble, nous créons un avenir durable pour les générations à venir.
             </p>
-            <div className="inline-flex items-center gap-6 text-lg text-foreground/70">
+            <div className="inline-flex flex-wrap items-center justify-center gap-6 text-lg text-foreground/70">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                 <span>Impact mesurable</span>
               </div>
-              <div className="w-px h-6 bg-white/20" />
+              <div className="w-px h-6 bg-white/20 hidden sm:block" />
               <div className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-primary" />
                 <span>Communauté engagée</span>
               </div>
-              <div className="w-px h-6 bg-white/20" />
+              <div className="w-px h-6 bg-white/20 hidden sm:block" />
               <div className="flex items-center gap-2">
                 <Leaf className="w-5 h-5 text-green-500" />
                 <span>Solutions durables</span>
               </div>
             </div>
-          </MotionDiv>
+          </motion.div>
           
-          <MotionDiv
+          <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.8, ease: "easeOut" }}
@@ -1856,10 +1885,10 @@ export default function ProjectUltra() {
             >
               Explorer les Ressources
             </BoutonAnimePremium>
-          </MotionDiv>
+          </motion.div>
           
           {/* Stats en temps réel */}
-          <MotionDiv
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 1 }}
@@ -1874,11 +1903,6 @@ export default function ProjectUltra() {
               <div 
                 key={stat.label}
                 className="text-center p-6 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10"
-                style={{
-                  animationDelay: `${1.2 + index * 0.1}s`,
-                  animation: 'fade-in-up 0.6s ease-out forwards',
-                  opacity: 0
-                }}
               >
                 <div className={`text-4xl font-bold mb-2 ${stat.color}`}>
                   {stat.value}
@@ -1889,11 +1913,11 @@ export default function ProjectUltra() {
                 </div>
               </div>
             ))}
-          </MotionDiv>
-        </MotionSection>
+          </motion.div>
+        </motion.section>
         
         {/* Section Objectifs avec animations de scroll */}
-        <MotionSection
+        <motion.section
           ref={(el: HTMLDivElement | null) => { if (el) sectionsRef.current.goals = el; }}
           id="goals"
           initial={{ opacity: 0 }}
@@ -1902,34 +1926,37 @@ export default function ProjectUltra() {
           transition={{ duration: 1.2, ease: "easeOut" }}
           className="max-w-7xl mx-auto mb-20 md:mb-32 scroll-mt-20"
         >
-          <MotionDiv
+          <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="text-center mb-20"
           >
-            <div className="inline-block relative mb-6">
-              <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-emerald-500/20 blur-xl rounded-full" />
-              <h2 className="relative text-5xl md:text-6xl lg:text-7xl font-bold">
-                <span className="bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 bg-clip-text text-transparent">
-                  Notre Vision
-                </span>
-              </h2>
+            <div className="inline-flex items-center gap-4 mb-6">
+              <div className="w-16 h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
+              <Target className="w-12 h-12 text-primary" />
+              <div className="w-16 h-px bg-gradient-to-r from-transparent via-emerald-500 to-transparent" />
             </div>
+            
+            <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6">
+              <span className="bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 bg-clip-text text-transparent">
+                Nos Objectifs
+              </span>
+            </h2>
             <p className="text-2xl text-foreground/80 max-w-3xl mx-auto">
-              Une vision claire, des objectifs ambitieux, un impact réel
+              Construire un avenir durable à travers l'éducation, l'innovation et l'engagement communautaire
             </p>
-          </MotionDiv>
+          </motion.div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
             {goals.map((goal, index) => (
-              <MotionDiv
+              <motion.div
                 key={goal.title}
-                initial={{ opacity: 0, y: 60, scale: 0.9 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                initial={{ opacity: 0, y: 60 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: index * 0.15, type: "spring", stiffness: 80 }}
+                transition={{ duration: 0.8, delay: index * 0.1, ease: "easeOut" }}
                 className="h-full"
               >
                 <CarteInteractiveUltra
@@ -1945,14 +1972,14 @@ export default function ProjectUltra() {
                   delay={index * 100}
                   tags={goal.tags}
                 />
-              </MotionDiv>
+              </motion.div>
             ))}
           </div>
           
           {/* Panel de détails des objectifs */}
           <AnimatePresence>
             {activeGoalIndex !== null && (
-              <MotionDiv
+              <motion.div
                 initial={{ opacity: 0, y: 40, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 40, scale: 0.95 }}
@@ -1969,29 +1996,23 @@ export default function ProjectUltra() {
                   border={goals[activeGoalIndex].border}
                   onClose={handleCloseDetails}
                   equalSize={true}
-                  stats={[
-                    { label: "Impact Environnemental", value: "Élevé", icon: Leaf },
-                    { label: "Engagement Communauté", value: "95%", icon: Users },
-                    { label: "Innovation Technologique", value: "Avancée", icon: Zap },
-                    { label: "Durabilité", value: "Long terme", icon: Shield }
-                  ]}
                 />
-              </MotionDiv>
+              </motion.div>
             )}
           </AnimatePresence>
-        </MotionSection>
+        </motion.section>
         
-        {/* Section Tri Sélectif avec animations avancées */}
-        <MotionSection
+        {/* Section Tri Sélectif avec animations fluides */}
+        <motion.section
           ref={(el: HTMLDivElement | null) => { if (el) sectionsRef.current.bins = el; }}
           id="bins"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={{ once: true }}
           transition={{ duration: 1.2, ease: "easeOut" }}
           className="max-w-7xl mx-auto mb-20 md:mb-32 scroll-mt-20"
         >
-          <MotionDiv
+          <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -2000,7 +2021,7 @@ export default function ProjectUltra() {
           >
             <div className="inline-flex items-center gap-4 mb-6">
               <div className="w-16 h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
-              <Recycle className="w-12 h-12 text-primary animate-spin" />
+              <Recycle className="w-12 h-12 text-primary animate-spin" style={{ animationDuration: '10s' }} />
               <div className="w-16 h-px bg-gradient-to-r from-transparent via-emerald-500 to-transparent" />
             </div>
             
@@ -2015,11 +2036,11 @@ export default function ProjectUltra() {
             <p className="text-lg text-foreground/70 max-w-4xl mx-auto">
               Notre approche combine technologie de pointe et simplicité d'utilisation pour maximiser l'impact écologique.
             </p>
-          </MotionDiv>
+          </motion.div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-16">
             {bins.map((bin, index) => (
-              <MotionDiv
+              <motion.div
                 key={bin.label}
                 initial={{ opacity: 0, y: 60, scale: 0.9 }}
                 whileInView={{ opacity: 1, y: 0, scale: 1 }}
@@ -2040,14 +2061,14 @@ export default function ProjectUltra() {
                   delay={index * 100}
                   tags={bin.tags}
                 />
-              </MotionDiv>
+              </motion.div>
             ))}
           </div>
           
           {/* Panel de détails des poubelles */}
           <AnimatePresence>
             {showBinDetails && (
-              <MotionDiv
+              <motion.div
                 initial={{ opacity: 0, y: 40, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 40, scale: 0.95 }}
@@ -2066,12 +2087,12 @@ export default function ProjectUltra() {
                   equalSize={true}
                   stats={bins[activeBinIndex].stats}
                 />
-              </MotionDiv>
+              </motion.div>
             )}
           </AnimatePresence>
           
           {/* Indicateurs de navigation améliorés */}
-          <MotionDiv
+          <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
@@ -2110,11 +2131,11 @@ export default function ProjectUltra() {
                 {isAutoRotating ? 'Pause' : 'Reprendre'}
               </BoutonAnimePremium>
             </div>
-          </MotionDiv>
-        </MotionSection>
+          </motion.div>
+        </motion.section>
         
         {/* Section Actions avec animations fluides */}
-        <MotionSection
+        <motion.section
           ref={(el: HTMLDivElement | null) => { if (el) sectionsRef.current.actions = el; }}
           id="actions"
           initial={{ opacity: 0 }}
@@ -2123,7 +2144,7 @@ export default function ProjectUltra() {
           transition={{ duration: 1.2, ease: "easeOut" }}
           className="max-w-7xl mx-auto mb-20 md:mb-32 scroll-mt-20"
         >
-          <MotionDiv
+          <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -2141,11 +2162,11 @@ export default function ProjectUltra() {
             <p className="text-2xl text-foreground/80 max-w-3xl mx-auto">
               Des initiatives concrètes pour un engagement immédiat
             </p>
-          </MotionDiv>
+          </motion.div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
             {actions.map((action, index) => (
-              <MotionDiv
+              <motion.div
                 key={action.title}
                 initial={{ opacity: 0, y: 60 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -2165,12 +2186,12 @@ export default function ProjectUltra() {
                   delay={index * 100}
                   tags={action.tags}
                 />
-              </MotionDiv>
+              </motion.div>
             ))}
           </div>
           
           {/* Call to Action intermédiaire */}
-          <MotionDiv
+          <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -2211,11 +2232,11 @@ export default function ProjectUltra() {
                 </div>
               </div>
             </div>
-          </MotionDiv>
-        </MotionSection>
+          </motion.div>
+        </motion.section>
         
         {/* Section Appel à l'Action Finale avec animations premium */}
-        <MotionSection
+        <motion.section
           ref={(el: HTMLDivElement | null) => { if (el) sectionsRef.current.cta = el; }}
           id="cta"
           initial={{ opacity: 0 }}
@@ -2232,7 +2253,7 @@ export default function ProjectUltra() {
                 <div className="absolute -top-32 -right-32 w-80 h-80 bg-gradient-to-r from-primary/20 to-emerald-500/20 
                               rounded-full blur-3xl animate-pulse" />
                 <div className="absolute -bottom-32 -left-32 w-80 h-80 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 
-                              rounded-full blur-3xl animate-pulse delay-2000" />
+                              rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
                 
                 {/* Étoiles scintillantes */}
                 {[...Array(8)].map((_, i) => (
@@ -2247,7 +2268,7 @@ export default function ProjectUltra() {
                   />
                 ))}
                 
-                <MotionDiv
+                <motion.div
                   initial={{ scale: 0, rotate: -180 }}
                   whileInView={{ scale: 1, rotate: 0 }}
                   viewport={{ once: true }}
@@ -2262,7 +2283,7 @@ export default function ProjectUltra() {
                       <div className="absolute -inset-6 rounded-full border-4 border-primary/20 animate-ping" />
                     </div>
                   </div>
-                </MotionDiv>
+                </motion.div>
                 
                 <h2 className="text-5xl md:text-6xl font-bold mb-10 relative z-10">
                   <span className="bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 
@@ -2333,7 +2354,7 @@ export default function ProjectUltra() {
               </CardContent>
             </Card>
           </WidgetFlottantPremium>
-        </MotionSection>
+        </motion.section>
       </div>
       
       {/* Footer animé */}
@@ -2351,22 +2372,22 @@ export default function ProjectUltra() {
             </div>
             
             <div className="flex items-center gap-6">
-              <a href="#" className="text-muted-foreground hover:text-primary">Mentions légales</a>
-              <a href="#" className="text-muted-foreground hover:text-primary">Politique de confidentialité</a>
-              <a href="#" className="text-muted-foreground hover:text-primary">Contact</a>
+              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">Mentions légales</a>
+              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">Politique de confidentialité</a>
+              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">Contact</a>
             </div>
             
             <div className="flex items-center gap-4">
               <button 
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="p-3 rounded-xl bg-white/5 hover:bg-white/10"
+                className="p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
                 aria-label="Changer le thème"
               >
                 {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
               <button 
                 onClick={() => setTheme('eco')}
-                className="p-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20"
+                className="p-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors"
                 aria-label="Thème écologique"
               >
                 <Leaf className="w-5 h-5 text-emerald-500" />
@@ -2411,20 +2432,20 @@ export default function ProjectUltra() {
           50% { background-position: 100% 50%; }
         }
         
-        @keyframes float-orb-advanced {
+        @keyframes float-orb {
           0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
           25% { transform: translate(50px, -60px) scale(1.2); opacity: 0.7; }
           50% { transform: translate(-30px, 30px) scale(0.9); opacity: 0.4; }
           75% { transform: translate(60px, 40px) scale(1.1); opacity: 0.6; }
         }
         
-        @keyframes ripple-advanced {
+        @keyframes ripple {
           0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
           70% { transform: translate(-50%, -50%) scale(4); opacity: 0.3; }
           100% { transform: translate(-50%, -50%) scale(5); opacity: 0; }
         }
         
-        @keyframes shine-slow {
+        @keyframes shine {
           0% { transform: translateX(-100%) rotate(30deg); }
           100% { transform: translateX(400%) rotate(30deg); }
         }
@@ -2436,78 +2457,9 @@ export default function ProjectUltra() {
           75% { transform: translateY(10px) translateX(5px); opacity: 0.7; }
         }
         
-        @keyframes orbit-particle {
-          0% { transform: rotate(0deg) translateX(60px) rotate(0deg); opacity: 0.5; }
-          50% { transform: rotate(180deg) translateX(80px) rotate(-180deg); opacity: 1; }
-          100% { transform: rotate(360deg) translateX(60px) rotate(-360deg); opacity: 0.5; }
-        }
-        
-        @keyframes grid-move {
-          0% { background-position: 0 0; }
-          100% { background-position: 40px 40px; }
-        }
-        
-        @keyframes fadeInOut {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 1; }
-        }
-        
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(30px); }
           to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .animate-gradient-border {
-          animation: gradient-border 3s ease-in-out infinite;
-          background-size: 200% 200%;
-        }
-        
-        .animate-gradient-slow {
-          animation: pulse 4s ease-in-out infinite;
-        }
-        
-        .animate-ripple-advanced {
-          animation: ripple-advanced 1s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
-        }
-        
-        .animate-shine-slow {
-          animation: shine-slow 3s ease-in-out infinite;
-        }
-        
-        .animate-pulse-smooth {
-          animation: pulse 2s ease-in-out infinite;
-        }
-        
-        .animate-pulse-slow {
-          animation: pulse 3s ease-in-out infinite;
-        }
-        
-        .animate-pulse-fast {
-          animation: pulse 0.5s ease-in-out infinite;
-        }
-        
-        .animate-spin-smooth {
-          animation: spin 1s linear infinite;
-        }
-        
-        .animate-spin-slow {
-          animation: spin 20s linear infinite;
-        }
-        
-        .animate-spin-slow-reverse {
-          animation: spin 25s linear infinite reverse;
-        }
-        
-        .animate-bounce-subtle {
-          animation: bounce 3s ease-in-out infinite;
-        }
-        
-        .animate-ping-slow {
-          animation: ping 3s cubic-bezier(0, 0, 0.2, 1) infinite;
-        }
-        
-        .animate-fade-in-out {
-          animation: fadeInOut 3s ease-in-out infinite;
         }
         
         .animate-fade-in-up {
