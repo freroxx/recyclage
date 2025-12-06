@@ -944,7 +944,7 @@ export default function Project() {
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-8 tracking-tight">
               <span className="bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 bg-clip-text text-transparent 
                             animate-gradient-smooth bg-300% leading-tight">
-                Ensemble pour la Planète
+                Project de Recyclage Maria
               </span>
             </h1>
           </MotionDiv>
@@ -1009,11 +1009,11 @@ export default function Project() {
           >
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
               <span className="bg-gradient-to-r from-primary to-emerald-600 bg-clip-text text-transparent">
-                Nos Objectifs Stratégiques
+                Nos Objectifs
               </span>
             </h2>
             <p className="text-xl text-foreground/80 max-w-3xl mx-auto">
-              Une vision claire et des objectifs ambitieux pour un impact environnemental significatif et durable
+              Une vision claire et des objectifs ambitieux
             </p>
           </MotionDiv>
           
@@ -1089,11 +1089,10 @@ export default function Project() {
               </span>
             </h2>
             <p className="text-xl text-foreground/80 max-w-3xl mx-auto mb-4">
-              Apprenez à trier correctement vos déchets pour maximiser le recyclage et minimiser l'impact environnemental
+              Apprenez à trier correctement vos déchets
             </p>
             <p className="text-lg text-foreground/70 max-w-4xl mx-auto">
-              Notre système de tri a été conçu pour être simple, efficace et accessible à tous. Chaque catégorie de déchets 
-              a son propre circuit de valorisation, permettant de réutiliser au maximum les ressources et de réduire notre empreinte écologique.
+              Notre système de tri a été conçu pour être simple, efficace et accessible à tous.
             </p>
           </MotionDiv>
           
@@ -1266,8 +1265,7 @@ export default function Project() {
                     en réduisant votre consommation, en participant à nos événements, vous contribuez activement 
                     à la préservation de notre planète.
                   </p>
-                  <p>
-                    Notre communauté compte déjà des milliers de membres engagés qui font la différence chaque jour. 
+                  <p> 
                     Ensemble, nous avons déjà accompli de grandes choses, mais il reste encore beaucoup à faire.
                   </p>
                   <p className="font-semibold text-primary animate-pulse-slow">
