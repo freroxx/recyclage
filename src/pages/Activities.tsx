@@ -61,9 +61,9 @@ export default function Activities() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isIframeLoading, setIsIframeLoading] = useState(true);
   const [iframeError, setIframeError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0); // Key to force iframe reload
   
   const iframeContainerRef = useRef<HTMLDivElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const currentGame = GAMES[currentLevel];
   const isLastLevel = currentLevel === GAMES.length - 1;
@@ -84,6 +84,7 @@ export default function Activities() {
       setCurrentLevel(prev => prev + 1);
       setIsIframeLoading(true);
       setIframeError(null);
+      setReloadKey(prev => prev + 1); // Increment reload key to force new iframe
     }
   }, [isLastLevel]);
 
@@ -102,17 +103,16 @@ export default function Activities() {
   }, []);
 
   const reloadIframe = useCallback(() => {
-    if (!iframeRef.current) return;
-    
     setIsIframeLoading(true);
     setIframeError(null);
-    iframeRef.current.src = iframeRef.current.src;
+    setReloadKey(prev => prev + 1); // Force iframe remount by changing key
   }, []);
 
   const handleLevelSelect = useCallback((index: number) => {
     setCurrentLevel(index);
     setIsIframeLoading(true);
     setIframeError(null);
+    setReloadKey(prev => prev + 1); // Force iframe remount
   }, []);
 
   const handleIframeLoad = useCallback(() => {
@@ -121,13 +121,13 @@ export default function Activities() {
 
   const handleIframeError = useCallback(() => {
     setIsIframeLoading(false);
-    setIframeError(t("activities.iframeError") || "Failed to load game. Please try again.");
+    setIframeError(t("activities.iframeError") || "Échec du chargement du jeu. Veuillez réessayer.");
   }, [t]);
 
   return (
     <div className="container mx-auto px-4 py-6 sm:py-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* En-tête */}
         <header className="text-center mb-8 sm:mb-12 animate-fade-in">
           <div className="flex flex-col items-center gap-4 mb-6">
             <div className="flex items-center justify-center gap-3">
@@ -141,11 +141,11 @@ export default function Activities() {
             </p>
           </div>
           
-          {/* Progress bar */}
+          {/* Barre de progression */}
           <div className="max-w-xl mx-auto mb-8">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm font-medium text-muted-foreground">
-                {t("activities.progress") || "Progress"}
+                Votre progression
               </span>
               <span className="text-sm font-semibold text-primary">
                 {currentLevel + 1} / {GAMES.length}
@@ -155,7 +155,7 @@ export default function Activities() {
           </div>
         </header>
 
-        {/* Main Game Card */}
+        {/* Carte principale du jeu */}
         <Card className="overflow-hidden border-2 shadow-2xl">
           <CardHeader className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent pb-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -173,13 +173,13 @@ export default function Activities() {
               
               <div className="flex items-center gap-3">
                 <Badge variant="outline" className="px-3 py-1 text-sm">
-                  {t("activities.level") || "Level"} {currentLevel + 1}
+                  Niveau {currentLevel + 1}
                 </Badge>
               </div>
             </div>
           </CardHeader>
           
-          {/* Game Container */}
+          {/* Conteneur du jeu */}
           <CardContent className="p-0">
             <ResizablePanelGroup direction="vertical" className="min-h-[500px] sm:min-h-[600px]">
               <ResizablePanel defaultSize={100} minSize={30}>
@@ -187,30 +187,29 @@ export default function Activities() {
                   ref={iframeContainerRef}
                   className="relative w-full h-full bg-gradient-to-br from-muted/10 to-muted/30"
                 >
-                  {/* Loading State */}
+                  {/* État de chargement */}
                   {isIframeLoading && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm z-20">
                       <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-                      <p className="text-muted-foreground">{t("activities.loading") || "Loading game..."}</p>
+                      <p className="text-muted-foreground">Chargement du jeu...</p>
                     </div>
                   )}
                   
-                  {/* Error State */}
+                  {/* État d'erreur */}
                   {iframeError && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/90 backdrop-blur-sm z-20 p-6">
                       <AlertCircle className="w-16 h-16 text-destructive mb-4" />
                       <p className="text-lg font-medium text-center mb-4">{iframeError}</p>
                       <Button onClick={reloadIframe} variant="outline">
                         <RotateCcw className="w-4 h-4 mr-2" />
-                        {t("activities.retry") || "Retry"}
+                        Réessayer
                       </Button>
                     </div>
                   )}
                   
-                  {/* Game Iframe */}
+                  {/* Iframe du jeu */}
                   <iframe
-                    ref={iframeRef}
-                    key={currentGame.url}
+                    key={`${currentGame.url}-${reloadKey}`} // Force remount on reload
                     src={currentGame.url}
                     className="w-full h-full"
                     title={t(currentGame.titleKey)}
@@ -221,14 +220,14 @@ export default function Activities() {
                     sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
                   />
                   
-                  {/* Game Controls */}
+                  {/* Contrôles du jeu */}
                   <div className="absolute top-4 right-4 flex gap-2 z-10">
                     <Button
                       variant="secondary"
                       size="icon"
                       className="shadow-lg bg-background/80 backdrop-blur-sm"
                       onClick={toggleFullscreen}
-                      aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                      aria-label={isFullscreen ? "Quitter le mode plein écran" : "Mode plein écran"}
                     >
                       {isFullscreen ? (
                         <Minimize2 className="w-4 h-4" />
@@ -242,7 +241,7 @@ export default function Activities() {
                       size="icon"
                       className="shadow-lg bg-background/80 backdrop-blur-sm"
                       onClick={reloadIframe}
-                      aria-label="Reload game"
+                      aria-label="Recharger le jeu"
                     >
                       <RotateCcw className="w-4 h-4" />
                     </Button>
@@ -252,7 +251,7 @@ export default function Activities() {
             </ResizablePanelGroup>
           </CardContent>
 
-          {/* Navigation Footer */}
+          {/* Pied de page de navigation */}
           <footer className="border-t bg-muted/20 p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <Button
@@ -294,10 +293,10 @@ export default function Activities() {
           </footer>
         </Card>
 
-        {/* Level Selector */}
+        {/* Sélecteur de niveau */}
         <div className="mt-8 sm:mt-12">
           <h2 className="text-xl font-semibold mb-4 text-center">
-            {t("activities.selectLevel") || "Select a Level"}
+            Sélectionnez votre niveau
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             {GAMES.map((game, index) => (
@@ -313,7 +312,7 @@ export default function Activities() {
                     : "border-border bg-card hover:border-primary/50"
                   }
                 `}
-                aria-label={`Select level ${game.id}: ${t(game.titleKey)}`}
+                aria-label={`Sélectionner le niveau ${game.id}: ${t(game.titleKey)}`}
                 aria-current={currentLevel === index ? "true" : "false"}
               >
                 <div className="flex items-center gap-3 mb-3">
@@ -328,7 +327,7 @@ export default function Activities() {
                     {game.id}
                   </span>
                   <span className="text-sm font-medium">
-                    {t("activities.level") || "Level"} {game.id}
+                    Niveau {game.id}
                   </span>
                 </div>
                 <p className="text-sm text-left text-muted-foreground line-clamp-2">
@@ -339,7 +338,7 @@ export default function Activities() {
           </div>
         </div>
 
-        {/* Mobile Completion Message */}
+        {/* Message de réussite sur mobile */}
         {isLastLevel && (
           <div className="mt-6 sm:hidden text-center">
             <span className="text-lg font-semibold text-primary">
