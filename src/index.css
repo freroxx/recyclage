@@ -102,6 +102,42 @@
   .focus-ring {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
   }
+
+  /* Ultra-smooth hover transitions */
+  .smooth-hover {
+    transition: all 500ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+
+  .smooth-hover:hover {
+    transform: translateY(-4px) scale(1.02);
+  }
+
+  /* Smooth scale effect */
+  .hover-scale-smooth {
+    transition: transform 500ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+
+  .hover-scale-smooth:hover {
+    transform: scale(1.05);
+  }
+
+  /* Smooth rotate effect */
+  .hover-rotate-smooth {
+    transition: transform 500ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+
+  .hover-rotate-smooth:hover {
+    transform: rotate(3deg) scale(1.02);
+  }
+
+  /* Custom easing */
+  .ease-out-smooth {
+    transition-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+
+  .ease-in-out-smooth {
+    transition-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
+  }
 }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
