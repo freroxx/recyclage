@@ -231,7 +231,7 @@ const BoutonAnime = memo(({
 
 BoutonAnime.displayName = 'BoutonAnime';
 
-// Composant Widget Flottant avec taille uniforme et animations améliorées
+// Composant Widget Flottant redessiné avec animations ultra-fluides
 const WidgetFlottant = memo(({
   children,
   intensity = 1,
@@ -290,39 +290,47 @@ const WidgetFlottant = memo(({
     };
   }, [interactive]);
   
-  const rotateX = interactive ? mousePosition.y * 1.5 * intensity : 0;
-  const rotateY = interactive ? -mousePosition.x * 1.5 * intensity : 0;
-  const translateZ = interactive ? Math.abs(mousePosition.x + mousePosition.y) * 3 * intensity : 0;
+  const rotateX = interactive ? mousePosition.y * 8 * intensity : 0;
+  const rotateY = interactive ? -mousePosition.x * 8 * intensity : 0;
+  const translateZ = isHovered ? 20 : 0;
+  const scale = isHovered ? 1.02 : 1;
   
   return (
     <div
       ref={widgetRef}
-      className={`relative transition-all duration-500 ease-out-smooth will-change-transform rounded-2xl ${className}
-        shadow-lg hover:shadow-2xl border border-white/10 hover:border-primary/30
+      className={`relative rounded-3xl group ${className}
         ${equalSize ? 'w-full h-full flex flex-col' : ''}
         ${minHeight}
       `}
       style={{
-        transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(${translateZ}px)`,
+        transform: `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(${translateZ}px) scale(${scale})`,
+        transition: 'transform 600ms cubic-bezier(0.23, 1, 0.32, 1)',
       }}
     >
-      {/* Effet de profondeur amélioré */}
-      {glow && interactive && (
-        <>
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/5 via-transparent to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-          <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-primary/20 via-emerald-500/20 to-cyan-500/20 opacity-0 group-hover:opacity-100 blur-xl transition-all duration-700" />
-        </>
+      {/* Animated gradient border */}
+      <div className={`absolute -inset-[2px] rounded-3xl bg-gradient-to-r from-primary/40 via-emerald-500/40 to-cyan-500/40 opacity-0 transition-opacity duration-700 ${isHovered ? 'opacity-100' : ''}`} 
+        style={{ filter: 'blur(1px)' }}
+      />
+      
+      {/* Glow effect on hover */}
+      {glow && (
+        <div className={`absolute -inset-4 rounded-3xl bg-gradient-to-br from-primary/20 via-emerald-500/15 to-cyan-500/20 transition-all duration-700 ${isHovered ? 'opacity-100 blur-2xl' : 'opacity-0 blur-xl'}`} />
       )}
       
-      {/* Effet de focus amélioré */}
-      {isHovered && interactive && (
-        <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-primary/10 to-cyan-500/10 blur-lg transition-all duration-300" />
-      )}
+      {/* Inner shadow and background */}
+      <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-card via-card/95 to-card/90 shadow-xl" />
       
-      {/* Effet de lueur subtile */}
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/0 via-transparent to-white/0 opacity-0 group-hover:opacity-50 transition-opacity duration-500" />
+      {/* Shimmer effect on hover */}
+      <div className={`absolute inset-0 rounded-3xl overflow-hidden`}>
+        <div className={`absolute -inset-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 ${isHovered ? 'translate-x-full' : '-translate-x-full'}`} 
+          style={{ transform: isHovered ? 'translateX(100%)' : 'translateX(-100%)', transition: 'transform 1s ease-out' }}
+        />
+      </div>
       
-      {children}
+      {/* Content container */}
+      <div className="relative z-10 h-full">
+        {children}
+      </div>
     </div>
   );
 });
@@ -469,28 +477,51 @@ const FondParticulesPremium = memo(() => {
         aria-hidden="true"
       />
       
-      {/* Superpositions de dégradés animés */}
-      <div className="fixed inset-0 pointer-events-none -z-10 bg-gradient-to-br from-primary/5 via-transparent to-emerald-500/5 animate-gradient-slow" />
-      <div className="fixed top-0 left-0 right-0 h-96 bg-gradient-to-b from-primary/10 via-transparent to-transparent pointer-events-none -z-10" />
-      <div className="fixed bottom-0 left-0 right-0 h-96 bg-gradient-to-t from-emerald-500/10 via-transparent to-transparent pointer-events-none -z-10" />
-      
-      {/* Orbes flottants améliorés */}
-      <div className="fixed top-1/4 left-10 w-96 h-96 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-full blur-3xl animate-float-smooth pointer-events-none -z-10" />
-      <div className="fixed bottom-1/3 right-10 w-96 h-96 bg-gradient-to-r from-emerald-500/10 to-green-500/10 rounded-full blur-3xl animate-float-smooth delay-1000 pointer-events-none -z-10" />
+      {/* Enhanced animated gradient overlays */}
+      <div className="fixed inset-0 pointer-events-none -z-10">
+        {/* Primary gradient layer with smooth animation */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-transparent to-emerald-500/8 animate-pulse" 
+          style={{ animationDuration: '8s' }} 
+        />
+        
+        {/* Top gradient fade */}
+        <div className="absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-primary/15 via-primary/5 to-transparent" />
+        
+        {/* Bottom gradient fade */}
+        <div className="absolute bottom-0 left-0 right-0 h-[50vh] bg-gradient-to-t from-emerald-500/15 via-emerald-500/5 to-transparent" />
+        
+        {/* Animated floating orbs */}
+        <div className="absolute top-[10%] left-[5%] w-[500px] h-[500px] bg-gradient-radial from-primary/20 via-primary/5 to-transparent rounded-full blur-3xl"
+          style={{ animation: 'float-orb 20s ease-in-out infinite' }}
+        />
+        <div className="absolute top-[40%] right-[5%] w-[400px] h-[400px] bg-gradient-radial from-emerald-500/20 via-emerald-500/5 to-transparent rounded-full blur-3xl"
+          style={{ animation: 'float-orb 25s ease-in-out infinite reverse' }}
+        />
+        <div className="absolute bottom-[10%] left-[30%] w-[600px] h-[600px] bg-gradient-radial from-cyan-500/15 via-cyan-500/3 to-transparent rounded-full blur-3xl"
+          style={{ animation: 'float-orb 30s ease-in-out infinite' }}
+        />
+        
+        {/* Grid pattern overlay */}
+        <div className="absolute inset-0 opacity-[0.02]"
+          style={{
+            backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
+            backgroundSize: '50px 50px'
+          }}
+        />
+      </div>
     </>
   );
 });
 
 FondParticulesPremium.displayName = 'FondParticulesPremium';
 
-// Composant Carte Interactive standardisé
+// Composant Carte Interactive redessiné
 const CarteInteractive = memo(({ 
   icon: Icon,
   title,
   description,
   color = "text-primary",
   bg = "bg-gradient-to-br from-primary/20 to-primary/10",
-  border = "border-primary/30",
   onClick,
   isActive = false,
   equalSize = true
@@ -509,49 +540,66 @@ const CarteInteractive = memo(({
   
   return (
     <WidgetFlottant 
-      intensity={0.8} 
+      intensity={0.6} 
       glow={true}
-      minHeight="min-h-[280px]"
+      minHeight="min-h-[300px]"
       equalSize={equalSize}
     >
       <div
         onClick={onClick}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className={`cursor-pointer h-full transition-all duration-500 ${isActive ? 'transform -translate-y-2' : ''}`}
+        className="cursor-pointer h-full"
       >
-        <Card className={`h-full border-2 ${border} overflow-hidden 
-                       backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all duration-500 rounded-2xl group`}>
-          <CardContent className="p-6 md:p-8 text-center relative flex flex-col items-center justify-center h-full">
+        <Card className={`h-full border-0 overflow-hidden bg-transparent rounded-3xl`}>
+          <CardContent className="p-8 text-center relative flex flex-col items-center justify-center h-full">
+            {/* Active indicator */}
             {isActive && (
-              <div className="absolute top-4 right-4">
-                <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse-smooth" />
+              <div className="absolute top-5 right-5">
+                <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-lg shadow-emerald-500/50" />
               </div>
             )}
             
-            <div className={`w-20 h-20 md:w-24 md:h-24 rounded-2xl ${bg} 
-                          flex items-center justify-center mx-auto mb-6
-                          transition-all duration-500 group-hover:scale-110 group-hover:rotate-6
-                          ${isActive ? 'scale-105 ring-4 ring-white/30' : ''}`}>
-              <Icon className={`w-10 h-10 md:w-12 md:h-12 ${color} transition-all duration-500 
-                            group-hover:rotate-12`} />
+            {/* Animated background circles */}
+            <div className={`absolute inset-0 overflow-hidden rounded-3xl`}>
+              <div className={`absolute -top-20 -right-20 w-40 h-40 rounded-full ${bg} transition-all duration-700 ${isHovered ? 'scale-150 opacity-60' : 'scale-100 opacity-30'}`} />
+              <div className={`absolute -bottom-20 -left-20 w-40 h-40 rounded-full ${bg} transition-all duration-700 delay-100 ${isHovered ? 'scale-150 opacity-60' : 'scale-100 opacity-30'}`} />
             </div>
             
-            <h3 className="font-bold text-xl md:text-2xl mb-3 bg-gradient-to-r from-foreground to-foreground/80 
-                         bg-clip-text text-transparent group-hover:text-primary transition-colors duration-500">
+            {/* Icon container with enhanced animation */}
+            <div className={`relative w-24 h-24 md:w-28 md:h-28 rounded-3xl ${bg} 
+                          flex items-center justify-center mx-auto mb-6 overflow-hidden
+                          transition-all duration-500
+                          ${isHovered ? 'scale-110 rotate-3 shadow-2xl' : 'shadow-lg'}
+                          ${isActive ? 'ring-4 ring-primary/40 scale-105' : ''}`}
+            >
+              {/* Inner glow */}
+              <div className={`absolute inset-0 bg-gradient-to-br from-white/20 to-transparent transition-opacity duration-500 ${isHovered ? 'opacity-100' : 'opacity-0'}`} />
+              
+              <Icon className={`relative z-10 w-12 h-12 md:w-14 md:h-14 ${color} transition-all duration-500 
+                            ${isHovered ? 'scale-110 rotate-6' : ''}`} />
+            </div>
+            
+            {/* Title with gradient */}
+            <h3 className={`relative z-10 font-bold text-xl md:text-2xl mb-3 transition-all duration-500
+                          ${isHovered ? 'text-primary scale-105' : 'text-foreground'}`}>
               {title}
             </h3>
             
-            <p className="text-sm md:text-base text-foreground/70 group-hover:text-foreground/80 transition-colors duration-500 flex-grow">
+            {/* Description */}
+            <p className={`relative z-10 text-sm md:text-base transition-all duration-500 flex-grow
+                          ${isHovered ? 'text-foreground' : 'text-muted-foreground'}`}>
               {description}
             </p>
             
-            {/* Indicateur de survol amélioré */}
-            {isHovered && !isActive && (
-              <div className="mt-4 pt-4 border-t border-white/10 group-hover:border-primary/20 transition-all duration-500">
-                <div className="text-xs text-primary animate-bounce-smooth">Cliquez pour explorer</div>
+            {/* Hover indicator */}
+            <div className={`relative z-10 mt-4 pt-4 border-t transition-all duration-500 overflow-hidden
+                           ${isHovered ? 'border-primary/30 opacity-100 max-h-20' : 'border-transparent opacity-0 max-h-0'}`}>
+              <div className="flex items-center justify-center gap-2 text-primary text-sm font-medium">
+                <span>Explorer</span>
+                <ArrowRight className="w-4 h-4 animate-bounce" style={{ animationDirection: 'alternate', animationDuration: '0.5s' }} />
               </div>
-            )}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -1273,6 +1321,13 @@ export default function Project() {
           25% { transform: translateY(-10px) rotate(1deg) scale(1.02); }
           50% { transform: translateY(0px) rotate(0deg) scale(1); }
           75% { transform: translateY(10px) rotate(-1deg) scale(0.98); }
+        }
+        
+        @keyframes float-orb {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          25% { transform: translate(30px, -40px) scale(1.1); }
+          50% { transform: translate(-20px, 20px) scale(0.95); }
+          75% { transform: translate(40px, 30px) scale(1.05); }
         }
         
         @keyframes ripple-smooth {
