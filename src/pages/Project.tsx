@@ -944,7 +944,7 @@ export default function Project() {
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-8 tracking-tight">
               <span className="bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 bg-clip-text text-transparent 
                             animate-gradient-smooth bg-300% leading-tight">
-                Project de Recyclage Maria
+                Project de Recyclage
               </span>
             </h1>
           </MotionDiv>
