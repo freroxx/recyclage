@@ -960,9 +960,7 @@ export default function Project() {
               et que, collectivement, nous pouvons créer un impact significatif pour préserver notre belle planète.
             </p>
             <p className="text-lg text-foreground/80 leading-relaxed">
-              Depuis notre création, nous avons sensibilisé plus de 10 000 personnes, recyclé des centaines de tonnes 
-              de déchets et créé une communauté engagée qui grandit chaque jour. Rejoignez-nous dans cette aventure 
-              passionnante vers un avenir plus vert et durable.
+              Un projet au sein de l'école Maria pour sauver notre planète
             </p>
           </MotionDiv>
           
