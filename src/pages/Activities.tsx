@@ -11,12 +11,17 @@ import {
   Minimize2, 
   RotateCcw,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  X,
+  Trophy,
+  BookOpen,
+  RotateCw
 } from "lucide-react";
 import { ResizablePanelGroup, ResizablePanel } from "@/components/ui/resizable";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import Confetti from "react-confetti";
 
 interface Game {
   id: number;
@@ -61,8 +66,13 @@ export default function Activities() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isIframeLoading, setIsIframeLoading] = useState(true);
   const [iframeError, setIframeError] = useState<string | null>(null);
-  const [reloadKey, setReloadKey] = useState(0); // Key to force iframe reload
-  
+  const [reloadKey, setReloadKey] = useState(0);
+  const [showCompletionPopup, setShowCompletionPopup] = useState(false);
+  const [windowDimensions, setWindowDimensions] = useState({ 
+    width: window.innerWidth, 
+    height: window.innerHeight 
+  });
+
   const iframeContainerRef = useRef<HTMLDivElement>(null);
 
   const currentGame = GAMES[currentLevel];
@@ -79,12 +89,25 @@ export default function Activities() {
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
+  // Handle window resize for confetti
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const handleNextLevel = useCallback(() => {
     if (!isLastLevel) {
       setCurrentLevel(prev => prev + 1);
       setIsIframeLoading(true);
       setIframeError(null);
-      setReloadKey(prev => prev + 1); // Increment reload key to force new iframe
+      setReloadKey(prev => prev + 1);
     }
   }, [isLastLevel]);
 
@@ -105,14 +128,14 @@ export default function Activities() {
   const reloadIframe = useCallback(() => {
     setIsIframeLoading(true);
     setIframeError(null);
-    setReloadKey(prev => prev + 1); // Force iframe remount by changing key
+    setReloadKey(prev => prev + 1);
   }, []);
 
   const handleLevelSelect = useCallback((index: number) => {
     setCurrentLevel(index);
     setIsIframeLoading(true);
     setIframeError(null);
-    setReloadKey(prev => prev + 1); // Force iframe remount
+    setReloadKey(prev => prev + 1);
   }, []);
 
   const handleIframeLoad = useCallback(() => {
@@ -124,9 +147,107 @@ export default function Activities() {
     setIframeError(t("activities.iframeError") || "Échec du chargement du jeu. Veuillez réessayer.");
   }, [t]);
 
+  const handleCompletionClick = () => {
+    setShowCompletionPopup(true);
+  };
+
+  const handleClosePopup = () => {
+    setShowCompletionPopup(false);
+  };
+
+  const handleRestart = () => {
+    window.location.reload(); // Reloads the page and resets progression
+  };
+
+  const handleLearnMore = () => {
+    navigate("/guide");
+  };
+
   return (
     <div className="container mx-auto px-4 py-6 sm:py-8">
       <div className="max-w-7xl mx-auto">
+        {/* Confetti Animation */}
+        {showCompletionPopup && (
+          <Confetti
+            width={windowDimensions.width}
+            height={windowDimensions.height}
+            recycle={false}
+            numberOfPieces={200}
+            gravity={0.1}
+            initialVelocityX={4}
+            initialVelocityY={10}
+            colors={['#FFC700', '#FF0000', '#2E3192', '#41B883', '#DD1B16']}
+            style={{ position: 'fixed', top: 0, left: 0, zIndex: 9998 }}
+          />
+        )}
+
+        {/* Completion Popup */}
+        {showCompletionPopup && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-9999 flex items-center justify-center p-4">
+            <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in">
+              <div className="flex justify-between items-start mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                    <Trophy className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                      Félicitations ! 🎉
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      Tu as terminé tous les niveaux
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleClosePopup}
+                  className="rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+
+              <div className="mb-8">
+                <p className="text-lg text-center font-medium text-gray-800 dark:text-gray-200 mb-6">
+                  Bravo, nous te félicitons pour ton excellent travail !
+                </p>
+                <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-4 rounded-xl border border-primary/20">
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    Tu as montré que tu es un vrai champion du recyclage. 
+                    Continue à apprendre et à partager tes connaissances !
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <Button
+                  onClick={handleRestart}
+                  size="lg"
+                  variant="outline"
+                  className="w-full gap-2 border-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+                >
+                  <RotateCw className="w-5 h-5" />
+                  Recommencer
+                </Button>
+                <Button
+                  onClick={handleLearnMore}
+                  size="lg"
+                  className="w-full gap-2 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary"
+                >
+                  <BookOpen className="w-5 h-5" />
+                  En savoir plus
+                </Button>
+              </div>
+
+              <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-6">
+                Clique sur "Recommencer" pour refaire tous les jeux
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* En-tête */}
         <header className="text-center mb-8 sm:mb-12 animate-fade-in">
           <div className="flex flex-col items-center gap-4 mb-6">
@@ -209,7 +330,7 @@ export default function Activities() {
                   
                   {/* Iframe du jeu */}
                   <iframe
-                    key={`${currentGame.url}-${reloadKey}`} // Force remount on reload
+                    key={`${currentGame.url}-${reloadKey}`}
                     src={currentGame.url}
                     className="w-full h-full"
                     title={t(currentGame.titleKey)}
@@ -276,15 +397,13 @@ export default function Activities() {
                   </Button>
                 ) : (
                   <div className="flex items-center justify-center sm:justify-end gap-3 flex-1">
-                    <span className="text-lg font-semibold text-primary hidden sm:inline">
-                      🎉 {t("activities.completed")}
-                    </span>
                     <Button
                       size="lg"
-                      onClick={() => handleLevelSelect(0)}
-                      variant="secondary"
+                      onClick={handleCompletionClick}
+                      className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white gap-2"
                     >
-                      {t("activities.restart")}
+                      <Trophy className="w-5 h-5" />
+                      J'ai terminé
                     </Button>
                   </div>
                 )}
@@ -337,15 +456,6 @@ export default function Activities() {
             ))}
           </div>
         </div>
-
-        {/* Message de réussite sur mobile */}
-        {isLastLevel && (
-          <div className="mt-6 sm:hidden text-center">
-            <span className="text-lg font-semibold text-primary">
-              🎉 {t("activities.completed")}
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );
