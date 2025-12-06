@@ -40,7 +40,17 @@ import {
   Gem,
   Crown,
   Flame,
-  Snowflake
+  Snowflake,
+  Clock,
+  Infinity,
+  PieChart,
+  ChevronRight,
+  Pause,
+  Play,
+  Zap,
+  TrendingUp,
+  Heart,
+  Sparkles
 } from "lucide-react";
 
 // Hook pour le chargement différé de framer-motion
