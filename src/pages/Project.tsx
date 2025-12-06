@@ -933,7 +933,6 @@ export default function Project() {
             <span className="bg-gradient-to-r from-primary to-emerald-600 bg-clip-text text-transparent">
               Initiative Écologique Excellence
             </span>
-            <Sparkles className="w-4 h-4" />
           </MotionDiv>
           
           <MotionDiv
