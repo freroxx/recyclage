@@ -29,8 +29,8 @@ export default function Home() {
     restDelta: 0.001
   });
 
-  // Parallax values for hero elements
-  const heroY = useTransform(springScrollProgress, [0, 1], [0, 150]);
+  // Parallax values for hero elements - reduced motion on mobile
+  const heroY = useTransform(springScrollProgress, [0, 1], [0, window.innerWidth > 768 ? 150 : 50]);
   const heroOpacity = useTransform(springScrollProgress, [0, 0.2], [1, 0]);
   const heroScale = useTransform(springScrollProgress, [0, 0.2], [1, 0.95]);
 
@@ -74,7 +74,7 @@ export default function Home() {
     }
   }, [statsInView]);
 
-  // Scroll progress tracking
+  // Scroll progress tracking - still used internally but not displayed
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
     setScrollProgress(Math.round(latest * 100));
   });
@@ -85,34 +85,34 @@ export default function Home() {
       icon: Recycle,
       title: t("project.implementation"),
       description: t("project.implementation.desc"),
-      color: "text-emerald-500",
-      bg: "bg-emerald-500/10",
-      borderColor: "border-emerald-500/20",
-      gradient: "from-emerald-500/5 via-emerald-400/10 to-emerald-600/15",
-      hoverShadow: "hover:shadow-[0_20px_60px_-15px_rgba(16,185,129,0.3)]",
-      iconAnimation: "group-hover:animate-spin"
+      color: "text-emerald-600 dark:text-emerald-500",
+      bg: "bg-emerald-100 dark:bg-emerald-500/10",
+      borderColor: "border-emerald-200 dark:border-emerald-500/20",
+      gradient: "from-emerald-50 dark:from-emerald-500/5 via-emerald-100 dark:via-emerald-400/10 to-emerald-200 dark:to-emerald-600/15",
+      hoverShadow: "hover:shadow-lg hover:shadow-emerald-100/50 dark:hover:shadow-[0_20px_60px_-15px_rgba(16,185,129,0.3)]",
+      iconAnimation: "group-hover:animate-spin-slow"
     },
     {
       icon: Lightbulb,
       title: t("project.awareness"),
       description: t("project.awareness.desc"),
-      color: "text-amber-500",
-      bg: "bg-amber-500/10",
-      borderColor: "border-amber-500/20",
-      gradient: "from-amber-500/5 via-amber-400/10 to-amber-600/15",
-      hoverShadow: "hover:shadow-[0_20px_60px_-15px_rgba(245,158,11,0.3)]",
+      color: "text-amber-600 dark:text-amber-500",
+      bg: "bg-amber-100 dark:bg-amber-500/10",
+      borderColor: "border-amber-200 dark:border-amber-500/20",
+      gradient: "from-amber-50 dark:from-amber-500/5 via-amber-100 dark:via-amber-400/10 to-amber-200 dark:to-amber-600/15",
+      hoverShadow: "hover:shadow-lg hover:shadow-amber-100/50 dark:hover:shadow-[0_20px_60px_-15px_rgba(245,158,11,0.3)]",
       iconAnimation: "group-hover:animate-pulse"
     },
     {
       icon: Users,
       title: t("project.mobilization"),
       description: t("project.mobilization.desc"),
-      color: "text-blue-500",
-      bg: "bg-blue-500/10",
-      borderColor: "border-blue-500/20",
-      gradient: "from-blue-500/5 via-blue-400/10 to-blue-600/15",
-      hoverShadow: "hover:shadow-[0_20px_60px_-15px_rgba(59,130,246,0.3)]",
-      iconAnimation: "group-hover:animate-bounce"
+      color: "text-blue-600 dark:text-blue-500",
+      bg: "bg-blue-100 dark:bg-blue-500/10",
+      borderColor: "border-blue-200 dark:border-blue-500/20",
+      gradient: "from-blue-50 dark:from-blue-500/5 via-blue-100 dark:via-blue-400/10 to-blue-200 dark:to-blue-600/15",
+      hoverShadow: "hover:shadow-lg hover:shadow-blue-100/50 dark:hover:shadow-[0_20px_60px_-15px_rgba(59,130,246,0.3)]",
+      iconAnimation: "group-hover:animate-bounce-slow"
     }
   ], [t]);
 
@@ -129,7 +129,7 @@ export default function Home() {
       label: language === "fr" ? "Engagement école" : "School engagement", 
       icon: Users,
       suffix: language === "fr" ? "participation" : "participation",
-      animation: "animate-pulse"
+      animation: "animate-pulse-slow"
     },
     { 
       value: "∞", 
@@ -166,17 +166,17 @@ export default function Home() {
     return () => observer.disconnect();
   }, [loadIframe]);
 
-  // Particle system for hero section
+  // Particle system for hero section - optimized for mobile
   useEffect(() => {
     if (!heroRef.current) return;
 
     const particles = [];
-    const particleCount = 30;
+    const particleCount = window.innerWidth < 768 ? 15 : 30;
     
     for (let i = 0; i < particleCount; i++) {
       const particle = document.createElement('div');
       particle.className = 'absolute rounded-full pointer-events-none';
-      particle.style.width = `${Math.random() * 4 + 2}px`;
+      particle.style.width = `${Math.random() * (window.innerWidth < 768 ? 2 : 4) + 1}px`;
       particle.style.height = particle.style.width;
       particle.style.left = `${Math.random() * 100}%`;
       particle.style.top = `${Math.random() * 100}%`;
@@ -192,11 +192,12 @@ export default function Home() {
       setTimeout(() => {
         particle.style.transition = `all ${Math.random() * 2 + 3}s ease-in-out`;
         particle.style.opacity = '0.6';
-        particle.style.transform = `translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px)`;
+        const moveDistance = window.innerWidth < 768 ? 30 : 50;
+        particle.style.transform = `translate(${Math.random() * moveDistance * 2 - moveDistance}px, ${Math.random() * moveDistance * 2 - moveDistance}px)`;
         
         // Continuous animation
         setInterval(() => {
-          particle.style.transform = `translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px)`;
+          particle.style.transform = `translate(${Math.random() * moveDistance * 2 - moveDistance}px, ${Math.random() * moveDistance * 2 - moveDistance}px)`;
         }, 3000 + Math.random() * 2000);
       }, i * 100);
     }
@@ -218,7 +219,7 @@ export default function Home() {
   }, []);
 
   const handleCtaClick = useCallback(() => {
-    // Add ripple effect animation
+    // Improved ripple effect animation
     const button = event?.currentTarget;
     if (button) {
       const ripple = document.createElement('span');
@@ -230,9 +231,9 @@ export default function Home() {
       ripple.style.cssText = `
         position: absolute;
         border-radius: 50%;
-        background: rgba(255, 255, 255, 0.4);
+        background: rgba(255, 255, 255, 0.6);
         transform: scale(0);
-        animation: ripple-animation 0.6s linear;
+        animation: ripple-animation 0.6s ease-out;
         width: ${size}px;
         height: ${size}px;
         top: ${y}px;
@@ -300,10 +301,10 @@ export default function Home() {
           transform: translate3d(0, 0, 0) rotate(0deg);
         }
         33% {
-          transform: translate3d(10px, -20px, 10px) rotate(120deg);
+          transform: translate3d(5px, -10px, 5px) rotate(120deg);
         }
         66% {
-          transform: translate3d(-10px, 10px, -10px) rotate(240deg);
+          transform: translate3d(-5px, 5px, -5px) rotate(240deg);
         }
       }
       
@@ -313,6 +314,24 @@ export default function Home() {
         }
         to {
           transform: rotate(360deg);
+        }
+      }
+      
+      @keyframes bounce-slow {
+        0%, 100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-5px);
+        }
+      }
+      
+      @keyframes pulse-slow {
+        0%, 100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.7;
         }
       }
       
@@ -327,6 +346,14 @@ export default function Home() {
       
       .animate-spin-slow {
         animation: spin-slow 8s linear infinite;
+      }
+      
+      .animate-bounce-slow {
+        animation: bounce-slow 2s ease-in-out infinite;
+      }
+      
+      .animate-pulse-slow {
+        animation: pulse-slow 2s ease-in-out infinite;
       }
       
       .animate-float-3d {
@@ -365,13 +392,29 @@ export default function Home() {
       }
       
       .hover-lift:hover {
-        transform: translateY(-8px);
+        transform: translateY(-4px);
       }
       
       .glass-effect {
-        background: rgba(255, 255, 255, 0.05);
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+      
+      .dark .glass-effect {
+        background: rgba(15, 23, 42, 0.8);
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      
+      @media (max-width: 768px) {
+        .hover-lift:hover {
+          transform: translateY(-2px);
+        }
+        
+        .animate-float-3d {
+          animation: float-3d 8s ease-in-out infinite;
+        }
       }
     `;
     document.head.appendChild(style);
@@ -383,7 +426,7 @@ export default function Home() {
 
   return (
     <>
-      {/* Scroll Progress Indicator */}
+      {/* Scroll Progress Indicator - Only the progress bar, no percentage */}
       <motion.div 
         className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-blue-500 to-amber-500 z-50 origin-left"
         style={{ scaleX: springScrollProgress }}
@@ -391,21 +434,6 @@ export default function Home() {
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
       />
-      
-      {/* Floating Progress Indicator */}
-      <motion.div 
-        className="fixed right-6 top-1/2 -translate-y-1/2 z-40 hidden lg:block"
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 1.2 }}
-      >
-        <div className="relative">
-          <div className="w-16 h-16 rounded-full glass-effect flex items-center justify-center">
-            <span className="text-sm font-bold text-gradient">{scrollProgress}%</span>
-          </div>
-          <div className="absolute inset-0 rounded-full animate-spin border-2 border-transparent border-t-emerald-500 border-r-blue-500 border-b-amber-500" />
-        </div>
-      </motion.div>
 
       {/* Enhanced Hero Section with Parallax */}
       <motion.header 
@@ -453,12 +481,12 @@ export default function Home() {
           />
         </div>
 
-        {/* Animated floating elements with 3D effect */}
+        {/* Animated floating elements with 3D effect - reduced on mobile */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {[0, 1, 2].map((i) => (
             <motion.div
               key={i}
-              className="absolute rounded-full blur-2xl animate-float-3d"
+              className="absolute rounded-full blur-2xl animate-float-3d hidden sm:block"
               style={{
                 top: `${20 + i * 30}%`,
                 left: i === 0 ? '10%' : i === 1 ? '80%' : '25%',
@@ -490,19 +518,19 @@ export default function Home() {
           initial="hidden"
           animate="visible"
         >
-          {/* Enhanced Badge with shimmer effect */}
+          {/* Enhanced Badge with shimmer effect - improved contrast */}
           <motion.div 
             variants={itemVariants}
             whileHover={{ scale: 1.05, rotate: 2 }}
-            className="inline-flex items-center gap-2 glass-effect text-white px-6 py-3 rounded-full text-sm font-medium mb-8 md:mb-12 animate-shimmer"
+            className="inline-flex items-center gap-2 glass-effect text-gray-900 dark:text-white px-6 py-3 rounded-full text-sm font-medium mb-8 md:mb-12 shadow-sm"
           >
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
             >
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             </motion.div>
-            <span>{language === "fr" ? "École Maria - Agadir" : "École Maria - Agadir"}</span>
+            <span className="font-semibold">École Maria - Agadir</span>
           </motion.div>
 
           <motion.h1 
@@ -548,13 +576,13 @@ export default function Home() {
             <motion.div variants={itemVariants} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button
                 size="lg"
-                className="group px-8 py-6 text-lg shadow-2xl hover:shadow-[0_25px_60px_-12px_rgba(16,185,129,0.5)] transition-all duration-300 w-full sm:w-auto relative overflow-hidden hover-lift"
+                className="group px-8 py-6 text-lg shadow-2xl hover:shadow-[0_25px_60px_-12px_rgba(16,185,129,0.5)] transition-all duration-300 w-full sm:w-auto relative overflow-hidden hover-lift active:scale-[0.98]"
                 onClick={handleCtaClick}
               >
                 {/* Button glow effect */}
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 
-                <Leaf className="w-5 h-5 mr-2 group-hover:animate-bounce" />
+                <Leaf className="w-5 h-5 mr-2 group-hover:animate-bounce-slow" />
                 {t("hero.cta")}
                 <ArrowRight className="w-5 h-5 ml-2 transition-all duration-300 group-hover:translate-x-2 group-hover:scale-110" />
               </Button>
@@ -565,11 +593,11 @@ export default function Home() {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="px-8 py-6 text-lg border-2 glass-effect text-white hover:bg-white/20 backdrop-blur-sm transition-all duration-300 w-full hover-lift relative overflow-hidden group"
+                  className="px-8 py-6 text-lg border-2 glass-effect text-white hover:bg-white/20 backdrop-blur-sm transition-all duration-300 w-full sm:w-auto hover-lift relative overflow-hidden group active:scale-[0.98]"
                 >
                   {/* Animated border */}
                   <div className="absolute inset-0 rounded-lg border-2 border-transparent group-hover:border-white/50 transition-all duration-500" />
-                  <span className="relative">
+                  <span className="relative font-medium">
                     {language === "fr" ? "Voir les ressources" : "View resources"}
                   </span>
                 </Button>
@@ -591,7 +619,7 @@ export default function Home() {
         </motion.main>
       </motion.header>
 
-      {/* Enhanced Stats Section with counters */}
+      {/* Enhanced Stats Section with counters - Improved contrast */}
       <motion.section 
         ref={statsRef}
         className="relative -mt-16 md:-mt-20 z-20"
@@ -615,23 +643,23 @@ export default function Home() {
                   key={stat.label} 
                   variants={itemVariants}
                   whileHover={{ scale: 1.05, y: -5 }}
-                  className="glass-effect border-2 border-white/10 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 hover-lift"
+                  className="bg-white dark:bg-gray-900 border-2 border-gray-100 dark:border-gray-800 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 hover-lift"
                   custom={index}
                 >
                   <div className="p-6 md:p-8 text-center relative overflow-hidden group">
                     {/* Hover gradient effect */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-blue-500/10 to-amber-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-blue-500/5 to-amber-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     
                     <div className="relative z-10">
                       <motion.div 
-                        className={`w-14 h-14 md:w-16 md:h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4 ${stat.animation}`}
+                        className={`w-14 h-14 md:w-16 md:h-16 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center mx-auto mb-4 ${stat.animation}`}
                         whileHover={{ rotate: 360 }}
                         transition={{ duration: 0.5 }}
                       >
-                        <StatIcon className="w-7 h-7 md:w-8 md:h-8 text-white" />
+                        <StatIcon className="w-7 h-7 md:w-8 md:h-8 text-emerald-600 dark:text-emerald-400" />
                       </motion.div>
                       <motion.div 
-                        className="text-3xl md:text-5xl font-bold text-white mb-2"
+                        className="text-3xl md:text-5xl font-bold text-gray-900 dark:text-white mb-2"
                         initial={{ scale: 0.5, opacity: 0 }}
                         animate={statsInView ? { scale: 1, opacity: 1 } : {}}
                         transition={{ delay: index * 0.2, type: "spring" }}
@@ -640,7 +668,7 @@ export default function Home() {
                         {stat.value === "100%" && "%"}
                         <span className="sr-only">{stat.suffix}</span>
                       </motion.div>
-                      <h3 className="text-sm md:text-base text-white/80 font-medium">
+                      <h3 className="text-sm md:text-base text-gray-600 dark:text-gray-300 font-medium">
                         {stat.label}
                       </h3>
                     </div>
@@ -675,7 +703,7 @@ export default function Home() {
             viewport={{ once: true }}
           >
             <motion.h2 
-              className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6"
+              className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-gray-900 dark:text-white"
               animate={{
                 backgroundPosition: ["0% 0%", "100% 100%"]
               }}
@@ -695,7 +723,7 @@ export default function Home() {
               {language === "fr" ? "Notre Mission" : "Our Mission"}
             </motion.h2>
             <motion.p 
-              className="text-xl text-muted-foreground max-w-2xl mx-auto"
+              className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
@@ -722,7 +750,7 @@ export default function Home() {
                   custom={index}
                   onMouseEnter={() => setHoveredFeature(index)}
                   onMouseLeave={() => setHoveredFeature(null)}
-                  className={`group bg-card/80 backdrop-blur-sm border-2 ${feature.borderColor} rounded-2xl ${feature.hoverShadow} transition-all duration-500 hover-lift relative overflow-hidden`}
+                  className={`group bg-white dark:bg-gray-900/80 backdrop-blur-sm border-2 ${feature.borderColor} rounded-2xl ${feature.hoverShadow} transition-all duration-500 hover-lift relative overflow-hidden`}
                   whileHover={{ 
                     y: -10,
                     transition: { type: "spring", stiffness: 300, damping: 20 }
@@ -778,7 +806,7 @@ export default function Home() {
                     </motion.div>
                     
                     <motion.h3 
-                      className="font-bold text-2xl mb-4 text-foreground group-hover:text-primary transition-colors duration-300"
+                      className="font-bold text-2xl mb-4 text-gray-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300"
                       animate={hoveredFeature === index ? { x: [0, -5, 5, 0] } : {}}
                       transition={{ duration: 0.3 }}
                     >
@@ -786,7 +814,7 @@ export default function Home() {
                     </motion.h3>
                     
                     <motion.p 
-                      className="text-muted-foreground leading-relaxed"
+                      className="text-gray-600 dark:text-gray-300 leading-relaxed"
                       initial={{ opacity: 0.8 }}
                       whileHover={{ opacity: 1 }}
                     >
@@ -795,7 +823,7 @@ export default function Home() {
                     
                     {/* Animated underline */}
                     <motion.div 
-                      className="w-0 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent mt-4 mx-auto"
+                      className="w-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-500 to-transparent mt-4 mx-auto"
                       initial={{ width: 0 }}
                       whileInView={{ width: "50%" }}
                       transition={{ delay: 0.5 }}
@@ -816,7 +844,7 @@ export default function Home() {
         whileInView={{ opacity: 1 }}
         viewport={{ once: true, amount: 0.2 }}
       >
-        {/* Animated gradient orbs */}
+        {/* Animated gradient orbs - reduced blur on mobile */}
         <div className="absolute inset-0 overflow-hidden">
           <motion.div 
             className="absolute top-1/4 left-10 w-64 h-64 rounded-full bg-gradient-to-r from-emerald-500/10 to-blue-500/10 blur-3xl"
@@ -844,7 +872,7 @@ export default function Home() {
               viewport={{ once: true }}
             >
               <motion.div 
-                className="inline-flex items-center gap-3 bg-gradient-to-r from-emerald-500/20 via-blue-500/20 to-amber-500/20 text-foreground px-6 py-3 rounded-full text-sm font-medium mb-6 border border-white/20 backdrop-blur-sm hover-lift"
+                className="inline-flex items-center gap-3 bg-gradient-to-r from-emerald-500/20 via-blue-500/20 to-amber-500/20 text-gray-900 dark:text-white px-6 py-3 rounded-full text-sm font-medium mb-6 border border-gray-200 dark:border-white/20 backdrop-blur-sm hover-lift"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -852,13 +880,13 @@ export default function Home() {
                   animate={{ rotate: 360 }}
                   transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
                 >
-                  <TreeDeciduous className="w-5 h-5" />
+                  <TreeDeciduous className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                 </motion.div>
                 <span>{language === "fr" ? "Présentation Interactive" : "Interactive Presentation"}</span>
               </motion.div>
               
               <motion.h2 
-                className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-foreground"
+                className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-gray-900 dark:text-white"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
@@ -868,7 +896,7 @@ export default function Home() {
               </motion.h2>
               
               <motion.p 
-                className="text-xl text-muted-foreground max-w-2xl mx-auto"
+                className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
@@ -885,27 +913,27 @@ export default function Home() {
               transition={{ duration: 0.8, type: "spring" }}
               viewport={{ once: true, amount: 0.3 }}
             >
-              <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl border-2 border-border/50 hover:border-primary/50 transition-all duration-500 group hover-lift">
+              <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl border-2 border-gray-200 dark:border-gray-800 hover:border-emerald-500/50 transition-all duration-500 group hover-lift">
                 {/* Animated border gradient */}
-                <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-primary/30 transition-all duration-500" />
+                <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-emerald-500/30 transition-all duration-500" />
                 
                 {/* Loading shimmer effect */}
                 {!loadIframe && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-muted via-background to-muted bg-[length:200%_100%] animate-shimmer flex items-center justify-center">
+                  <div className="absolute inset-0 bg-gradient-to-r from-gray-100 via-gray-50 to-gray-100 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 bg-[length:200%_100%] animate-shimmer flex items-center justify-center">
                     <motion.div 
                       className="text-center space-y-6"
                       animate={{ scale: [1, 1.1, 1] }}
                       transition={{ duration: 2, repeat: Infinity }}
                     >
-                      <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto">
+                      <div className="w-20 h-20 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center mx-auto">
                         <motion.div
                           animate={{ rotate: 360 }}
                           transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
                         >
-                          <Recycle className="w-10 h-10 text-primary" />
+                          <Recycle className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />
                         </motion.div>
                       </div>
-                      <p className="text-muted-foreground font-medium">
+                      <p className="text-gray-600 dark:text-gray-400 font-medium">
                         {language === "fr" ? "Chargement de la présentation..." : "Loading presentation..."}
                       </p>
                     </motion.div>
@@ -944,7 +972,7 @@ export default function Home() {
                   href="https://www.canva.com/design/DAG5CGlo4U8/e8TE7nOlF8W-8b7pUdDrPg/view?utm_content=DAG5CGlo4U8&utm_campaign=designshare&utm_medium=embeds&utm_source=link"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-3 text-foreground/80 hover:text-primary transition-all duration-300 group font-medium hover-lift"
+                  className="inline-flex items-center gap-3 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-all duration-300 group font-medium hover-lift"
                 >
                   <span>How To Recycle Waste {t("home.presentation.by")} Yahia Ikni</span>
                   <motion.div
@@ -1004,7 +1032,7 @@ export default function Home() {
               {[...Array(8)].map((_, i) => (
                 <motion.div
                   key={i}
-                  className="absolute w-1 h-1 rounded-full bg-primary/30"
+                  className="absolute w-1 h-1 rounded-full bg-emerald-500/30"
                   animate={{
                     y: [0, -100, 0],
                     x: [0, Math.sin(i) * 50, 0],
@@ -1043,7 +1071,7 @@ export default function Home() {
                 </motion.div>
                 
                 <motion.h2 
-                  className="text-4xl md:text-5xl font-bold mb-6"
+                  className="text-4xl md:text-5xl font-bold mb-6 text-gray-900 dark:text-white"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6 }}
@@ -1054,7 +1082,7 @@ export default function Home() {
                 </motion.h2>
                 
                 <motion.p 
-                  className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto"
+                  className="text-xl text-gray-600 dark:text-gray-300 mb-10 max-w-2xl mx-auto"
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
                   transition={{ delay: 0.3 }}
@@ -1075,10 +1103,10 @@ export default function Home() {
                     <Link to="/project">
                       <Button 
                         size="lg" 
-                        className="group px-10 py-7 text-lg shadow-2xl hover:shadow-[0_25px_60px_-12px_rgba(16,185,129,0.5)] transition-all duration-300 w-full sm:w-auto relative overflow-hidden"
+                        className="group px-10 py-7 text-lg shadow-2xl hover:shadow-[0_25px_60px_-12px_rgba(16,185,129,0.5)] transition-all duration-300 w-full sm:w-auto relative overflow-hidden active:scale-[0.98]"
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-blue-500 opacity-0 group-hover:opacity-10 transition-opacity duration-500" />
-                        <Sparkles className="w-6 h-6 mr-3 group-hover:animate-spin" />
+                        <Sparkles className="w-6 h-6 mr-3 group-hover:animate-spin-slow" />
                         {language === "fr" ? "Découvrir le projet" : "Discover the project"}
                         <ArrowRight className="w-6 h-6 ml-3 transition-all duration-300 group-hover:translate-x-2 group-hover:scale-110" />
                       </Button>
@@ -1090,9 +1118,9 @@ export default function Home() {
                       <Button 
                         variant="outline" 
                         size="lg" 
-                        className="px-10 py-7 text-lg border-2 glass-effect hover:bg-white/10 transition-all duration-300 w-full sm:w-auto group relative overflow-hidden"
+                        className="px-10 py-7 text-lg border-2 glass-effect hover:bg-white/10 dark:hover:bg-white/10 transition-all duration-300 w-full sm:w-auto group relative overflow-hidden active:scale-[0.98]"
                       >
-                        <span className="relative">
+                        <span className="relative font-medium">
                           {language === "fr" ? "Nous contacter" : "Contact us"}
                         </span>
                         {/* Hover underline animation */}
