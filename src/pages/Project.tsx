@@ -46,11 +46,7 @@ import {
   PieChart,
   ChevronRight,
   Pause,
-  Play,
-  Zap,
-  TrendingUp,
-  Heart,
-  Sparkles
+  Play
 } from "lucide-react";
 
 // Hook pour le chargement différé de framer-motion
@@ -164,7 +160,7 @@ const LoadingScreenPremium = memo(() => {
                 left: '50%',
                 transform: `rotate(${rotation + phase * 36}deg) translateX(60px) rotate(-${rotation + phase * 36}deg)`,
                 transition: 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                animation: `orbit-${i} 4s ease-in-out infinite ${i * 0.2}s`
+                animation: `orbit-particle 4s ease-in-out infinite ${i * 0.2}s`
               }}
             />
           ))}
@@ -443,7 +439,6 @@ const BoutonAnimePremium = memo(({
   const buttonClasses = `
     relative overflow-hidden rounded-2xl font-bold
     transition-all duration-500 ease-out-smooth
-    hover-lift-strong hover-glow-strong
     disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
     focus:outline-none focus:ring-4 focus:ring-primary/30
     ${fullWidth ? 'w-full' : ''}
@@ -607,7 +602,7 @@ const WidgetFlottantPremium = memo(({
   return (
     <div
       ref={widgetRef}
-      className={`relative rounded-3xl group smooth-hover-strong ${className}
+      className={`relative rounded-3xl group ${className}
         ${equalSize ? 'w-full h-full flex flex-col' : ''}
         ${minHeight}
         transform-gpu
@@ -962,8 +957,8 @@ const FondParticulesUltra = memo(() => {
         />
         
         {/* Light beams */}
-        <div className="absolute top-0 left-1/4 w-1 h-[100vh] bg-gradient-to-b from-primary/30 via-transparent to-transparent animate-light-beam" />
-        <div className="absolute top-0 left-3/4 w-1 h-[100vh] bg-gradient-to-b from-emerald-500/30 via-transparent to-transparent animate-light-beam delay-1000" />
+        <div className="absolute top-0 left-1/4 w-1 h-[100vh] bg-gradient-to-b from-primary/30 via-transparent to-transparent animate-pulse" />
+        <div className="absolute top-0 left-3/4 w-1 h-[100vh] bg-gradient-to-b from-emerald-500/30 via-transparent to-transparent animate-pulse delay-1000" />
         
         {/* Floating particles overlay */}
         <div className="absolute inset-0">
@@ -976,7 +971,7 @@ const FondParticulesUltra = memo(() => {
                 height: `${Math.random() * 6 + 2}px`,
                 top: `${Math.random() * 100}%`,
                 left: `${Math.random() * 100}%`,
-                animation: `float-particle-slow ${15 + Math.random() * 10}s ease-in-out infinite ${i * 0.5}s`,
+                animation: `float-particle ${15 + Math.random() * 10}s ease-in-out infinite ${i * 0.5}s`,
                 filter: 'blur(1px)'
               }}
             />
@@ -1082,21 +1077,21 @@ const CarteInteractiveUltra = memo(({
           onMouseLeave={handleMouseLeave}
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
-          className={`cursor-pointer h-full smooth-hover-strong ${isPressed ? 'scale-[0.98]' : ''}`}
+          className={`cursor-pointer h-full ${isPressed ? 'scale-[0.98]' : ''}`}
           style={{
             transform: isVisible ? 'translateY(0)' : 'translateY(50px)',
             opacity: isVisible ? 1 : 0,
             transition: `transform 800ms cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms, opacity 600ms ease-out ${delay}ms`
           }}
         >
-          <Card className={`h-full border-0 overflow-hidden bg-transparent rounded-3xl performance-layer`}>
+          <Card className={`h-full border-0 overflow-hidden bg-transparent rounded-3xl`}>
             <CardContent className="p-8 text-center relative flex flex-col items-center justify-center h-full">
               {/* Active indicator avec animation */}
               {isActive && (
                 <div className="absolute top-5 right-5 z-20">
                   <div className="relative">
-                    <div className="w-4 h-4 bg-emerald-500 rounded-full animate-pulse-glow shadow-lg shadow-emerald-500/50" />
-                    <div className="absolute -inset-2 rounded-full border-2 border-emerald-500/30 animate-ping-slow" />
+                    <div className="w-4 h-4 bg-emerald-500 rounded-full animate-pulse shadow-lg shadow-emerald-500/50" />
+                    <div className="absolute -inset-2 rounded-full border-2 border-emerald-500/30 animate-ping" />
                   </div>
                 </div>
               )}
@@ -1137,7 +1132,6 @@ const CarteInteractiveUltra = memo(({
               {/* Icon container with ultra animations */}
               <div className={`relative w-28 h-28 md:w-32 md:h-32 rounded-3xl ${bg} 
                             flex items-center justify-center mx-auto mb-8 overflow-hidden
-                            smooth-hover-strong hover-lift-strong hover-rotate-3d
                             ${isHovered ? 'scale-110 shadow-2xl' : 'shadow-xl'}
                             ${isActive ? 'ring-4 ring-primary/40 scale-105' : ''}
                             transform-gpu`}
@@ -1156,25 +1150,25 @@ const CarteInteractiveUltra = memo(({
                     className="absolute w-2 h-2 rounded-full bg-white/50"
                     style={{
                       transform: `rotate(${i * 60}deg) translateX(60px) rotate(-${i * 60}deg)`,
-                      animation: `orbit-particle 2s ease-in-out infinite ${i * 0.2}s`
+                      animation: `spin 2s linear infinite ${i * 0.2}s`
                     }}
                   />
                 ))}
                 
-                <Icon className={`relative z-10 w-14 h-14 md:w-16 md:h-16 ${color} smooth-hover-strong hover-scale-strong
-                              ${isHovered ? 'scale-125 rotate-12 animate-wiggle' : ''}`} />
+                <Icon className={`relative z-10 w-14 h-14 md:w-16 md:h-16 ${color}
+                              ${isHovered ? 'scale-125 rotate-12' : ''}`} />
               </div>
               
               {/* Title with gradient animation */}
-              <h3 className={`relative z-10 font-bold text-2xl md:text-3xl mb-4 smooth-hover-strong
+              <h3 className={`relative z-10 font-bold text-2xl md:text-3xl mb-4
                             ${isHovered ? 'scale-105' : ''}`}>
-                <span className={`bg-gradient-to-r ${isHovered ? 'from-primary via-emerald-500 to-cyan-500' : 'from-foreground to-foreground/80'} bg-clip-text text-transparent animate-gradient-slow`}>
+                <span className={`bg-gradient-to-r ${isHovered ? 'from-primary via-emerald-500 to-cyan-500' : 'from-foreground to-foreground/80'} bg-clip-text text-transparent`}>
                   {title}
                 </span>
               </h3>
               
               {/* Description avec animation de fade */}
-              <p className={`relative z-10 text-base md:text-lg mb-6 smooth-hover-strong flex-grow
+              <p className={`relative z-10 text-base md:text-lg mb-6 flex-grow
                             ${isHovered ? 'text-foreground scale-105' : 'text-muted-foreground'}`}
                 style={{
                   opacity: isVisible ? 1 : 0,
@@ -1207,21 +1201,21 @@ const CarteInteractiveUltra = memo(({
               {/* Hover indicator avec animation fluide */}
               <div className={`relative z-10 mt-6 pt-6 border-t transition-all duration-700 overflow-hidden
                              ${isHovered ? 'border-primary/40 opacity-100 max-h-24' : 'border-transparent opacity-0 max-h-0'}`}>
-                <div className="flex items-center justify-center gap-3 text-primary text-sm font-medium animate-pulse-slow">
+                <div className="flex items-center justify-center gap-3 text-primary text-sm font-medium">
                   <span className="flex items-center gap-2">
                     <Sparkles className="w-4 h-4" />
                     Cliquez pour explorer
                   </span>
-                  <ArrowRight className="w-4 h-4 animate-bounce-smooth" style={{ animationDuration: '1.2s' }} />
+                  <ArrowRight className="w-4 h-4 animate-bounce" style={{ animationDuration: '1.2s' }} />
                 </div>
               </div>
               
               {/* Subtle particle effects on hover */}
               {isHovered && (
                 <>
-                  <div className="absolute bottom-4 left-4 w-3 h-3 rounded-full bg-primary/30 animate-ping-slow" />
-                  <div className="absolute bottom-4 right-4 w-2 h-2 rounded-full bg-emerald-500/30 animate-ping-slow delay-300" />
-                  <div className="absolute top-4 left-4 w-2 h-2 rounded-full bg-cyan-500/30 animate-ping-slow delay-600" />
+                  <div className="absolute bottom-4 left-4 w-3 h-3 rounded-full bg-primary/30 animate-ping" />
+                  <div className="absolute bottom-4 right-4 w-2 h-2 rounded-full bg-emerald-500/30 animate-ping delay-300" />
+                  <div className="absolute top-4 left-4 w-2 h-2 rounded-full bg-cyan-500/30 animate-ping delay-600" />
                 </>
               )}
             </CardContent>
@@ -1295,7 +1289,7 @@ const PanelDetailsUltra = memo(({
         onHoverChange={setIsHovered}
         scrollReveal={true}
       >
-        <Card className={`h-full border-2 ${border} overflow-hidden backdrop-blur-xl bg-white/10 rounded-2xl smooth-hover-strong ${isHovered ? 'shadow-3xl' : ''}`}
+        <Card className={`h-full border-2 ${border} overflow-hidden backdrop-blur-xl bg-white/10 rounded-2xl ${isHovered ? 'shadow-3xl' : ''}`}
           style={{
             transform: isVisible ? 'translateY(0) scale(1)' : 'translateY(50px) scale(0.95)',
             opacity: isVisible ? 1 : 0,
@@ -1305,33 +1299,33 @@ const PanelDetailsUltra = memo(({
             {/* En-tête avec animations */}
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-4">
-                <div className={`relative w-14 h-14 rounded-xl ${bg} flex items-center justify-center smooth-hover-strong ${isHovered ? 'scale-110 rotate-6' : ''}`}>
+                <div className={`relative w-14 h-14 rounded-xl ${bg} flex items-center justify-center ${isHovered ? 'scale-110 rotate-6' : ''}`}>
                   <div className={`absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent transition-opacity duration-500 ${isHovered ? 'opacity-100' : 'opacity-0'}`} />
-                  <Icon className={`relative z-10 w-7 h-7 ${color} smooth-hover-strong ${isHovered ? 'scale-125 rotate-12' : ''}`} />
+                  <Icon className={`relative z-10 w-7 h-7 ${color} ${isHovered ? 'scale-125 rotate-12' : ''}`} />
                 </div>
                 <div>
                   <h3 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-emerald-600 bg-clip-text text-transparent">
                     {title}
                   </h3>
-                  <p className="text-sm text-foreground/70 mt-1 animate-fade-in">{description}</p>
+                  <p className="text-sm text-foreground/70 mt-1">{description}</p>
                 </div>
               </div>
               
               {onClose && (
                 <button
                   onClick={onClose}
-                  className="p-2 hover:bg-white/10 rounded-xl smooth-hover-strong hover-scale-strong hover-rotate-strong relative group"
+                  className="p-2 hover:bg-white/10 rounded-xl relative group"
                   aria-label="Fermer"
                 >
                   <X className="w-6 h-6" />
-                  <span className="absolute -top-2 -right-2 w-3 h-3 rounded-full bg-red-500/80 animate-pulse-slow" />
+                  <span className="absolute -top-2 -right-2 w-3 h-3 rounded-full bg-red-500/80 animate-pulse" />
                 </button>
               )}
             </div>
             
             {/* Contenu détaillé avec animations */}
             <div className="space-y-8 flex-grow">
-              <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
+              <div className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
                 <h4 className="font-semibold text-lg mb-4 text-primary flex items-center gap-2">
                   <BookOpen className="w-5 h-5" />
                   Description Détaillée
@@ -1341,7 +1335,7 @@ const PanelDetailsUltra = memo(({
               
               {/* Stats avec animations */}
               {stats.length > 0 && (
-                <div className="animate-slide-up" style={{ animationDelay: '200ms' }}>
+                <div className="animate-fade-in-up" style={{ animationDelay: '200ms' }}>
                   <h4 className="font-semibold text-lg mb-4 text-emerald-500 flex items-center gap-2">
                     <TrendingUp className="w-5 h-5" />
                     Statistiques Clés
@@ -1350,7 +1344,7 @@ const PanelDetailsUltra = memo(({
                     {stats.map((stat, index) => (
                       <div 
                         key={stat.label}
-                        className="text-center p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 smooth-hover-strong hover-lift-strong"
+                        className="text-center p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10"
                         style={{
                           animationDelay: `${300 + index * 100}ms`,
                           opacity: isVisible ? 1 : 0,
@@ -1370,7 +1364,7 @@ const PanelDetailsUltra = memo(({
               )}
               
               {/* Timeline ou étapes (optionnel) */}
-              <div className="animate-slide-up" style={{ animationDelay: '300ms' }}>
+              <div className="animate-fade-in-up" style={{ animationDelay: '300ms' }}>
                 <h4 className="font-semibold text-lg mb-4 text-cyan-500 flex items-center gap-2">
                   <Zap className="w-5 h-5" />
                   Prochaines Étapes
@@ -1379,7 +1373,7 @@ const PanelDetailsUltra = memo(({
                   {['Analyse', 'Mise en œuvre', 'Optimisation', 'Suivi'].map((step, index) => (
                     <div 
                       key={step}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10 smooth-hover-strong"
+                      className="flex items-center gap-3 p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10"
                       style={{
                         animationDelay: `${400 + index * 100}ms`,
                         opacity: isVisible ? 1 : 0,
@@ -1478,14 +1472,14 @@ const ScrollNavigation = memo(({
   
   return (
     <div 
-      className={`fixed right-8 top-1/2 -translate-y-1/2 z-40 transition-all duration-500 ease-out-smooth ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-20'}`}
+      className={`fixed right-8 top-1/2 -translate-y-1/2 z-40 transition-all duration-500 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-20'}`}
     >
       <div className="flex flex-col items-center gap-4 p-4 rounded-2xl bg-background/80 backdrop-blur-xl border border-white/10 shadow-2xl">
         {sections.map((section, index) => (
           <button
             key={section.id}
             onClick={() => onSectionClick(section.id)}
-            className={`relative p-3 rounded-xl smooth-hover-strong transition-all duration-300
+            className={`relative p-3 rounded-xl transition-all duration-300
               ${activeSection === section.id 
                 ? 'bg-gradient-to-r from-primary/20 to-emerald-500/20 text-primary' 
                 : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
@@ -1497,8 +1491,8 @@ const ScrollNavigation = memo(({
             {/* Indicateur actif */}
             {activeSection === section.id && (
               <>
-                <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-1 h-8 rounded-full bg-gradient-to-b from-primary to-emerald-500 animate-pulse-slow" />
-                <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-primary animate-ping-slow" />
+                <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-1 h-8 rounded-full bg-gradient-to-b from-primary to-emerald-500 animate-pulse" />
+                <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-primary animate-ping" />
               </>
             )}
             
@@ -1515,7 +1509,7 @@ const ScrollNavigation = memo(({
         {/* Bouton retour en haut */}
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="p-3 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/5 smooth-hover-strong"
+          className="p-3 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/5"
           aria-label="Retour en haut"
         >
           <ChevronUp className="w-5 h-5" />
@@ -1858,7 +1852,7 @@ export default function ProjectUltra() {
       {/* Curseur personnalisé amélioré */}
       <div className="fixed inset-0 pointer-events-none z-50">
         <div 
-          className={`absolute w-8 h-8 rounded-full -translate-x-1/2 -translate-y-1/2 transition-all duration-150 ease-out-smooth ${
+          className={`absolute w-8 h-8 rounded-full -translate-x-1/2 -translate-y-1/2 transition-all duration-150 ${
             cursorVariant === 'pointer' 
               ? 'bg-primary/20 border-2 border-primary/50 scale-150' 
               : cursorVariant === 'hover'
@@ -1871,7 +1865,7 @@ export default function ProjectUltra() {
           }}
         />
         <div 
-          className="absolute w-2 h-2 rounded-full bg-primary -translate-x-1/2 -translate-y-1/2 transition-all duration-75 ease-linear"
+          className="absolute w-2 h-2 rounded-full bg-primary -translate-x-1/2 -translate-y-1/2 transition-all duration-75"
           style={{
             left: mousePosition.x,
             top: mousePosition.y,
@@ -1911,10 +1905,10 @@ export default function ProjectUltra() {
             transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.2 }}
             className="inline-flex items-center gap-3 bg-gradient-to-r from-primary/30 via-emerald-500/30 to-cyan-500/30 
                        text-primary px-8 py-4 rounded-full text-base font-bold mb-12 
-                       border border-white/20 backdrop-blur-xl shadow-2xl smooth-hover-strong hover-scale-strong hover-rotate"
+                       border border-white/20 backdrop-blur-xl shadow-2xl"
           >
-            <Sparkles className="w-5 h-5 animate-sparkle" />
-            <span className="bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 bg-clip-text text-transparent animate-gradient-slow">
+            <Sparkles className="w-5 h-5 animate-pulse" />
+            <span className="bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 bg-clip-text text-transparent">
               Initiative Écologique Excellence 2024
             </span>
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -1928,7 +1922,7 @@ export default function ProjectUltra() {
           >
             <h1 className="text-6xl md:text-8xl lg:text-9xl font-black mb-8 tracking-tighter">
               <span className="bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 bg-clip-text text-transparent 
-                            animate-gradient-advanced bg-400% leading-none">
+                            leading-none">
                 Projet Écologique
               </span>
             </h1>
@@ -1947,11 +1941,11 @@ export default function ProjectUltra() {
             transition={{ duration: 1, delay: 0.6, ease: "easeOut" }}
             className="max-w-3xl mx-auto mb-16"
           >
-            <p className="text-2xl md:text-3xl text-foreground/90 leading-relaxed font-light mb-8 animate-fade-in-up">
+            <p className="text-2xl md:text-3xl text-foreground/90 leading-relaxed font-light mb-8">
               Bienvenue dans notre mouvement écologique communautaire. Chaque geste compte, chaque action a un impact, 
               et ensemble, nous créons un avenir durable pour les générations à venir.
             </p>
-            <div className="inline-flex items-center gap-6 text-lg text-foreground/70 animate-slide-up">
+            <div className="inline-flex items-center gap-6 text-lg text-foreground/70">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                 <span>Impact mesurable</span>
@@ -1983,7 +1977,6 @@ export default function ProjectUltra() {
               fullWidth={true}
               glow={true}
               pulse={true}
-              className="animate-bounce-subtle"
             >
               Commencer l'Aventure
             </BoutonAnimePremium>
@@ -2015,14 +2008,14 @@ export default function ProjectUltra() {
             ].map((stat, index) => (
               <div 
                 key={stat.label}
-                className="text-center p-6 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 smooth-hover-strong hover-lift-strong"
+                className="text-center p-6 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10"
                 style={{
                   animationDelay: `${1.2 + index * 0.1}s`,
                   animation: 'fade-in-up 0.6s ease-out forwards',
                   opacity: 0
                 }}
               >
-                <div className={`text-4xl font-bold mb-2 ${stat.color} animate-count-up`}>
+                <div className={`text-4xl font-bold mb-2 ${stat.color}`}>
                   {stat.value}
                 </div>
                 <div className="text-sm text-muted-foreground flex items-center justify-center gap-2">
@@ -2054,12 +2047,12 @@ export default function ProjectUltra() {
             <div className="inline-block relative mb-6">
               <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-emerald-500/20 blur-xl rounded-full" />
               <h2 className="relative text-5xl md:text-6xl lg:text-7xl font-bold">
-                <span className="bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 bg-clip-text text-transparent animate-gradient-advanced">
+                <span className="bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 bg-clip-text text-transparent">
                   Notre Vision
                 </span>
               </h2>
             </div>
-            <p className="text-2xl text-foreground/80 max-w-3xl mx-auto animate-fade-in-up">
+            <p className="text-2xl text-foreground/80 max-w-3xl mx-auto">
               Une vision claire, des objectifs ambitieux, un impact réel
             </p>
           </MotionDiv>
@@ -2142,12 +2135,12 @@ export default function ProjectUltra() {
           >
             <div className="inline-flex items-center gap-4 mb-6">
               <div className="w-16 h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
-              <Recycle className="w-12 h-12 text-primary animate-spin-slow" />
+              <Recycle className="w-12 h-12 text-primary animate-spin" />
               <div className="w-16 h-px bg-gradient-to-r from-transparent via-emerald-500 to-transparent" />
             </div>
             
             <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6">
-              <span className="bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 bg-clip-text text-transparent animate-gradient-advanced">
+              <span className="bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 bg-clip-text text-transparent">
                 Tri Intelligent
               </span>
             </h2>
@@ -2225,7 +2218,7 @@ export default function ProjectUltra() {
                 <button
                   key={index}
                   onClick={() => handleBinInteraction(index)}
-                  className={`relative w-4 h-4 rounded-full transition-all duration-500 ease-out-smooth hover:scale-150 ${
+                  className={`relative w-4 h-4 rounded-full transition-all duration-500 hover:scale-150 ${
                     index === activeBinIndex 
                       ? 'w-12 bg-gradient-to-r from-primary to-emerald-600 shadow-lg shadow-primary/50' 
                       : 'bg-muted hover:bg-primary/50'
@@ -2233,7 +2226,7 @@ export default function ProjectUltra() {
                   aria-label={`Aller à ${bins[index].label}`}
                 >
                   {index === activeBinIndex && (
-                    <div className="absolute -inset-3 rounded-full border-2 border-primary/30 animate-ping-slow" />
+                    <div className="absolute -inset-3 rounded-full border-2 border-primary/30 animate-ping" />
                   )}
                 </button>
               ))}
@@ -2273,9 +2266,9 @@ export default function ProjectUltra() {
             className="text-center mb-20"
           >
             <div className="relative inline-block mb-6">
-              <Zap className="absolute -top-6 -right-6 w-12 h-12 text-yellow-500 animate-pulse-glow" />
+              <Zap className="absolute -top-6 -right-6 w-12 h-12 text-yellow-500 animate-pulse" />
               <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold">
-                <span className="bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 bg-clip-text text-transparent animate-gradient-advanced">
+                <span className="bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 bg-clip-text text-transparent">
                   Passez à l'Action
                 </span>
               </h2>
@@ -2320,7 +2313,7 @@ export default function ProjectUltra() {
             className="mt-20"
           >
             <div className="relative rounded-3xl overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-emerald-500/20 to-cyan-500/20 animate-gradient-slow" />
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-emerald-500/20 to-cyan-500/20" />
               <div className="relative p-8 md:p-12 text-center backdrop-blur-sm">
                 <h3 className="text-3xl md:text-4xl font-bold mb-6">
                   <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
@@ -2368,19 +2361,19 @@ export default function ProjectUltra() {
         >
           <WidgetFlottantPremium intensity={1} glow={true} equalSize={false}>
             <Card className="border-2 border-white/20 overflow-hidden backdrop-blur-xl 
-                           bg-gradient-to-br from-primary/15 via-emerald-500/15 to-cyan-500/15 rounded-3xl smooth-hover-strong">
+                           bg-gradient-to-br from-primary/15 via-emerald-500/15 to-cyan-500/15 rounded-3xl">
               <CardContent className="p-12 md:p-16 text-center relative overflow-hidden">
                 {/* Éléments de fond animés premium */}
                 <div className="absolute -top-32 -right-32 w-80 h-80 bg-gradient-to-r from-primary/20 to-emerald-500/20 
-                              rounded-full blur-3xl animate-float-slow" />
+                              rounded-full blur-3xl animate-pulse" />
                 <div className="absolute -bottom-32 -left-32 w-80 h-80 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 
-                              rounded-full blur-3xl animate-float-slow delay-2000" />
+                              rounded-full blur-3xl animate-pulse delay-2000" />
                 
                 {/* Étoiles scintillantes */}
                 {[...Array(8)].map((_, i) => (
                   <div
                     key={i}
-                    className="absolute w-2 h-2 rounded-full bg-white/50 animate-twinkle"
+                    className="absolute w-2 h-2 rounded-full bg-white/50 animate-pulse"
                     style={{
                       top: `${20 + i * 10}%`,
                       left: `${10 + i * 12}%`,
@@ -2395,34 +2388,34 @@ export default function ProjectUltra() {
                   viewport={{ once: true }}
                   transition={{ type: "spring", stiffness: 150, damping: 12, duration: 1.2 }}
                   className="relative z-10 w-40 h-40 rounded-full bg-gradient-to-br from-primary/30 to-emerald-500/30 
-                           flex items-center justify-center mx-auto mb-12 border-4 border-white/20 smooth-hover-strong hover-rotate-3d"
+                           flex items-center justify-center mx-auto mb-12 border-4 border-white/20"
                 >
                   <div className="w-32 h-32 rounded-full bg-gradient-to-br from-background/90 to-background/70 
                                 flex items-center justify-center">
                     <div className="relative">
-                      <Heart className="w-20 h-20 text-primary animate-heartbeat" />
-                      <div className="absolute -inset-6 rounded-full border-4 border-primary/20 animate-ping-slow" />
+                      <Heart className="w-20 h-20 text-primary animate-pulse" />
+                      <div className="absolute -inset-6 rounded-full border-4 border-primary/20 animate-ping" />
                     </div>
                   </div>
                 </MotionDiv>
                 
                 <h2 className="text-5xl md:text-6xl font-bold mb-10 relative z-10">
                   <span className="bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 
-                                 bg-clip-text text-transparent animate-gradient-advanced">
+                                 bg-clip-text text-transparent">
                     Votre Engagement Compte
                   </span>
                 </h2>
                 
-                <div className="text-2xl text-foreground/90 leading-relaxed mb-12 max-w-3xl mx-auto relative z-10 space-y-6 animate-fade-in-up">
+                <div className="text-2xl text-foreground/90 leading-relaxed mb-12 max-w-3xl mx-auto relative z-10 space-y-6">
                   <p>
                     Chaque geste que vous posez pour l'environnement a un impact réel. En triant vos déchets, 
                     en réduisant votre consommation, en participant à nos événements, vous contribuez activement 
                     à la préservation de notre planète.
                   </p>
-                  <p className="font-semibold text-primary animate-pulse-slow">
+                  <p className="font-semibold text-primary animate-pulse">
                     Ensemble, nous avons déjà accompli de grandes choses, mais il reste encore beaucoup à faire.
                   </p>
-                  <p className="text-3xl font-bold bg-gradient-to-r from-emerald-500 to-cyan-500 bg-clip-text text-transparent animate-gradient-slow">
+                  <p className="text-3xl font-bold bg-gradient-to-r from-emerald-500 to-cyan-500 bg-clip-text text-transparent">
                     Rejoignez-nous aujourd'hui et faites partie de la solution !
                   </p>
                 </div>
@@ -2436,7 +2429,6 @@ export default function ProjectUltra() {
                     fullWidth={true}
                     glow={true}
                     pulse={true}
-                    className="animate-bounce-subtle"
                   >
                     Nous Rejoindre
                   </BoutonAnimePremium>
@@ -2494,22 +2486,22 @@ export default function ProjectUltra() {
             </div>
             
             <div className="flex items-center gap-6">
-              <a href="#" className="text-muted-foreground hover:text-primary smooth-hover-strong">Mentions légales</a>
-              <a href="#" className="text-muted-foreground hover:text-primary smooth-hover-strong">Politique de confidentialité</a>
-              <a href="#" className="text-muted-foreground hover:text-primary smooth-hover-strong">Contact</a>
+              <a href="#" className="text-muted-foreground hover:text-primary">Mentions légales</a>
+              <a href="#" className="text-muted-foreground hover:text-primary">Politique de confidentialité</a>
+              <a href="#" className="text-muted-foreground hover:text-primary">Contact</a>
             </div>
             
             <div className="flex items-center gap-4">
               <button 
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="p-3 rounded-xl bg-white/5 hover:bg-white/10 smooth-hover-strong"
+                className="p-3 rounded-xl bg-white/5 hover:bg-white/10"
                 aria-label="Changer le thème"
               >
                 {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
               <button 
                 onClick={() => setTheme('eco')}
-                className="p-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 smooth-hover-strong"
+                className="p-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20"
                 aria-label="Thème écologique"
               >
                 <Leaf className="w-5 h-5 text-emerald-500" />
@@ -2525,28 +2517,14 @@ export default function ProjectUltra() {
       
       {/* Styles globaux pour les animations ultra améliorées */}
       <style>{`
-        @keyframes gradient-advanced {
-          0%, 100% { background-position: 0% 50%; }
-          25% { background-position: 50% 100%; }
-          50% { background-position: 100% 50%; }
-          75% { background-position: 50% 0%; }
+        @keyframes gradient-pan {
+          0% { background-position: 0% 0%; }
+          100% { background-position: 200% 200%; }
         }
         
         @keyframes gradient-border {
           0%, 100% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
-        }
-        
-        @keyframes gradient-slow {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 0.8; }
-        }
-        
-        @keyframes float-slow {
-          0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
-          25% { transform: translateY(-20px) rotate(2deg) scale(1.05); }
-          50% { transform: translateY(0px) rotate(0deg) scale(1); }
-          75% { transform: translateY(20px) rotate(-2deg) scale(0.95); }
         }
         
         @keyframes float-orb-advanced {
@@ -2562,102 +2540,9 @@ export default function ProjectUltra() {
           100% { transform: translate(-50%, -50%) scale(5); opacity: 0; }
         }
         
-        @keyframes shine-smooth {
-          0% { transform: translateX(-100%) rotate(30deg); }
-          50% { transform: translateX(100%) rotate(30deg); }
-          100% { transform: translateX(300%) rotate(30deg); }
-        }
-        
         @keyframes shine-slow {
           0% { transform: translateX(-100%) rotate(30deg); }
           100% { transform: translateX(400%) rotate(30deg); }
-        }
-        
-        @keyframes pulse-smooth {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.8; transform: scale(1.05); }
-        }
-        
-        @keyframes pulse-glow {
-          0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 20px currentColor; }
-          50% { opacity: 0.7; transform: scale(1.1); box-shadow: 0 0 40px currentColor; }
-        }
-        
-        @keyframes pulse-fast {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.5; transform: scale(1.1); }
-        }
-        
-        @keyframes spin-smooth {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        
-        @keyframes spin-slow {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        
-        @keyframes spin-slow-reverse {
-          0% { transform: rotate(360deg); }
-          100% { transform: rotate(0deg); }
-        }
-        
-        @keyframes bounce-smooth {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-8px); }
-        }
-        
-        @keyframes bounce-subtle {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-5px); }
-        }
-        
-        @keyframes pulse-slow {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-        
-        @keyframes ping-slow {
-          0% { transform: scale(1); opacity: 1; }
-          100% { transform: scale(3); opacity: 0; }
-        }
-        
-        @keyframes twinkle {
-          0%, 100% { opacity: 0.2; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.2); }
-        }
-        
-        @keyframes heartbeat {
-          0%, 100% { transform: scale(1); }
-          25% { transform: scale(1.1); }
-          50% { transform: scale(1); }
-          75% { transform: scale(1.05); }
-        }
-        
-        @keyframes fade-in-up {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes fade-in-out {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 1; }
-        }
-        
-        @keyframes slide-up {
-          from { opacity: 0; transform: translateY(50px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes grid-move {
-          0% { background-position: 0 0; }
-          100% { background-position: 40px 40px; }
-        }
-        
-        @keyframes light-beam {
-          0%, 100% { opacity: 0.3; }
-          50% { opacity: 0.1; }
         }
         
         @keyframes float-particle {
@@ -2667,43 +2552,15 @@ export default function ProjectUltra() {
           75% { transform: translateY(10px) translateX(5px); opacity: 0.7; }
         }
         
-        @keyframes float-particle-slow {
-          0%, 100% { transform: translate(0, 0) rotate(0deg); }
-          25% { transform: translate(20px, -30px) rotate(90deg); }
-          50% { transform: translate(-10px, 20px) rotate(180deg); }
-          75% { transform: translate(30px, 10px) rotate(270deg); }
-        }
-        
         @keyframes orbit-particle {
           0% { transform: rotate(0deg) translateX(60px) rotate(0deg); opacity: 0.5; }
           50% { transform: rotate(180deg) translateX(80px) rotate(-180deg); opacity: 1; }
           100% { transform: rotate(360deg) translateX(60px) rotate(-360deg); opacity: 0.5; }
         }
         
-        @keyframes count-up {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes wiggle {
-          0%, 100% { transform: rotate(0deg); }
-          25% { transform: rotate(5deg); }
-          75% { transform: rotate(-5deg); }
-        }
-        
-        @keyframes sparkle {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.5; transform: scale(1.2); }
-        }
-        
-        @keyframes gradient-pan {
-          0% { background-position: 0% 0%; }
-          100% { background-position: 200% 200%; }
-        }
-        
-        .animate-gradient-advanced {
-          animation: gradient-advanced 8s ease-in-out infinite;
-          background-size: 200% 200%;
+        @keyframes grid-move {
+          0% { background-position: 0 0; }
+          100% { background-position: 40px 40px; }
         }
         
         .animate-gradient-border {
@@ -2712,19 +2569,11 @@ export default function ProjectUltra() {
         }
         
         .animate-gradient-slow {
-          animation: gradient-slow 4s ease-in-out infinite;
-        }
-        
-        .animate-float-slow {
-          animation: float-slow 20s ease-in-out infinite;
+          animation: pulse 4s ease-in-out infinite;
         }
         
         .animate-ripple-advanced {
           animation: ripple-advanced 1s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
-        }
-        
-        .animate-shine-smooth {
-          animation: shine-smooth 2s ease-in-out;
         }
         
         .animate-shine-slow {
@@ -2732,338 +2581,47 @@ export default function ProjectUltra() {
         }
         
         .animate-pulse-smooth {
-          animation: pulse-smooth 2s ease-in-out infinite;
-        }
-        
-        .animate-pulse-glow {
-          animation: pulse-glow 2s ease-in-out infinite;
-        }
-        
-        .animate-pulse-fast {
-          animation: pulse-fast 0.5s ease-in-out infinite;
+          animation: pulse 2s ease-in-out infinite;
         }
         
         .animate-pulse-slow {
-          animation: pulse-slow 3s ease-in-out infinite;
-        }
-        
-        .animate-ping-slow {
-          animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+          animation: pulse 3s ease-in-out infinite;
         }
         
         .animate-spin-smooth {
-          animation: spin-smooth 1s linear infinite;
+          animation: spin 1s linear infinite;
         }
         
         .animate-spin-slow {
-          animation: spin-slow 20s linear infinite;
+          animation: spin 20s linear infinite;
         }
         
         .animate-spin-slow-reverse {
-          animation: spin-slow-reverse 25s linear infinite;
-        }
-        
-        .animate-bounce-smooth {
-          animation: bounce-smooth 1.5s ease-in-out infinite;
+          animation: spin 25s linear infinite reverse;
         }
         
         .animate-bounce-subtle {
-          animation: bounce-subtle 3s ease-in-out infinite;
-        }
-        
-        .animate-twinkle {
-          animation: twinkle 2s ease-in-out infinite;
-        }
-        
-        .animate-heartbeat {
-          animation: heartbeat 1.5s ease-in-out infinite;
-        }
-        
-        .animate-fade-in-up {
-          animation: fade-in-up 1s ease-out forwards;
+          animation: bounce 3s ease-in-out infinite;
         }
         
         .animate-fade-in-out {
-          animation: fade-in-out 3s ease-in-out infinite;
+          animation: fadeInOut 3s ease-in-out infinite;
         }
         
-        .animate-slide-up {
-          animation: slide-up 0.8s ease-out forwards;
+        .animate-fade-in-up {
+          animation: fadeInUp 0.8s ease-out forwards;
         }
         
-        .animate-wiggle {
-          animation: wiggle 0.5s ease-in-out;
+        @keyframes fadeInOut {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 1; }
         }
         
-        .animate-sparkle {
-          animation: sparkle 1s ease-in-out infinite;
-        }
-        
-        .animate-count-up {
-          animation: count-up 1s ease-out forwards;
-        }
-        
-        .bg-400% {
-          background-size: 400% 400%;
-        }
-        
-        /* Courbes d'easing ultra améliorées */
-        .ease-out-smooth {
-          transition-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
-        }
-        
-        .ease-in-out-smooth {
-          transition-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
-        }
-        
-        .ease-elastic {
-          transition-timing-function: cubic-bezier(0.68, -0.55, 0.27, 1.55);
-        }
-        
-        /* Animations de survol ultra-fluides */
-        .smooth-hover-strong {
-          transition: all 500ms cubic-bezier(0.22, 0.61, 0.36, 1);
-        }
-        
-        .hover-lift-strong {
-          transition: transform 500ms cubic-bezier(0.22, 0.61, 0.36, 1);
-        }
-        
-        .hover-lift-strong:hover {
-          transform: translateY(-8px);
-        }
-        
-        .hover-scale-strong {
-          transition: transform 500ms cubic-bezier(0.22, 0.61, 0.36, 1);
-        }
-        
-        .hover-scale-strong:hover {
-          transform: scale(1.08);
-        }
-        
-        .hover-rotate-strong {
-          transition: transform 500ms cubic-bezier(0.22, 0.61, 0.36, 1);
-        }
-        
-        .hover-rotate-strong:hover {
-          transform: rotate(8deg);
-        }
-        
-        .hover-rotate-3d {
-          transition: transform 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        
-        .hover-rotate-3d:hover {
-          transform: rotateY(10deg) rotateX(5deg);
-        }
-        
-        .hover-glow-strong {
-          transition: box-shadow 500ms cubic-bezier(0.22, 0.61, 0.36, 1);
-        }
-        
-        .hover-glow-strong:hover {
-          box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-        }
-        
-        /* Optimisations des performances */
-        * {
-          -webkit-font-smoothing: antialiased;
-          -moz-osx-font-smoothing: grayscale;
-          text-rendering: optimizeLegibility;
-        }
-        
-        /* Accélération matérielle */
-        .performance-layer {
-          transform: translate3d(0, 0, 0);
-          backface-visibility: hidden;
-          perspective: 1000px;
-          will-change: transform, opacity;
-        }
-        
-        .transform-gpu {
-          transform: translate3d(0, 0, 0);
-        }
-        
-        /* Réduction du mouvement */
-        @media (prefers-reduced-motion: reduce) {
-          .animate-gradient-advanced,
-          .animate-gradient-border,
-          .animate-gradient-slow,
-          .animate-float-slow,
-          .animate-ripple-advanced,
-          .animate-shine-smooth,
-          .animate-shine-slow,
-          .animate-pulse-smooth,
-          .animate-pulse-glow,
-          .animate-pulse-fast,
-          .animate-pulse-slow,
-          .animate-ping-slow,
-          .animate-spin-smooth,
-          .animate-spin-slow,
-          .animate-spin-slow-reverse,
-          .animate-bounce-smooth,
-          .animate-bounce-subtle,
-          .animate-twinkle,
-          .animate-heartbeat,
-          .animate-fade-in-up,
-          .animate-fade-in-out,
-          .animate-slide-up,
-          .animate-wiggle,
-          .animate-sparkle,
-          .animate-count-up {
-            animation: none !important;
-          }
-          
-          * {
-            transition-duration: 0.01ms !important;
-          }
-          
-          .smooth-hover-strong,
-          .hover-lift-strong,
-          .hover-scale-strong,
-          .hover-rotate-strong,
-          .hover-rotate-3d,
-          .hover-glow-strong {
-            transition: none !important;
-          }
-        }
-        
-        /* Défilement ultra fluide */
-        html {
-          scroll-behavior: smooth;
-          scroll-padding-top: 100px;
-        }
-        
-        /* Styles de focus améliorés */
-        :focus-visible {
-          outline: 4px solid var(--primary);
-          outline-offset: 4px;
-          border-radius: 1rem;
-        }
-        
-        /* Scroll animation pour les sections */
-        .scroll-animate {
-          opacity: 0;
-          transform: translateY(60px) scale(0.95);
-          transition: opacity 1s cubic-bezier(0.34, 1.56, 0.64, 1), 
-                     transform 1s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        
-        .scroll-animate.visible {
-          opacity: 1;
-          transform: translateY(0) scale(1);
-        }
-        
-        /* Uniformisation des tailles */
-        .widget-uniform {
-          min-height: 320px;
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-        }
-        
-        .card-uniform {
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-        }
-        
-        .content-uniform {
-          flex-grow: 1;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-        }
-        
-        /* Effet de parallaxe léger */
-        .parallax-layer {
-          will-change: transform;
-        }
-        
-        /* Scroll margin pour les ancres */
-        .scroll-mt-20 {
-          scroll-margin-top: 80px;
-        }
-        
-        /* Media queries pour les animations */
-        @media (max-width: 768px) {
-          .animate-gradient-advanced,
-          .animate-gradient-border {
-            animation-duration: 12s;
-          }
-          
-          .smooth-hover-strong {
-            transition-duration: 300ms;
-          }
-        }
-        
-        /* Support du thème écologique */
-        .theme-eco {
-          --primary: 34 197 94;
-          --primary-foreground: 255 255 255;
-          --background: 6 78 59;
-          --foreground: 240 253 244;
-          --card: 6 78 59;
-          --card-foreground: 240 253 244;
-        }
-        
-        .theme-light {
-          --primary: 59 130 246;
-          --primary-foreground: 255 255 255;
-          --background: 248 250 252;
-          --foreground: 15 23 42;
-          --card: 255 255 255;
-          --card-foreground: 15 23 42;
-        }
-        
-        .theme-dark {
-          --primary: 59 130 246;
-          --primary-foreground: 255 255 255;
-          --background: 15 23 42;
-          --foreground: 248 250 252;
-          --card: 30 41 59;
-          --card-foreground: 248 250 252;
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>
   );
 }
-
-// Ajout des imports manquants
-const Clock = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-);
-
-const Infinity = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-  </svg>
-);
-
-const PieChart = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
-  </svg>
-);
-
-const ChevronRight = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-  </svg>
-);
-
-const Pause = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-);
-
-const Play = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-);
