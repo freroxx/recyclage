@@ -1288,7 +1288,7 @@ export default function Project() {
                     variant="outline"
                     size="lg"
                     icon={<BookOpen className="w-6 h-6" />}
-                    href="/activites"
+                    href="/activities"
                     fullWidth={true}
                   >
                     Voir nos Activités
