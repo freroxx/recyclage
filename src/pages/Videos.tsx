@@ -53,7 +53,7 @@ export default function Videos() {
     {
       id: "community",
       title: "Avenir plus propre avec nos amis félins",
-      description: "Inspirez-vous de notre communauté pour un futur plus durable",
+      description: "Fait par Salsabile",
       youtubeId: "CtcgvPj1vGk",
       duration: "0:59",
       publishDate: "2025-12-06",
