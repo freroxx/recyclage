@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { useState, useMemo, useEffect, lazy, Suspense } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
