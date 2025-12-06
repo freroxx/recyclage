@@ -525,11 +525,11 @@ const WidgetFlottantPremium = memo(({
   const [isHovered, setIsHovered] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const widgetRef = useRef<HTMLDivElement>(null);
-  const observerRef = useRef<IntersectionObserver>();
+  const observerRef = useRef<IntersectionObserver | null>(null);
   
   // Animation de révélation au scroll
   useEffect(() => {
-    if (!scrollReveal || !widgetRef.current) return;
+    if (!scrollReveal || !widgetRef.current || typeof window === 'undefined') return;
     
     observerRef.current = new IntersectionObserver(
       ([entry]) => {
@@ -552,12 +552,10 @@ const WidgetFlottantPremium = memo(({
   }, [scrollReveal, delay]);
   
   useEffect(() => {
-    if (!interactive) return;
+    if (!interactive || !widgetRef.current) return;
     
     const handleMouseMove = (e: MouseEvent) => {
-      if (!widgetRef.current) return;
-      
-      const rect = widgetRef.current.getBoundingClientRect();
+      const rect = widgetRef.current!.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width;
       const y = (e.clientY - rect.top) / rect.height;
       
@@ -578,18 +576,14 @@ const WidgetFlottantPremium = memo(({
     };
     
     const widget = widgetRef.current;
-    if (widget) {
-      widget.addEventListener('mousemove', handleMouseMove);
-      widget.addEventListener('mouseenter', handleMouseEnter);
-      widget.addEventListener('mouseleave', handleMouseLeave);
-    }
+    widget.addEventListener('mousemove', handleMouseMove);
+    widget.addEventListener('mouseenter', handleMouseEnter);
+    widget.addEventListener('mouseleave', handleMouseLeave);
     
     return () => {
-      if (widget) {
-        widget.removeEventListener('mousemove', handleMouseMove);
-        widget.removeEventListener('mouseenter', handleMouseEnter);
-        widget.removeEventListener('mouseleave', handleMouseLeave);
-      }
+      widget.removeEventListener('mousemove', handleMouseMove);
+      widget.removeEventListener('mouseenter', handleMouseEnter);
+      widget.removeEventListener('mouseleave', handleMouseLeave);
     };
   }, [interactive, onHoverChange]);
   
@@ -667,10 +661,19 @@ const FondParticulesUltra = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
   const particlesRef = useRef<any[]>([]);
-  const mouseRef = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+  const mouseRef = useRef({ x: 0, y: 0 });
   const timeRef = useRef(0);
+  const mountedRef = useRef(true);
   
   useEffect(() => {
+    mountedRef.current = true;
+    
+    // Initialize mouse position
+    mouseRef.current = { 
+      x: window.innerWidth / 2, 
+      y: window.innerHeight / 2 
+    };
+    
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -679,6 +682,7 @@ const FondParticulesUltra = memo(() => {
     
     // Définir la taille du canvas
     const resize = () => {
+      if (!mountedRef.current || !canvas) return;
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       initParticles();
@@ -693,11 +697,6 @@ const FondParticulesUltra = memo(() => {
         mouseRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
       }
     };
-    
-    resize();
-    window.addEventListener('resize', resize);
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('touchmove', handleTouchMove);
     
     // Classe Particule ultra améliorée
     class Particule {
@@ -715,9 +714,9 @@ const FondParticulesUltra = memo(() => {
       orbitAngle: number;
       type: 'normal' | 'sparkle' | 'orb';
       
-      constructor() {
-        this.x = Math.random() * canvas!.width;
-        this.y = Math.random() * canvas!.height;
+      constructor(canvasWidth: number, canvasHeight: number) {
+        this.x = Math.random() * canvasWidth;
+        this.y = Math.random() * canvasHeight;
         this.size = Math.random() * 3 + 0.5;
         this.speedX = Math.random() * 0.6 - 0.3;
         this.speedY = Math.random() * 0.6 - 0.3;
@@ -743,7 +742,7 @@ const FondParticulesUltra = memo(() => {
         return colors[Math.floor(Math.random() * colors.length)];
       }
       
-      update(time: number) {
+      update(time: number, canvasWidth: number, canvasHeight: number) {
         // Mouvement orbital pour certaines particules
         if (this.type === 'orb') {
           this.orbitAngle += this.orbitSpeed;
@@ -755,10 +754,10 @@ const FondParticulesUltra = memo(() => {
         }
         
         // Rebond sur les bords
-        if (this.x > canvas!.width) this.x = 0;
-        if (this.x < 0) this.x = canvas!.width;
-        if (this.y > canvas!.height) this.y = 0;
-        if (this.y < 0) this.y = canvas!.height;
+        if (this.x > canvasWidth) this.x = 0;
+        if (this.x < 0) this.x = canvasWidth;
+        if (this.y > canvasHeight) this.y = 0;
+        if (this.y < 0) this.y = canvasHeight;
         
         // Animation de pulsation
         this.alpha = 0.15 + Math.sin(time * this.pulseSpeed) * 0.25;
@@ -776,8 +775,7 @@ const FondParticulesUltra = memo(() => {
         }
       }
       
-      draw() {
-        if (!ctx) return;
+      draw(ctx: CanvasRenderingContext2D, particles: any[]) {
         ctx.save();
         
         if (this.type === 'sparkle') {
@@ -822,7 +820,8 @@ const FondParticulesUltra = memo(() => {
           ctx.fill();
           
           // Dessiner les connexions améliorées
-          particlesRef.current.forEach(particule => {
+          particles.forEach(particule => {
+            if (particule === this) return;
             const dx = this.x - particule.x;
             const dy = this.y - particule.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
@@ -853,14 +852,14 @@ const FondParticulesUltra = memo(() => {
       const particleCount = Math.min(Math.floor((canvas.width * canvas.height) / 10000), 120);
       
       for (let i = 0; i < particleCount; i++) {
-        particlesRef.current.push(new Particule());
+        particlesRef.current.push(new Particule(canvas.width, canvas.height));
       }
     };
     
-    initParticles();
-    
     // Boucle d'animation optimisée
     const animate = () => {
+      if (!mountedRef.current || !ctx || !canvas) return;
+      
       timeRef.current += 0.01;
       
       // Fond dégradé animé
@@ -893,16 +892,22 @@ const FondParticulesUltra = memo(() => {
       
       // Mettre à jour et dessiner les particules
       particlesRef.current.forEach(particule => {
-        particule.update(timeRef.current);
-        particule.draw();
+        particule.update(timeRef.current, canvas.width, canvas.height);
+        particule.draw(ctx, particlesRef.current);
       });
       
       animationRef.current = requestAnimationFrame(animate);
     };
     
+    // Initialize
+    resize();
+    window.addEventListener('resize', resize);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('touchmove', handleTouchMove);
     animate();
     
     return () => {
+      mountedRef.current = false;
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('touchmove', handleTouchMove);
@@ -1479,7 +1484,7 @@ const ScrollNavigation = memo(({
           <button
             key={section.id}
             onClick={() => onSectionClick(section.id)}
-            className={`relative p-3 rounded-xl transition-all duration-300
+            className={`relative p-3 rounded-xl transition-all duration-300 group
               ${activeSection === section.id 
                 ? 'bg-gradient-to-r from-primary/20 to-emerald-500/20 text-primary' 
                 : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
@@ -1821,12 +1826,10 @@ export default function ProjectUltra() {
   const MotionDiv = motion?.div || 'div';
   const MotionSection = motion?.section || 'section';
   const AnimatePresence = motion?.AnimatePresence || 'div';
-  const useScroll = motion?.useScroll;
-  const useTransform = motion?.useTransform;
   
   // Animations de scroll avec Framer Motion
-  const { scrollYProgress } = useScroll?.() || { scrollYProgress: { get: () => 0 } };
-  const scaleX = useTransform?.(scrollYProgress, [0, 1], [0, 1]) || scrollProgress / 100;
+  const { scrollYProgress } = motion?.useScroll?.() || { scrollYProgress: { get: () => 0 } };
+  const scaleX = motion?.useTransform?.(scrollYProgress, [0, 1], [0, 1]) || scrollProgress / 100;
   
   if (framerMotionLoading) {
     return <LoadingScreenPremium />;
@@ -1892,7 +1895,7 @@ export default function ProjectUltra() {
       <div className="container mx-auto px-4 py-8 md:py-12 lg:py-16">
         {/* Section Héro avec animations avancées */}
         <MotionSection
-          ref={(el) => { if (el) sectionsRef.current.hero = el; }}
+          ref={(el: HTMLDivElement | null) => { if (el) sectionsRef.current.hero = el; }}
           id="hero"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -2029,7 +2032,7 @@ export default function ProjectUltra() {
         
         {/* Section Objectifs avec animations de scroll */}
         <MotionSection
-          ref={(el) => { if (el) sectionsRef.current.goals = el; }}
+          ref={(el: HTMLDivElement | null) => { if (el) sectionsRef.current.goals = el; }}
           id="goals"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -2118,7 +2121,7 @@ export default function ProjectUltra() {
         
         {/* Section Tri Sélectif avec animations avancées */}
         <MotionSection
-          ref={(el) => { if (el) sectionsRef.current.bins = el; }}
+          ref={(el: HTMLDivElement | null) => { if (el) sectionsRef.current.bins = el; }}
           id="bins"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -2250,7 +2253,7 @@ export default function ProjectUltra() {
         
         {/* Section Actions avec animations fluides */}
         <MotionSection
-          ref={(el) => { if (el) sectionsRef.current.actions = el; }}
+          ref={(el: HTMLDivElement | null) => { if (el) sectionsRef.current.actions = el; }}
           id="actions"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -2351,7 +2354,7 @@ export default function ProjectUltra() {
         
         {/* Section Appel à l'Action Finale avec animations premium */}
         <MotionSection
-          ref={(el) => { if (el) sectionsRef.current.cta = el; }}
+          ref={(el: HTMLDivElement | null) => { if (el) sectionsRef.current.cta = el; }}
           id="cta"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -2517,6 +2520,25 @@ export default function ProjectUltra() {
       
       {/* Styles globaux pour les animations ultra améliorées */}
       <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: .5; }
+        }
+        
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-25%); }
+        }
+        
+        @keyframes ping {
+          75%, 100% { transform: scale(2); opacity: 0; }
+        }
+        
         @keyframes gradient-pan {
           0% { background-position: 0% 0%; }
           100% { background-position: 200% 200%; }
@@ -2563,6 +2585,16 @@ export default function ProjectUltra() {
           100% { background-position: 40px 40px; }
         }
         
+        @keyframes fadeInOut {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 1; }
+        }
+        
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
         .animate-gradient-border {
           animation: gradient-border 3s ease-in-out infinite;
           background-size: 200% 200%;
@@ -2588,6 +2620,10 @@ export default function ProjectUltra() {
           animation: pulse 3s ease-in-out infinite;
         }
         
+        .animate-pulse-fast {
+          animation: pulse 0.5s ease-in-out infinite;
+        }
+        
         .animate-spin-smooth {
           animation: spin 1s linear infinite;
         }
@@ -2604,22 +2640,16 @@ export default function ProjectUltra() {
           animation: bounce 3s ease-in-out infinite;
         }
         
+        .animate-ping-slow {
+          animation: ping 3s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        
         .animate-fade-in-out {
           animation: fadeInOut 3s ease-in-out infinite;
         }
         
         .animate-fade-in-up {
           animation: fadeInUp 0.8s ease-out forwards;
-        }
-        
-        @keyframes fadeInOut {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 1; }
-        }
-        
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>
