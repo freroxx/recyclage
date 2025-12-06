@@ -87,6 +87,7 @@ const BoutonAnime = memo(({
 }) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isHovered, setIsHovered] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
   const [ripples, setRipples] = useState<Array<{x: number, y: number, id: number, size: number}>>([]);
   
   const handleMouseEnter = useCallback(() => {
@@ -97,6 +98,17 @@ const BoutonAnime = memo(({
   
   const handleMouseLeave = useCallback(() => {
     setIsHovered(false);
+    setIsPressed(false);
+  }, []);
+  
+  const handleMouseDown = useCallback(() => {
+    if (!disabled && !loading) {
+      setIsPressed(true);
+    }
+  }, [disabled, loading]);
+  
+  const handleMouseUp = useCallback(() => {
+    setIsPressed(false);
   }, []);
   
   const handleClick = useCallback((e: React.MouseEvent) => {
@@ -122,17 +134,17 @@ const BoutonAnime = memo(({
   
   const sizeClasses = {
     sm: "px-4 py-2.5 text-sm",
-    default: "px-6 py-3",
+    default: "px-6 py-3 text-base",
     lg: "px-8 py-4 text-lg",
     xl: "px-12 py-6 text-xl"
   };
   
   const variantClasses = {
-    default: "bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary",
-    outline: "border-2 border-primary/20 bg-background/80 backdrop-blur-sm hover:border-primary/40 hover:bg-primary/5",
-    premium: "bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 hover:from-amber-600 hover:via-orange-600 hover:to-pink-600",
-    gradient: "bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 hover:from-primary/90 hover:via-emerald-700 hover:to-cyan-700",
-    success: "bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700"
+    default: "bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-primary/30",
+    outline: "border-2 border-primary/30 bg-background/90 backdrop-blur-sm hover:border-primary/60 hover:bg-primary/10 hover:shadow-primary/20",
+    premium: "bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 hover:from-amber-600 hover:via-orange-600 hover:to-pink-600 shadow-lg hover:shadow-orange-500/30",
+    gradient: "bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 hover:from-primary/90 hover:via-emerald-700 hover:to-cyan-700 shadow-lg hover:shadow-primary/30",
+    success: "bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-lg hover:shadow-emerald-500/30"
   };
   
   const ButtonContent = (
@@ -154,11 +166,11 @@ const BoutonAnime = memo(({
       
       {/* Effet de Brillance amélioré */}
       <span className="absolute inset-0 overflow-hidden rounded-xl">
-        <span className="absolute -inset-y-full -left-20 w-20 bg-gradient-to-r from-transparent via-white/40 to-transparent group-hover:animate-shine-smooth transition-all duration-700" />
+        <span className={`absolute -inset-y-full -left-20 w-20 bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-1000 ${isHovered ? 'translate-x-[calc(100%+10rem)]' : '-translate-x-full'}`} />
       </span>
       
       {/* Effet de glow au survol */}
-      <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      <span className={`absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 transition-opacity duration-500 ${isHovered ? 'opacity-100' : 'opacity-0'}`} />
       
       {/* État Loading */}
       {loading && (
@@ -167,9 +179,9 @@ const BoutonAnime = memo(({
         </span>
       )}
       
-      <span className="relative flex items-center justify-center gap-3">
+      <span className={`relative flex items-center justify-center gap-3 transition-all duration-300 ${isPressed ? 'scale-95' : ''}`}>
         {icon && !loading && (
-          <span className="transition-all duration-500 ease-out-smooth group-hover:scale-110 group-hover:rotate-12">
+          <span className={`transition-all duration-300 ${isHovered ? 'scale-110 rotate-12' : ''}`}>
             {icon}
           </span>
         )}
@@ -179,7 +191,7 @@ const BoutonAnime = memo(({
           children
         )}
         {!loading && (
-          <ArrowRight className="w-5 h-5 transition-all duration-500 ease-out-smooth group-hover:translate-x-2 group-hover:scale-110 group-hover:rotate-3" />
+          <ArrowRight className={`w-5 h-5 transition-all duration-300 ${isHovered ? 'translate-x-2 scale-110 rotate-3' : ''}`} />
         )}
       </span>
     </>
@@ -187,23 +199,25 @@ const BoutonAnime = memo(({
   
   const buttonClasses = `
     relative overflow-hidden rounded-xl font-semibold
-    transition-all duration-500 ease-out-smooth
-    transform hover:-translate-y-1.5 active:translate-y-0
-    active:scale-95
+    transition-all duration-300 ease-out-smooth
+    hover-lift hover-glow
     disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
     ${fullWidth ? 'w-full' : ''}
     group ${sizeClasses[size]} ${variantClasses[variant]} ${className}
-    ${isHovered ? 'shadow-2xl scale-[1.02]' : 'shadow-lg hover:shadow-xl'}
+    ${isHovered ? 'shadow-2xl' : 'shadow-lg'}
+    ${isPressed ? 'scale-[0.98] shadow-md' : ''}
   `;
   
   if (href && !disabled && !loading) {
     return (
-      <Link to={href}>
+      <Link to={href} className={fullWidth ? 'w-full' : ''}>
         <button
           ref={buttonRef}
           className={buttonClasses}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
           onClick={handleClick}
           disabled={disabled || loading}
           {...props}
@@ -220,6 +234,8 @@ const BoutonAnime = memo(({
       className={buttonClasses}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
       onClick={handleClick}
       disabled={disabled || loading}
       {...props}
@@ -239,7 +255,8 @@ const WidgetFlottant = memo(({
   interactive = true,
   glow = true,
   minHeight = "min-h-[320px]",
-  equalSize = true
+  equalSize = true,
+  onHoverChange
 }: {
   children: React.ReactNode;
   intensity?: number;
@@ -248,6 +265,7 @@ const WidgetFlottant = memo(({
   glow?: boolean;
   minHeight?: string;
   equalSize?: boolean;
+  onHoverChange?: (hovered: boolean) => void;
 }) => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
@@ -268,10 +286,15 @@ const WidgetFlottant = memo(({
       });
     };
     
-    const handleMouseEnter = () => setIsHovered(true);
+    const handleMouseEnter = () => {
+      setIsHovered(true);
+      onHoverChange?.(true);
+    };
+    
     const handleMouseLeave = () => {
       setIsHovered(false);
       setMousePosition({ x: 0, y: 0 });
+      onHoverChange?.(false);
     };
     
     const widget = widgetRef.current;
@@ -288,7 +311,7 @@ const WidgetFlottant = memo(({
         widget.removeEventListener('mouseleave', handleMouseLeave);
       }
     };
-  }, [interactive]);
+  }, [interactive, onHoverChange]);
   
   const rotateX = interactive ? mousePosition.y * 8 * intensity : 0;
   const rotateY = interactive ? -mousePosition.x * 8 * intensity : 0;
@@ -298,17 +321,17 @@ const WidgetFlottant = memo(({
   return (
     <div
       ref={widgetRef}
-      className={`relative rounded-3xl group ${className}
+      className={`relative rounded-3xl group smooth-hover ${className}
         ${equalSize ? 'w-full h-full flex flex-col' : ''}
         ${minHeight}
       `}
       style={{
         transform: `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(${translateZ}px) scale(${scale})`,
-        transition: 'transform 600ms cubic-bezier(0.23, 1, 0.32, 1)',
+        transition: 'transform 600ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 600ms cubic-bezier(0.23, 1, 0.32, 1)',
       }}
     >
       {/* Animated gradient border */}
-      <div className={`absolute -inset-[2px] rounded-3xl bg-gradient-to-r from-primary/40 via-emerald-500/40 to-cyan-500/40 opacity-0 transition-opacity duration-700 ${isHovered ? 'opacity-100' : ''}`} 
+      <div className={`absolute -inset-[2px] rounded-3xl bg-gradient-to-r from-primary/40 via-emerald-500/40 to-cyan-500/40 transition-opacity duration-700 ${isHovered ? 'opacity-100' : 'opacity-0'}`} 
         style={{ filter: 'blur(1px)' }}
       />
       
@@ -318,13 +341,11 @@ const WidgetFlottant = memo(({
       )}
       
       {/* Inner shadow and background */}
-      <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-card via-card/95 to-card/90 shadow-xl" />
+      <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br from-card via-card/95 to-card/90 shadow-xl transition-all duration-700 ${isHovered ? 'shadow-2xl' : ''}`} />
       
       {/* Shimmer effect on hover */}
       <div className={`absolute inset-0 rounded-3xl overflow-hidden`}>
-        <div className={`absolute -inset-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 ${isHovered ? 'translate-x-full' : '-translate-x-full'}`} 
-          style={{ transform: isHovered ? 'translateX(100%)' : 'translateX(-100%)', transition: 'transform 1s ease-out' }}
-        />
+        <div className={`absolute -inset-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 ${isHovered ? 'translate-x-full' : '-translate-x-full'}`} />
       </div>
       
       {/* Content container */}
@@ -342,6 +363,7 @@ const FondParticulesPremium = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
   const particlesRef = useRef<any[]>([]);
+  const mouseRef = useRef({ x: 0, y: 0 });
   
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -356,8 +378,13 @@ const FondParticulesPremium = memo(() => {
       canvas.height = window.innerHeight;
     };
     
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseRef.current = { x: e.clientX, y: e.clientY };
+    };
+    
     resize();
     window.addEventListener('resize', resize);
+    window.addEventListener('mousemove', handleMouseMove);
     
     // Classe Particule améliorée
     class Particule {
@@ -369,6 +396,7 @@ const FondParticulesPremium = memo(() => {
       color: string;
       alpha: number;
       pulseSpeed: number;
+      distanceFromMouse: number;
       
       constructor() {
         this.x = Math.random() * canvas!.width;
@@ -379,6 +407,7 @@ const FondParticulesPremium = memo(() => {
         this.color = `rgb(${Math.floor(Math.random() * 100 + 155)}, ${Math.floor(Math.random() * 200 + 55)}, 255)`;
         this.alpha = Math.random() * 0.3 + 0.1;
         this.pulseSpeed = Math.random() * 0.02 + 0.01;
+        this.distanceFromMouse = 0;
       }
       
       update() {
@@ -391,6 +420,18 @@ const FondParticulesPremium = memo(() => {
         
         // Animation de pulsation
         this.alpha = 0.1 + Math.sin(Date.now() * this.pulseSpeed) * 0.2;
+        
+        // Interaction avec la souris
+        const dx = this.x - mouseRef.current.x;
+        const dy = this.y - mouseRef.current.y;
+        this.distanceFromMouse = Math.sqrt(dx * dx + dy * dy);
+        
+        if (this.distanceFromMouse < 100) {
+          const angle = Math.atan2(dy, dx);
+          const force = (100 - this.distanceFromMouse) / 100;
+          this.x += Math.cos(angle) * force * 0.5;
+          this.y += Math.sin(angle) * force * 0.5;
+        }
       }
       
       draw() {
@@ -463,6 +504,7 @@ const FondParticulesPremium = memo(() => {
     
     return () => {
       window.removeEventListener('resize', resize);
+      window.removeEventListener('mousemove', handleMouseMove);
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
@@ -515,7 +557,7 @@ const FondParticulesPremium = memo(() => {
 
 FondParticulesPremium.displayName = 'FondParticulesPremium';
 
-// Composant Carte Interactive redessiné
+// Composant Carte Interactive redessiné avec animations de survol fluides
 const CarteInteractive = memo(({ 
   icon: Icon,
   title,
@@ -537,6 +579,28 @@ const CarteInteractive = memo(({
   equalSize?: boolean;
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
+  
+  const handleMouseEnter = useCallback(() => {
+    setIsHovered(true);
+  }, []);
+  
+  const handleMouseLeave = useCallback(() => {
+    setIsHovered(false);
+    setIsPressed(false);
+  }, []);
+  
+  const handleMouseDown = useCallback(() => {
+    setIsPressed(true);
+  }, []);
+  
+  const handleMouseUp = useCallback(() => {
+    setIsPressed(false);
+  }, []);
+  
+  const handleClick = useCallback(() => {
+    onClick?.();
+  }, [onClick]);
   
   return (
     <WidgetFlottant 
@@ -544,12 +608,15 @@ const CarteInteractive = memo(({
       glow={true}
       minHeight="min-h-[300px]"
       equalSize={equalSize}
+      onHoverChange={setIsHovered}
     >
       <div
-        onClick={onClick}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        className="cursor-pointer h-full"
+        onClick={handleClick}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        className={`cursor-pointer h-full smooth-hover ${isPressed ? 'scale-[0.98]' : ''}`}
       >
         <Card className={`h-full border-0 overflow-hidden bg-transparent rounded-3xl`}>
           <CardContent className="p-8 text-center relative flex flex-col items-center justify-center h-full">
@@ -569,25 +636,25 @@ const CarteInteractive = memo(({
             {/* Icon container with enhanced animation */}
             <div className={`relative w-24 h-24 md:w-28 md:h-28 rounded-3xl ${bg} 
                           flex items-center justify-center mx-auto mb-6 overflow-hidden
-                          transition-all duration-500
+                          smooth-hover hover-lift hover-rotate
                           ${isHovered ? 'scale-110 rotate-3 shadow-2xl' : 'shadow-lg'}
                           ${isActive ? 'ring-4 ring-primary/40 scale-105' : ''}`}
             >
               {/* Inner glow */}
               <div className={`absolute inset-0 bg-gradient-to-br from-white/20 to-transparent transition-opacity duration-500 ${isHovered ? 'opacity-100' : 'opacity-0'}`} />
               
-              <Icon className={`relative z-10 w-12 h-12 md:w-14 md:h-14 ${color} transition-all duration-500 
+              <Icon className={`relative z-10 w-12 h-12 md:w-14 md:h-14 ${color} smooth-hover hover-scale
                             ${isHovered ? 'scale-110 rotate-6' : ''}`} />
             </div>
             
             {/* Title with gradient */}
-            <h3 className={`relative z-10 font-bold text-xl md:text-2xl mb-3 transition-all duration-500
+            <h3 className={`relative z-10 font-bold text-xl md:text-2xl mb-3 smooth-hover hover-scale
                           ${isHovered ? 'text-primary scale-105' : 'text-foreground'}`}>
               {title}
             </h3>
             
             {/* Description */}
-            <p className={`relative z-10 text-sm md:text-base transition-all duration-500 flex-grow
+            <p className={`relative z-10 text-sm md:text-base smooth-hover flex-grow
                           ${isHovered ? 'text-foreground' : 'text-muted-foreground'}`}>
               {description}
             </p>
@@ -631,6 +698,7 @@ const PanelDetails = memo(({
   onClose?: () => void;
   equalSize?: boolean;
 }) => {
+  const [isHovered, setIsHovered] = useState(false);
   
   return (
     <WidgetFlottant 
@@ -638,14 +706,15 @@ const PanelDetails = memo(({
       glow={true}
       minHeight="min-h-[400px]"
       equalSize={equalSize}
+      onHoverChange={setIsHovered}
     >
-      <Card className={`h-full border-2 ${border} overflow-hidden backdrop-blur-xl bg-white/10 rounded-2xl`}>
+      <Card className={`h-full border-2 ${border} overflow-hidden backdrop-blur-xl bg-white/10 rounded-2xl smooth-hover ${isHovered ? 'shadow-2xl' : ''}`}>
         <CardContent className="p-6 md:p-8 h-full flex flex-col">
           {/* En-tête avec boutons de contrôle */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-xl ${bg} flex items-center justify-center transition-all duration-500 hover:scale-110`}>
-                <Icon className={`w-6 h-6 ${color}`} />
+              <div className={`w-12 h-12 rounded-xl ${bg} flex items-center justify-center smooth-hover hover-scale ${isHovered ? 'scale-110' : ''}`}>
+                <Icon className={`w-6 h-6 ${color} smooth-hover ${isHovered ? 'rotate-12' : ''}`} />
               </div>
               <div>
                 <h3 className="text-xl md:text-2xl font-bold">{title}</h3>
@@ -656,7 +725,7 @@ const PanelDetails = memo(({
             {onClose && (
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-white/10 rounded-lg transition-all duration-300 hover:scale-110"
+                className="p-2 hover:bg-white/10 rounded-lg smooth-hover hover-scale hover-rotate"
                 aria-label="Fermer"
               >
                 <X className="w-5 h-5" />
@@ -712,9 +781,11 @@ export default function Project() {
   const [isAutoRotating, setIsAutoRotating] = useState(true);
   const [showBinDetails, setShowBinDetails] = useState(false);
   const [activeGoalIndex, setActiveGoalIndex] = useState<number | null>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
   
   const autoRotationInterval = useRef<NodeJS.Timeout>();
   const mountedRef = useRef(true);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   // Données avec tailles standardisées
   const bins = useMemo(() => [
@@ -803,7 +874,8 @@ export default function Project() {
       details: "Chaque mois, nous organisons des activités variées : clean-ups, ateliers de compostage, conférences et visites de centres de tri.",
       color: "text-blue-600",
       bg: "bg-gradient-to-br from-blue-500/20 to-cyan-600/10",
-      border: "border-blue-400/30"
+      border: "border-blue-400/30",
+      href: "/activities"
     },
     {
       icon: BookOpen,
@@ -812,7 +884,8 @@ export default function Project() {
       details: "Notre programme éducatif couvre les écoles, les entreprises et le grand public avec des contenus adaptés à chaque public.",
       color: "text-green-600",
       bg: "bg-gradient-to-br from-green-500/20 to-emerald-600/10",
-      border: "border-green-400/30"
+      border: "border-green-400/30",
+      href: "/resources"
     },
     {
       icon: Home,
@@ -821,7 +894,8 @@ export default function Project() {
       details: "Découvrez comment réduire votre empreinte écologique à la maison avec nos guides pratiques et kits de démarrage.",
       color: "text-purple-600",
       bg: "bg-gradient-to-br from-purple-500/20 to-pink-600/10",
-      border: "border-purple-400/30"
+      border: "border-purple-400/30",
+      href: "/guide"
     },
     {
       icon: Award,
@@ -830,9 +904,31 @@ export default function Project() {
       details: "Notre programme de certification valorise les entreprises et individus qui s'engagent concrètement pour l'environnement.",
       color: "text-amber-600",
       bg: "bg-gradient-to-br from-amber-500/20 to-orange-600/10",
-      border: "border-amber-400/30"
+      border: "border-amber-400/30",
+      href: "/project"
     }
   ], []);
+  
+  // Animation de scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!containerRef.current) return;
+      
+      const element = containerRef.current;
+      const scrollTop = window.scrollY;
+      const elementTop = element.offsetTop;
+      const elementHeight = element.offsetHeight;
+      const windowHeight = window.innerHeight;
+      
+      const progress = Math.min(Math.max((scrollTop - elementTop + windowHeight) / (elementHeight + windowHeight), 0), 1);
+      setScrollProgress(progress);
+    };
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll(); // Initial call
+    
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   
   // Rotation automatique
   useEffect(() => {
@@ -910,8 +1006,16 @@ export default function Project() {
   }
   
   return (
-    <div className="min-h-screen overflow-hidden">
+    <div className="min-h-screen overflow-hidden" ref={containerRef}>
       <FondParticulesPremium />
+      
+      {/* Indicateur de progression du scroll */}
+      <div className="fixed top-0 left-0 w-full h-1 z-50">
+        <div 
+          className="h-full bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 transition-all duration-300"
+          style={{ width: `${scrollProgress * 100}%` }}
+        />
+      </div>
       
       <div className="container mx-auto px-4 py-8 md:py-12 lg:py-16">
         {/* Section Héro */}
@@ -927,7 +1031,7 @@ export default function Project() {
             transition={{ type: "spring", stiffness: 200, damping: 20 }}
             className="inline-flex items-center gap-3 bg-gradient-to-r from-primary/20 via-emerald-500/20 to-cyan-500/20 
                        text-primary px-6 py-3 rounded-full text-sm font-medium mb-10 
-                       border border-white/20 backdrop-blur-xl shadow-lg transition-all duration-500 hover:scale-105 hover:shadow-xl"
+                       border border-white/20 backdrop-blur-xl shadow-lg smooth-hover hover-scale"
           >
             <Sparkles className="w-4 h-4" />
             <span className="bg-gradient-to-r from-primary to-emerald-600 bg-clip-text text-transparent">
@@ -983,7 +1087,7 @@ export default function Project() {
               variant="outline"
               size="xl"
               icon={<BookOpen className="w-6 h-6" />}
-              href="/ressources"
+              href="/resources"
               fullWidth={true}
             >
               Ressources Éducatives
@@ -1210,7 +1314,7 @@ export default function Project() {
                   color={action.color}
                   bg={action.bg}
                   border={action.border}
-                  onClick={() => window.open(`/actions/${action.title.toLowerCase().replace(/ /g, '-')}`, '_blank')}
+                  onClick={() => action.href && window.open(action.href, '_self')}
                   equalSize={true}
                 />
               </MotionDiv>
@@ -1228,7 +1332,7 @@ export default function Project() {
         >
           <WidgetFlottant intensity={0.8} glow={true} equalSize={false}>
             <Card className="border-2 border-white/20 overflow-hidden backdrop-blur-xl 
-                           bg-gradient-to-br from-primary/10 via-emerald-500/10 to-cyan-500/10 rounded-2xl">
+                           bg-gradient-to-br from-primary/10 via-emerald-500/10 to-cyan-500/10 rounded-2xl smooth-hover">
               <CardContent className="p-12 md:p-16 text-center relative overflow-hidden">
                 {/* Éléments de fond animés */}
                 <div className="absolute -top-20 -right-20 w-64 h-64 bg-gradient-to-r from-primary/15 to-emerald-500/15 
@@ -1242,7 +1346,7 @@ export default function Project() {
                   viewport={{ once: true }}
                   transition={{ type: "spring", stiffness: 120, damping: 15, duration: 1 }}
                   className="relative z-10 w-28 h-28 rounded-full bg-gradient-to-br from-primary/25 to-emerald-500/25 
-                           flex items-center justify-center mx-auto mb-10 border-4 border-white/20"
+                           flex items-center justify-center mx-auto mb-10 border-4 border-white/20 smooth-hover hover-rotate"
                 >
                   <div className="w-20 h-20 rounded-full bg-gradient-to-br from-white to-white/80 
                                 flex items-center justify-center">
@@ -1352,6 +1456,11 @@ export default function Project() {
           50% { transform: translateY(-5px); }
         }
         
+        @keyframes pulse-slow {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
+        
         .animate-gradient-smooth {
           animation: gradient-smooth 5s ease-in-out infinite;
           background-size: 200% 200%;
@@ -1377,6 +1486,10 @@ export default function Project() {
           animation: pulse-smooth 2s ease-in-out infinite;
         }
         
+        .animate-pulse-slow {
+          animation: pulse-slow 3s ease-in-out infinite;
+        }
+        
         .animate-spin-smooth {
           animation: spin-smooth 1s linear infinite;
         }
@@ -1396,6 +1509,43 @@ export default function Project() {
         
         .ease-in-out-smooth {
           transition-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
+        }
+        
+        /* Animations de survol ultra-fluides */
+        .smooth-hover {
+          transition: all 300ms cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+        
+        .hover-lift {
+          transition: transform 300ms cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+        
+        .hover-lift:hover {
+          transform: translateY(-4px);
+        }
+        
+        .hover-scale {
+          transition: transform 300ms cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+        
+        .hover-scale:hover {
+          transform: scale(1.05);
+        }
+        
+        .hover-rotate {
+          transition: transform 300ms cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+        
+        .hover-rotate:hover {
+          transform: rotate(3deg);
+        }
+        
+        .hover-glow {
+          transition: box-shadow 300ms cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+        
+        .hover-glow:hover {
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
         
         /* Optimisations des performances */
@@ -1421,12 +1571,21 @@ export default function Project() {
           .animate-shine-smooth,
           .animate-pulse-smooth,
           .animate-spin-smooth,
-          .animate-bounce-smooth {
+          .animate-bounce-smooth,
+          .animate-pulse-slow {
             animation: none !important;
           }
           
           * {
             transition-duration: 0.01ms !important;
+          }
+          
+          .smooth-hover,
+          .hover-lift,
+          .hover-scale,
+          .hover-rotate,
+          .hover-glow {
+            transition: none !important;
           }
         }
         
@@ -1442,26 +1601,17 @@ export default function Project() {
           outline-offset: 3px;
           border-radius: 0.5rem;
         }
-
-        /* Animations de survol ultra-fluides */
-        .smooth-hover {
-          transition: all 500ms cubic-bezier(0.22, 0.61, 0.36, 1);
+        
+        /* Scroll animation pour les sections */
+        .scroll-animate {
+          opacity: 0;
+          transform: translateY(30px);
+          transition: opacity 0.6s ease-out, transform 0.6s ease-out;
         }
-
-        .hover-lift {
-          transition: transform 500ms cubic-bezier(0.22, 0.61, 0.36, 1);
-        }
-
-        .hover-scale {
-          transition: transform 500ms cubic-bezier(0.22, 0.61, 0.36, 1);
-        }
-
-        .hover-rotate {
-          transition: transform 500ms cubic-bezier(0.22, 0.61, 0.36, 1);
-        }
-
-        .hover-glow {
-          transition: box-shadow 500ms cubic-bezier(0.22, 0.61, 0.36, 1);
+        
+        .scroll-animate.visible {
+          opacity: 1;
+          transform: translateY(0);
         }
         
         /* Uniformisation des tailles */
@@ -1483,6 +1633,11 @@ export default function Project() {
           display: flex;
           flex-direction: column;
           justify-content: space-between;
+        }
+        
+        /* Effet de parallaxe léger */
+        .parallax-layer {
+          will-change: transform;
         }
       `}</style>
     </div>
