@@ -46,7 +46,7 @@ import {
   Play,
   LucideIcon
 } from "lucide-react";
-import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Simple Card components
 const Card = ({ children, className = "", style }: { children: ReactNode; className?: string; style?: React.CSSProperties }) => (
@@ -74,140 +74,10 @@ const Link = ({ to, children, className = "", onMouseEnter, onMouseLeave }: {
     className={className}
     onMouseEnter={onMouseEnter}
     onMouseLeave={onMouseLeave}
-    onClick={(e) => {
-      e.preventDefault();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }}
   >
     {children}
   </a>
 );
-
-// Mock useLanguage hook
-const useLanguage = () => {
-  return { language: 'fr' };
-};
-
-// Écran de chargement amélioré avec animations premium
-const LoadingScreenPremium = memo(() => {
-  const [progress, setProgress] = useState(0);
-  const [phase, setPhase] = useState(0);
-  const messages = useMemo(() => [
-    "Chargement de l'expérience écologique...",
-    "Initialisation des particules animées...",
-    "Préparation des animations fluides...",
-    "Chargement des modules interactifs...",
-    "Presque terminé..."
-  ], []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setProgress(prev => {
-        const newProgress = prev + Math.random() * 15;
-        if (newProgress >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        return newProgress;
-      });
-      
-      setPhase(prev => {
-        const newPhase = Math.floor(progress / 20);
-        return Math.min(newPhase, messages.length - 1);
-      });
-    }, 200);
-
-    return () => clearInterval(interval);
-  }, [progress, messages.length]);
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-xl">
-      {/* Effets de fond animés */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-gradient-to-r from-blue-500/20 to-emerald-500/20 rounded-full blur-3xl" 
-          style={{ animation: 'spin 20s linear infinite' }} />
-        <div className="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-full blur-3xl" 
-          style={{ animation: 'spin 25s linear infinite reverse' }} />
-      </div>
-
-      {/* Contenu principal du chargement */}
-      <div className="relative z-10 text-center max-w-md mx-4">
-        {/* Logo/icône animé */}
-        <div className="relative w-32 h-32 mx-auto mb-8">
-          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 via-emerald-500 to-cyan-500 blur-lg" 
-            style={{ animation: 'spin 20s linear infinite' }} />
-          <div className="absolute inset-4 rounded-full bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
-            <div className="relative">
-              <Leaf className="w-16 h-16 text-emerald-500" style={{ animation: 'pulse 2s ease-in-out infinite' }} />
-              <div className="absolute -inset-4 rounded-full border-4 border-blue-500/30" 
-                style={{ animation: 'ping 3s cubic-bezier(0, 0, 0.2, 1) infinite' }} />
-            </div>
-          </div>
-          
-          {/* Particules tournantes */}
-          {[0, 72, 144, 216, 288].map((rotation, i) => (
-            <div
-              key={i}
-              className="absolute w-3 h-3 rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400"
-              style={{
-                top: '50%',
-                left: '50%',
-                transform: `rotate(${rotation + phase * 36}deg) translateX(60px) rotate(-${rotation + phase * 36}deg)`,
-                transition: 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
-              }}
-            />
-          ))}
-        </div>
-
-        {/* Message de chargement */}
-        <h3 className="text-2xl font-bold mb-6 bg-gradient-to-r from-blue-500 via-emerald-500 to-cyan-500 bg-clip-text text-transparent">
-          {messages[phase]}
-        </h3>
-
-        {/* Barre de progression améliorée */}
-        <div className="relative h-3 bg-white/10 rounded-full overflow-hidden mb-4">
-          <div 
-            className="absolute inset-0 bg-gradient-to-r from-blue-500 via-emerald-500 to-cyan-500 rounded-full transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          >
-            {/* Effet de brillance sur la barre */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent" 
-              style={{ animation: 'shine 3s ease-in-out infinite' }} />
-          </div>
-          
-          {/* Points animés sur la barre */}
-          <div className="absolute inset-0 flex items-center justify-between px-2">
-            {[0, 25, 50, 75, 100].map((point) => (
-              <div
-                key={point}
-                className={`w-2 h-2 rounded-full transition-all duration-500 ${progress >= point ? 'bg-white scale-125' : 'bg-white/30'}`}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Pourcentage et indicateur */}
-        <div className="flex items-center justify-between text-sm text-white/70 mb-2">
-          <span>Chargement...</span>
-          <span className="font-bold text-white">{Math.round(progress)}%</span>
-        </div>
-
-        {/* Conseils écologiques pendant le chargement */}
-        <div className="mt-8 p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10">
-          <p className="text-sm text-white/80 italic">
-            {phase === 0 && "💡 Le recyclage d'une tonne de papier sauve 17 arbres."}
-            {phase === 1 && "🌱 Chaque geste compte pour préserver notre planète."}
-            {phase === 2 && "♻️ Le plastique peut prendre jusqu'à 500 ans à se décomposer."}
-            {phase === 3 && "🌍 Ensemble, nous pouvons créer un impact significatif."}
-            {phase === 4 && "✨ Merci de votre engagement écologique !"}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-});
-
-LoadingScreenPremium.displayName = 'LoadingScreenPremium';
 
 // Types for button component
 interface BoutonAnimePremiumProps {
@@ -225,7 +95,7 @@ interface BoutonAnimePremiumProps {
   pulse?: boolean;
 }
 
-// Composant Bouton Animé Premium avec animations ultra-fluides
+// Composant Bouton Animé Premium optimisé
 const BoutonAnimePremium = memo(({ 
   children, 
   variant = "default",
@@ -243,8 +113,6 @@ const BoutonAnimePremium = memo(({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
-  const [ripples, setRipples] = useState<Array<{ x: number; y: number; id: number; size: number; color: string }>>([]);
   
   const handleMouseEnter = useCallback(() => {
     if (!disabled && !loading) {
@@ -267,41 +135,10 @@ const BoutonAnimePremium = memo(({
     setIsPressed(false);
   }, []);
   
-  const handleFocus = useCallback(() => {
-    if (!disabled && !loading) {
-      setIsFocused(true);
-    }
-  }, [disabled, loading]);
-  
-  const handleBlur = useCallback(() => {
-    setIsFocused(false);
-  }, []);
-  
   const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     if (disabled || loading) return;
-    
-    const button = buttonRef.current;
-    if (!button) return;
-    
-    const rect = button.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const size = Math.max(rect.width, rect.height);
-    
-    const rippleColor = variant === 'premium' ? 'rgba(255,193,7,0.4)' : 
-                       variant === 'eco' ? 'rgba(34,197,94,0.4)' : 
-                       variant === 'gradient' ? 'rgba(59,130,246,0.4)' : 
-                       'rgba(255,255,255,0.4)';
-    
-    const id = Date.now();
-    setRipples(prev => [...prev, { x, y, id, size, color: rippleColor }]);
-    
-    setTimeout(() => {
-      setRipples(prev => prev.filter(ripple => ripple.id !== id));
-    }, 800);
-    
-    if (onClick) onClick();
-  }, [disabled, loading, onClick, variant]);
+    onClick?.();
+  }, [disabled, loading, onClick]);
   
   const sizeClasses: Record<string, string> = {
     sm: "px-5 py-2.5 text-sm",
@@ -323,28 +160,6 @@ const BoutonAnimePremium = memo(({
   
   const ButtonContent = (
     <>
-      {/* Effets d'Ondulation */}
-      {ripples.map(ripple => (
-        <span
-          key={ripple.id}
-          className="absolute rounded-full"
-          style={{
-            left: ripple.x,
-            top: ripple.y,
-            width: ripple.size,
-            height: ripple.size,
-            transform: 'translate(-50%, -50%)',
-            background: ripple.color,
-            animation: 'ripple 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) forwards'
-          }}
-        />
-      ))}
-      
-      {/* Effet de Brillance */}
-      <span className="absolute inset-0 overflow-hidden rounded-2xl">
-        <span className={`absolute -inset-y-full -left-32 w-32 bg-gradient-to-r from-transparent via-white/50 to-transparent transition-transform duration-1000 ${isHovered ? 'translate-x-[calc(100%+15rem)]' : '-translate-x-full'}`} />
-      </span>
-      
       {/* Effet de glow au survol */}
       {glow && (
         <span className={`absolute -inset-2 rounded-2xl bg-gradient-to-r from-blue-500/30 via-emerald-500/20 to-cyan-500/30 transition-all duration-700 blur-xl ${isHovered ? 'opacity-100' : 'opacity-0'}`} />
@@ -359,17 +174,8 @@ const BoutonAnimePremium = memo(({
       {/* État Loading */}
       {loading && (
         <span className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm rounded-2xl">
-          <div className="relative">
-            <span className="rounded-full h-8 w-8 border-t-3 border-b-3 border-white"
-              style={{ animation: 'spin 1s linear infinite' }}></span>
-          </div>
+          <span className="rounded-full h-8 w-8 border-t-3 border-b-3 border-white animate-spin"></span>
         </span>
-      )}
-      
-      {/* Effet de focus */}
-      {isFocused && (
-        <span className="absolute -inset-1 rounded-2xl border-3 border-white/50" 
-          style={{ animation: 'pulse 0.5s ease-in-out infinite' }} />
       )}
       
       <span className={`relative flex items-center justify-center gap-3 transition-all duration-500 ${isPressed ? 'scale-95' : ''}`}>
@@ -401,8 +207,6 @@ const BoutonAnimePremium = memo(({
     group ${sizeClasses[size]} ${variantClasses[variant]} ${className}
     ${isHovered ? 'shadow-2xl scale-105' : 'shadow-xl'}
     ${isPressed ? 'scale-95 shadow-lg' : ''}
-    ${isFocused ? 'ring-4 ring-blue-500/30' : ''}
-    transform-gpu
   `;
   
   if (href && !disabled && !loading) {
@@ -420,8 +224,6 @@ const BoutonAnimePremium = memo(({
           onMouseLeave={handleMouseLeave}
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
           onClick={handleClick}
           disabled={disabled || loading}
         >
@@ -439,8 +241,6 @@ const BoutonAnimePremium = memo(({
       onMouseLeave={handleMouseLeave}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
       onClick={handleClick}
       disabled={disabled || loading}
     >
@@ -465,10 +265,10 @@ interface WidgetFlottantPremiumProps {
   scrollReveal?: boolean;
 }
 
-// Composant Widget Flottant
+// Composant Widget Flottant optimisé avec moins de courbure
 const WidgetFlottantPremium = memo(({
   children,
-  intensity = 1,
+  intensity = 0.3, // Réduit l'intensité pour moins de courbure
   className = "",
   interactive = true,
   glow = true,
@@ -540,10 +340,10 @@ const WidgetFlottantPremium = memo(({
     };
   }, [interactive, onHoverChange]);
   
-  const rotateX = interactive ? mousePosition.y * 10 * intensity : 0;
-  const rotateY = interactive ? -mousePosition.x * 10 * intensity : 0;
-  const translateZ = isHovered ? 30 : 0;
-  const scale = isHovered ? 1.03 : isVisible ? 1 : 0.95;
+  const rotateX = interactive ? mousePosition.y * 5 * intensity : 0; // Réduit de 10 à 5
+  const rotateY = interactive ? -mousePosition.x * 5 * intensity : 0; // Réduit de 10 à 5
+  const translateZ = isHovered ? 15 : 0; // Réduit de 30 à 15
+  const scale = isHovered ? 1.02 : isVisible ? 1 : 0.95; // Réduit de 1.03 à 1.02
   const opacity = isVisible ? 1 : 0;
   
   return (
@@ -565,11 +365,6 @@ const WidgetFlottantPremium = memo(({
         transformStyle: 'preserve-3d',
       }}
     >
-      {/* Animated gradient border */}
-      <div className={`absolute -inset-[2px] rounded-3xl bg-gradient-to-r from-blue-500/50 via-emerald-500/50 to-cyan-500/50 transition-all duration-1000 ${isHovered ? 'opacity-100' : 'opacity-0'}`} 
-        style={{ filter: 'blur(1.5px)', backgroundSize: '200% 200%', animation: isHovered ? 'gradient-border 3s ease-in-out infinite' : 'none' }}
-      />
-      
       {/* Glow effect */}
       {glow && (
         <div className={`absolute -inset-4 rounded-3xl bg-gradient-to-br from-blue-500/30 via-emerald-500/25 to-cyan-500/30 transition-all duration-1000 ${isHovered ? 'opacity-100 blur-3xl' : 'opacity-0 blur-2xl'}`} />
@@ -577,27 +372,6 @@ const WidgetFlottantPremium = memo(({
       
       {/* Inner shadow and background */}
       <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br from-slate-800/95 via-slate-900/90 to-slate-800/85 shadow-2xl transition-all duration-1000 ${isHovered ? 'shadow-3xl' : ''}`} />
-      
-      {/* Shimmer effect */}
-      <div className={`absolute inset-0 rounded-3xl overflow-hidden`}>
-        <div className={`absolute -inset-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1500 ${isHovered ? 'translate-x-full' : '-translate-x-full'}`} />
-      </div>
-      
-      {/* Points de lumière animés */}
-      <div className="absolute inset-0 rounded-3xl overflow-hidden">
-        {[...Array(5)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-2 h-2 rounded-full bg-white/30 blur-sm"
-            style={{
-              top: `${20 + i * 15}%`,
-              left: `${10 + i * 20}%`,
-              animation: `float-particle ${3 + i * 0.5}s ease-in-out infinite ${i * 0.3}s`,
-              opacity: isHovered ? 0.7 : 0.3,
-            }}
-          />
-        ))}
-      </div>
       
       {/* Content container */}
       <div className="relative z-10 h-full transform-gpu">
@@ -627,131 +401,49 @@ const FondParticulesUltra = memo(() => {
     color: string;
     alpha: number;
     pulseSpeed: number;
-    distanceFromMouse: number;
-    orbitRadius: number;
-    orbitSpeed: number;
-    orbitAngle: number;
-    type: string;
 
     constructor(canvasWidth: number, canvasHeight: number) {
       this.x = Math.random() * canvasWidth;
       this.y = Math.random() * canvasHeight;
-      this.size = Math.random() * 3 + 0.5;
-      this.speedX = Math.random() * 0.6 - 0.3;
-      this.speedY = Math.random() * 0.6 - 0.3;
+      this.size = Math.random() * 2 + 0.5;
+      this.speedX = Math.random() * 0.4 - 0.2;
+      this.speedY = Math.random() * 0.4 - 0.2;
       this.color = this.getRandomColor();
-      this.alpha = Math.random() * 0.4 + 0.1;
+      this.alpha = Math.random() * 0.3 + 0.1;
       this.pulseSpeed = Math.random() * 0.02 + 0.01;
-      this.distanceFromMouse = 0;
-      this.orbitRadius = Math.random() * 50 + 20;
-      this.orbitSpeed = Math.random() * 0.02 + 0.01;
-      this.orbitAngle = Math.random() * Math.PI * 2;
-      this.type = Math.random() > 0.9 ? 'sparkle' : Math.random() > 0.8 ? 'orb' : 'normal';
     }
     
     getRandomColor() {
       const colors = [
         `rgb(100, 200, 255)`,
         `rgb(100, 255, 200)`,
-        `rgb(255, 200, 100)`,
         `rgb(200, 100, 255)`,
-        `rgb(255, 100, 200)`,
         `rgb(100, 255, 255)`,
       ];
       return colors[Math.floor(Math.random() * colors.length)];
     }
     
     update(time: number, canvasWidth: number, canvasHeight: number) {
-      if (this.type === 'orb') {
-        this.orbitAngle += this.orbitSpeed;
-        this.x = mouseRef.current.x + Math.cos(this.orbitAngle) * this.orbitRadius;
-        this.y = mouseRef.current.y + Math.sin(this.orbitAngle) * this.orbitRadius;
-      } else {
-        this.x += this.speedX;
-        this.y += this.speedY;
-      }
+      this.x += this.speedX;
+      this.y += this.speedY;
       
       if (this.x > canvasWidth) this.x = 0;
       if (this.x < 0) this.x = canvasWidth;
       if (this.y > canvasHeight) this.y = 0;
       if (this.y < 0) this.y = canvasHeight;
       
-      this.alpha = 0.15 + Math.sin(time * this.pulseSpeed) * 0.25;
-      
-      const dx = this.x - mouseRef.current.x;
-      const dy = this.y - mouseRef.current.y;
-      this.distanceFromMouse = Math.sqrt(dx * dx + dy * dy);
-      
-      if (this.distanceFromMouse < 150 && this.type !== 'orb') {
-        const angle = Math.atan2(dy, dx);
-        const force = (150 - this.distanceFromMouse) / 150;
-        this.x += Math.cos(angle) * force * 2;
-        this.y += Math.sin(angle) * force * 2;
-      }
+      this.alpha = 0.15 + Math.sin(time * this.pulseSpeed) * 0.15;
     }
     
-    draw(ctx: CanvasRenderingContext2D, particles: Particule[]) {
+    draw(ctx: CanvasRenderingContext2D) {
       ctx.save();
+      ctx.globalAlpha = this.alpha;
+      ctx.fillStyle = this.color;
       
-      if (this.type === 'sparkle') {
-        ctx.globalAlpha = this.alpha * 0.7;
-        ctx.fillStyle = 'white';
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-        
-        for (let i = 0; i < 4; i++) {
-          ctx.beginPath();
-          ctx.moveTo(this.x, this.y);
-          ctx.lineTo(
-            this.x + Math.cos(i * Math.PI / 2) * this.size * 3,
-            this.y + Math.sin(i * Math.PI / 2) * this.size * 3
-          );
-          ctx.strokeStyle = `rgba(255, 255, 255, ${this.alpha * 0.5})`;
-          ctx.lineWidth = 1;
-          ctx.stroke();
-        }
-      } else {
-        ctx.globalAlpha = this.alpha;
-        
-        if (this.type === 'orb') {
-          const gradient = ctx.createRadialGradient(
-            this.x, this.y, 0,
-            this.x, this.y, this.size * 2
-          );
-          gradient.addColorStop(0, this.color.replace('rgb', 'rgba').replace(')', ', 0.8)'));
-          gradient.addColorStop(1, this.color.replace('rgb', 'rgba').replace(')', ', 0)'));
-          ctx.fillStyle = gradient;
-        } else {
-          ctx.fillStyle = this.color;
-        }
-        
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-        
-        particles.forEach(particule => {
-          if (particule === this) return;
-          const dx = this.x - particule.x;
-          const dy = this.y - particule.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          
-          if (distance < 120) {
-            ctx.beginPath();
-            const gradient = ctx.createLinearGradient(
-              this.x, this.y,
-              particule.x, particule.y
-            );
-            gradient.addColorStop(0, this.color.replace('rgb', 'rgba').replace(')', `, ${0.3 * (1 - distance/120)})`));
-            gradient.addColorStop(1, particule.color.replace('rgb', 'rgba').replace(')', `, ${0.3 * (1 - distance/120)})`));
-            ctx.strokeStyle = gradient;
-            ctx.lineWidth = 0.8 * (1 - distance/120);
-            ctx.moveTo(this.x, this.y);
-            ctx.lineTo(particule.x, particule.y);
-            ctx.stroke();
-          }
-        });
-      }
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fill();
+      
       ctx.restore();
     }
   }
@@ -789,7 +481,7 @@ const FondParticulesUltra = memo(() => {
     
     const initParticles = () => {
       particlesRef.current = [];
-      const particleCount = Math.min(Math.floor((canvas.width * canvas.height) / 10000), 120);
+      const particleCount = Math.min(Math.floor((canvas.width * canvas.height) / 15000), 80);
       
       for (let i = 0; i < particleCount; i++) {
         particlesRef.current.push(new Particule(canvas.width, canvas.height));
@@ -803,32 +495,12 @@ const FondParticulesUltra = memo(() => {
       
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      const gradient = ctx.createLinearGradient(
-        0, 0,
-        canvas.width * Math.cos(timeRef.current * 0.2),
-        canvas.height * Math.sin(timeRef.current * 0.2)
-      );
-      gradient.addColorStop(0, 'rgba(15, 23, 42, 0.1)');
-      gradient.addColorStop(0.5, 'rgba(30, 41, 59, 0.15)');
-      gradient.addColorStop(1, 'rgba(15, 23, 42, 0.1)');
-      ctx.fillStyle = gradient;
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.1)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.02)';
-      const gridSize = 60;
-      for (let x = 0; x < canvas.width; x += gridSize) {
-        for (let y = 0; y < canvas.height; y += gridSize) {
-          if ((x / gridSize + y / gridSize) % 2 === 0) {
-            ctx.beginPath();
-            ctx.arc(x, y, 1, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        }
-      }
       
       particlesRef.current.forEach(particule => {
         particule.update(timeRef.current, canvas.width, canvas.height);
-        particule.draw(ctx, particlesRef.current);
+        particule.draw(ctx);
       });
       
       animationRef.current = requestAnimationFrame(animate);
@@ -862,55 +534,10 @@ const FondParticulesUltra = memo(() => {
       <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-emerald-500/10" 
           style={{ 
-            animation: 'gradient-pan 15s ease-in-out infinite',
+            animation: 'gradient-pan 20s ease-in-out infinite',
             backgroundSize: '200% 200%'
           }} 
         />
-        
-        <div className="absolute top-0 left-0 right-0 h-[40vh] bg-gradient-to-b from-blue-500/20 via-blue-500/10 to-transparent" />
-        
-        <div className="absolute bottom-0 left-0 right-0 h-[40vh] bg-gradient-to-t from-emerald-500/20 via-emerald-500/10 to-transparent" />
-        
-        <div className="absolute top-[10%] left-[5%] w-[600px] h-[600px] bg-gradient-radial from-blue-500/25 via-blue-500/10 to-transparent rounded-full blur-3xl"
-          style={{ 
-            animation: 'float-orb 25s ease-in-out infinite',
-            filter: 'blur(40px)'
-          }}
-        />
-        <div className="absolute top-[40%] right-[5%] w-[500px] h-[500px] bg-gradient-radial from-emerald-500/25 via-emerald-500/10 to-transparent rounded-full blur-3xl"
-          style={{ 
-            animation: 'float-orb 30s ease-in-out infinite reverse',
-            filter: 'blur(40px)'
-          }}
-        />
-        <div className="absolute bottom-[10%] left-[30%] w-[700px] h-[700px] bg-gradient-radial from-cyan-500/20 via-cyan-500/8 to-transparent rounded-full blur-3xl"
-          style={{ 
-            animation: 'float-orb 35s ease-in-out infinite',
-            filter: 'blur(40px)'
-          }}
-        />
-        
-        <div className="absolute top-0 left-1/4 w-1 h-[100vh] bg-gradient-to-b from-blue-500/30 via-transparent to-transparent"
-          style={{ animation: 'pulse 3s ease-in-out infinite' }} />
-        <div className="absolute top-0 left-3/4 w-1 h-[100vh] bg-gradient-to-b from-emerald-500/30 via-transparent to-transparent"
-          style={{ animation: 'pulse 3s ease-in-out infinite 1s' }} />
-        
-        <div className="absolute inset-0">
-          {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute rounded-full bg-gradient-to-r from-blue-500/20 to-emerald-500/20"
-              style={{
-                width: `${Math.random() * 6 + 2}px`,
-                height: `${Math.random() * 6 + 2}px`,
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                animation: `float-particle ${15 + Math.random() * 10}s ease-in-out infinite ${i * 0.5}s`,
-                filter: 'blur(1px)'
-              }}
-            />
-          ))}
-        </div>
       </div>
     </>
   );
@@ -930,10 +557,9 @@ interface CarteInteractiveUltraProps {
   isActive?: boolean;
   equalSize?: boolean;
   delay?: number;
-  tags?: string[];
 }
 
-// Composant Carte Interactive ultra améliorée
+// Composant Carte Interactive optimisé
 const CarteInteractiveUltra = memo(({ 
   icon: Icon,
   title,
@@ -945,7 +571,6 @@ const CarteInteractiveUltra = memo(({
   isActive = false,
   equalSize = true,
   delay = 0,
-  tags = [],
 }: CarteInteractiveUltraProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
@@ -999,9 +624,9 @@ const CarteInteractiveUltra = memo(({
   return (
     <div ref={cardRef} className="h-full">
       <WidgetFlottantPremium 
-        intensity={0.8} 
+        intensity={0.4} 
         glow={true}
-        minHeight="min-h-[320px]"
+        minHeight="min-h-[280px]"
         equalSize={equalSize}
         onHoverChange={setIsHovered}
         delay={delay}
@@ -1021,120 +646,45 @@ const CarteInteractiveUltra = memo(({
           }}
         >
           <Card className={`h-full border-0 overflow-hidden bg-transparent rounded-3xl`}>
-            <CardContent className="p-8 text-center relative flex flex-col items-center justify-center h-full">
+            <CardContent className="p-6 text-center relative flex flex-col items-center justify-center h-full">
               {isActive && (
-                <div className="absolute top-5 right-5 z-20">
-                  <div className="relative">
-                    <div className="w-4 h-4 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/50"
-                      style={{ animation: 'pulse 2s ease-in-out infinite' }} />
-                    <div className="absolute -inset-2 rounded-full border-2 border-emerald-500/30"
-                      style={{ animation: 'ping 3s cubic-bezier(0, 0, 0.2, 1) infinite' }} />
-                  </div>
+                <div className="absolute top-4 right-4 z-20">
+                  <div className="w-3 h-3 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/50 animate-pulse" />
                 </div>
               )}
               
-              {tags.length > 0 && (
-                <div className="absolute top-5 left-5 flex gap-2 z-20">
-                  {tags.map((tag, index) => (
-                    <span
-                      key={tag}
-                      className="px-3 py-1 text-xs font-medium rounded-full bg-blue-500/10 text-blue-400 backdrop-blur-sm border border-blue-500/20"
-                      style={{
-                        animationDelay: `${index * 100}ms`,
-                      }}
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-              
-              <div className={`relative w-28 h-28 md:w-32 md:h-32 rounded-3xl ${bg} 
-                            flex items-center justify-center mx-auto mb-8 overflow-hidden
-                            ${isHovered ? 'scale-110 shadow-2xl' : 'shadow-xl'}
-                            ${isActive ? 'ring-4 ring-blue-500/40 scale-105' : ''}
+              <div className={`relative w-20 h-20 rounded-2xl ${bg} 
+                            flex items-center justify-center mx-auto mb-6 overflow-hidden
+                            ${isHovered ? 'scale-105 shadow-xl' : 'shadow-lg'}
+                            ${isActive ? 'ring-2 ring-blue-500/40' : ''}
                             transform-gpu`}
                 style={{
-                  transform: isHovered ? 'rotateY(5deg) rotateX(5deg)' : 'rotateY(0) rotateX(0)',
-                  transition: 'all 600ms cubic-bezier(0.34, 1.56, 0.64, 1)'
+                  transform: isHovered ? 'rotateY(3deg) rotateX(3deg)' : 'rotateY(0) rotateX(0)',
+                  transition: 'all 500ms cubic-bezier(0.34, 1.56, 0.64, 1)'
                 }}
               >
-                <div className={`absolute inset-0 bg-gradient-to-br from-white/30 to-transparent transition-opacity duration-700 ${isHovered ? 'opacity-100' : 'opacity-0'}`} />
-                
-                {isHovered && [...Array(6)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="absolute w-2 h-2 rounded-full bg-white/50"
-                    style={{
-                      transform: `rotate(${i * 60}deg) translateX(60px) rotate(-${i * 60}deg)`,
-                      animation: `spin 2s linear infinite ${i * 0.2}s`
-                    }}
-                  />
-                ))}
-                
-                <Icon className={`relative z-10 w-14 h-14 md:w-16 md:h-16 ${color}
-                              ${isHovered ? 'scale-125 rotate-12' : ''}`} 
-                  style={{ transition: 'all 600ms cubic-bezier(0.34, 1.56, 0.64, 1)' }} />
+                <Icon className={`relative z-10 w-10 h-10 ${color}
+                              ${isHovered ? 'scale-110 rotate-6' : ''}`} 
+                  style={{ transition: 'all 500ms cubic-bezier(0.34, 1.56, 0.64, 1)' }} />
               </div>
               
-              <h3 className={`relative z-10 font-bold text-2xl md:text-3xl mb-4
+              <h3 className={`relative z-10 font-bold text-xl mb-3
                             ${isHovered ? 'scale-105' : ''}`}
-                style={{ transition: 'all 600ms cubic-bezier(0.34, 1.56, 0.64, 1)' }}>
+                style={{ transition: 'all 500ms cubic-bezier(0.34, 1.56, 0.64, 1)' }}>
                 <span className={`bg-gradient-to-r ${isHovered ? 'from-blue-400 via-emerald-400 to-cyan-400' : 'from-white to-white/80'} bg-clip-text text-transparent`}>
                   {title}
                 </span>
               </h3>
               
-              <p className={`relative z-10 text-base md:text-lg mb-6 flex-grow text-slate-300
+              <p className={`relative z-10 text-sm text-slate-300 mb-4 flex-grow
                             ${isHovered ? 'scale-105' : ''}`}
                 style={{
                   opacity: isVisible ? 1 : 0,
                   transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
-                  transition: `all 600ms cubic-bezier(0.34, 1.56, 0.64, 1) ${delay + 200}ms`
+                  transition: `all 500ms cubic-bezier(0.34, 1.56, 0.64, 1) ${delay + 200}ms`
                 }}>
                 {description}
               </p>
-              
-              {isHovered && (
-                <div className="relative z-10 w-full mb-4">
-                  <div className="flex items-center justify-center gap-6">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-400">95%</div>
-                      <div className="text-xs text-slate-400">Efficacité</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-emerald-400">24/7</div>
-                      <div className="text-xs text-slate-400">Disponible</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-cyan-400">100%</div>
-                      <div className="text-xs text-slate-400">Écologique</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              <div className={`relative z-10 mt-6 pt-6 border-t transition-all duration-700 overflow-hidden
-                             ${isHovered ? 'border-blue-500/40 opacity-100 max-h-24' : 'border-transparent opacity-0 max-h-0'}`}>
-                <div className="flex items-center justify-center gap-3 text-blue-400 text-sm font-medium">
-                  <span className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4" />
-                    Cliquez pour explorer
-                  </span>
-                  <ArrowRight className="w-4 h-4" style={{ animation: 'bounce 1.2s ease-in-out infinite' }} />
-                </div>
-              </div>
-              
-              {isHovered && (
-                <>
-                  <div className="absolute bottom-4 left-4 w-3 h-3 rounded-full bg-blue-500/30"
-                    style={{ animation: 'ping 3s cubic-bezier(0, 0, 0.2, 1) infinite' }} />
-                  <div className="absolute bottom-4 right-4 w-2 h-2 rounded-full bg-emerald-500/30"
-                    style={{ animation: 'ping 3s cubic-bezier(0, 0, 0.2, 1) infinite 0.3s' }} />
-                  <div className="absolute top-4 left-4 w-2 h-2 rounded-full bg-cyan-500/30"
-                    style={{ animation: 'ping 3s cubic-bezier(0, 0, 0.2, 1) infinite 0.6s' }} />
-                </>
-              )}
             </CardContent>
           </Card>
         </div>
@@ -1145,416 +695,168 @@ const CarteInteractiveUltra = memo(({
 
 CarteInteractiveUltra.displayName = 'CarteInteractiveUltra';
 
-// Types for panel
-interface PanelDetailsUltraProps {
+// Types for modal
+interface BinModalProps {
+  isOpen: boolean;
+  onClose: () => void;
   icon: LucideIcon;
   title: string;
   description: string;
   details: string;
   color?: string;
   bg?: string;
-  border?: string;
-  onClose?: () => void;
-  equalSize?: boolean;
-  stats?: Array<{ label: string; value: string; icon: LucideIcon }>;
 }
 
-// Composant Panel Détails amélioré avec animations
-const PanelDetailsUltra = memo(({ 
+// Modal pour les détails des poubelles
+const BinModal = memo(({ 
+  isOpen,
+  onClose,
   icon: Icon,
   title,
   description,
   details,
   color = "text-primary",
   bg = "bg-gradient-to-br from-primary/20 to-primary/10",
-  border = "border-primary/30",
-  onClose,
-  equalSize = true,
-  stats = [],
-}: PanelDetailsUltraProps) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const panelRef = useRef<HTMLDivElement>(null);
-  
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setTimeout(() => {
-            setIsVisible(true);
-          }, 200);
-        }
-      },
-      { threshold: 0.1 }
-    );
-    
-    if (panelRef.current) {
-      observer.observe(panelRef.current);
-    }
-    
-    return () => {
-      if (panelRef.current) {
-        observer.unobserve(panelRef.current);
-      }
-    };
-  }, []);
-  
+}: BinModalProps) => {
   return (
-    <div ref={panelRef}>
-      <WidgetFlottantPremium 
-        intensity={0.5} 
-        glow={true}
-        minHeight="min-h-[420px]"
-        equalSize={equalSize}
-        onHoverChange={setIsHovered}
-        scrollReveal={true}
-      >
-        <Card className={`h-full border-2 ${border} overflow-hidden backdrop-blur-xl bg-white/10 rounded-2xl ${isHovered ? 'shadow-3xl' : ''}`}
-          style={{
-            transform: isVisible ? 'translateY(0) scale(1)' : 'translateY(50px) scale(0.95)',
-            opacity: isVisible ? 1 : 0,
-            transition: 'all 800ms cubic-bezier(0.34, 1.56, 0.64, 1)'
-          }}>
-          <CardContent className="p-6 md:p-8 h-full flex flex-col">
-            {/* En-tête avec animations */}
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-4">
-                <div className={`relative w-14 h-14 rounded-xl ${bg} flex items-center justify-center ${isHovered ? 'scale-110 rotate-6' : ''}`}>
-                  <div className={`absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent transition-opacity duration-500 ${isHovered ? 'opacity-100' : 'opacity-0'}`} />
-                  <Icon className={`relative z-10 w-7 h-7 ${color} ${isHovered ? 'scale-125 rotate-12' : ''}`} />
-                </div>
-                <div>
-                  <h3 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-emerald-600 bg-clip-text text-transparent">
-                    {title}
-                  </h3>
-                  <p className="text-sm text-foreground/70 mt-1">{description}</p>
-                </div>
-              </div>
-              
-              {onClose && (
-                <button
-                  onClick={onClose}
-                  className="p-2 hover:bg-white/10 rounded-xl relative group"
-                  aria-label="Fermer"
-                >
-                  <X className="w-6 h-6" />
-                  <span className="absolute -top-2 -right-2 w-3 h-3 rounded-full bg-red-500/80 animate-pulse" />
-                </button>
-              )}
-            </div>
-            
-            {/* Contenu détaillé avec animations */}
-            <div className="space-y-8 flex-grow">
-              <div className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-                <h4 className="font-semibold text-lg mb-4 text-primary flex items-center gap-2">
-                  <BookOpen className="w-5 h-5" />
-                  Description Détaillée
-                </h4>
-                <p className="text-foreground/80 leading-relaxed text-lg">{details}</p>
-              </div>
-              
-              {/* Stats avec animations */}
-              {stats.length > 0 && (
-                <div className="animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-                  <h4 className="font-semibold text-lg mb-4 text-emerald-500 flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5" />
-                    Statistiques Clés
-                  </h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {stats.map((stat, index) => (
-                      <div 
-                        key={stat.label}
-                        className="text-center p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10"
-                        style={{
-                          animationDelay: `${300 + index * 100}ms`,
-                          opacity: isVisible ? 1 : 0,
-                          transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
-                          transition: `all 600ms cubic-bezier(0.34, 1.56, 0.64, 1) ${300 + index * 100}ms`
-                        }}
-                      >
-                        <div className="flex justify-center mb-2">
-                          <stat.icon className={`w-6 h-6 ${color}`} />
-                        </div>
-                        <div className="text-2xl font-bold text-primary mb-1">{stat.value}</div>
-                        <div className="text-xs text-muted-foreground">{stat.label}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {/* Timeline ou étapes (optionnel) */}
-              <div className="animate-fade-in-up" style={{ animationDelay: '300ms' }}>
-                <h4 className="font-semibold text-lg mb-4 text-cyan-500 flex items-center gap-2">
-                  <Zap className="w-5 h-5" />
-                  Prochaines Étapes
-                </h4>
-                <div className="space-y-3">
-                  {['Analyse', 'Mise en œuvre', 'Optimisation', 'Suivi'].map((step, index) => (
-                    <div 
-                      key={step}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10"
-                      style={{
-                        animationDelay: `${400 + index * 100}ms`,
-                        opacity: isVisible ? 1 : 0,
-                        transform: isVisible ? 'translateX(0)' : 'translateX(-20px)',
-                        transition: `all 600ms cubic-bezier(0.34, 1.56, 0.64, 1) ${400 + index * 100}ms`
-                      }}
-                    >
-                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                        <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                      </div>
-                      <span className="font-medium">{step}</span>
-                      <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-            
-            {/* Actions avec animations */}
-            <div className="flex flex-col sm:flex-row items-center justify-between pt-8 mt-8 border-t border-white/20 gap-4">
-              <div className="flex items-center gap-3">
-                <BoutonAnimePremium
-                  variant="outline"
-                  size="sm"
-                  icon={<Share2 className="w-4 h-4" />}
-                  onClick={() => navigator.share?.({ title, text: description })}
-                  pulse={true}
-                >
-                  Partager
-                </BoutonAnimePremium>
-                
-                <BoutonAnimePremium
-                  variant="outline"
-                  size="sm"
-                  icon={<Heart className="w-4 h-4" />}
-                  onClick={() => {}}
-                >
-                  Favoris
-                </BoutonAnimePremium>
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <BoutonAnimePremium
-                  variant="gradient"
-                  size="sm"
-                  icon={<BookOpen className="w-4 h-4" />}
-                  href={`/guide/${title.toLowerCase().replace(/ /g, '-')}`}
-                  glow={true}
-                >
-                  Guide Complet
-                </BoutonAnimePremium>
-                
-                <BoutonAnimePremium
-                  variant="eco"
-                  size="sm"
-                  icon={<Leaf className="w-4 h-4" />}
-                  href="/action"
-                  pulse={true}
-                >
-                  Agir Maintenant
-                </BoutonAnimePremium>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </WidgetFlottantPremium>
-    </div>
-  );
-});
-
-PanelDetailsUltra.displayName = 'PanelDetailsUltra';
-
-// Types for navigation
-interface ScrollNavigationProps {
-  sections: Array<{ id: string; label: string; icon: LucideIcon }>;
-  activeSection: string;
-  onSectionClick: (id: string) => void;
-}
-
-// Composant de navigation par scroll amélioré
-const ScrollNavigation = memo(({ 
-  sections,
-  activeSection,
-  onSectionClick
-}: ScrollNavigationProps) => {
-  const [isVisible, setIsVisible] = useState(true);
-  const lastScrollY = useRef(0);
-  
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      setIsVisible(currentScrollY < lastScrollY.current || currentScrollY < 100);
-      lastScrollY.current = currentScrollY;
-    };
-    
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-  
-  return (
-    <div 
-      className={`fixed right-8 top-1/2 -translate-y-1/2 z-40 transition-all duration-500 hidden lg:block ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-20'}`}
-    >
-      <div className="flex flex-col items-center gap-4 p-4 rounded-2xl bg-background/80 backdrop-blur-xl border border-white/10 shadow-2xl">
-        {sections.map((section) => (
-          <button
-            key={section.id}
-            onClick={() => onSectionClick(section.id)}
-            className={`relative p-3 rounded-xl transition-all duration-300 group
-              ${activeSection === section.id 
-                ? 'bg-gradient-to-r from-primary/20 to-emerald-500/20 text-primary' 
-                : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
-              }`}
-            aria-label={`Aller à ${section.label}`}
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+          />
+          
+          {/* Modal content */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="relative max-w-2xl w-full rounded-3xl overflow-hidden"
           >
-            <section.icon className="w-5 h-5" />
-            
-            {/* Indicateur actif */}
-            {activeSection === section.id && (
-              <>
-                <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-1 h-8 rounded-full bg-gradient-to-b from-primary to-emerald-500 animate-pulse" />
-                <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-primary animate-ping" />
-              </>
-            )}
-            
-            {/* Tooltip */}
-            <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-3 py-2 rounded-lg bg-background/90 backdrop-blur-xl border border-white/10 text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-              {section.label}
-            </div>
-          </button>
-        ))}
-        
-        {/* Barre de progression */}
-        <div className="w-px h-16 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
-        
-        {/* Bouton retour en haut */}
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="p-3 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/5"
-          aria-label="Retour en haut"
-        >
-          <ChevronUp className="w-5 h-5" />
-        </button>
-      </div>
-    </div>
+            <WidgetFlottantPremium intensity={0.2} glow={true} minHeight="min-h-0">
+              <Card className="border-2 border-white/20 overflow-hidden backdrop-blur-xl bg-slate-900/90">
+                <CardContent className="p-8">
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-8">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-16 h-16 rounded-xl ${bg} flex items-center justify-center`}>
+                        <Icon className={`w-8 h-8 ${color}`} />
+                      </div>
+                      <div>
+                        <h3 className="text-3xl font-bold text-white mb-2">{title}</h3>
+                        <p className="text-white/70">{description}</p>
+                      </div>
+                    </div>
+                    
+                    <button
+                      onClick={onClose}
+                      className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+                      aria-label="Fermer"
+                    >
+                      <X className="w-6 h-6" />
+                    </button>
+                  </div>
+                  
+                  {/* Details */}
+                  <div className="space-y-6">
+                    <div>
+                      <h4 className="font-semibold text-lg mb-3 text-blue-400">Description</h4>
+                      <p className="text-white/80 leading-relaxed">{details}</p>
+                    </div>
+                    
+                    {/* Quick tips */}
+                    <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                      <h4 className="font-semibold text-sm mb-2 text-blue-400">💡 CONSEILS DE TRI</h4>
+                      <ul className="text-sm text-white/80 space-y-1">
+                        <li>• Bien nettoyer les contenants</li>
+                        <li>• Retirer les couvercles non-recyclables</li>
+                        <li>• Compacter pour gagner de l'espace</li>
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  {/* Actions */}
+                  <div className="flex gap-4 mt-8 pt-6 border-t border-white/20">
+                    <BoutonAnimePremium
+                      variant="outline"
+                      size="sm"
+                      onClick={onClose}
+                    >
+                      Fermer
+                    </BoutonAnimePremium>
+                    
+                    <BoutonAnimePremium
+                      variant="gradient"
+                      size="sm"
+                      href="/guide"
+                    >
+                      Guide Complet
+                    </BoutonAnimePremium>
+                  </div>
+                </CardContent>
+              </Card>
+            </WidgetFlottantPremium>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
   );
 });
 
-ScrollNavigation.displayName = 'ScrollNavigation';
+BinModal.displayName = 'BinModal';
 
-// Composant principal ultra amélioré
+// Composant principal ultra optimisé
 export default function ProjectUltra() {
-  useLanguage();
   
-  // États améliorés
+  // États optimisés
   const [activeBinIndex, setActiveBinIndex] = useState(0);
   const [isAutoRotating, setIsAutoRotating] = useState(true);
-  const [showBinDetails, setShowBinDetails] = useState(false);
+  const [openModalIndex, setOpenModalIndex] = useState<number | null>(null);
   const [activeGoalIndex, setActiveGoalIndex] = useState<number | null>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [activeSection, setActiveSection] = useState('hero');
-  const [theme, setTheme] = useState<'light' | 'dark' | 'eco'>('dark');
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [cursorVariant, setCursorVariant] = useState('default');
   
   const autoRotationInterval = useRef<NodeJS.Timeout>();
   const mountedRef = useRef(true);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const sectionsRef = useRef<{ [key: string]: HTMLElement }>({});
   
-  // Effet curseur personnalisé
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-    };
-    
-    const handleMouseOver = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.closest('button, a, [role="button"]')) {
-        setCursorVariant('pointer');
-      } else if (target.closest('.interactive-card, .widget')) {
-        setCursorVariant('hover');
-      } else {
-        setCursorVariant('default');
-      }
-    };
-    
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseover', handleMouseOver);
-    
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseover', handleMouseOver);
-    };
-  }, []);
-  
-  // Données avec tailles standardisées et tags
+  // Données simplifiées
   const bins = useMemo(() => [
     { 
       icon: FileText, 
       color: "text-amber-600", 
       bg: "bg-gradient-to-br from-amber-500/20 to-amber-600/10", 
-      border: "border-amber-400/30", 
       label: "Papier & Carton",
-      description: "Journaux, magazines, cartons, emballages papier",
-      details: "Le papier et le carton représentent environ 25% de nos déchets ménagers. Leur recyclage permet de sauver des arbres, réduire la consommation d'eau (jusqu'à 90% d'économie) et d'énergie (jusqu'à 50% d'économie). Notre système de collecte optimisé garantit un taux de recyclage optimal.",
-      tags: ["Recyclable", "Économie d'eau", "Sauve des arbres"],
-      stats: [
-        { label: "Taux de recyclage", value: "85%", icon: TrendingUp },
-        { label: "Économie d'eau", value: "90%", icon: Droplets },
-        { label: "Arbres sauvés", value: "17/tonne", icon: TreePine },
-        { label: "Énergie économisée", value: "50%", icon: Zap }
-      ]
+      description: "Journaux, magazines, cartons",
+      details: "Le papier et le carton représentent environ 25% de nos déchets ménagers. Leur recyclage permet de sauver des arbres et réduire la consommation d'eau et d'énergie."
     },
     { 
       icon: Package, 
       color: "text-blue-600", 
       bg: "bg-gradient-to-br from-blue-500/20 to-cyan-600/10", 
-      border: "border-blue-400/30", 
       label: "Plastique",
-      description: "Bouteilles, emballages, films plastiques recyclables",
-      details: "Les plastiques peuvent mettre jusqu'à 500 ans à se décomposer dans la nature. Notre programme de recyclage innovant transforme les plastiques usagés en nouvelles ressources. Nous utilisons des technologies de tri optique pour séparer les différents types de plastiques et maximiser leur valeur de recyclage.",
-      tags: ["Recyclable", "Longue durée", "Innovation"],
-      stats: [
-        { label: "Temps de décomposition", value: "500 ans", icon: Clock },
-        { label: "Taux de recyclage", value: "45%", icon: TrendingUp },
-        { label: "Nouveaux produits", value: "Infini", icon: Recycle },
-        { label: "Réduction CO₂", value: "75%", icon: Cloud }
-      ]
+      description: "Bouteilles, emballages plastiques",
+      details: "Les plastiques peuvent mettre jusqu'à 500 ans à se décomposer. Notre programme de recyclage les transforme en nouvelles ressources."
     },
     { 
       icon: Trash2, 
       color: "text-gray-600", 
       bg: "bg-gradient-to-br from-gray-500/20 to-gray-600/10", 
-      border: "border-gray-400/30", 
       label: "Métal",
-      description: "Cannettes, boîtes de conserve, produits métalliques",
-      details: "Le recyclage des métaux est particulièrement efficace : il permet d'économiser jusqu'à 95% de l'énergie nécessaire à leur production primaire. Notre centre de tri utilise des aimants puissants et des courants de Foucault pour séparer les métaux ferreux et non-ferreux avec une précision de 99%.",
-      tags: ["Recyclable à l'infini", "Économie d'énergie", "Haute valeur"],
-      stats: [
-        { label: "Économie d'énergie", value: "95%", icon: Zap },
-        { label: "Précision du tri", value: "99%", icon: Target },
-        { label: "Recyclage infini", value: "✓", icon: Infinity },
-        { label: "Valeur récupérée", value: "100%", icon: Coins }
-      ]
+      description: "Cannettes, boîtes de conserve",
+      details: "Le recyclage des métaux permet d'économiser jusqu'à 95% de l'énergie nécessaire à leur production primaire."
     },
     { 
       icon: Apple, 
       color: "text-green-600", 
       bg: "bg-gradient-to-br from-green-500/20 to-emerald-600/10", 
-      border: "border-green-400/30", 
       label: "Organique",
-      description: "Déchets alimentaires, résidus végétaux, compostables",
-      details: "Les déchets organiques représentent environ 30% de notre poubelle. Notre programme de compostage communautaire transforme ces déchets en ressources précieuses. Le compost produit est utilisé pour enrichir les sols des jardins communautaires, des espaces verts publics et des fermes locales.",
-      tags: ["Compostable", "Fertilisant naturel", "Économie circulaire"],
-      stats: [
-        { label: "Part des déchets", value: "30%", icon: PieChart },
-        { label: "Compost produit", value: "40%", icon: Leaf },
-        { label: "Sol enrichi", value: "100%", icon: TreePine },
-        { label: "Émissions évitées", value: "60%", icon: Cloud }
-      ]
+      description: "Déchets alimentaires, compostables",
+      details: "Transformés en compost pour enrichir les sols des jardins communautaires et espaces verts."
     },
   ], []);
   
@@ -1562,136 +864,89 @@ export default function ProjectUltra() {
     {
       icon: Target,
       title: "Mission Éducative",
-      description: "Éduquer et sensibiliser la communauté aux enjeux environnementaux",
-      details: "Notre programme éducatif complet s'adresse à tous les publics. Nous organisons des ateliers pratiques, des conférences interactives et fournissons des ressources pédagogiques gratuites. Notre objectif est de créer une culture durable partagée par tous les membres de la communauté.",
+      description: "Sensibiliser aux enjeux environnementaux",
       color: "text-blue-600",
       bg: "bg-gradient-to-br from-blue-500/20 to-cyan-600/10",
-      border: "border-blue-400/30",
-      tags: ["Éducation", "Sensibilisation", "Formation"]
     },
     {
       icon: Users,
       title: "Engagement Communautaire",
-      description: "Créer une communauté active et engagée dans la protection de l'environnement",
-      details: "Nous croyons fermement que le changement durable vient de la base. Notre réseau grandissant de bénévoles et d'ambassadeurs écologiques organise des événements réguliers, des opérations de nettoyage et des projets collaboratifs qui renforcent les liens communautaires tout en protégeant l'environnement.",
+      description: "Créer une communauté active et engagée",
       color: "text-green-600",
       bg: "bg-gradient-to-br from-green-500/20 to-emerald-600/10",
-      border: "border-green-400/30",
-      tags: ["Communauté", "Bénévolat", "Collaboration"]
     },
     {
       icon: Recycle,
       title: "Innovation Technologique",
-      description: "Développer des solutions innovantes pour le tri et la valorisation des déchets",
-      details: "Nous investissons continuellement dans la recherche et le développement de technologies de pointe. Nos centres de tri intelligents utilisent l'IA et la robotique pour améliorer l'efficacité du tri, tandis que nos projets de R&D explorent de nouvelles filières de valorisation des déchets complexes.",
+      description: "Développer des solutions innovantes",
       color: "text-purple-600",
       bg: "bg-gradient-to-br from-purple-500/20 to-pink-600/10",
-      border: "border-purple-400/30",
-      tags: ["Innovation", "Technologie", "R&D"]
     },
     {
       icon: Award,
       title: "Impact Mesurable",
-      description: "Atteindre des résultats concrets et mesurables pour notre planète",
-      details: "La transparence et la mesure de l'impact sont au cœur de notre démarche. Nous suivons rigoureusement nos progrès avec des indicateurs clés de performance environnementaux. Nos rapports annuels détaillés permettent à chaque membre de la communauté de voir concrètement les résultats de ses efforts.",
+      description: "Atteindre des résultats concrets",
       color: "text-amber-600",
       bg: "bg-gradient-to-br from-amber-500/20 to-orange-600/10",
-      border: "border-amber-400/30",
-      tags: ["Transparence", "Mesure", "Résultats"]
     }
   ], []);
   
   const actions = useMemo(() => [
     {
       icon: Calendar,
-      title: "Événements Réguliers",
-      description: "Participez à nos événements communautaires et ateliers pratiques",
-      details: "Chaque mois, nous organisons des activités variées : clean-ups, ateliers de compostage, conférences et visites de centres de tri.",
+      title: "Événements",
+      description: "Participez à nos activités communautaires",
       color: "text-blue-600",
       bg: "bg-gradient-to-br from-blue-500/20 to-cyan-600/10",
-      border: "border-blue-400/30",
-      href: "/activities",
-      tags: ["Événements", "Ateliers", "Pratique"]
+      href: "/activities"
     },
     {
       icon: BookOpen,
-      title: "Programme Éducatif",
-      description: "Formations et ressources pour tous les niveaux",
-      details: "Notre programme éducatif couvre les écoles, les entreprises et le grand public avec des contenus adaptés à chaque public.",
+      title: "Ressources",
+      description: "Formations et guides pratiques",
       color: "text-green-600",
       bg: "bg-gradient-to-br from-green-500/20 to-emerald-600/10",
-      border: "border-green-400/30",
-      href: "/resources",
-      tags: ["Éducation", "Ressources", "Formation"]
+      href: "/resources"
     },
     {
       icon: Home,
-      title: "Solutions Domestiques",
-      description: "Conseils et outils pour un foyer plus écologique",
-      details: "Découvrez comment réduire votre empreinte écologique à la maison avec nos guides pratiques et kits de démarrage.",
+      title: "Guides",
+      description: "Solutions pour un foyer écologique",
       color: "text-purple-600",
       bg: "bg-gradient-to-br from-purple-500/20 to-pink-600/10",
-      border: "border-purple-400/30",
-      href: "/guide",
-      tags: ["Maison", "Conseils", "Guides"]
+      href: "/guide"
     },
     {
       icon: Award,
-      title: "Certification Écologique",
-      description: "Obtenir la certification environnementale pour notre communauté",
-      details: "Notre programme de certification valorise les entreprises et individus qui s'engagent concrètement pour l'environnement.",
+      title: "Projets",
+      description: "Découvrez nos initiatives en cours",
       color: "text-amber-600",
       bg: "bg-gradient-to-br from-amber-500/20 to-orange-600/10",
-      border: "border-amber-400/30",
-      href: "/project",
-      tags: ["Certification", "Reconnaissance", "Engagement"]
+      href: "/project"
     }
   ], []);
   
-  const sections = useMemo(() => [
-    { id: 'hero', label: 'Accueil', icon: Home },
-    { id: 'goals', label: 'Objectifs', icon: Target },
-    { id: 'bins', label: 'Tri Sélectif', icon: Recycle },
-    { id: 'actions', label: 'Actions', icon: Rocket },
-    { id: 'cta', label: 'Engagement', icon: Heart },
-  ], []);
-  
-  // Animation de scroll améliorée
+  // Animation de scroll
   useEffect(() => {
     const handleScroll = () => {
-      if (!containerRef.current) return;
-      
       const scrollTop = window.scrollY;
       const docHeight = document.body.scrollHeight - window.innerHeight;
       const progress = (scrollTop / docHeight) * 100;
       setScrollProgress(progress);
-      
-      // Détection de la section active
-      const sectionIds = ['hero', 'goals', 'bins', 'actions', 'cta'];
-      for (const sectionId of sectionIds) {
-        const element = sectionsRef.current[sectionId];
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          if (rect.top <= 100 && rect.bottom >= 100) {
-            setActiveSection(sectionId);
-            break;
-          }
-        }
-      }
     };
     
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // Initial call
+    handleScroll();
     
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   
-  // Rotation automatique améliorée
+  // Rotation automatique optimisée
   useEffect(() => {
     mountedRef.current = true;
     
     const rotateBins = () => {
-      if (mountedRef.current && isAutoRotating && !showBinDetails) {
+      if (mountedRef.current && isAutoRotating && openModalIndex === null) {
         setActiveBinIndex(prev => (prev + 1) % bins.length);
       }
     };
@@ -1700,7 +955,7 @@ export default function ProjectUltra() {
       clearInterval(autoRotationInterval.current);
     }
     
-    autoRotationInterval.current = setInterval(rotateBins, 3500);
+    autoRotationInterval.current = setInterval(rotateBins, 4000);
     
     return () => {
       mountedRef.current = false;
@@ -1708,255 +963,143 @@ export default function ProjectUltra() {
         clearInterval(autoRotationInterval.current);
       }
     };
-  }, [isAutoRotating, showBinDetails, bins.length]);
+  }, [isAutoRotating, openModalIndex, bins.length]);
   
-  // Gestion des interactions ultra améliorée
-  const handleBinInteraction = useCallback((index: number) => {
+  // Gestion des interactions optimisées
+  const handleBinClick = useCallback((index: number) => {
     setActiveBinIndex(index);
+    setOpenModalIndex(index);
     setIsAutoRotating(false);
-    setShowBinDetails(true);
-    
-    setTimeout(() => {
-      if (mountedRef.current) {
-        setIsAutoRotating(true);
-      }
-    }, 20000);
   }, []);
   
-  const handleGoalInteraction = useCallback((index: number) => {
+  const handleCloseModal = useCallback(() => {
+    setOpenModalIndex(null);
+    setIsAutoRotating(true);
+  }, []);
+  
+  const handleGoalClick = useCallback((index: number) => {
     setActiveGoalIndex(index === activeGoalIndex ? null : index);
   }, [activeGoalIndex]);
   
-  const handleCloseDetails = useCallback(() => {
-    setShowBinDetails(false);
-    setActiveGoalIndex(null);
-  }, []);
-  
-  const handleSectionClick = useCallback((sectionId: string) => {
-    const element = sectionsRef.current[sectionId];
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, []);
-  
   return (
-    <div className="min-h-screen overflow-hidden" ref={containerRef}>
+    <div className="min-h-screen overflow-hidden">
       <FondParticulesUltra />
       
-      {/* Curseur personnalisé amélioré */}
-      <div className="fixed inset-0 pointer-events-none z-50 hidden lg:block">
-        <div 
-          className={`absolute w-8 h-8 rounded-full -translate-x-1/2 -translate-y-1/2 transition-all duration-150 ${
-            cursorVariant === 'pointer' 
-              ? 'bg-primary/20 border-2 border-primary/50 scale-150' 
-              : cursorVariant === 'hover'
-              ? 'bg-emerald-500/10 border-2 border-emerald-500/30 scale-125'
-              : 'bg-white/10 border border-white/20'
-          }`}
-          style={{
-            left: mousePosition.x,
-            top: mousePosition.y,
-          }}
-        />
-        <div 
-          className="absolute w-2 h-2 rounded-full bg-primary -translate-x-1/2 -translate-y-1/2 transition-all duration-75"
-          style={{
-            left: mousePosition.x,
-            top: mousePosition.y,
-          }}
-        />
-      </div>
-      
-      {/* Indicateur de progression du scroll amélioré */}
+      {/* Indicateur de progression du scroll */}
       <div className="fixed top-0 left-0 w-full h-1 z-40 bg-background/50 backdrop-blur-sm">
         <div 
-          className="h-full bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 transition-all duration-300 rounded-r-full"
+          className="h-full bg-gradient-to-r from-blue-600 via-emerald-600 to-cyan-600 transition-all duration-300 rounded-r-full"
           style={{ width: `${scrollProgress}%` }}
         />
-        <div className="absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-y-1/2" />
       </div>
       
-      {/* Navigation par scroll */}
-      <ScrollNavigation
-        sections={sections}
-        activeSection={activeSection}
-        onSectionClick={handleSectionClick}
-      />
-      
       <div className="container mx-auto px-4 py-8 md:py-12 lg:py-16">
-        {/* Section Héro avec animations avancées */}
+        {/* Section Héro optimisée */}
         <motion.section
-          ref={(el: HTMLDivElement | null) => { if (el) sectionsRef.current.hero = el; }}
-          id="hero"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
-          className="max-w-6xl mx-auto text-center mb-16 md:mb-24 lg:mb-32 pt-16"
+          transition={{ duration: 1.2 }}
+          className="max-w-6xl mx-auto text-center mb-16 md:mb-24 pt-16"
         >
           <motion.div
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.2 }}
-            className="inline-flex items-center gap-3 bg-gradient-to-r from-primary/30 via-emerald-500/30 to-cyan-500/30 
-                       text-primary px-8 py-4 rounded-full text-base font-bold mb-12 
-                       border border-white/20 backdrop-blur-xl shadow-2xl"
+            className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-600/30 via-emerald-500/30 to-cyan-500/30 
+                       text-white px-6 py-3 rounded-full text-sm font-medium mb-8 
+                       border border-white/20 backdrop-blur-xl"
           >
-            <Sparkles className="w-5 h-5 animate-pulse" />
-            <span className="bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 bg-clip-text text-transparent">
-              Initiative Écologique Excellence 2024
-            </span>
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <Sparkles className="w-4 h-4" />
+            <span>Initiative Écologique 2025</span>
           </motion.div>
           
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 0.4, ease: "easeOut" }}
-            className="mb-12"
+            transition={{ duration: 1, delay: 0.4 }}
+            className="mb-8"
           >
-            <h1 className="text-6xl md:text-8xl lg:text-9xl font-black mb-8 tracking-tighter">
-              <span className="bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 bg-clip-text text-transparent 
-                            leading-none">
-                Projet Écologique
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black mb-6 tracking-tighter">
+              <span className="bg-gradient-to-r from-blue-600 via-emerald-600 to-cyan-600 bg-clip-text text-transparent leading-none">
+                Écologie
               </span>
             </h1>
             
-            <div className="relative inline-block">
-              <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-emerald-500/20 to-cyan-500/20 blur-2xl rounded-full" />
-              <h2 className="relative text-4xl md:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-white/90 to-white/80 bg-clip-text text-transparent">
-                Notre Planète, Notre Avenir
-              </h2>
-            </div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
+              Notre Planète, Notre Avenir
+            </h2>
           </motion.div>
           
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.6, ease: "easeOut" }}
-            className="max-w-3xl mx-auto mb-16"
+            transition={{ duration: 1, delay: 0.6 }}
+            className="max-w-2xl mx-auto mb-8"
           >
-            <p className="text-2xl md:text-3xl text-foreground/90 leading-relaxed font-light mb-8">
-              Bienvenue dans notre mouvement écologique communautaire. Chaque geste compte, chaque action a un impact, 
-              et ensemble, nous créons un avenir durable pour les générations à venir.
+            <p className="text-xl text-white/80 leading-relaxed mb-6">
+              Bienvenue dans notre mouvement écologique communautaire. 
+              Ensemble, nous créons un avenir durable pour les générations à venir.
             </p>
-            <div className="inline-flex flex-wrap items-center justify-center gap-6 text-lg text-foreground/70">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                <span>Impact mesurable</span>
-              </div>
-              <div className="w-px h-6 bg-white/20 hidden sm:block" />
-              <div className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-primary" />
-                <span>Communauté engagée</span>
-              </div>
-              <div className="w-px h-6 bg-white/20 hidden sm:block" />
-              <div className="flex items-center gap-2">
-                <Leaf className="w-5 h-5 text-green-500" />
-                <span>Solutions durables</span>
-              </div>
-            </div>
           </motion.div>
           
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.8, ease: "easeOut" }}
-            className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-20 max-w-2xl mx-auto"
+            transition={{ duration: 1, delay: 0.8 }}
+            className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12"
           >
             <BoutonAnimePremium
               variant="gradient"
-              size="2xl"
-              icon={<Rocket className="w-7 h-7" />}
-              href="/guide"
-              fullWidth={true}
+              size="lg"
+              icon={<Rocket className="w-5 h-5" />}
+              href="/project"
               glow={true}
-              pulse={true}
             >
-              Commencer l'Aventure
+              Découvrir
             </BoutonAnimePremium>
             
             <BoutonAnimePremium
               variant="outline"
-              size="2xl"
-              icon={<BookOpen className="w-7 h-7" />}
-              href="/resources"
-              fullWidth={true}
-              className="hover:border-primary/60"
+              size="lg"
+              icon={<BookOpen className="w-5 h-5" />}
+              href="/guide"
             >
-              Explorer les Ressources
+              Guide Pratique
             </BoutonAnimePremium>
-          </motion.div>
-          
-          {/* Stats en temps réel */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 1 }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto"
-          >
-            {[
-              { value: "2,458", label: "Membres Actifs", icon: Users, color: "text-blue-500" },
-              { value: "15.7t", label: "Déchets Recyclés", icon: Recycle, color: "text-emerald-500" },
-              { value: "128", label: "Événements", icon: Calendar, color: "text-purple-500" },
-              { value: "95%", label: "Satisfaction", icon: Heart, color: "text-pink-500" },
-            ].map((stat, index) => (
-              <div 
-                key={stat.label}
-                className="text-center p-6 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10"
-              >
-                <div className={`text-4xl font-bold mb-2 ${stat.color}`}>
-                  {stat.value}
-                </div>
-                <div className="text-sm text-muted-foreground flex items-center justify-center gap-2">
-                  <stat.icon className="w-4 h-4" />
-                  {stat.label}
-                </div>
-              </div>
-            ))}
           </motion.div>
         </motion.section>
         
-        {/* Section Objectifs avec animations de scroll */}
+        {/* Section Objectifs optimisée */}
         <motion.section
-          ref={(el: HTMLDivElement | null) => { if (el) sectionsRef.current.goals = el; }}
-          id="goals"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
-          className="max-w-7xl mx-auto mb-20 md:mb-32 scroll-mt-20"
+          transition={{ duration: 1 }}
+          className="max-w-7xl mx-auto mb-20"
         >
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="text-center mb-20"
+            className="text-center mb-12"
           >
-            <div className="inline-flex items-center gap-4 mb-6">
-              <div className="w-16 h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
-              <Target className="w-12 h-12 text-primary" />
-              <div className="w-16 h-px bg-gradient-to-r from-transparent via-emerald-500 to-transparent" />
-            </div>
-            
-            <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6">
-              <span className="bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 bg-clip-text text-transparent">
-                Nos Objectifs
-              </span>
+            <Target className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
+              Nos Objectifs
             </h2>
-            <p className="text-2xl text-foreground/80 max-w-3xl mx-auto">
-              Construire un avenir durable à travers l'éducation, l'innovation et l'engagement communautaire
+            <p className="text-lg text-white/60">
+              Construire un avenir durable ensemble
             </p>
           </motion.div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {goals.map((goal, index) => (
               <motion.div
                 key={goal.title}
-                initial={{ opacity: 0, y: 60 }}
+                initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: index * 0.1, ease: "easeOut" }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
                 className="h-full"
               >
                 <CarteInteractiveUltra
@@ -1965,87 +1108,47 @@ export default function ProjectUltra() {
                   description={goal.description}
                   color={goal.color}
                   bg={goal.bg}
-                  border={goal.border}
-                  onClick={() => handleGoalInteraction(index)}
+                  onClick={() => handleGoalClick(index)}
                   isActive={activeGoalIndex === index}
                   equalSize={true}
                   delay={index * 100}
-                  tags={goal.tags}
                 />
               </motion.div>
             ))}
           </div>
-          
-          {/* Panel de détails des objectifs */}
-          <AnimatePresence>
-            {activeGoalIndex !== null && (
-              <motion.div
-                initial={{ opacity: 0, y: 40, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 40, scale: 0.95 }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-                className="mt-16"
-              >
-                <PanelDetailsUltra
-                  icon={goals[activeGoalIndex].icon}
-                  title={goals[activeGoalIndex].title}
-                  description={goals[activeGoalIndex].description}
-                  details={goals[activeGoalIndex].details}
-                  color={goals[activeGoalIndex].color}
-                  bg={goals[activeGoalIndex].bg}
-                  border={goals[activeGoalIndex].border}
-                  onClose={handleCloseDetails}
-                  equalSize={true}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
         </motion.section>
         
-        {/* Section Tri Sélectif avec animations fluides */}
+        {/* Section Tri Sélectif optimisée */}
         <motion.section
-          ref={(el: HTMLDivElement | null) => { if (el) sectionsRef.current.bins = el; }}
-          id="bins"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
-          className="max-w-7xl mx-auto mb-20 md:mb-32 scroll-mt-20"
+          transition={{ duration: 1 }}
+          className="max-w-7xl mx-auto mb-20"
         >
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="text-center mb-20"
+            className="text-center mb-12"
           >
-            <div className="inline-flex items-center gap-4 mb-6">
-              <div className="w-16 h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
-              <Recycle className="w-12 h-12 text-primary animate-spin" style={{ animationDuration: '10s' }} />
-              <div className="w-16 h-px bg-gradient-to-r from-transparent via-emerald-500 to-transparent" />
-            </div>
-            
-            <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6">
-              <span className="bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 bg-clip-text text-transparent">
-                Tri Intelligent
-              </span>
+            <Recycle className="w-12 h-12 text-emerald-600 mx-auto mb-4 animate-spin" style={{ animationDuration: '15s' }} />
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
+              Tri Sélectif
             </h2>
-            <p className="text-2xl text-foreground/80 max-w-3xl mx-auto mb-6">
-              Un système innovant pour un recyclage optimal
-            </p>
-            <p className="text-lg text-foreground/70 max-w-4xl mx-auto">
-              Notre approche combine technologie de pointe et simplicité d'utilisation pour maximiser l'impact écologique.
+            <p className="text-lg text-white/60">
+              Un système simple pour un impact maximal
             </p>
           </motion.div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {bins.map((bin, index) => (
               <motion.div
                 key={bin.label}
-                initial={{ opacity: 0, y: 60, scale: 0.9 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: index * 0.1, type: "spring", stiffness: 80 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
                 className="h-full"
               >
                 <CarteInteractiveUltra
@@ -2054,78 +1157,42 @@ export default function ProjectUltra() {
                   description={bin.description}
                   color={bin.color}
                   bg={bin.bg}
-                  border={bin.border}
-                  onClick={() => handleBinInteraction(index)}
+                  onClick={() => handleBinClick(index)}
                   isActive={activeBinIndex === index}
                   equalSize={true}
                   delay={index * 100}
-                  tags={bin.tags}
                 />
               </motion.div>
             ))}
           </div>
           
-          {/* Panel de détails des poubelles */}
-          <AnimatePresence>
-            {showBinDetails && (
-              <motion.div
-                initial={{ opacity: 0, y: 40, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 40, scale: 0.95 }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-                className="mt-16"
-              >
-                <PanelDetailsUltra
-                  icon={bins[activeBinIndex].icon}
-                  title={bins[activeBinIndex].label}
-                  description={bins[activeBinIndex].description}
-                  details={bins[activeBinIndex].details}
-                  color={bins[activeBinIndex].color}
-                  bg={bins[activeBinIndex].bg}
-                  border={bins[activeBinIndex].border}
-                  onClose={handleCloseDetails}
-                  equalSize={true}
-                  stats={bins[activeBinIndex].stats}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-          
-          {/* Indicateurs de navigation améliorés */}
+          {/* Indicateurs de navigation */}
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.5, ease: "easeOut" }}
-            className="flex flex-col items-center gap-8 mt-20"
+            className="flex flex-col items-center gap-4 mt-8"
           >
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               {bins.map((_, index) => (
                 <button
                   key={index}
-                  onClick={() => handleBinInteraction(index)}
-                  className={`relative w-4 h-4 rounded-full transition-all duration-500 hover:scale-150 ${
+                  onClick={() => handleBinClick(index)}
+                  className={`relative w-3 h-3 rounded-full transition-all duration-300 hover:scale-150 ${
                     index === activeBinIndex 
-                      ? 'w-12 bg-gradient-to-r from-primary to-emerald-600 shadow-lg shadow-primary/50' 
-                      : 'bg-muted hover:bg-primary/50'
+                      ? 'w-8 bg-gradient-to-r from-blue-600 to-emerald-600' 
+                      : 'bg-white/30 hover:bg-white/50'
                   }`}
-                  aria-label={`Aller à ${bins[index].label}`}
-                >
-                  {index === activeBinIndex && (
-                    <div className="absolute -inset-3 rounded-full border-2 border-primary/30 animate-ping" />
-                  )}
-                </button>
+                  aria-label={`Voir ${bins[index].label}`}
+                />
               ))}
             </div>
             
             <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-2">
-                {isAutoRotating ? 'Rotation automatique activée' : 'Rotation automatique désactivée'}
-              </p>
               <BoutonAnimePremium
                 variant="outline"
                 size="sm"
-                icon={isAutoRotating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                icon={isAutoRotating ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
                 onClick={() => setIsAutoRotating(!isAutoRotating)}
               >
                 {isAutoRotating ? 'Pause' : 'Reprendre'}
@@ -2134,44 +1201,37 @@ export default function ProjectUltra() {
           </motion.div>
         </motion.section>
         
-        {/* Section Actions avec animations fluides */}
+        {/* Section Actions optimisée */}
         <motion.section
-          ref={(el: HTMLDivElement | null) => { if (el) sectionsRef.current.actions = el; }}
-          id="actions"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
-          className="max-w-7xl mx-auto mb-20 md:mb-32 scroll-mt-20"
+          transition={{ duration: 1 }}
+          className="max-w-7xl mx-auto mb-20"
         >
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="text-center mb-20"
+            className="text-center mb-12"
           >
-            <div className="relative inline-block mb-6">
-              <Zap className="absolute -top-6 -right-6 w-12 h-12 text-yellow-500 animate-pulse" />
-              <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold">
-                <span className="bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 bg-clip-text text-transparent">
-                  Passez à l'Action
-                </span>
-              </h2>
-            </div>
-            <p className="text-2xl text-foreground/80 max-w-3xl mx-auto">
-              Des initiatives concrètes pour un engagement immédiat
+            <Zap className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
+              Passez à l'Action
+            </h2>
+            <p className="text-lg text-white/60">
+              Des initiatives concrètes pour s'engager
             </p>
           </motion.div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {actions.map((action, index) => (
               <motion.div
                 key={action.title}
-                initial={{ opacity: 0, y: 60 }}
+                initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: index * 0.1, ease: "easeOut" }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
                 className="h-full"
               >
                 <CarteInteractiveUltra
@@ -2180,11 +1240,9 @@ export default function ProjectUltra() {
                   description={action.description}
                   color={action.color}
                   bg={action.bg}
-                  border={action.border}
                   onClick={() => action.href && window.open(action.href, '_self')}
                   equalSize={true}
                   delay={index * 100}
-                  tags={action.tags}
                 />
               </motion.div>
             ))}
@@ -2192,216 +1250,47 @@ export default function ProjectUltra() {
           
           {/* Call to Action intermédiaire */}
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-            className="mt-20"
+            className="mt-12"
           >
-            <div className="relative rounded-3xl overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-emerald-500/20 to-cyan-500/20" />
-              <div className="relative p-8 md:p-12 text-center backdrop-blur-sm">
-                <h3 className="text-3xl md:text-4xl font-bold mb-6">
-                  <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-                    Prêt à faire la différence ?
-                  </span>
-                </h3>
-                <p className="text-xl text-white/80 mb-8 max-w-2xl mx-auto">
-                  Rejoignez notre communauté croissante de citoyens engagés pour l'environnement.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <BoutonAnimePremium
-                    variant="premium"
-                    size="lg"
-                    icon={<Star className="w-5 h-5" />}
-                    href="/join"
-                    glow={true}
-                    pulse={true}
-                  >
-                    Devenir Membre Premium
-                  </BoutonAnimePremium>
-                  
-                  <BoutonAnimePremium
-                    variant="outline"
-                    size="lg"
-                    icon={<Users className="w-5 h-5" />}
-                    href="/community"
-                  >
-                    Voir la Communauté
-                  </BoutonAnimePremium>
-                </div>
-              </div>
+            <div className="relative rounded-2xl overflow-hidden p-8 text-center bg-gradient-to-r from-blue-600/20 to-emerald-600/20 backdrop-blur-sm">
+              <h3 className="text-2xl font-bold mb-4 text-white">
+                Rejoignez notre communauté
+              </h3>
+              <p className="text-white/80 mb-6">
+                Ensemble, nous pouvons faire la différence
+              </p>
+              <BoutonAnimePremium
+                variant="gradient"
+                size="lg"
+                icon={<Users className="w-5 h-5" />}
+                href="/contact"
+                glow={true}
+              >
+                Nous Contacter
+              </BoutonAnimePremium>
             </div>
           </motion.div>
         </motion.section>
-        
-        {/* Section Appel à l'Action Finale avec animations premium */}
-        <motion.section
-          ref={(el: HTMLDivElement | null) => { if (el) sectionsRef.current.cta = el; }}
-          id="cta"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
-          className="max-w-5xl mx-auto scroll-mt-20"
-        >
-          <WidgetFlottantPremium intensity={1} glow={true} equalSize={false}>
-            <Card className="border-2 border-white/20 overflow-hidden backdrop-blur-xl 
-                           bg-gradient-to-br from-primary/15 via-emerald-500/15 to-cyan-500/15 rounded-3xl">
-              <CardContent className="p-12 md:p-16 text-center relative overflow-hidden">
-                {/* Éléments de fond animés premium */}
-                <div className="absolute -top-32 -right-32 w-80 h-80 bg-gradient-to-r from-primary/20 to-emerald-500/20 
-                              rounded-full blur-3xl animate-pulse" />
-                <div className="absolute -bottom-32 -left-32 w-80 h-80 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 
-                              rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-                
-                {/* Étoiles scintillantes */}
-                {[...Array(8)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="absolute w-2 h-2 rounded-full bg-white/50 animate-pulse"
-                    style={{
-                      top: `${20 + i * 10}%`,
-                      left: `${10 + i * 12}%`,
-                      animationDelay: `${i * 0.3}s`
-                    }}
-                  />
-                ))}
-                
-                <motion.div
-                  initial={{ scale: 0, rotate: -180 }}
-                  whileInView={{ scale: 1, rotate: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ type: "spring", stiffness: 150, damping: 12, duration: 1.2 }}
-                  className="relative z-10 w-40 h-40 rounded-full bg-gradient-to-br from-primary/30 to-emerald-500/30 
-                           flex items-center justify-center mx-auto mb-12 border-4 border-white/20"
-                >
-                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-background/90 to-background/70 
-                                flex items-center justify-center">
-                    <div className="relative">
-                      <Heart className="w-20 h-20 text-primary animate-pulse" />
-                      <div className="absolute -inset-6 rounded-full border-4 border-primary/20 animate-ping" />
-                    </div>
-                  </div>
-                </motion.div>
-                
-                <h2 className="text-5xl md:text-6xl font-bold mb-10 relative z-10">
-                  <span className="bg-gradient-to-r from-primary via-emerald-600 to-cyan-600 
-                                 bg-clip-text text-transparent">
-                    Votre Engagement Compte
-                  </span>
-                </h2>
-                
-                <div className="text-2xl text-foreground/90 leading-relaxed mb-12 max-w-3xl mx-auto relative z-10 space-y-6">
-                  <p>
-                    Chaque geste que vous posez pour l'environnement a un impact réel. En triant vos déchets, 
-                    en réduisant votre consommation, en participant à nos événements, vous contribuez activement 
-                    à la préservation de notre planète.
-                  </p>
-                  <p className="font-semibold text-primary animate-pulse">
-                    Ensemble, nous avons déjà accompli de grandes choses, mais il reste encore beaucoup à faire.
-                  </p>
-                  <p className="text-3xl font-bold bg-gradient-to-r from-emerald-500 to-cyan-500 bg-clip-text text-transparent">
-                    Rejoignez-nous aujourd'hui et faites partie de la solution !
-                  </p>
-                </div>
-                
-                <div className="flex flex-col sm:flex-row gap-6 justify-center relative z-10">
-                  <BoutonAnimePremium
-                    variant="gradient"
-                    size="xl"
-                    icon={<Leaf className="w-7 h-7" />}
-                    href="/contact"
-                    fullWidth={true}
-                    glow={true}
-                    pulse={true}
-                  >
-                    Nous Rejoindre
-                  </BoutonAnimePremium>
-                  
-                  <BoutonAnimePremium
-                    variant="outline"
-                    size="xl"
-                    icon={<BookOpen className="w-7 h-7" />}
-                    href="/activities"
-                    fullWidth={true}
-                  >
-                    Voir nos Activités
-                  </BoutonAnimePremium>
-                  
-                  <BoutonAnimePremium
-                    variant="eco"
-                    size="xl"
-                    icon={<TreePine className="w-7 h-7" />}
-                    href="/donate"
-                    fullWidth={true}
-                    glow={true}
-                  >
-                    Faire un Don
-                  </BoutonAnimePremium>
-                </div>
-                
-                {/* Social proof */}
-                <div className="mt-12 pt-8 border-t border-white/10 relative z-10">
-                  <p className="text-sm text-white/60 mb-4">Déjà rejoint par plus de 2,500 citoyens engagés</p>
-                  <div className="flex items-center justify-center gap-2">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-                    ))}
-                    <span className="ml-2 text-white/80">4.9/5 (458 avis)</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </WidgetFlottantPremium>
-        </motion.section>
       </div>
       
-      {/* Footer animé */}
-      <footer className="mt-32 py-8 border-t border-white/10">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-primary to-emerald-600 flex items-center justify-center">
-                <Leaf className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="font-bold text-xl">Projet Écologique</h3>
-                <p className="text-sm text-muted-foreground">Un avenir durable, ensemble</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-6">
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">Mentions légales</a>
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">Politique de confidentialité</a>
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">Contact</a>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
-                aria-label="Changer le thème"
-              >
-                {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-              </button>
-              <button 
-                onClick={() => setTheme('eco')}
-                className="p-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors"
-                aria-label="Thème écologique"
-              >
-                <Leaf className="w-5 h-5 text-emerald-500" />
-              </button>
-            </div>
-          </div>
-          
-          <div className="mt-8 pt-8 border-t border-white/10 text-center text-sm text-muted-foreground">
-            <p>© 2024 Projet Écologique - Tous droits réservés | École Maria - Sauvons notre planète</p>
-          </div>
-        </div>
-      </footer>
+      {/* Modals pour les détails des poubelles */}
+      {openModalIndex !== null && (
+        <BinModal
+          isOpen={true}
+          onClose={handleCloseModal}
+          icon={bins[openModalIndex].icon}
+          title={bins[openModalIndex].label}
+          description={bins[openModalIndex].description}
+          details={bins[openModalIndex].details}
+          color={bins[openModalIndex].color}
+          bg={bins[openModalIndex].bg}
+        />
+      )}
       
-      {/* Styles globaux pour les animations ultra améliorées */}
+      {/* Styles globaux optimisés */}
       <style>{`
         @keyframes spin {
           from { transform: rotate(0deg); }
@@ -2413,57 +1302,17 @@ export default function ProjectUltra() {
           50% { opacity: .5; }
         }
         
-        @keyframes bounce {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-25%); }
-        }
-        
-        @keyframes ping {
-          75%, 100% { transform: scale(2); opacity: 0; }
-        }
-        
         @keyframes gradient-pan {
-          0% { background-position: 0% 0%; }
-          100% { background-position: 200% 200%; }
+          0% { background-position: 0% 50%; }
+          100% { background-position: 200% 50%; }
         }
         
-        @keyframes gradient-border {
-          0%, 100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
+        .animate-spin {
+          animation: spin 1s linear infinite;
         }
         
-        @keyframes float-orb {
-          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
-          25% { transform: translate(50px, -60px) scale(1.2); opacity: 0.7; }
-          50% { transform: translate(-30px, 30px) scale(0.9); opacity: 0.4; }
-          75% { transform: translate(60px, 40px) scale(1.1); opacity: 0.6; }
-        }
-        
-        @keyframes ripple {
-          0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
-          70% { transform: translate(-50%, -50%) scale(4); opacity: 0.3; }
-          100% { transform: translate(-50%, -50%) scale(5); opacity: 0; }
-        }
-        
-        @keyframes shine {
-          0% { transform: translateX(-100%) rotate(30deg); }
-          100% { transform: translateX(400%) rotate(30deg); }
-        }
-        
-        @keyframes float-particle {
-          0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
-          25% { transform: translateY(-10px) translateX(5px); opacity: 0.7; }
-          50% { transform: translateY(0) translateX(10px); opacity: 0.3; }
-          75% { transform: translateY(10px) translateX(5px); opacity: 0.7; }
-        }
-        
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .animate-fade-in-up {
-          animation: fadeInUp 0.8s ease-out forwards;
+        .animate-pulse {
+          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
       `}</style>
     </div>
