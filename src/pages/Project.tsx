@@ -1,40 +1,13 @@
 import { useState, useEffect, useMemo, useCallback, useRef, memo, ReactNode } from "react";
 import { 
-  Trash2, 
-  FileText, 
-  Apple, 
-  Package, 
-  Target, 
-  Users, 
-  Leaf, 
-  Recycle, 
-  CheckCircle2,
-  ArrowRight,
-  Sparkles,
-  Award,
-  BookOpen,
-  Calendar,
-  Home,
-  X,
-  Share2,
-  Rocket,
-  Zap,
-  Heart,
-  Star,
-  Cloud,
-  Sun,
-  Moon,
-  Droplets,
-  Clock,
-  Infinity,
-  ChevronRight,
-  Pause,
-  Play,
-  LucideIcon
+  Trash2, FileText, Apple, Package, Target, Users, Leaf, Recycle, 
+  CheckCircle2, ArrowRight, Sparkles, Award, BookOpen, Calendar, 
+  Home, X, Share2, Rocket, Zap, Heart, Star, Cloud, Sun, Moon, 
+  Droplets, Clock, Infinity, ChevronRight, Pause, Play, LucideIcon 
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-// Hook de navigation sans rechargement
+// Hook de navigation SPA
 const useNavigate = () => {
   const navigate = useCallback((path: string) => {
     window.history.pushState({}, '', path);
@@ -44,7 +17,35 @@ const useNavigate = () => {
   return navigate;
 };
 
-// Simple Card components
+// Hook de gestion du thème
+const useTheme = () => {
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    if (savedTheme) {
+      setTheme(savedTheme);
+    } else if (prefersDark) {
+      setTheme('dark');
+    }
+  }, []);
+  
+  useEffect(() => {
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+  
+  const toggleTheme = useCallback(() => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  }, []);
+  
+  return { theme, toggleTheme };
+};
+
+// Composants de base
 const Card = ({ children, className = "", style }: { children: ReactNode; className?: string; style?: React.CSSProperties }) => (
   <div className={`rounded-lg border bg-card text-card-foreground shadow-sm ${className}`} style={style}>
     {children}
@@ -83,11 +84,11 @@ const Link = ({ to, children, className = "", onClick }: {
   );
 };
 
-// Types for button component
-interface BoutonAnimePremiumProps {
+// Types pour le bouton
+interface BoutonAnimeProps {
   children: ReactNode;
-  variant?: "default" | "outline" | "premium" | "gradient" | "success" | "eco" | "warning";
-  size?: "sm" | "default" | "lg" | "xl" | "2xl";
+  variant?: "default" | "outline" | "gradient" | "eco";
+  size?: "sm" | "default" | "lg";
   className?: string;
   onClick?: () => void;
   icon?: ReactNode;
@@ -99,8 +100,8 @@ interface BoutonAnimePremiumProps {
   pulse?: boolean;
 }
 
-// Composant Bouton Animé Premium optimisé
-const BoutonAnimePremium = memo(({ 
+// Composant Bouton avec support thème
+const BoutonAnime = memo(({ 
   children, 
   variant = "default",
   size = "default",
@@ -113,14 +114,12 @@ const BoutonAnimePremium = memo(({
   fullWidth = false,
   glow = true,
   pulse = false,
-}: BoutonAnimePremiumProps) => {
+}: BoutonAnimeProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
   
   const handleMouseEnter = useCallback(() => {
-    if (!disabled && !loading) {
-      setIsHovered(true);
-    }
+    if (!disabled && !loading) setIsHovered(true);
   }, [disabled, loading]);
   
   const handleMouseLeave = useCallback(() => {
@@ -129,9 +128,7 @@ const BoutonAnimePremium = memo(({
   }, []);
   
   const handleMouseDown = useCallback(() => {
-    if (!disabled && !loading) {
-      setIsPressed(true);
-    }
+    if (!disabled && !loading) setIsPressed(true);
   }, [disabled, loading]);
   
   const handleMouseUp = useCallback(() => {
@@ -140,6 +137,7 @@ const BoutonAnimePremium = memo(({
   
   const handleClick = useCallback((e: React.MouseEvent) => {
     if (disabled || loading) return;
+    e.preventDefault();
     onClick?.();
   }, [disabled, loading, onClick]);
   
@@ -147,37 +145,82 @@ const BoutonAnimePremium = memo(({
     sm: "px-5 py-2.5 text-sm",
     default: "px-7 py-3.5 text-base",
     lg: "px-9 py-4 text-lg",
-    xl: "px-12 py-5 text-xl",
-    "2xl": "px-16 py-7 text-2xl"
   };
   
+  // Classes variant pour thème clair/sombre
   const variantClasses: Record<string, string> = {
-    default: "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-600 shadow-xl hover:shadow-blue-500/40",
-    outline: "border-2 border-blue-400/40 bg-slate-900/90 backdrop-blur-sm hover:border-blue-400/80 hover:bg-blue-500/15 hover:shadow-blue-500/30",
-    premium: "bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 hover:from-amber-600 hover:via-orange-600 hover:to-pink-600 shadow-xl hover:shadow-orange-500/40",
-    gradient: "bg-gradient-to-r from-blue-600 via-emerald-600 to-cyan-600 hover:from-blue-500 hover:via-emerald-700 hover:to-cyan-700 shadow-xl hover:shadow-blue-500/40",
-    success: "bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-xl hover:shadow-emerald-500/40",
-    eco: "bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500 hover:from-emerald-600 hover:via-green-600 hover:to-teal-600 shadow-xl hover:shadow-emerald-500/40",
-    warning: "bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 hover:from-amber-600 hover:via-yellow-600 hover:to-orange-600 shadow-xl hover:shadow-amber-500/40"
+    default: `
+      dark:bg-gradient-to-r dark:from-blue-600 dark:to-blue-500 
+      dark:hover:from-blue-500 dark:hover:to-blue-600 
+      dark:shadow-xl dark:hover:shadow-blue-500/40
+      light:bg-gradient-to-r light:from-blue-500 light:to-blue-400 
+      light:hover:from-blue-400 light:hover:to-blue-500 
+      light:shadow-xl light:hover:shadow-blue-500/30
+      text-white
+    `,
+    outline: `
+      dark:border-2 dark:border-blue-400/40 dark:bg-slate-900/90 
+      dark:hover:border-blue-400/80 dark:hover:bg-blue-500/15 
+      dark:hover:shadow-blue-500/30
+      light:border-2 light:border-blue-500/60 light:bg-white/90 
+      light:hover:border-blue-500/80 light:hover:bg-blue-50 
+      light:hover:shadow-blue-500/20
+      dark:text-white light:text-blue-900
+    `,
+    gradient: `
+      dark:bg-gradient-to-r dark:from-blue-600 dark:via-emerald-600 dark:to-cyan-600 
+      dark:hover:from-blue-500 dark:hover:via-emerald-700 dark:hover:to-cyan-700 
+      dark:shadow-xl dark:hover:shadow-blue-500/40
+      light:bg-gradient-to-r light:from-blue-500 light:via-emerald-500 light:to-cyan-500 
+      light:hover:from-blue-400 light:hover:via-emerald-600 light:hover:to-cyan-600 
+      light:shadow-xl light:hover:shadow-blue-500/30
+      text-white
+    `,
+    eco: `
+      dark:bg-gradient-to-r dark:from-emerald-500 dark:via-green-500 dark:to-teal-500 
+      dark:hover:from-emerald-600 dark:hover:via-green-600 dark:hover:to-teal-600 
+      dark:shadow-xl dark:hover:shadow-emerald-500/40
+      light:bg-gradient-to-r light:from-emerald-400 light:via-green-400 light:to-teal-400 
+      light:hover:from-emerald-500 light:hover:via-green-500 light:hover:to-teal-500 
+      light:shadow-xl light:hover:shadow-emerald-500/30
+      text-white
+    `,
   };
+  
+  const buttonClasses = `
+    relative overflow-hidden rounded-2xl font-bold
+    transition-all duration-500
+    disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
+    focus:outline-none focus:ring-4 dark:focus:ring-blue-500/30 light:focus:ring-blue-500/20
+    ${fullWidth ? 'w-full' : ''}
+    group ${sizeClasses[size]} ${variantClasses[variant]} ${className}
+    ${isHovered ? 'shadow-2xl scale-105' : 'shadow-xl'}
+    ${isPressed ? 'scale-95 shadow-lg' : ''}
+  `;
   
   const ButtonContent = (
     <>
-      {/* Effet de glow au survol */}
       {glow && (
-        <span className={`absolute -inset-2 rounded-2xl bg-gradient-to-r from-blue-500/30 via-emerald-500/20 to-cyan-500/30 transition-all duration-700 blur-xl ${isHovered ? 'opacity-100' : 'opacity-0'}`} />
+        <span className={`
+          absolute -inset-2 rounded-2xl blur-xl transition-all duration-700
+          ${isHovered ? 'opacity-100' : 'opacity-0'}
+          dark:bg-gradient-to-r dark:from-blue-500/30 dark:via-emerald-500/20 dark:to-cyan-500/30
+          light:bg-gradient-to-r light:from-blue-400/20 light:via-emerald-400/15 light:to-cyan-400/20
+        `} />
       )}
       
-      {/* Effet de pulse */}
       {pulse && (
-        <span className={`absolute -inset-2 rounded-2xl bg-gradient-to-r from-blue-500/40 via-emerald-500/30 to-cyan-500/40 transition-opacity duration-500 ${isHovered ? 'opacity-100' : 'opacity-50'}`}
-          style={{ animation: 'pulse 3s ease-in-out infinite' }} />
+        <span className={`
+          absolute -inset-2 rounded-2xl transition-opacity duration-500
+          ${isHovered ? 'opacity-100' : 'opacity-50'}
+          dark:bg-gradient-to-r dark:from-blue-500/40 dark:via-emerald-500/30 dark:to-cyan-500/40
+          light:bg-gradient-to-r light:from-blue-400/30 light:via-emerald-400/20 light:to-cyan-400/30
+        `} style={{ animation: 'pulse 3s ease-in-out infinite' }} />
       )}
       
-      {/* État Loading */}
       {loading && (
-        <span className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm rounded-2xl">
-          <span className="rounded-full h-8 w-8 border-t-3 border-b-3 border-white animate-spin"></span>
+        <span className="absolute inset-0 flex items-center justify-center bg-black/20 dark:bg-black/20 light:bg-white/20 backdrop-blur-sm rounded-2xl">
+          <span className="rounded-full h-8 w-8 border-t-3 border-b-3 dark:border-white light:border-blue-600 animate-spin"></span>
         </span>
       )}
       
@@ -201,23 +244,12 @@ const BoutonAnimePremium = memo(({
     </>
   );
   
-  const buttonClasses = `
-    relative overflow-hidden rounded-2xl font-bold text-white
-    transition-all duration-500
-    disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
-    focus:outline-none focus:ring-4 focus:ring-blue-500/30
-    ${fullWidth ? 'w-full' : ''}
-    group ${sizeClasses[size]} ${variantClasses[variant]} ${className}
-    ${isHovered ? 'shadow-2xl scale-105' : 'shadow-xl'}
-    ${isPressed ? 'scale-95 shadow-lg' : ''}
-  `;
-  
   if (href && !disabled && !loading) {
     return (
       <Link 
         to={href} 
         className={`inline-block ${fullWidth ? 'w-full' : ''}`}
-        onClick={handleClick}
+        onClick={onClick}
       >
         <button
           className={buttonClasses}
@@ -248,10 +280,10 @@ const BoutonAnimePremium = memo(({
   );
 });
 
-BoutonAnimePremium.displayName = 'BoutonAnimePremium';
+BoutonAnime.displayName = 'BoutonAnime';
 
-// Types for widget
-interface WidgetFlottantPremiumProps {
+// Types pour le widget
+interface WidgetFlottantProps {
   children: ReactNode;
   intensity?: number;
   className?: string;
@@ -264,19 +296,19 @@ interface WidgetFlottantPremiumProps {
   scrollReveal?: boolean;
 }
 
-// Composant Widget Flottant optimisé avec animations fluides
-const WidgetFlottantPremium = memo(({
+// Widget avec support thème
+const WidgetFlottant = memo(({
   children,
   intensity = 0.3,
   className = "",
   interactive = true,
   glow = true,
-  minHeight = "min-h-[280px]",
+  minHeight = "min-h-[260px]",
   equalSize = true,
   onHoverChange,
   delay = 0,
   scrollReveal = true,
-}: WidgetFlottantPremiumProps) => {
+}: WidgetFlottantProps) => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
   const [isVisible, setIsVisible] = useState(!scrollReveal);
@@ -288,19 +320,14 @@ const WidgetFlottantPremium = memo(({
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setTimeout(() => {
-            setIsVisible(true);
-          }, delay);
+          setTimeout(() => setIsVisible(true), delay);
         }
       },
       { threshold: 0.05, rootMargin: '50px' }
     );
     
     observer.observe(widgetRef.current);
-    
-    return () => {
-      observer.disconnect();
-    };
+    return () => observer.disconnect();
   }, [scrollReveal, delay]);
   
   useEffect(() => {
@@ -364,20 +391,32 @@ const WidgetFlottantPremium = memo(({
         transformStyle: 'preserve-3d',
       }}
     >
-      {/* Glow effect */}
       {glow && (
-        <div className={`absolute -inset-3 rounded-3xl bg-gradient-to-br from-blue-500/25 via-emerald-500/20 to-cyan-500/25 transition-all duration-700 ${isHovered ? 'opacity-100 blur-2xl' : 'opacity-0 blur-xl'}`} />
+        <div className={`
+          absolute -inset-3 rounded-3xl transition-all duration-700
+          ${isHovered ? 'opacity-100 blur-2xl' : 'opacity-0 blur-xl'}
+          dark:bg-gradient-to-br dark:from-blue-500/25 dark:via-emerald-500/20 dark:to-cyan-500/25
+          light:bg-gradient-to-br light:from-blue-400/20 light:via-emerald-400/15 light:to-cyan-400/20
+        `} />
       )}
       
-      {/* Inner shadow and background */}
-      <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br from-slate-800/95 via-slate-900/90 to-slate-800/85 shadow-xl transition-all duration-700 ${isHovered ? 'shadow-2xl' : ''}`} />
+      <div className={`
+        absolute inset-0 rounded-3xl shadow-xl transition-all duration-700
+        ${isHovered ? 'shadow-2xl' : ''}
+        dark:bg-gradient-to-br dark:from-slate-800/95 dark:via-slate-900/90 dark:to-slate-800/85
+        light:bg-gradient-to-br light:from-white/95 light:via-gray-50/90 light:to-white/85
+        light:border light:border-gray-200
+      `} />
       
-      {/* Shimmer effect amélioré */}
       <div className={`absolute inset-0 rounded-3xl overflow-hidden`}>
-        <div className={`absolute -inset-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1200 ${isHovered ? 'translate-x-full' : '-translate-x-full'}`} />
+        <div className={`
+          absolute -inset-full transition-transform duration-1200
+          ${isHovered ? 'translate-x-full' : '-translate-x-full'}
+          dark:bg-gradient-to-r dark:from-transparent dark:via-white/10 dark:to-transparent
+          light:bg-gradient-to-r light:from-transparent light:via-blue-500/5 light:to-transparent
+        `} />
       </div>
       
-      {/* Content container */}
       <div className="relative z-10 h-full transform-gpu">
         {children}
       </div>
@@ -385,21 +424,15 @@ const WidgetFlottantPremium = memo(({
   );
 });
 
-WidgetFlottantPremium.displayName = 'WidgetFlottantPremium';
+WidgetFlottant.displayName = 'WidgetFlottant';
 
-// Arrière-plan animé ultra fluide
-const FondAniméUltra = memo(() => {
+// Arrière-plan optimisé avec thème
+const FondAnime = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
   const particlesRef = useRef<Array<{
-    x: number;
-    y: number;
-    size: number;
-    speedX: number;
-    speedY: number;
-    color: string;
-    alpha: number;
-    pulseSpeed: number;
+    x: number; y: number; size: number; speedX: number; speedY: number;
+    color: string; alpha: number; pulseSpeed: number;
   }>>([]);
   const timeRef = useRef(0);
   
@@ -410,6 +443,8 @@ const FondAniméUltra = memo(() => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
+    const isDark = document.documentElement.classList.contains('dark');
+    
     const resize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -418,18 +453,22 @@ const FondAniméUltra = memo(() => {
     
     const initParticles = () => {
       particlesRef.current = [];
-      const particleCount = Math.min(Math.floor((canvas.width * canvas.height) / 20000), 60);
+      const particleCount = Math.min(Math.floor((canvas.width * canvas.height) / 25000), 50);
+      
+      const baseColors = isDark 
+        ? ['#60a5fa', '#34d399', '#22d3ee'] // Bleu, Vert, Cyan pour dark
+        : ['#3b82f6', '#10b981', '#06b6d4']; // Bleu, Vert, Cyan pour light
       
       for (let i = 0; i < particleCount; i++) {
         particlesRef.current.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          size: Math.random() * 2 + 0.5,
-          speedX: Math.random() * 0.3 - 0.15,
-          speedY: Math.random() * 0.3 - 0.15,
-          color: `hsl(${Math.random() * 60 + 180}, 70%, 70%)`,
-          alpha: Math.random() * 0.2 + 0.1,
-          pulseSpeed: Math.random() * 0.02 + 0.005,
+          size: Math.random() * 1.5 + 0.5,
+          speedX: Math.random() * 0.2 - 0.1,
+          speedY: Math.random() * 0.2 - 0.1,
+          color: baseColors[Math.floor(Math.random() * baseColors.length)],
+          alpha: Math.random() * 0.15 + 0.05,
+          pulseSpeed: Math.random() * 0.015 + 0.005,
         });
       }
     };
@@ -437,13 +476,20 @@ const FondAniméUltra = memo(() => {
     const animate = () => {
       timeRef.current += 0.01;
       
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const isDarkNow = document.documentElement.classList.contains('dark');
       
-      // Fond dégradé animé
+      // Fond avec gradient adaptatif
       const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      gradient.addColorStop(0, 'rgba(15, 23, 42, 0.1)');
-      gradient.addColorStop(0.5, 'rgba(30, 41, 59, 0.08)');
-      gradient.addColorStop(1, 'rgba(15, 23, 42, 0.1)');
+      if (isDarkNow) {
+        gradient.addColorStop(0, 'rgba(15, 23, 42, 0.1)');
+        gradient.addColorStop(0.5, 'rgba(30, 41, 59, 0.08)');
+        gradient.addColorStop(1, 'rgba(15, 23, 42, 0.1)');
+      } else {
+        gradient.addColorStop(0, 'rgba(249, 250, 251, 0.1)');
+        gradient.addColorStop(0.5, 'rgba(243, 244, 246, 0.08)');
+        gradient.addColorStop(1, 'rgba(249, 250, 251, 0.1)');
+      }
+      
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
@@ -457,7 +503,7 @@ const FondAniméUltra = memo(() => {
         if (particle.y > canvas.height) particle.y = 0;
         if (particle.y < 0) particle.y = canvas.height;
         
-        particle.alpha = 0.1 + Math.sin(timeRef.current * particle.pulseSpeed) * 0.1;
+        particle.alpha = 0.08 + Math.sin(timeRef.current * particle.pulseSpeed) * 0.07;
         
         ctx.save();
         ctx.globalAlpha = particle.alpha;
@@ -477,9 +523,7 @@ const FondAniméUltra = memo(() => {
     
     return () => {
       window.removeEventListener('resize', resize);
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
   }, []);
   
@@ -492,74 +536,55 @@ const FondAniméUltra = memo(() => {
       />
       
       <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-        {/* Ombres portées animées */}
-        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-blue-500/15 via-blue-500/10 to-transparent"
-          style={{ 
-            animation: 'float-gentle 20s ease-in-out infinite',
-          }} 
-        />
+        {/* Orbes flottants adaptatifs */}
+        <div className={`
+          absolute top-1/4 left-1/4 w-96 h-96 rounded-full
+          dark:bg-gradient-radial dark:from-blue-500/20 dark:via-blue-500/10 dark:to-transparent
+          light:bg-gradient-radial light:from-blue-400/15 light:via-blue-400/8 light:to-transparent
+        `} style={{ 
+          animation: 'float-orb 30s ease-in-out infinite',
+          filter: 'blur(40px)'
+        }} />
         
-        <div className="absolute bottom-0 left-0 right-0 h-96 bg-gradient-to-t from-emerald-500/15 via-emerald-500/10 to-transparent"
-          style={{ 
-            animation: 'float-gentle 25s ease-in-out infinite reverse',
-          }} 
-        />
-        
-        {/* Orbes flottants */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-radial from-blue-500/20 via-blue-500/10 to-transparent rounded-full"
-          style={{ 
-            animation: 'float-orb 30s ease-in-out infinite',
-            filter: 'blur(40px)'
-          }}
-        />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-radial from-emerald-500/20 via-emerald-500/10 to-transparent rounded-full"
-          style={{ 
-            animation: 'float-orb 35s ease-in-out infinite reverse',
-            filter: 'blur(40px)'
-          }}
-        />
-        
-        {/* Effets de lumière subtils */}
-        <div className="absolute top-1/2 left-0 w-px h-64 bg-gradient-to-b from-transparent via-cyan-500/20 to-transparent animate-pulse"
-          style={{ animationDuration: '4s' }} />
-        <div className="absolute top-1/3 right-0 w-px h-64 bg-gradient-to-b from-transparent via-emerald-500/20 to-transparent animate-pulse"
-          style={{ animationDuration: '4s', animationDelay: '2s' }} />
+        <div className={`
+          absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full
+          dark:bg-gradient-radial dark:from-emerald-500/20 dark:via-emerald-500/10 dark:to-transparent
+          light:bg-gradient-radial light:from-emerald-400/15 light:via-emerald-400/8 light:to-transparent
+        `} style={{ 
+          animation: 'float-orb 35s ease-in-out infinite reverse',
+          filter: 'blur(40px)'
+        }} />
       </div>
     </>
   );
 });
 
-FondAniméUltra.displayName = 'FondAniméUltra';
+FondAnime.displayName = 'FondAnime';
 
-// Types for card
-interface CarteInteractiveUltraProps {
+// Types pour la carte
+interface CarteInteractiveProps {
   icon: LucideIcon;
   title: string;
   description: string;
   color?: string;
   bg?: string;
-  border?: string;
   onClick?: () => void;
   isActive?: boolean;
-  equalSize?: boolean;
   delay?: number;
 }
 
-// Composant Carte Interactive avec animations de scroll améliorées
-const CarteInteractiveUltra = memo(({ 
+// Carte interactive avec support thème
+const CarteInteractive = memo(({ 
   icon: Icon,
   title,
   description,
-  color = "text-blue-500",
+  color = "text-blue-600",
   bg = "bg-gradient-to-br from-blue-500/20 to-blue-500/10",
-  border = "border-blue-500/20",
   onClick,
   isActive = false,
-  equalSize = true,
   delay = 0,
-}: CarteInteractiveUltraProps) => {
+}: CarteInteractiveProps) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [isPressed, setIsPressed] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   
@@ -567,80 +592,38 @@ const CarteInteractiveUltra = memo(({
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setTimeout(() => {
-            setIsVisible(true);
-          }, delay);
+          setTimeout(() => setIsVisible(true), delay);
         }
       },
-      { 
-        threshold: 0.05,
-        rootMargin: '100px 0px 100px 0px'
-      }
+      { threshold: 0.05, rootMargin: '100px 0px' }
     );
     
-    if (cardRef.current) {
-      observer.observe(cardRef.current);
-    }
-    
+    if (cardRef.current) observer.observe(cardRef.current);
     return () => {
-      if (cardRef.current) {
-        observer.unobserve(cardRef.current);
-      }
+      if (cardRef.current) observer.unobserve(cardRef.current);
     };
   }, [delay]);
   
-  const handleMouseEnter = useCallback(() => {
-    setIsHovered(true);
-  }, []);
-  
-  const handleMouseLeave = useCallback(() => {
-    setIsHovered(false);
-    setIsPressed(false);
-  }, []);
-  
-  const handleMouseDown = useCallback(() => {
-    setIsPressed(true);
-  }, []);
-  
-  const handleMouseUp = useCallback(() => {
-    setIsPressed(false);
-  }, []);
-  
-  const handleClick = useCallback(() => {
-    onClick?.();
-  }, [onClick]);
-  
   return (
     <div ref={cardRef} className="h-full">
-      <WidgetFlottantPremium 
-        intensity={0.35} 
+      <WidgetFlottant 
+        intensity={0.35}
         glow={true}
-        minHeight="min-h-[260px]"
-        equalSize={equalSize}
+        minHeight="min-h-[240px]"
         onHoverChange={setIsHovered}
         delay={delay}
-        scrollReveal={true}
       >
         <motion.div
-          onClick={handleClick}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-          onMouseDown={handleMouseDown}
-          onMouseUp={handleMouseUp}
-          className={`cursor-pointer h-full ${isPressed ? 'scale-[0.98]' : ''}`}
+          onClick={onClick}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          className="cursor-pointer h-full"
           initial={{ opacity: 0, y: 30 }}
-          animate={{ 
-            opacity: isVisible ? 1 : 0,
-            y: isVisible ? 0 : 30
-          }}
-          transition={{ 
-            duration: 0.8,
-            delay: delay / 1000,
-            ease: "easeOut"
-          }}
+          animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 30 }}
+          transition={{ duration: 0.6, delay: delay / 1000 }}
         >
-          <Card className={`h-full border-0 overflow-hidden bg-transparent rounded-3xl`}>
-            <CardContent className="p-6 text-center relative flex flex-col items-center justify-center h-full">
+          <Card className="h-full border-0 overflow-hidden bg-transparent rounded-3xl">
+            <CardContent className="p-5 text-center flex flex-col items-center justify-center h-full">
               {isActive && (
                 <motion.div
                   className="absolute top-3 right-3 z-20"
@@ -648,59 +631,52 @@ const CarteInteractiveUltra = memo(({
                   animate={{ scale: 1 }}
                   transition={{ type: "spring" }}
                 >
-                  <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/50 animate-pulse" />
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/50 animate-pulse" />
                 </motion.div>
               )}
               
               <motion.div
-                className={`relative w-20 h-20 rounded-2xl ${bg} 
-                          flex items-center justify-center mx-auto mb-6 overflow-hidden
-                          ${isHovered ? 'scale-110 shadow-xl' : 'shadow-lg'}
-                          ${isActive ? 'ring-2 ring-blue-500/40' : ''}
-                          transform-gpu`}
-                whileHover={{ 
-                  rotateY: 3,
-                  rotateX: 3,
-                  scale: 1.1
-                }}
-                transition={{ 
-                  type: "spring",
-                  stiffness: 200,
-                  damping: 15
-                }}
+                className={`relative w-16 h-16 rounded-2xl ${bg} flex items-center justify-center mx-auto mb-4 shadow-lg transform-gpu`}
+                whileHover={{ rotateY: 3, rotateX: 3, scale: 1.1 }}
+                transition={{ type: "spring", stiffness: 200, damping: 15 }}
               >
-                <Icon className={`relative z-10 w-10 h-10 ${color}`} />
+                <Icon className={`relative z-10 w-8 h-8 ${color}`} />
               </motion.div>
               
               <motion.h3
-                className="relative z-10 font-bold text-xl mb-3"
+                className="font-bold text-lg mb-2"
                 whileHover={{ scale: 1.05 }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
-                <span className={`bg-gradient-to-r ${isHovered ? 'from-blue-400 via-emerald-400 to-cyan-400' : 'from-white to-white/80'} bg-clip-text text-transparent`}>
+                <span className={`
+                  bg-gradient-to-r bg-clip-text text-transparent
+                  ${isHovered ? 'from-blue-500 via-emerald-500 to-cyan-500' : 'dark:from-white dark:to-white/80 light:from-gray-900 light:to-gray-700'}
+                `}>
                   {title}
                 </span>
               </motion.h3>
               
               <motion.p
-                className="relative z-10 text-sm text-slate-300 mb-4 flex-grow"
+                className="text-sm mb-4 flex-grow"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: isVisible ? 1 : 0 }}
-                transition={{ duration: 0.6, delay: (delay + 200) / 1000 }}
+                transition={{ duration: 0.4, delay: (delay + 200) / 1000 }}
               >
-                {description}
+                <span className="dark:text-gray-300 light:text-gray-600">
+                  {description}
+                </span>
               </motion.p>
             </CardContent>
           </Card>
         </motion.div>
-      </WidgetFlottantPremium>
+      </WidgetFlottant>
     </div>
   );
 });
 
-CarteInteractiveUltra.displayName = 'CarteInteractiveUltra';
+CarteInteractive.displayName = 'CarteInteractive';
 
-// Types for modal
+// Types pour le modal
 interface BinModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -712,7 +688,7 @@ interface BinModalProps {
   bg?: string;
 }
 
-// Modal amélioré avec animations fluides
+// Modal optimisé avec animations fluides
 const BinModal = memo(({ 
   isOpen,
   onClose,
@@ -760,55 +736,66 @@ const BinModal = memo(({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={handleBackdropClick}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
-          style={{ WebkitBackdropFilter: 'blur(8px)' }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ 
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)'
+          }}
         >
           <motion.div
             ref={modalRef}
-            initial={{ opacity: 0, scale: 0.9, y: 20, rotateX: 5 }}
-            animate={{ 
-              opacity: 1, 
-              scale: 1, 
-              y: 0,
-              rotateX: 0
-            }}
-            exit={{ 
-              opacity: 0, 
-              scale: 0.95, 
-              y: -20,
-              rotateX: -5
-            }}
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -20 }}
             transition={{ 
               type: "spring",
               damping: 25,
               stiffness: 300,
               mass: 0.8
             }}
-            className="relative max-w-2xl w-full"
+            className="relative max-w-2xl w-full max-h-[90vh] overflow-y-auto"
           >
-            <WidgetFlottantPremium intensity={0.2} glow={true} minHeight="min-h-0" interactive={true}>
-              <Card className="border-2 border-white/20 overflow-hidden backdrop-blur-xl bg-slate-900/95">
-                <CardContent className="p-8">
+            <WidgetFlottant intensity={0.2} glow={true} minHeight="min-h-0">
+              <Card className={`
+                border overflow-hidden
+                dark:border-white/20 dark:bg-slate-900/95
+                light:border-gray-300 light:bg-white/95
+              `}>
+                <CardContent className="p-6">
                   {/* Header */}
-                  <div className="flex items-start justify-between mb-8">
+                  <div className="flex items-start justify-between mb-6">
                     <motion.div 
                       className="flex items-center gap-4"
                       initial={{ x: -20, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
                       transition={{ delay: 0.1 }}
                     >
-                      <div className={`w-16 h-16 rounded-xl ${bg} flex items-center justify-center`}>
-                        <Icon className={`w-8 h-8 ${color}`} />
+                      <div className={`w-14 h-14 rounded-xl ${bg} flex items-center justify-center`}>
+                        <Icon className={`w-7 h-7 ${color}`} />
                       </div>
                       <div>
-                        <h3 className="text-3xl font-bold text-white mb-2">{title}</h3>
-                        <p className="text-white/70">{description}</p>
+                        <h3 className={`
+                          text-2xl font-bold mb-1
+                          dark:text-white light:text-gray-900
+                        `}>
+                          {title}
+                        </h3>
+                        <p className={`
+                          text-sm
+                          dark:text-gray-300 light:text-gray-600
+                        `}>
+                          {description}
+                        </p>
                       </div>
                     </motion.div>
                     
                     <motion.button
                       onClick={onClose}
-                      className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+                      className={`
+                        p-2 rounded-xl transition-colors
+                        dark:hover:bg-white/10 light:hover:bg-gray-100
+                      `}
                       aria-label="Fermer"
                       whileHover={{ scale: 1.1, rotate: 90 }}
                       whileTap={{ scale: 0.9 }}
@@ -816,7 +803,10 @@ const BinModal = memo(({
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.2 }}
                     >
-                      <X className="w-6 h-6" />
+                      <X className={`
+                        w-6 h-6
+                        dark:text-white light:text-gray-700
+                      `} />
                     </motion.button>
                   </div>
                   
@@ -827,46 +817,71 @@ const BinModal = memo(({
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.3 }}
                     >
-                      <h4 className="font-semibold text-lg mb-3 text-blue-400">Description</h4>
-                      <p className="text-white/80 leading-relaxed">{details}</p>
+                      <h4 className={`
+                        font-semibold text-lg mb-3
+                        dark:text-blue-400 light:text-blue-600
+                      `}>
+                        Description
+                      </h4>
+                      <p className={`
+                        leading-relaxed
+                        dark:text-gray-300 light:text-gray-700
+                      `}>
+                        {details}
+                      </p>
                     </motion.div>
                     
                     <motion.div
-                      className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20"
+                      className={`
+                        p-4 rounded-xl border
+                        dark:bg-blue-500/10 dark:border-blue-500/20
+                        light:bg-blue-50 light:border-blue-200
+                      `}
                       initial={{ y: 20, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.4 }}
                     >
-                      <h4 className="font-semibold text-sm mb-2 text-blue-400 flex items-center gap-2">
+                      <h4 className={`
+                        font-semibold text-sm mb-2 flex items-center gap-2
+                        dark:text-blue-400 light:text-blue-600
+                      `}>
                         <Sparkles className="w-4 h-4" />
                         CONSEILS DE TRI
                       </h4>
-                      <ul className="text-sm text-white/80 space-y-1">
-                        <li>• Bien nettoyer les contenants</li>
-                        <li>• Retirer les couvercles non-recyclables</li>
-                        <li>• Compacter pour gagner de l'espace</li>
-                        <li>• Vérifier les consignes locales</li>
+                      <ul className="text-sm space-y-1">
+                        <li className={`
+                          dark:text-gray-300 light:text-gray-700
+                        `}>• Bien nettoyer les contenants</li>
+                        <li className={`
+                          dark:text-gray-300 light:text-gray-700
+                        `}>• Retirer les couvercles non-recyclables</li>
+                        <li className={`
+                          dark:text-gray-300 light:text-gray-700
+                        `}>• Compacter pour gagner de l'espace</li>
                       </ul>
                     </motion.div>
                   </div>
                   
                   {/* Actions */}
                   <motion.div 
-                    className="flex gap-4 mt-8 pt-6 border-t border-white/20"
+                    className={`
+                      flex gap-4 mt-8 pt-6 border-t
+                      dark:border-white/20 light:border-gray-200
+                    `}
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.5 }}
                   >
-                    <BoutonAnimePremium
+                    <BoutonAnime
                       variant="outline"
                       size="sm"
                       onClick={onClose}
                       className="flex-1"
                     >
                       Fermer
-                    </BoutonAnimePremium>
+                    </BoutonAnime>
                     
-                    <BoutonAnimePremium
+                    <BoutonAnime
                       variant="gradient"
                       size="sm"
                       href="/guide"
@@ -874,12 +889,12 @@ const BinModal = memo(({
                       glow={true}
                     >
                       <BookOpen className="w-4 h-4 mr-2" />
-                      Guide Complet
-                    </BoutonAnimePremium>
+                      Guide
+                    </BoutonAnime>
                   </motion.div>
                 </CardContent>
               </Card>
-            </WidgetFlottantPremium>
+            </WidgetFlottant>
           </motion.div>
         </motion.div>
       )}
@@ -889,8 +904,44 @@ const BinModal = memo(({
 
 BinModal.displayName = 'BinModal';
 
+// Composant Switch pour thème
+const ThemeSwitch = memo(() => {
+  const { theme, toggleTheme } = useTheme();
+  
+  return (
+    <motion.button
+      onClick={toggleTheme}
+      className={`
+        relative p-3 rounded-xl transition-colors
+        dark:bg-slate-800/50 dark:hover:bg-slate-700/50
+        light:bg-gray-100 light:hover:bg-gray-200
+        border dark:border-white/10 light:border-gray-300
+      `}
+      aria-label={theme === 'dark' ? 'Passer au mode clair' : 'Passer au mode sombre'}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+    >
+      <motion.div
+        initial={false}
+        animate={{ rotate: theme === 'dark' ? 0 : 180 }}
+        transition={{ type: "spring", stiffness: 200, damping: 10 }}
+      >
+        {theme === 'dark' ? (
+          <Sun className="w-5 h-5 text-yellow-500" />
+        ) : (
+          <Moon className="w-5 h-5 text-blue-600" />
+        )}
+      </motion.div>
+    </motion.button>
+  );
+});
+
+ThemeSwitch.displayName = 'ThemeSwitch';
+
 // Composant principal optimisé
-export default function ProjectUltra() {
+export default function ProjectEco() {
+  const { theme } = useTheme();
+  
   // États optimisés
   const [activeBinIndex, setActiveBinIndex] = useState(0);
   const [isAutoRotating, setIsAutoRotating] = useState(true);
@@ -908,7 +959,7 @@ export default function ProjectUltra() {
       bg: "bg-gradient-to-br from-amber-500/20 to-amber-600/10", 
       label: "Papier & Carton",
       description: "Journaux, magazines, cartons",
-      details: "Le papier et le carton représentent environ 25% de nos déchets ménagers. Leur recyclage permet de sauver des arbres et réduire la consommation d'eau et d'énergie. Notre système de collecte optimisé garantit un taux de recyclage optimal."
+      details: "Le papier et le carton représentent environ 25% de nos déchets ménagers. Leur recyclage permet de sauver des arbres et réduire la consommation d'eau et d'énergie."
     },
     { 
       icon: Package, 
@@ -916,7 +967,7 @@ export default function ProjectUltra() {
       bg: "bg-gradient-to-br from-blue-500/20 to-cyan-600/10", 
       label: "Plastique",
       description: "Bouteilles, emballages plastiques",
-      details: "Les plastiques peuvent mettre jusqu'à 500 ans à se décomposer dans la nature. Notre programme de recyclage innovant transforme les plastiques usagés en nouvelles ressources grâce à des technologies de tri optique avancées."
+      details: "Les plastiques peuvent mettre jusqu'à 500 ans à se décomposer. Notre programme de recyclage les transforme en nouvelles ressources."
     },
     { 
       icon: Trash2, 
@@ -924,7 +975,7 @@ export default function ProjectUltra() {
       bg: "bg-gradient-to-br from-gray-500/20 to-gray-600/10", 
       label: "Métal",
       description: "Cannettes, boîtes de conserve",
-      details: "Le recyclage des métaux est particulièrement efficace avec une économie d'énergie allant jusqu'à 95% par rapport à la production primaire. Nous utilisons des aimants puissants pour une séparation précise à 99%."
+      details: "Le recyclage des métaux permet d'économiser jusqu'à 95% de l'énergie nécessaire à leur production primaire."
     },
     { 
       icon: Apple, 
@@ -932,7 +983,7 @@ export default function ProjectUltra() {
       bg: "bg-gradient-to-br from-green-500/20 to-emerald-600/10", 
       label: "Organique",
       description: "Déchets alimentaires, compostables",
-      details: "Transformés en compost de haute qualité pour enrichir les sols des jardins communautaires et espaces verts publics, contribuant ainsi à l'économie circulaire locale."
+      details: "Transformés en compost pour enrichir les sols des jardins communautaires et espaces verts publics."
     },
   ], []);
   
@@ -986,7 +1037,7 @@ export default function ProjectUltra() {
     },
     {
       icon: Home,
-      title: "Guides Pratiques",
+      title: "Guides",
       description: "Conseils pour un foyer écologique",
       color: "text-purple-600",
       bg: "bg-gradient-to-br from-purple-500/20 to-pink-600/10",
@@ -1060,61 +1111,80 @@ export default function ProjectUltra() {
     setOpenModalIndex(null);
     setTimeout(() => {
       setIsAutoRotating(true);
-    }, 500);
+    }, 300);
   }, []);
   
   return (
     <div className="min-h-screen overflow-hidden">
-      <FondAniméUltra />
+      <FondAnime />
       
-      {/* Indicateur de progression du scroll amélioré */}
+      {/* Barre de progression de scroll */}
       <motion.div 
-        className="fixed top-0 left-0 w-full h-1 z-40 bg-background/30 backdrop-blur-sm"
+        className="fixed top-0 left-0 w-full h-1 z-40"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
       >
-        <motion.div 
-          className="h-full bg-gradient-to-r from-blue-600 via-emerald-600 to-cyan-600 rounded-r-full"
-          style={{ width: `${scrollProgress}%` }}
-          transition={{ type: "spring", damping: 30, stiffness: 100 }}
-        />
+        <div className={`
+          w-full h-full
+          dark:bg-slate-900/30 light:bg-gray-100/30
+          backdrop-blur-sm
+        `}>
+          <motion.div 
+            className={`
+              h-full rounded-r-full
+              dark:bg-gradient-to-r dark:from-blue-600 dark:via-emerald-600 dark:to-cyan-600
+              light:bg-gradient-to-r light:from-blue-500 light:via-emerald-500 light:to-cyan-500
+            `}
+            style={{ width: `${scrollProgress}%` }}
+            transition={{ type: "spring", damping: 30, stiffness: 100 }}
+          />
+        </div>
       </motion.div>
       
+      {/* Bouton thème */}
+      <div className="fixed top-4 right-4 z-40">
+        <ThemeSwitch />
+      </div>
+      
       <div className="container mx-auto px-4 py-8 md:py-12 lg:py-16">
-        {/* Section Héro avec animations fluides */}
+        {/* Section Héro */}
         <motion.section
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1, ease: "easeOut" }}
+          transition={{ duration: 0.8 }}
           className="max-w-6xl mx-auto text-center mb-16 md:mb-24 pt-16"
         >
           <motion.div
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ 
-              type: "spring",
-              stiffness: 200,
-              damping: 15,
-              delay: 0.2
-            }}
-            className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-600/30 via-emerald-500/30 to-cyan-500/30 
-                       text-white px-6 py-3 rounded-full text-sm font-medium mb-8 
-                       border border-white/20 backdrop-blur-xl shadow-lg"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
+            className={`
+              inline-flex items-center gap-3 px-6 py-3 rounded-full text-sm font-medium mb-8 
+              backdrop-blur-xl shadow-lg border
+              dark:bg-gradient-to-r dark:from-blue-600/30 dark:via-emerald-500/30 dark:to-cyan-500/30
+              dark:border-white/20 dark:text-white
+              light:bg-gradient-to-r light:from-blue-500/20 light:via-emerald-400/20 light:to-cyan-400/20
+              light:border-gray-300 light:text-gray-800
+            `}
           >
             <Sparkles className="w-4 h-4" />
             <span>Initiative Écologique 2025</span>
           </motion.div>
           
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+            transition={{ duration: 0.6, delay: 0.4 }}
             className="mb-8"
           >
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-black mb-6 tracking-tighter">
               <motion.span
-                className="bg-gradient-to-r from-blue-600 via-emerald-600 to-cyan-600 bg-clip-text text-transparent leading-none inline-block"
+                className={`
+                  bg-gradient-to-r bg-clip-text text-transparent inline-block
+                  dark:from-blue-600 dark:via-emerald-600 dark:to-cyan-600
+                  light:from-blue-500 light:via-emerald-500 light:to-cyan-500
+                `}
                 animate={{ 
                   backgroundPosition: ['0% 50%', '100% 50%', '0% 50%']
                 }}
@@ -1123,31 +1193,36 @@ export default function ProjectUltra() {
                   repeat: Infinity,
                   ease: "linear"
                 }}
-                style={{ 
-                  backgroundSize: '200% auto'
-                }}
+                style={{ backgroundSize: '200% auto' }}
               >
                 Écologie
               </motion.span>
             </h1>
             
             <motion.h2
-              className="text-3xl md:text-4xl font-bold mb-6 text-white"
+              className="text-3xl md:text-4xl font-bold mb-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
             >
-              Notre Planète, Notre Avenir
+              <span className={`
+                dark:text-white light:text-gray-900
+              `}>
+                Notre Planète, Notre Avenir
+              </span>
             </motion.h2>
           </motion.div>
           
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8, ease: "easeOut" }}
+            transition={{ duration: 0.6, delay: 0.8 }}
             className="max-w-2xl mx-auto mb-8"
           >
-            <p className="text-xl text-white/80 leading-relaxed mb-6">
+            <p className={`
+              text-xl leading-relaxed mb-6
+              dark:text-gray-300 light:text-gray-700
+            `}>
               Bienvenue dans notre mouvement écologique communautaire. 
               Ensemble, nous créons un avenir durable pour les générations à venir.
             </p>
@@ -1156,10 +1231,10 @@ export default function ProjectUltra() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1, ease: "easeOut" }}
+            transition={{ duration: 0.6, delay: 1 }}
             className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12"
           >
-            <BoutonAnimePremium
+            <BoutonAnime
               variant="gradient"
               size="lg"
               icon={<Rocket className="w-5 h-5" />}
@@ -1167,45 +1242,53 @@ export default function ProjectUltra() {
               glow={true}
               pulse={true}
             >
-              Découvrir nos Projets
-            </BoutonAnimePremium>
+              Découvrir
+            </BoutonAnime>
             
-            <BoutonAnimePremium
+            <BoutonAnime
               variant="outline"
               size="lg"
               icon={<BookOpen className="w-5 h-5" />}
               href="/guide"
             >
               Guide Pratique
-            </BoutonAnimePremium>
+            </BoutonAnime>
           </motion.div>
         </motion.section>
         
-        {/* Section Objectifs avec animations de scroll */}
+        {/* Section Objectifs */}
         <motion.section
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
+          transition={{ duration: 0.6 }}
           className="max-w-7xl mx-auto mb-20"
         >
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
             <motion.div
               whileHover={{ rotate: 360 }}
-              transition={{ duration: 1, ease: "easeInOut" }}
+              transition={{ duration: 1 }}
             >
-              <Target className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+              <Target className={`
+                w-12 h-12 mx-auto mb-4
+                dark:text-blue-600 light:text-blue-500
+              `} />
             </motion.div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
+            <h2 className={`
+              text-4xl md:text-5xl font-bold mb-4
+              dark:text-white light:text-gray-900
+            `}>
               Nos Objectifs
             </h2>
-            <p className="text-lg text-white/60">
+            <p className={`
+              text-lg
+              dark:text-gray-400 light:text-gray-600
+            `}>
               Construire un avenir durable ensemble
             </p>
           </motion.div>
@@ -1217,16 +1300,15 @@ export default function ProjectUltra() {
                 initial={{ opacity: 0, y: 60 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.6, delay: index * 0.1, ease: "easeOut" }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="h-full"
               >
-                <CarteInteractiveUltra
+                <CarteInteractive
                   icon={goal.icon}
                   title={goal.title}
                   description={goal.description}
                   color={goal.color}
                   bg={goal.bg}
-                  equalSize={true}
                   delay={index * 100}
                 />
               </motion.div>
@@ -1234,31 +1316,39 @@ export default function ProjectUltra() {
           </div>
         </motion.section>
         
-        {/* Section Tri Sélectif avec animations fluides */}
+        {/* Section Tri Sélectif */}
         <motion.section
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
+          transition={{ duration: 0.6 }}
           className="max-w-7xl mx-auto mb-20"
         >
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
             >
-              <Recycle className="w-12 h-12 text-emerald-600 mx-auto mb-4" />
+              <Recycle className={`
+                w-12 h-12 mx-auto mb-4
+                dark:text-emerald-600 light:text-emerald-500
+              `} />
             </motion.div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
+            <h2 className={`
+              text-4xl md:text-5xl font-bold mb-4
+              dark:text-white light:text-gray-900
+            `}>
               Tri Sélectif
             </h2>
-            <p className="text-lg text-white/60">
+            <p className={`
+              text-lg
+              dark:text-gray-400 light:text-gray-600
+            `}>
               Un système simple pour un impact maximal
             </p>
           </motion.div>
@@ -1270,16 +1360,10 @@ export default function ProjectUltra() {
                 initial={{ opacity: 0, y: 60 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
-                transition={{ 
-                  duration: 0.6, 
-                  delay: index * 0.1, 
-                  ease: "easeOut",
-                  type: "spring",
-                  stiffness: 100
-                }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="h-full"
               >
-                <CarteInteractiveUltra
+                <CarteInteractive
                   icon={bin.icon}
                   title={bin.label}
                   description={bin.description}
@@ -1287,19 +1371,17 @@ export default function ProjectUltra() {
                   bg={bin.bg}
                   onClick={() => handleBinClick(index)}
                   isActive={activeBinIndex === index}
-                  equalSize={true}
                   delay={index * 100}
                 />
               </motion.div>
             ))}
           </div>
           
-          {/* Indicateurs de navigation améliorés */}
+          {/* Navigation */}
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.4 }}
             className="flex flex-col items-center gap-4 mt-8"
           >
             <div className="flex items-center gap-2">
@@ -1307,75 +1389,80 @@ export default function ProjectUltra() {
                 <motion.button
                   key={index}
                   onClick={() => handleBinClick(index)}
-                  className={`relative w-3 h-3 rounded-full transition-colors duration-300 ${
-                    index === activeBinIndex 
-                      ? 'bg-gradient-to-r from-blue-600 to-emerald-600' 
-                      : 'bg-white/30 hover:bg-white/50'
-                  }`}
+                  className={`
+                    relative w-3 h-3 rounded-full transition-colors duration-300
+                    ${index === activeBinIndex 
+                      ? 'dark:bg-gradient-to-r dark:from-blue-600 dark:to-emerald-600 light:bg-gradient-to-r light:from-blue-500 light:to-emerald-500' 
+                      : 'dark:bg-white/30 dark:hover:bg-white/50 light:bg-gray-400 light:hover:bg-gray-600'
+                    }
+                  `}
                   whileHover={{ scale: 1.5 }}
                   whileTap={{ scale: 0.8 }}
                   aria-label={`Voir ${bins[index].label}`}
                 >
                   {index === activeBinIndex && (
                     <motion.div
-                      className="absolute -inset-2 rounded-full border-2 border-emerald-500/30"
+                      className="absolute -inset-2 rounded-full border-2"
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ type: "spring" }}
-                    />
+                    >
+                      <div className={`
+                        w-full h-full rounded-full
+                        dark:border-emerald-500/30 light:border-emerald-400/30
+                      `} />
+                    </motion.div>
                   )}
                 </motion.button>
               ))}
             </div>
             
-            <motion.div
-              className="text-center"
-              whileHover={{ scale: 1.05 }}
-            >
-              <BoutonAnimePremium
+            <motion.div whileHover={{ scale: 1.05 }}>
+              <BoutonAnime
                 variant="outline"
                 size="sm"
                 icon={isAutoRotating ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
                 onClick={() => setIsAutoRotating(!isAutoRotating)}
               >
                 {isAutoRotating ? 'Pause' : 'Reprendre'}
-              </BoutonAnimePremium>
+              </BoutonAnime>
             </motion.div>
           </motion.div>
         </motion.section>
         
-        {/* Section Actions avec animations */}
+        {/* Section Actions */}
         <motion.section
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
+          transition={{ duration: 0.6 }}
           className="max-w-7xl mx-auto mb-20"
         >
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
             <motion.div
-              animate={{ 
-                scale: [1, 1.2, 1],
-                rotate: [0, 10, -10, 0]
-              }}
-              transition={{ 
-                duration: 2,
-                repeat: Infinity,
-                repeatType: "reverse"
-              }}
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
             >
-              <Zap className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+              <Zap className={`
+                w-12 h-12 mx-auto mb-4
+                dark:text-yellow-500 light:text-yellow-500
+              `} />
             </motion.div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
+            <h2 className={`
+              text-4xl md:text-5xl font-bold mb-4
+              dark:text-white light:text-gray-900
+            `}>
               Passez à l'Action
             </h2>
-            <p className="text-lg text-white/60">
+            <p className={`
+              text-lg
+              dark:text-gray-400 light:text-gray-600
+            `}>
               Des initiatives concrètes pour s'engager
             </p>
           </motion.div>
@@ -1387,49 +1474,57 @@ export default function ProjectUltra() {
                 initial={{ opacity: 0, y: 60 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
-                transition={{ 
-                  duration: 0.6, 
-                  delay: index * 0.1,
-                  ease: "easeOut" 
-                }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="h-full"
               >
-                <CarteInteractiveUltra
+                <CarteInteractive
                   icon={action.icon}
                   title={action.title}
                   description={action.description}
                   color={action.color}
                   bg={action.bg}
                   onClick={() => window.history.pushState({}, '', action.href)}
-                  equalSize={true}
                   delay={index * 100}
                 />
               </motion.div>
             ))}
           </div>
           
-          {/* Call to Action final */}
+          {/* CTA Final */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.4 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
             className="mt-16"
           >
-            <WidgetFlottantPremium intensity={0.2} glow={true} minHeight="min-h-0">
-              <Card className="border-2 border-white/20 overflow-hidden backdrop-blur-xl 
-                             bg-gradient-to-br from-blue-600/20 via-emerald-600/20 to-cyan-600/20">
+            <WidgetFlottant intensity={0.2} glow={true} minHeight="min-h-0">
+              <Card className={`
+                border overflow-hidden
+                dark:bg-gradient-to-br dark:from-blue-600/20 dark:via-emerald-600/20 dark:to-cyan-600/20
+                light:bg-gradient-to-br light:from-blue-500/15 light:via-emerald-500/15 light:to-cyan-500/15
+                dark:border-white/20 light:border-gray-300
+              `}>
                 <CardContent className="p-8 text-center">
-                  <Heart className="w-16 h-16 text-pink-500 mx-auto mb-6 animate-pulse" />
-                  <h3 className="text-3xl font-bold text-white mb-4">
+                  <Heart className={`
+                    w-16 h-16 mx-auto mb-6 animate-pulse
+                    dark:text-pink-500 light:text-pink-500
+                  `} />
+                  <h3 className={`
+                    text-3xl font-bold mb-4
+                    dark:text-white light:text-gray-900
+                  `}>
                     Votre Engagement Compte
                   </h3>
-                  <p className="text-white/80 mb-6 max-w-2xl mx-auto">
+                  <p className={`
+                    mb-6 max-w-2xl mx-auto
+                    dark:text-gray-300 light:text-gray-700
+                  `}>
                     Chaque geste que vous posez pour l'environnement a un impact réel. 
                     Ensemble, nous pouvons créer un changement durable.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <BoutonAnimePremium
+                    <BoutonAnime
                       variant="gradient"
                       size="lg"
                       icon={<Users className="w-5 h-5" />}
@@ -1437,25 +1532,25 @@ export default function ProjectUltra() {
                       glow={true}
                     >
                       Nous Contacter
-                    </BoutonAnimePremium>
+                    </BoutonAnime>
                     
-                    <BoutonAnimePremium
+                    <BoutonAnime
                       variant="outline"
                       size="lg"
                       icon={<Calendar className="w-5 h-5" />}
                       href="/activities"
                     >
                       Voir les Activités
-                    </BoutonAnimePremium>
+                    </BoutonAnime>
                   </div>
                 </CardContent>
               </Card>
-            </WidgetFlottantPremium>
+            </WidgetFlottant>
           </motion.div>
         </motion.section>
       </div>
       
-      {/* Modals pour les détails des poubelles */}
+      {/* Modals */}
       {openModalIndex !== null && (
         <BinModal
           isOpen={true}
@@ -1469,7 +1564,7 @@ export default function ProjectUltra() {
         />
       )}
       
-      {/* Styles globaux optimisés */}
+      {/* Styles globaux */}
       <style>{`
         @keyframes spin {
           from { transform: rotate(0deg); }
@@ -1479,13 +1574,6 @@ export default function ProjectUltra() {
         @keyframes pulse {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.7; transform: scale(1.05); }
-        }
-        
-        @keyframes float-gentle {
-          0%, 100% { transform: translateY(0px) translateX(0px); }
-          25% { transform: translateY(-20px) translateX(10px); }
-          50% { transform: translateY(0px) translateX(20px); }
-          75% { transform: translateY(20px) translateX(10px); }
         }
         
         @keyframes float-orb {
@@ -1518,6 +1606,11 @@ export default function ProjectUltra() {
         
         .will-change-transform {
           will-change: transform;
+        }
+        
+        /* Smooth transitions for theme changes */
+        * {
+          transition: background-color 0.3s ease, border-color 0.3s ease;
         }
       `}</style>
     </div>
