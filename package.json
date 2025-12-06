@@ -14,7 +14,7 @@
   "dependencies": {
     "react-confetti": "^6.1.0",
     "lodash-es": "^4.17.21",
-    "framer-motion": "^10.0.0",
+    "framer-motion": "^11.5.0",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
