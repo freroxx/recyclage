@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -21,7 +21,8 @@ import {
   ChevronRight,
   Heart,
   Globe,
-  Shield
+  Shield,
+  Maximize2
 } from "lucide-react";
 
 interface Video {
@@ -42,13 +43,14 @@ export default function Videos() {
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<'tutorials' | 'community'>('tutorials');
+  const [isLoading, setIsLoading] = useState(false);
   useScrollReveal();
 
   const videos: Video[] = useMemo(() => [
     {
       id: "community",
       title: "Avenir plus propre avec nos amis félins",
-      description: "Découvrez comment nos compagnons félins nous inspirent à créer un avenir plus durable",
+      description: "Inspirez-vous de notre communauté pour un futur plus durable",
       youtubeId: "CtcgvPj1vGk",
       duration: "0:59",
       publishDate: "2025-12-06",
@@ -127,164 +129,137 @@ export default function Videos() {
     });
   };
 
-  const formatModalDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const options: Intl.DateTimeFormatOptions = {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    };
-    return date.toLocaleDateString('fr-FR', options);
-  };
+  const handleVideoSelect = useCallback((video: Video) => {
+    setIsLoading(true);
+    setSelectedVideo(video);
+    // Simulate loading for better UX
+    setTimeout(() => setIsLoading(false), 300);
+  }, []);
+
+  const handleThumbnailClick = useCallback((e: React.MouseEvent, video: Video) => {
+    e.stopPropagation();
+    handleVideoSelect(video);
+  }, [handleVideoSelect]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-emerald-50/5 dark:to-emerald-950/5">
       <div className="container mx-auto px-4 py-12 md:py-16 lg:py-20">
         <div className="max-w-7xl mx-auto">
-          {/* Hero Section with Enhanced Design */}
+          {/* Enhanced Header */}
           <div 
-            className="text-center mb-16 md:mb-20 lg:mb-24 animate-fade-in-up"
+            className="text-center mb-12 md:mb-16 lg:mb-20 animate-fade-in-up"
             style={{ animationDelay: "0.1s" }}
           >
             <div 
-              className="inline-flex items-center justify-center p-4 mb-8 animate-float"
-              style={{ animationDuration: "3s" }}
+              className="inline-flex items-center justify-center p-3 mb-6 animate-float"
+              style={{ animationDuration: "4s" }}
             >
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-green-500 blur-3xl opacity-20 rounded-full"></div>
-                <div className="relative bg-gradient-to-br from-emerald-500/20 via-green-500/20 to-teal-500/20 backdrop-blur-sm border border-emerald-500/20 p-6 rounded-2xl">
-                  <Play className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/30 to-green-500/30 blur-xl rounded-full animate-pulse-slow"></div>
+                <div className="relative bg-gradient-to-br from-emerald-500/20 via-green-500/20 to-teal-500/20 backdrop-blur-sm border border-emerald-500/30 p-4 rounded-2xl shadow-lg shadow-emerald-500/10">
+                  <Play className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
                 </div>
               </div>
             </div>
             
             <h1 
-              className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 animate-fade-in-up"
+              className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 animate-fade-in-up"
               style={{ animationDelay: "0.2s" }}
             >
               <span className="bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 bg-clip-text text-transparent">
-                Découvrez Notre
-              </span>
-              <br />
-              <span className="bg-gradient-to-r from-foreground to-foreground/90 bg-clip-text text-transparent">
-                Collection Vidéo
+                Vidéos Éducatives
               </span>
             </h1>
             
             <p 
-              className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-10 animate-fade-in-up"
+              className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 animate-fade-in-up"
               style={{ animationDelay: "0.3s" }}
             >
-              Apprenez, inspirez-vous et rejoignez le mouvement pour un avenir plus durable
+              Apprenez et inspirez-vous pour un avenir plus durable
             </p>
-            
-            {/* Stats Cards */}
-            <div 
-              className="flex flex-wrap justify-center gap-4 max-w-2xl mx-auto animate-fade-in-up"
-              style={{ animationDelay: "0.4s" }}
-            >
-              <div className="flex items-center gap-3 px-6 py-4 bg-emerald-500/5 backdrop-blur-sm border border-emerald-500/20 rounded-xl">
-                <div className="p-2 bg-emerald-500/10 rounded-lg">
-                  <Recycle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{tutorialVideos.length}</div>
-                  <div className="text-sm text-muted-foreground">Tutoriels</div>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3 px-6 py-4 bg-green-500/5 backdrop-blur-sm border border-green-500/20 rounded-xl">
-                <div className="p-2 bg-green-500/10 rounded-lg">
-                  <Leaf className="w-5 h-5 text-green-600 dark:text-green-400" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-green-700 dark:text-green-300">{communityVideos.length}</div>
-                  <div className="text-sm text-muted-foreground">Vidéos Communauté</div>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3 px-6 py-4 bg-teal-500/5 backdrop-blur-sm border border-teal-500/20 rounded-xl">
-                <div className="p-2 bg-teal-500/10 rounded-lg">
-                  <Zap className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-teal-700 dark:text-teal-300">24/7</div>
-                  <div className="text-sm text-muted-foreground">Disponible</div>
-                </div>
-              </div>
-            </div>
           </div>
 
-          {/* Navigation Tabs with Better Design */}
+          {/* Navigation Tabs - Enhanced */}
           <div 
-            className="mb-12 animate-fade-in-up"
-            style={{ animationDelay: "0.5s" }}
+            className="mb-10 animate-fade-in-up"
+            style={{ animationDelay: "0.4s" }}
           >
-            <div className="flex justify-center mb-2">
-              <div className="inline-flex bg-muted/50 backdrop-blur-sm p-1.5 rounded-2xl border border-border/30">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mb-8">
+              <div className="flex gap-2">
                 <button
                   onClick={() => setActiveSection('tutorials')}
-                  className={`px-8 py-3 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
+                  className={`group relative px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-3 ${
                     activeSection === 'tutorials'
                       ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/25'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                      : 'bg-background/50 border border-border hover:border-emerald-500/30 hover:bg-emerald-500/5 text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  <Recycle className="w-4 h-4" />
+                  <Recycle className={`w-4 h-4 transition-transform duration-300 ${activeSection === 'tutorials' ? 'group-hover:rotate-12' : ''}`} />
                   Tutoriels
-                  <span className="ml-1 px-2 py-0.5 text-xs rounded-full bg-white/20">{tutorialVideos.length}</span>
+                  <span className={`px-2 py-0.5 text-xs rounded-full transition-all duration-300 ${
+                    activeSection === 'tutorials' 
+                      ? 'bg-white/30' 
+                      : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                  }`}>
+                    {tutorialVideos.length}
+                  </span>
                 </button>
                 
                 <button
                   onClick={() => setActiveSection('community')}
-                  className={`px-8 py-3 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
+                  className={`group relative px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-3 ${
                     activeSection === 'community'
                       ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/25'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                      : 'bg-background/50 border border-border hover:border-emerald-500/30 hover:bg-emerald-500/5 text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  <Users className="w-4 h-4" />
+                  <Users className={`w-4 h-4 transition-transform duration-300 ${activeSection === 'community' ? 'group-hover:scale-110' : ''}`} />
                   Communauté
-                  <span className="ml-1 px-2 py-0.5 text-xs rounded-full bg-white/20">{communityVideos.length}</span>
+                  <span className={`px-2 py-0.5 text-xs rounded-full transition-all duration-300 ${
+                    activeSection === 'community' 
+                      ? 'bg-white/30' 
+                      : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                  }`}>
+                    {communityVideos.length}
+                  </span>
                 </button>
               </div>
-            </div>
-            
-            <div className="text-center mt-4">
-              <p className="text-sm text-muted-foreground">
-                {activeSection === 'tutorials' 
-                  ? 'Apprenez les techniques essentielles de recyclage'
-                  : 'Découvrez les actions inspirantes de notre communauté'}
-              </p>
+              
+              <div className="text-sm text-muted-foreground">
+                <span className="inline-flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4" />
+                  Contenu régulièrement mis à jour
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Content Grid */}
+          {/* Content Area */}
           {activeSection === 'tutorials' && (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
               {tutorialVideos.map((video, index) => (
                 <div
                   key={video.id}
                   className="animate-fade-in-up scroll-reveal"
                   style={{ 
-                    animationDelay: `${0.6 + index * 0.1}s`,
+                    animationDelay: `${0.5 + index * 0.1}s`,
                   }}
                 >
                   <Card
-                    className="group relative h-full border-border/40 hover:border-emerald-500/50 overflow-hidden bg-gradient-to-b from-card to-card/50 backdrop-blur-sm cursor-pointer transition-all duration-500 hover:shadow-2xl hover:shadow-emerald-500/15 hover:-translate-y-1"
-                    onClick={() => setSelectedVideo(video)}
+                    className="group relative h-full border-border/40 hover:border-emerald-500/50 overflow-hidden bg-gradient-to-b from-card to-card/50 backdrop-blur-sm cursor-pointer transition-all duration-500 hover:shadow-2xl hover:shadow-emerald-500/10"
+                    onClick={() => handleVideoSelect(video)}
                   >
-                    {/* Hover Effect */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                    {/* Hover Glow Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     
                     <CardContent className="p-0">
-                      {/* Thumbnail Container */}
-                      <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-emerald-500/10 via-green-500/10 to-teal-500/10">
+                      {/* Thumbnail Container with Play Button */}
+                      <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-emerald-500/5 via-green-500/5 to-teal-500/5">
+                        <div className="absolute inset-0 z-0" />
                         <img
                           src={getThumbnailUrl(video.youtubeId)}
                           alt={video.title}
-                          className="absolute inset-0 w-full h-full object-cover z-10 transition-all duration-700 group-hover:scale-110 group-hover:brightness-110"
+                          className="absolute inset-0 w-full h-full object-cover z-10 transition-all duration-700 group-hover:scale-105"
                           loading="lazy"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
@@ -292,40 +267,55 @@ export default function Videos() {
                           }}
                         />
                         
-                        {/* Overlay Gradient */}
-                        <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
-                        
-                        {/* Play Button */}
-                        <div className="absolute inset-0 z-30 flex items-center justify-center">
-                          <div className="relative">
-                            <div className="absolute inset-0 w-20 h-20 bg-emerald-500/30 rounded-full animate-ping-slow" />
-                            <div className="relative w-16 h-16 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-2xl shadow-emerald-500/40 transition-all duration-300 group-hover:scale-110 group-hover:shadow-emerald-500/60">
-                              <Play className="w-6 h-6 text-white ml-0.5" fill="white" />
+                        {/* Play Button Overlay */}
+                        <div 
+                          className="absolute inset-0 z-20 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer"
+                          onClick={(e) => handleThumbnailClick(e, video)}
+                        >
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="relative">
+                              <div className="absolute inset-0 w-16 h-16 bg-emerald-500/40 rounded-full animate-ping-slow" />
+                              <div className="relative w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-xl shadow-emerald-500/40 transition-all duration-300 group-hover:scale-110 group-hover:shadow-emerald-500/60">
+                                <Play className="w-6 h-6 text-white ml-0.5" fill="white" />
+                              </div>
                             </div>
                           </div>
                         </div>
 
-                        {/* Category Badge */}
-                        <div className="absolute top-4 left-4 z-40">
-                          <Badge className="bg-black/80 backdrop-blur-sm text-white border-0 shadow-lg px-3 py-1.5">
+                        {/* Top Badges */}
+                        <div className="absolute top-3 left-3 z-30 flex gap-2">
+                          <Badge className="bg-black/80 backdrop-blur-sm text-white border-0 text-xs px-2.5 py-1">
                             {video.category}
                           </Badge>
                         </div>
 
                         {/* Duration Badge */}
                         {video.duration && (
-                          <div className="absolute bottom-4 right-4 z-40 bg-black/80 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-lg">
+                          <div className="absolute bottom-3 right-3 z-30 bg-black/80 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-md">
                             {video.duration}
                           </div>
                         )}
                       </div>
 
                       {/* Content */}
-                      <div className="p-6 relative z-20">
+                      <div className="p-5 relative z-20">
                         <div className="space-y-4">
-                          <h3 className="font-bold text-xl line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
-                            {video.title}
-                          </h3>
+                          <div className="flex items-start justify-between gap-3">
+                            <h3 className="font-bold text-lg line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                              {video.title}
+                            </h3>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 hover:bg-emerald-500/10"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openInYouTube(video.youtubeId);
+                              }}
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </Button>
+                          </div>
                           
                           <p className="text-sm text-muted-foreground line-clamp-2">
                             {video.description}
@@ -337,7 +327,7 @@ export default function Videos() {
                               {video.tags.slice(0, 2).map((tag) => (
                                 <span 
                                   key={tag}
-                                  className="text-xs px-3 py-1 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 rounded-full border border-emerald-500/20"
+                                  className="text-xs px-2.5 py-1 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 rounded-full border border-emerald-500/20"
                                 >
                                   {tag}
                                 </span>
@@ -345,24 +335,21 @@ export default function Videos() {
                             </div>
                           )}
                           
-                          {/* Metadata & Actions */}
+                          {/* Footer */}
                           <div className="flex items-center justify-between pt-4 border-t border-border/50">
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Calendar className="w-4 h-4" />
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <Calendar className="w-3 h-3" />
                               <span>{formatDate(video.publishDate || '')}</span>
                             </div>
                             
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 px-3 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-emerald-500/10"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openInYouTube(video.youtubeId);
-                              }}
+                              className="h-7 px-2.5 text-xs hover:bg-emerald-500/10"
+                              onClick={() => handleVideoSelect(video)}
                             >
-                              <ExternalLink className="w-4 h-4 mr-2" />
-                              YouTube
+                              <Play className="w-3 h-3 mr-1.5" />
+                              Regarder
                             </Button>
                           </div>
                         </div>
@@ -375,178 +362,185 @@ export default function Videos() {
           )}
 
           {activeSection === 'community' && (
-            <div className="max-w-2xl mx-auto">
-              {/* Featured Community Video */}
-              <div className="mb-12 animate-fade-in-up" style={{ animationDelay: "0.6s" }}>
-                <div className="text-center mb-8">
-                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 rounded-full mb-4">
-                    <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Vidéo à la une</span>
-                  </div>
-                  <h2 className="text-3xl font-bold mb-4">Notre Communauté en Action</h2>
-                  <p className="text-muted-foreground max-w-2xl mx-auto">
-                    Découvrez comment nos membres contribuent à créer un avenir meilleur
-                  </p>
+            <div className="space-y-8">
+              {/* Community Header */}
+              <div 
+                className="text-center mb-8 animate-fade-in-up"
+                style={{ animationDelay: "0.5s" }}
+              >
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 rounded-full mb-4">
+                  <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Vidéo à la une</span>
                 </div>
-                
-                {/* Community Card */}
-                <div 
-                  className="animate-scale-in"
-                  style={{ animationDelay: "0.7s" }}
-                >
-                  <Card className="group relative overflow-hidden bg-gradient-to-br from-emerald-50/10 to-green-50/5 dark:from-emerald-950/10 dark:to-green-950/5 backdrop-blur-sm border border-emerald-500/20 hover:border-emerald-500/40 transition-all duration-500">
-                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                    
-                    <CardContent className="p-0">
-                      {/* Portrait Thumbnail */}
-                      <div className="relative aspect-[9/16] max-w-md mx-auto overflow-hidden bg-gradient-to-br from-emerald-500/10 via-green-500/10 to-teal-500/10">
-                        <img
-                          src={getThumbnailUrl(communityVideos[0].youtubeId)}
-                          alt={communityVideos[0].title}
-                          className="absolute inset-0 w-full h-full object-cover z-10 transition-all duration-700 group-hover:scale-105 group-hover:brightness-110"
-                          loading="lazy"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = getThumbnailUrl(communityVideos[0].youtubeId, 'hqdefault');
-                          }}
-                        />
-                        
-                        {/* Overlay */}
-                        <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
-                        
-                        {/* Play Button */}
-                        <div className="absolute inset-0 z-30 flex items-center justify-center">
+                <h2 className="text-2xl md:text-3xl font-bold mb-3">Notre Communauté en Action</h2>
+                <p className="text-muted-foreground max-w-xl mx-auto">
+                  Découvrez les moments inspirants partagés par notre communauté
+                </p>
+              </div>
+              
+              {/* Compact Community Video Card */}
+              <div 
+                className="max-w-lg mx-auto animate-scale-in"
+                style={{ animationDelay: "0.6s" }}
+              >
+                <Card className="group relative overflow-hidden bg-gradient-to-br from-emerald-50/10 to-green-50/5 dark:from-emerald-950/10 dark:to-green-950/5 backdrop-blur-sm border border-emerald-500/20 hover:border-emerald-500/40 transition-all duration-500">
+                  <CardContent className="p-0">
+                    {/* Portrait Thumbnail Container */}
+                    <div 
+                      className="relative aspect-[9/16] max-h-[500px] overflow-hidden bg-gradient-to-br from-emerald-500/10 via-green-500/10 to-teal-500/10 cursor-pointer"
+                      onClick={(e) => handleThumbnailClick(e, communityVideos[0])}
+                    >
+                      <img
+                        src={getThumbnailUrl(communityVideos[0].youtubeId)}
+                        alt={communityVideos[0].title}
+                        className="absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-102"
+                        loading="lazy"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = getThumbnailUrl(communityVideos[0].youtubeId, 'hqdefault');
+                        }}
+                      />
+                      
+                      {/* Play Button Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300">
+                        <div className="absolute inset-0 flex items-center justify-center">
                           <div className="relative">
-                            <div className="absolute inset-0 w-24 h-24 bg-emerald-500/30 rounded-full animate-ping-slow" />
-                            <div className="relative w-20 h-20 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-2xl shadow-emerald-500/40 transition-all duration-300 group-hover:scale-110">
-                              <Play className="w-10 h-10 text-white ml-1" fill="white" />
+                            <div className="absolute inset-0 w-20 h-20 bg-emerald-500/40 rounded-full animate-ping-slow" />
+                            <div className="relative w-16 h-16 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-xl shadow-emerald-500/40 transition-all duration-300 group-hover:scale-110">
+                              <Play className="w-8 h-8 text-white ml-1" fill="white" />
                             </div>
                           </div>
                         </div>
-
-                        {/* Short Badge */}
-                        <div className="absolute top-6 left-6 z-40">
-                          <Badge className="bg-gradient-to-r from-emerald-600 to-green-500 text-white border-0 shadow-lg px-4 py-2">
-                            <Zap className="w-4 h-4 mr-2" />
-                            SHORT
-                          </Badge>
-                        </div>
-
-                        {/* Duration */}
-                        {communityVideos[0].duration && (
-                          <div className="absolute bottom-6 right-6 z-40 bg-black/80 backdrop-blur-sm text-white text-sm px-3 py-1.5 rounded-lg">
-                            {communityVideos[0].duration}
-                          </div>
-                        )}
                       </div>
-                      
-                      {/* Content */}
-                      <div className="p-8 relative z-20">
-                        <div className="space-y-6">
-                          <div>
-                            <h3 className="text-2xl font-bold mb-3 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
-                              {communityVideos[0].title}
-                            </h3>
-                            
-                            <p className="text-muted-foreground">
-                              {communityVideos[0].description}
-                            </p>
-                          </div>
+
+                      {/* Short Badge */}
+                      <div className="absolute top-4 left-4 z-30">
+                        <Badge className="bg-gradient-to-r from-emerald-600 to-green-500 text-white border-0 shadow-lg text-xs px-3 py-1.5">
+                          <Zap className="w-3 h-3 mr-1.5" />
+                          SHORT
+                        </Badge>
+                      </div>
+
+                      {/* Duration */}
+                      {communityVideos[0].duration && (
+                        <div className="absolute bottom-4 right-4 z-30 bg-black/80 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-md">
+                          {communityVideos[0].duration}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Compact Content */}
+                    <div className="p-5">
+                      <div className="space-y-4">
+                        <div>
+                          <h3 className="font-bold text-lg mb-2 line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                            {communityVideos[0].title}
+                          </h3>
+                          
+                          <p className="text-sm text-muted-foreground mb-3">
+                            {communityVideos[0].description}
+                          </p>
                           
                           {/* Tags */}
                           {communityVideos[0].tags && communityVideos[0].tags.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-wrap gap-2 mb-4">
                               {communityVideos[0].tags.map((tag) => (
                                 <span 
                                   key={tag}
-                                  className="px-3 py-1.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 rounded-full border border-emerald-500/20 text-sm"
+                                  className="text-xs px-2.5 py-1 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 rounded-full border border-emerald-500/20"
                                 >
                                   {tag}
                                 </span>
                               ))}
                             </div>
                           )}
+                        </div>
+                        
+                        {/* Action Buttons */}
+                        <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Calendar className="w-3 h-3" />
+                            <span>{formatDate(communityVideos[0].publishDate || '')}</span>
+                          </div>
                           
-                          {/* CTA */}
-                          <div className="pt-6 border-t border-border/50">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              <Button
-                                className="gap-3 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 shadow-lg shadow-emerald-500/25"
-                                onClick={() => setSelectedVideo(communityVideos[0])}
-                              >
-                                <Play className="w-5 h-5" />
-                                Regarder maintenant
-                              </Button>
-                              
-                              <Button
-                                variant="outline"
-                                className="gap-3 border-emerald-500/30 hover:border-emerald-500/50 hover:bg-emerald-500/10"
-                                onClick={() => openInYouTube(communityVideos[0].youtubeId)}
-                              >
-                                <ExternalLink className="w-5 h-5" />
-                                Sur YouTube
-                              </Button>
-                            </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 shadow-md shadow-emerald-500/20"
+                              onClick={() => handleVideoSelect(communityVideos[0])}
+                            >
+                              <Play className="w-4 h-4" />
+                              Regarder
+                            </Button>
+                            
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-emerald-500/30 hover:border-emerald-500/50 hover:bg-emerald-500/10"
+                              onClick={() => openInYouTube(communityVideos[0].youtubeId)}
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </Button>
                           </div>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
               
-              {/* Community Inspiration */}
+              {/* Community Stats */}
               <div 
-                className="text-center animate-fade-in-up"
-                style={{ animationDelay: "0.8s" }}
+                className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto animate-fade-in-up"
+                style={{ animationDelay: "0.7s" }}
               >
-                <h3 className="text-2xl font-bold mb-6">Rejoignez Notre Mouvement</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="p-6 bg-gradient-to-br from-emerald-50/5 to-green-50/5 rounded-2xl border border-emerald-500/10">
-                    <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center mb-4 mx-auto">
-                      <Globe className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                    <h4 className="font-semibold mb-2">Portée Globale</h4>
-                    <p className="text-sm text-muted-foreground">Des membres actifs partout dans le monde</p>
+                <div className="p-5 bg-gradient-to-br from-emerald-50/5 to-green-50/5 rounded-xl border border-emerald-500/10 hover:border-emerald-500/30 transition-all duration-300 hover:-translate-y-1">
+                  <div className="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center mb-3">
+                    <Globe className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                   </div>
-                  
-                  <div className="p-6 bg-gradient-to-br from-emerald-50/5 to-green-50/5 rounded-2xl border border-emerald-500/10">
-                    <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center mb-4 mx-auto">
-                      <Leaf className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                    <h4 className="font-semibold mb-2">Impact Positif</h4>
-                    <p className="text-sm text-muted-foreground">Chaque action compte pour notre planète</p>
+                  <h4 className="font-semibold mb-1">Communauté Globale</h4>
+                  <p className="text-sm text-muted-foreground">Membres engagés partout dans le monde</p>
+                </div>
+                
+                <div className="p-5 bg-gradient-to-br from-emerald-50/5 to-green-50/5 rounded-xl border border-emerald-500/10 hover:border-emerald-500/30 transition-all duration-300 hover:-translate-y-1">
+                  <div className="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center mb-3">
+                    <Leaf className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                   </div>
-                  
-                  <div className="p-6 bg-gradient-to-br from-emerald-50/5 to-green-50/5 rounded-2xl border border-emerald-500/10">
-                    <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center mb-4 mx-auto">
-                      <Shield className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                    <h4 className="font-semibold mb-2">Communauté Bienveillante</h4>
-                    <p className="text-sm text-muted-foreground">Un espace d'échange et d'inspiration</p>
+                  <h4 className="font-semibold mb-1">Impact Collectif</h4>
+                  <p className="text-sm text-muted-foreground">Chaque action contribue à un futur meilleur</p>
+                </div>
+                
+                <div className="p-5 bg-gradient-to-br from-emerald-50/5 to-green-50/5 rounded-xl border border-emerald-500/10 hover:border-emerald-500/30 transition-all duration-300 hover:-translate-y-1">
+                  <div className="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center mb-3">
+                    <Shield className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                   </div>
+                  <h4 className="font-semibold mb-1">Inspiration Mutuelle</h4>
+                  <p className="text-sm text-muted-foreground">Partagez vos initiatives et inspirez les autres</p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* YouTube Channel CTA */}
+          {/* YouTube Channel Section */}
           <div 
-            className="text-center mt-16 md:mt-20 animate-fade-in-up"
-            style={{ animationDelay: "1s" }}
+            className="mt-12 md:mt-16 animate-fade-in-up"
+            style={{ animationDelay: "0.9s" }}
           >
-            <div className="max-w-2xl mx-auto">
-              <div className="p-8 bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-teal-500/5 rounded-2xl border border-emerald-500/20 mb-8">
-                <h3 className="text-2xl font-bold mb-4">Notre Chaîne YouTube</h3>
-                <p className="text-muted-foreground mb-6">
-                  Abonnez-vous pour ne manquer aucune nouvelle vidéo éducative
-                </p>
+            <div className="bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-teal-500/5 rounded-2xl border border-emerald-500/20 p-6 md:p-8">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="text-center md:text-left">
+                  <h3 className="text-xl font-bold mb-2">Notre Chaîne YouTube</h3>
+                  <p className="text-muted-foreground mb-4 md:mb-0">
+                    Plus de contenu éducatif disponible sur notre chaîne
+                  </p>
+                </div>
+                
                 <Button
                   size="lg"
-                  className="gap-4 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 shadow-lg shadow-emerald-500/25 px-8"
+                  className="gap-3 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 shadow-lg shadow-emerald-500/25 px-8 group"
                   onClick={() => window.open("https://www.youtube.com/channel/UC1H5HYDNTWHw7fGOYBJp0RQ", '_blank')}
                 >
-                  <ExternalLink className="w-5 h-5" />
+                  <ExternalLink className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
                   Visiter la chaîne
                 </Button>
               </div>
@@ -555,17 +549,56 @@ export default function Videos() {
         </div>
       </div>
 
-      {/* Enhanced Modal with Proper Aspect Ratio */}
+      {/* Enhanced Modal */}
       <Dialog open={isModalOpen} onOpenChange={() => setSelectedVideo(null)}>
-        <DialogContent className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 border-border/50 shadow-2xl overflow-hidden p-0 ${
+        <DialogContent className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 border-none shadow-2xl overflow-hidden p-0 bg-black ${
           selectedVideo?.aspect === 'portrait' 
-            ? 'max-w-md w-[95vw] h-[85vh] md:h-[90vh] aspect-[9/16]' 
-            : 'max-w-4xl w-[95vw] md:w-[90vw] h-auto aspect-video max-h-[85vh] md:max-h-[90vh]'
-        }`}>
-          <div className="bg-background w-full h-full flex flex-col">
-            {/* Video Player */}
-            <div className={`relative flex-1 ${selectedVideo?.aspect === 'portrait' ? 'aspect-[9/16]' : 'aspect-video'}`}>
-              {selectedVideo && (
+            ? 'w-[95vw] max-w-[350px] h-[85vh] max-h-[620px] aspect-[9/16]' 
+            : 'w-[95vw] max-w-[900px] h-[85vh] max-h-[506px] aspect-video'
+        } transition-all duration-300 ${isLoading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+          
+          {/* Loading Overlay */}
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
+              <div className="relative">
+                <div className="w-16 h-16 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Play className="w-8 h-8 text-emerald-500 animate-pulse" />
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Video Player */}
+          <div className="relative w-full h-full">
+            {selectedVideo && (
+              <>
+                {/* Close Button */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-4 right-4 z-50 bg-black/50 backdrop-blur-sm hover:bg-black/80 text-white border-none hover:scale-110 transition-all duration-200"
+                  onClick={() => setSelectedVideo(null)}
+                >
+                  ×
+                </Button>
+                
+                {/* Fullscreen Toggle */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-4 right-12 z-50 bg-black/50 backdrop-blur-sm hover:bg-black/80 text-white border-none hover:scale-110 transition-all duration-200"
+                  onClick={() => {
+                    const iframe = document.querySelector('iframe');
+                    if (iframe?.requestFullscreen) {
+                      iframe.requestFullscreen();
+                    }
+                  }}
+                >
+                  <Maximize2 className="w-4 h-4" />
+                </Button>
+                
+                {/* YouTube Player */}
                 <iframe
                   width="100%"
                   height="100%"
@@ -577,80 +610,57 @@ export default function Videos() {
                   className="absolute inset-0 w-full h-full"
                   loading="lazy"
                   referrerPolicy="strict-origin-when-cross-origin"
+                  onLoad={() => setIsLoading(false)}
                 />
-              )}
-            </div>
-            
-            {/* Video Info - Only shown for landscape videos or below portrait */}
-            {selectedVideo?.aspect === 'landscape' ? (
-              <div className="p-6 border-t border-border/50 bg-gradient-to-b from-background to-background/95">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-xl font-bold mb-2">{selectedVideo.title}</h3>
-                    <p className="text-muted-foreground text-sm">{selectedVideo.description}</p>
-                  </div>
-                  
-                  <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                      {selectedVideo.duration && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <Clock className="w-4 h-4 text-emerald-600" />
-                          <span>{selectedVideo.duration}</span>
-                        </div>
-                      )}
+                
+                {/* Video Info Overlay (Appears on hover) */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                  <div className="absolute bottom-0 left-0 right-0 p-6 pointer-events-auto">
+                    <div className="space-y-3">
+                      <h3 className="text-xl font-bold text-white">{selectedVideo.title}</h3>
+                      <p className="text-sm text-white/80 line-clamp-2">{selectedVideo.description}</p>
                       
-                      {selectedVideo.publishDate && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <Calendar className="w-4 h-4 text-emerald-600" />
-                          <span>{formatModalDate(selectedVideo.publishDate)}</span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          {selectedVideo.duration && (
+                            <div className="flex items-center gap-2 text-sm text-white/90">
+                              <Clock className="w-4 h-4" />
+                              <span>{selectedVideo.duration}</span>
+                            </div>
+                          )}
+                          
+                          {selectedVideo.publishDate && (
+                            <div className="flex items-center gap-2 text-sm text-white/90">
+                              <Calendar className="w-4 h-4" />
+                              <span>{formatDate(selectedVideo.publishDate)}</span>
+                            </div>
+                          )}
                         </div>
-                      )}
+                        
+                        <Button
+                          size="sm"
+                          className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600"
+                          onClick={() => openInYouTube(selectedVideo.youtubeId)}
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          YouTube
+                        </Button>
+                      </div>
                     </div>
-                    
-                    <Button
-                      size="sm"
-                      className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600"
-                      onClick={() => selectedVideo && openInYouTube(selectedVideo.youtubeId)}
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      Sur YouTube
-                    </Button>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div className="p-4 border-t border-border/50 bg-gradient-to-b from-background to-background/95">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <h3 className="font-semibold text-sm line-clamp-1">{selectedVideo?.title}</h3>
-                    {selectedVideo?.publishDate && (
-                      <p className="text-xs text-muted-foreground">
-                        {formatDate(selectedVideo.publishDate)}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8"
-                    onClick={() => selectedVideo && openInYouTube(selectedVideo.youtubeId)}
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
+              </>
             )}
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Enhanced Animations */}
+      {/* Enhanced Animations CSS */}
       <style>{`
         @keyframes fadeInUp {
           from {
             opacity: 0;
-            transform: translateY(30px);
+            transform: translateY(20px);
           }
           to {
             opacity: 1;
@@ -661,22 +671,11 @@ export default function Videos() {
         @keyframes scaleIn {
           from {
             opacity: 0;
-            transform: scale(0.95) translateY(20px);
+            transform: scale(0.95);
           }
           to {
             opacity: 1;
-            transform: scale(1) translateY(0);
-          }
-        }
-        
-        @keyframes modalIn {
-          from {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
+            transform: scale(1);
           }
         }
         
@@ -689,17 +688,26 @@ export default function Videos() {
             opacity: 0;
           }
           100% {
-            transform: scale(1.4);
+            transform: scale(1.3);
             opacity: 0;
+          }
+        }
+        
+        @keyframes pulseSlow {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.7;
           }
         }
         
         @keyframes float {
           0%, 100% {
-            transform: translateY(0) rotate(0deg);
+            transform: translateY(0);
           }
           50% {
-            transform: translateY(-10px) rotate(2deg);
+            transform: translateY(-8px);
           }
         }
         
@@ -713,25 +721,25 @@ export default function Videos() {
         }
         
         .animate-fade-in-up {
-          animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
           opacity: 0;
         }
         
         .animate-scale-in {
-          animation: scaleIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          animation: scaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
           opacity: 0;
-        }
-        
-        .animate-modal-in {
-          animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         
         .animate-ping-slow {
           animation: pingSlow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
         }
         
+        .animate-pulse-slow {
+          animation: pulseSlow 2s ease-in-out infinite;
+        }
+        
         .animate-float {
-          animation: float 6s ease-in-out infinite;
+          animation: float 4s ease-in-out infinite;
         }
         
         .animate-shimmer {
@@ -740,27 +748,49 @@ export default function Videos() {
           animation: shimmer 2s infinite;
         }
         
-        /* Smooth scrolling */
-        .scroll-reveal {
-          opacity: 0;
-          transform: translateY(20px);
-          transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        /* Custom hover scales */
+        .group-hover\\:scale-102 {
+          transform: scale(1.02);
         }
         
-        .scroll-reveal.visible {
-          opacity: 1;
+        /* Smooth transitions */
+        .transition-all {
+          transition-property: all;
+          transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Button hover effects */
+        button:hover {
+          transform: translateY(-1px);
+        }
+        
+        button:active {
           transform: translateY(0);
+        }
+        
+        /* Card hover effects */
+        .card-hover {
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card-hover:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 20px 40px rgba(16, 185, 129, 0.1);
         }
         
         /* Reduced motion */
         @media (prefers-reduced-motion: reduce) {
           .animate-fade-in-up,
           .animate-scale-in,
-          .animate-modal-in,
           .animate-ping-slow,
+          .animate-pulse-slow,
           .animate-float,
           .animate-shimmer,
-          .scroll-reveal {
+          .scroll-reveal,
+          .transition-all,
+          .group-hover\\:scale-102,
+          button:hover,
+          .card-hover {
             animation: none !important;
             opacity: 1 !important;
             transform: none !important;
@@ -768,15 +798,23 @@ export default function Videos() {
           }
         }
         
+        /* Scroll reveal */
+        .scroll-reveal {
+          opacity: 0;
+          transform: translateY(20px);
+          transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), 
+                      transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .scroll-reveal.visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        
         /* Better focus styles */
         *:focus-visible {
           outline: 2px solid rgb(16, 185, 129);
           outline-offset: 2px;
-        }
-        
-        /* Smooth transitions */
-        * {
-          transition: background-color 0.2s ease, border-color 0.2s ease;
         }
       `}</style>
     </div>
