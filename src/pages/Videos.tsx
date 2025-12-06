@@ -10,7 +10,6 @@ import {
   ExternalLink, 
   Calendar, 
   Clock, 
-  Eye, 
   TrendingUp, 
   Users, 
   Tag, 
@@ -18,17 +17,11 @@ import {
   Leaf,
   Recycle,
   Zap,
-  ChevronRight,
-  Heart,
-  Globe,
-  Shield,
   X,
   Maximize2,
   Minimize2,
-  Volume2,
-  VolumeX,
-  Settings,
-  Captions
+  Globe,
+  Shield
 } from "lucide-react";
 
 interface Video {
@@ -181,7 +174,7 @@ export default function Videos() {
     
     controlsTimeoutRef.current = setTimeout(() => {
       setShowControls(false);
-    }, 3000);
+    }, 2000);
   }, []);
 
   useEffect(() => {
@@ -198,12 +191,10 @@ export default function Videos() {
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div 
-            className="text-center mb-12 md:mb-16 lg:mb-20 animate-fade-in-up"
-            style={{ animationDelay: "0.1s" }}
+            className="text-center mb-12 md:mb-16 lg:mb-20"
           >
             <div 
               className="inline-flex items-center justify-center p-3 mb-6 animate-float"
-              style={{ animationDuration: "4s" }}
             >
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/30 to-green-500/30 blur-xl rounded-full animate-pulse-slow"></div>
@@ -214,8 +205,7 @@ export default function Videos() {
             </div>
             
             <h1 
-              className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 animate-fade-in-up"
-              style={{ animationDelay: "0.2s" }}
+              className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6"
             >
               <span className="bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 bg-clip-text text-transparent">
                 Vidéos Éducatives
@@ -223,8 +213,7 @@ export default function Videos() {
             </h1>
             
             <p 
-              className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 animate-fade-in-up"
-              style={{ animationDelay: "0.3s" }}
+              className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8"
             >
               Apprenez et inspirez-vous pour un avenir plus durable
             </p>
@@ -232,8 +221,7 @@ export default function Videos() {
 
           {/* Navigation */}
           <div 
-            className="mb-10 animate-fade-in-up"
-            style={{ animationDelay: "0.4s" }}
+            className="mb-10"
           >
             <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mb-8">
               <div className="flex gap-2">
@@ -291,9 +279,9 @@ export default function Videos() {
               {tutorialVideos.map((video, index) => (
                 <div
                   key={video.id}
-                  className="animate-fade-in-up scroll-reveal"
+                  className="scroll-reveal"
                   style={{ 
-                    animationDelay: `${0.5 + index * 0.1}s`,
+                    animationDelay: `${index * 0.1}s`,
                   }}
                 >
                   <Card
@@ -304,7 +292,6 @@ export default function Videos() {
                     
                     <CardContent className="p-0">
                       <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-emerald-500/5 via-green-500/5 to-teal-500/5">
-                        <div className="absolute inset-0 z-0" />
                         <img
                           src={getThumbnailUrl(video.youtubeId)}
                           alt={video.title}
@@ -408,8 +395,7 @@ export default function Videos() {
           {activeSection === 'community' && (
             <div className="space-y-8">
               <div 
-                className="text-center mb-8 animate-fade-in-up"
-                style={{ animationDelay: "0.5s" }}
+                className="text-center mb-8"
               >
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 rounded-full mb-4">
                   <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -423,13 +409,11 @@ export default function Videos() {
               
               {/* Compact Community Video */}
               <div 
-                className="max-w-md mx-auto animate-scale-in"
-                style={{ animationDelay: "0.6s" }}
+                className="max-w-md mx-auto"
               >
                 <Card className="group relative overflow-hidden bg-gradient-to-br from-emerald-50/10 to-green-50/5 dark:from-emerald-950/10 dark:to-green-950/5 backdrop-blur-sm border border-emerald-500/20 hover:border-emerald-500/40 transition-all duration-500 card-hover">
                   <CardContent className="p-0">
-                    {/* Fixed aspect ratio container */}
-                    <div className="relative w-full pt-[177.78%] overflow-hidden"> {/* 9:16 aspect ratio */}
+                    <div className="relative aspect-[9/16] overflow-hidden">
                       <div 
                         className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-green-500/10 to-teal-500/10 cursor-pointer"
                         onClick={(e) => handleThumbnailClick(e, communityVideos[0])}
@@ -530,8 +514,7 @@ export default function Videos() {
               
               {/* Community Stats */}
               <div 
-                className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto animate-fade-in-up"
-                style={{ animationDelay: "0.7s" }}
+                className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto"
               >
                 <div className="p-5 bg-gradient-to-br from-emerald-50/5 to-green-50/5 rounded-xl border border-emerald-500/10 hover:border-emerald-500/30 transition-all duration-300 hover:-translate-y-1">
                   <div className="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center mb-3">
@@ -562,8 +545,7 @@ export default function Videos() {
 
           {/* YouTube Channel */}
           <div 
-            className="mt-12 md:mt-16 animate-fade-in-up"
-            style={{ animationDelay: "0.9s" }}
+            className="mt-12 md:mt-16"
           >
             <div className="bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-teal-500/5 rounded-2xl border border-emerald-500/20 p-6 md:p-8">
               <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -588,24 +570,18 @@ export default function Videos() {
         </div>
       </div>
 
-      {/* Enhanced Video Modal */}
+      {/* Enhanced Video Modal with Perfect Centering */}
       <Dialog open={isModalOpen} onOpenChange={() => {
         setSelectedVideo(null);
         setIsFullscreen(false);
       }}>
         <DialogContent 
           ref={modalRef}
-          className={`fixed inset-0 m-auto border-none bg-black shadow-2xl overflow-hidden p-0 ${
-            selectedVideo?.aspect === 'portrait' 
-              ? 'w-[95vw] max-w-[350px] h-[85vh] max-h-[620px] aspect-[9/16]' 
-              : 'w-[95vw] max-w-[900px] h-[85vh] max-h-[506px] aspect-video'
-          } transition-all duration-300 ${isLoading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}
+          className="fixed inset-0 m-auto border-none bg-black shadow-2xl overflow-hidden p-0 w-[95vw] h-[85vh] transition-all duration-300 z-50"
           style={{
-            position: 'fixed',
-            left: '50%',
-            top: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 100
+            maxWidth: selectedVideo?.aspect === 'portrait' ? '350px' : '900px',
+            maxHeight: selectedVideo?.aspect === 'portrait' ? '620px' : '506px',
+            aspectRatio: selectedVideo?.aspect === 'portrait' ? '9/16' : '16/9',
           }}
           onMouseMove={handleMouseMove}
           onMouseLeave={() => {
@@ -628,71 +604,41 @@ export default function Videos() {
             </div>
           )}
           
-          {/* Top Controls Bar */}
+          {/* Simplified Top Controls Bar */}
           <div 
-            className={`absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/90 to-transparent p-4 transition-all duration-300 ${
+            className={`absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/90 to-transparent p-3 transition-all duration-200 ${
               showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'
             }`}
           >
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="bg-black/50 backdrop-blur-sm hover:bg-black/80 text-white border-none hover:scale-110 transition-all duration-200"
+                  className="h-8 w-8 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border-none hover:scale-110 transition-all duration-200"
                   onClick={() => {
                     setSelectedVideo(null);
                     setIsFullscreen(false);
                   }}
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </Button>
-                
-                <div className="text-sm text-white/80">
-                  {selectedVideo?.title}
-                </div>
               </div>
               
               <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="bg-black/50 backdrop-blur-sm hover:bg-black/80 text-white border-none hover:scale-110 transition-all duration-200"
-                  onClick={() => {
-                    // Mute/unmute functionality
-                    const iframe = document.querySelector('iframe');
-                    // This would need YouTube API integration for full control
-                  }}
+                  className="h-8 w-8 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border-none hover:scale-110 transition-all duration-200"
+                  onClick={() => selectedVideo && openInYouTube(selectedVideo.youtubeId)}
                 >
-                  <Volume2 className="w-4 h-4" />
+                  <ExternalLink className="w-4 h-4" />
                 </Button>
                 
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="bg-black/50 backdrop-blur-sm hover:bg-black/80 text-white border-none hover:scale-110 transition-all duration-200"
-                  onClick={() => {
-                    // Captions functionality
-                  }}
-                >
-                  <Captions className="w-4 h-4" />
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="bg-black/50 backdrop-blur-sm hover:bg-black/80 text-white border-none hover:scale-110 transition-all duration-200"
-                  onClick={() => {
-                    // Settings functionality
-                  }}
-                >
-                  <Settings className="w-4 h-4" />
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="bg-black/50 backdrop-blur-sm hover:bg-black/80 text-white border-none hover:scale-110 transition-all duration-200"
+                  className="h-8 w-8 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border-none hover:scale-110 transition-all duration-200"
                   onClick={toggleFullscreen}
                 >
                   {isFullscreen ? (
@@ -724,43 +670,15 @@ export default function Videos() {
                   onLoad={() => setIsLoading(false)}
                 />
                 
-                {/* Bottom Info Overlay */}
+                {/* Video Title Overlay */}
                 <div 
-                  className={`absolute bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-6 transition-all duration-300 ${
-                    showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full pointer-events-none'
+                  className={`absolute top-12 left-0 right-0 p-4 transition-all duration-200 ${
+                    showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
                   }`}
                 >
-                  <div className="space-y-3">
-                    <h3 className="text-xl font-bold text-white">{selectedVideo.title}</h3>
-                    <p className="text-sm text-white/80 line-clamp-2">{selectedVideo.description}</p>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        {selectedVideo.duration && (
-                          <div className="flex items-center gap-2 text-sm text-white/90">
-                            <Clock className="w-4 h-4" />
-                            <span>{selectedVideo.duration}</span>
-                          </div>
-                        )}
-                        
-                        {selectedVideo.publishDate && (
-                          <div className="flex items-center gap-2 text-sm text-white/90">
-                            <Calendar className="w-4 h-4" />
-                            <span>{formatDate(selectedVideo.publishDate)}</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <Button
-                        size="sm"
-                        className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600"
-                        onClick={() => openInYouTube(selectedVideo.youtubeId)}
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                        Sur YouTube
-                      </Button>
-                    </div>
-                  </div>
+                  <h3 className="text-sm font-medium text-white/90 truncate">
+                    {selectedVideo.title}
+                  </h3>
                 </div>
               </>
             )}
@@ -768,7 +686,18 @@ export default function Videos() {
         </DialogContent>
       </Dialog>
 
-      {/* Enhanced Animations CSS */}
+      {/* Modal Backdrop */}
+      {isModalOpen && (
+        <div 
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 transition-opacity duration-300"
+          onClick={() => {
+            setSelectedVideo(null);
+            setIsFullscreen(false);
+          }}
+        />
+      )}
+
+      {/* Animations CSS */}
       <style>{`
         @keyframes fadeInUp {
           from {
@@ -778,17 +707,6 @@ export default function Videos() {
           to {
             opacity: 1;
             transform: translateY(0);
-          }
-        }
-        
-        @keyframes scaleIn {
-          from {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
           }
         }
         
@@ -833,16 +751,6 @@ export default function Videos() {
           }
         }
         
-        .animate-fade-in-up {
-          animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-          opacity: 0;
-        }
-        
-        .animate-scale-in {
-          animation: scaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-          opacity: 0;
-        }
-        
         .animate-ping-slow {
           animation: pingSlow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
         }
@@ -870,8 +778,6 @@ export default function Videos() {
         
         /* Reduced motion */
         @media (prefers-reduced-motion: reduce) {
-          .animate-fade-in-up,
-          .animate-scale-in,
           .animate-ping-slow,
           .animate-pulse-slow,
           .animate-float,
