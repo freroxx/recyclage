@@ -18,35 +18,31 @@ import {
   X,
   Share2,
   Rocket,
-  ChevronUp,
-  ChevronDown,
   Zap,
-  TrendingUp,
-  Globe,
   Heart,
   Star,
-  Shield,
-  Lightbulb,
   Cloud,
   Sun,
   Moon,
   Droplets,
-  Wind,
-  TreePine,
-  Coins,
-  Gem,
-  Crown,
-  Flame,
-  Snowflake,
   Clock,
   Infinity,
-  PieChart,
   ChevronRight,
   Pause,
   Play,
   LucideIcon
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+// Hook de navigation sans rechargement
+const useNavigate = () => {
+  const navigate = useCallback((path: string) => {
+    window.history.pushState({}, '', path);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  }, []);
+
+  return navigate;
+};
 
 // Simple Card components
 const Card = ({ children, className = "", style }: { children: ReactNode; className?: string; style?: React.CSSProperties }) => (
@@ -61,23 +57,31 @@ const CardContent = ({ children, className = "" }: { children: ReactNode; classN
   </div>
 );
 
-// Simple Link component
-const Link = ({ to, children, className = "", onMouseEnter, onMouseLeave }: { 
+// Composant Link optimisé pour SPA
+const Link = ({ to, children, className = "", onClick }: { 
   to: string; 
   children: ReactNode; 
   className?: string;
-  onMouseEnter?: () => void;
-  onMouseLeave?: () => void;
-}) => (
-  <a 
-    href={to} 
-    className={className}
-    onMouseEnter={onMouseEnter}
-    onMouseLeave={onMouseLeave}
-  >
-    {children}
-  </a>
-);
+  onClick?: () => void;
+}) => {
+  const navigate = useNavigate();
+  
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    navigate(to);
+    onClick?.();
+  };
+  
+  return (
+    <a 
+      href={to} 
+      className={className}
+      onClick={handleClick}
+    >
+      {children}
+    </a>
+  );
+};
 
 // Types for button component
 interface BoutonAnimePremiumProps {
@@ -110,7 +114,6 @@ const BoutonAnimePremium = memo(({
   glow = true,
   pulse = false,
 }: BoutonAnimePremiumProps) => {
-  const buttonRef = useRef<HTMLButtonElement>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
   
@@ -135,7 +138,7 @@ const BoutonAnimePremium = memo(({
     setIsPressed(false);
   }, []);
   
-  const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleClick = useCallback((e: React.MouseEvent) => {
     if (disabled || loading) return;
     onClick?.();
   }, [disabled, loading, onClick]);
@@ -214,17 +217,14 @@ const BoutonAnimePremium = memo(({
       <Link 
         to={href} 
         className={`inline-block ${fullWidth ? 'w-full' : ''}`}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
       >
         <button
-          ref={buttonRef}
           className={buttonClasses}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
-          onClick={handleClick}
           disabled={disabled || loading}
         >
           {ButtonContent}
@@ -235,7 +235,6 @@ const BoutonAnimePremium = memo(({
   
   return (
     <button
-      ref={buttonRef}
       className={buttonClasses}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -265,14 +264,14 @@ interface WidgetFlottantPremiumProps {
   scrollReveal?: boolean;
 }
 
-// Composant Widget Flottant optimisé avec moins de courbure
+// Composant Widget Flottant optimisé avec animations fluides
 const WidgetFlottantPremium = memo(({
   children,
-  intensity = 0.3, // Réduit l'intensité pour moins de courbure
+  intensity = 0.3,
   className = "",
   interactive = true,
   glow = true,
-  minHeight = "min-h-[320px]",
+  minHeight = "min-h-[280px]",
   equalSize = true,
   onHoverChange,
   delay = 0,
@@ -294,7 +293,7 @@ const WidgetFlottantPremium = memo(({
           }, delay);
         }
       },
-      { threshold: 0.1, rootMargin: '50px' }
+      { threshold: 0.05, rootMargin: '50px' }
     );
     
     observer.observe(widgetRef.current);
@@ -340,10 +339,10 @@ const WidgetFlottantPremium = memo(({
     };
   }, [interactive, onHoverChange]);
   
-  const rotateX = interactive ? mousePosition.y * 5 * intensity : 0; // Réduit de 10 à 5
-  const rotateY = interactive ? -mousePosition.x * 5 * intensity : 0; // Réduit de 10 à 5
-  const translateZ = isHovered ? 15 : 0; // Réduit de 30 à 15
-  const scale = isHovered ? 1.02 : isVisible ? 1 : 0.95; // Réduit de 1.03 à 1.02
+  const rotateX = interactive ? mousePosition.y * 4 * intensity : 0;
+  const rotateY = interactive ? -mousePosition.x * 4 * intensity : 0;
+  const translateZ = isHovered ? 12 : 0;
+  const scale = isHovered ? 1.02 : isVisible ? 1 : 0.97;
   const opacity = isVisible ? 1 : 0;
   
   return (
@@ -352,26 +351,31 @@ const WidgetFlottantPremium = memo(({
       className={`relative rounded-3xl group ${className}
         ${equalSize ? 'w-full h-full flex flex-col' : ''}
         ${minHeight}
-        transform-gpu
+        transform-gpu will-change-transform
       `}
       style={{
-        transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(${translateZ}px) scale(${scale})`,
+        transform: `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(${translateZ}px) scale(${scale})`,
         opacity,
         transition: `
           transform 800ms cubic-bezier(0.16, 1, 0.3, 1),
-          opacity 1000ms cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms,
-          box-shadow 800ms cubic-bezier(0.16, 1, 0.3, 1)
+          opacity 800ms cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms,
+          box-shadow 600ms cubic-bezier(0.16, 1, 0.3, 1)
         `,
         transformStyle: 'preserve-3d',
       }}
     >
       {/* Glow effect */}
       {glow && (
-        <div className={`absolute -inset-4 rounded-3xl bg-gradient-to-br from-blue-500/30 via-emerald-500/25 to-cyan-500/30 transition-all duration-1000 ${isHovered ? 'opacity-100 blur-3xl' : 'opacity-0 blur-2xl'}`} />
+        <div className={`absolute -inset-3 rounded-3xl bg-gradient-to-br from-blue-500/25 via-emerald-500/20 to-cyan-500/25 transition-all duration-700 ${isHovered ? 'opacity-100 blur-2xl' : 'opacity-0 blur-xl'}`} />
       )}
       
       {/* Inner shadow and background */}
-      <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br from-slate-800/95 via-slate-900/90 to-slate-800/85 shadow-2xl transition-all duration-1000 ${isHovered ? 'shadow-3xl' : ''}`} />
+      <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br from-slate-800/95 via-slate-900/90 to-slate-800/85 shadow-xl transition-all duration-700 ${isHovered ? 'shadow-2xl' : ''}`} />
+      
+      {/* Shimmer effect amélioré */}
+      <div className={`absolute inset-0 rounded-3xl overflow-hidden`}>
+        <div className={`absolute -inset-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1200 ${isHovered ? 'translate-x-full' : '-translate-x-full'}`} />
+      </div>
       
       {/* Content container */}
       <div className="relative z-10 h-full transform-gpu">
@@ -383,16 +387,11 @@ const WidgetFlottantPremium = memo(({
 
 WidgetFlottantPremium.displayName = 'WidgetFlottantPremium';
 
-// Système de particules optimisé
-const FondParticulesUltra = memo(() => {
+// Arrière-plan animé ultra fluide
+const FondAniméUltra = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
-  const particlesRef = useRef<Particule[]>([]);
-  const mouseRef = useRef({ x: 0, y: 0 });
-  const timeRef = useRef(0);
-  const mountedRef = useRef(true);
-
-  class Particule {
+  const particlesRef = useRef<Array<{
     x: number;
     y: number;
     size: number;
@@ -401,61 +400,10 @@ const FondParticulesUltra = memo(() => {
     color: string;
     alpha: number;
     pulseSpeed: number;
-
-    constructor(canvasWidth: number, canvasHeight: number) {
-      this.x = Math.random() * canvasWidth;
-      this.y = Math.random() * canvasHeight;
-      this.size = Math.random() * 2 + 0.5;
-      this.speedX = Math.random() * 0.4 - 0.2;
-      this.speedY = Math.random() * 0.4 - 0.2;
-      this.color = this.getRandomColor();
-      this.alpha = Math.random() * 0.3 + 0.1;
-      this.pulseSpeed = Math.random() * 0.02 + 0.01;
-    }
-    
-    getRandomColor() {
-      const colors = [
-        `rgb(100, 200, 255)`,
-        `rgb(100, 255, 200)`,
-        `rgb(200, 100, 255)`,
-        `rgb(100, 255, 255)`,
-      ];
-      return colors[Math.floor(Math.random() * colors.length)];
-    }
-    
-    update(time: number, canvasWidth: number, canvasHeight: number) {
-      this.x += this.speedX;
-      this.y += this.speedY;
-      
-      if (this.x > canvasWidth) this.x = 0;
-      if (this.x < 0) this.x = canvasWidth;
-      if (this.y > canvasHeight) this.y = 0;
-      if (this.y < 0) this.y = canvasHeight;
-      
-      this.alpha = 0.15 + Math.sin(time * this.pulseSpeed) * 0.15;
-    }
-    
-    draw(ctx: CanvasRenderingContext2D) {
-      ctx.save();
-      ctx.globalAlpha = this.alpha;
-      ctx.fillStyle = this.color;
-      
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-      ctx.fill();
-      
-      ctx.restore();
-    }
-  }
+  }>>([]);
+  const timeRef = useRef(0);
   
   useEffect(() => {
-    mountedRef.current = true;
-    
-    mouseRef.current = { 
-      x: window.innerWidth / 2, 
-      y: window.innerHeight / 2 
-    };
-    
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -463,44 +411,61 @@ const FondParticulesUltra = memo(() => {
     if (!ctx) return;
     
     const resize = () => {
-      if (!mountedRef.current || !canvas) return;
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       initParticles();
     };
     
-    const handleMouseMove = (e: MouseEvent) => {
-      mouseRef.current = { x: e.clientX, y: e.clientY };
-    };
-    
-    const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches.length > 0) {
-        mouseRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      }
-    };
-    
     const initParticles = () => {
       particlesRef.current = [];
-      const particleCount = Math.min(Math.floor((canvas.width * canvas.height) / 15000), 80);
+      const particleCount = Math.min(Math.floor((canvas.width * canvas.height) / 20000), 60);
       
       for (let i = 0; i < particleCount; i++) {
-        particlesRef.current.push(new Particule(canvas.width, canvas.height));
+        particlesRef.current.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          size: Math.random() * 2 + 0.5,
+          speedX: Math.random() * 0.3 - 0.15,
+          speedY: Math.random() * 0.3 - 0.15,
+          color: `hsl(${Math.random() * 60 + 180}, 70%, 70%)`,
+          alpha: Math.random() * 0.2 + 0.1,
+          pulseSpeed: Math.random() * 0.02 + 0.005,
+        });
       }
     };
     
     const animate = () => {
-      if (!mountedRef.current || !ctx || !canvas) return;
-      
       timeRef.current += 0.01;
       
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.1)';
+      // Fond dégradé animé
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      gradient.addColorStop(0, 'rgba(15, 23, 42, 0.1)');
+      gradient.addColorStop(0.5, 'rgba(30, 41, 59, 0.08)');
+      gradient.addColorStop(1, 'rgba(15, 23, 42, 0.1)');
+      ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      particlesRef.current.forEach(particule => {
-        particule.update(timeRef.current, canvas.width, canvas.height);
-        particule.draw(ctx);
+      // Particules
+      particlesRef.current.forEach(particle => {
+        particle.x += particle.speedX;
+        particle.y += particle.speedY;
+        
+        if (particle.x > canvas.width) particle.x = 0;
+        if (particle.x < 0) particle.x = canvas.width;
+        if (particle.y > canvas.height) particle.y = 0;
+        if (particle.y < 0) particle.y = canvas.height;
+        
+        particle.alpha = 0.1 + Math.sin(timeRef.current * particle.pulseSpeed) * 0.1;
+        
+        ctx.save();
+        ctx.globalAlpha = particle.alpha;
+        ctx.fillStyle = particle.color;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
       });
       
       animationRef.current = requestAnimationFrame(animate);
@@ -508,15 +473,10 @@ const FondParticulesUltra = memo(() => {
     
     resize();
     window.addEventListener('resize', resize);
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('touchmove', handleTouchMove);
     animate();
     
     return () => {
-      mountedRef.current = false;
       window.removeEventListener('resize', resize);
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('touchmove', handleTouchMove);
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
@@ -532,18 +492,44 @@ const FondParticulesUltra = memo(() => {
       />
       
       <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-emerald-500/10" 
+        {/* Ombres portées animées */}
+        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-blue-500/15 via-blue-500/10 to-transparent"
           style={{ 
-            animation: 'gradient-pan 20s ease-in-out infinite',
-            backgroundSize: '200% 200%'
+            animation: 'float-gentle 20s ease-in-out infinite',
           }} 
         />
+        
+        <div className="absolute bottom-0 left-0 right-0 h-96 bg-gradient-to-t from-emerald-500/15 via-emerald-500/10 to-transparent"
+          style={{ 
+            animation: 'float-gentle 25s ease-in-out infinite reverse',
+          }} 
+        />
+        
+        {/* Orbes flottants */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-radial from-blue-500/20 via-blue-500/10 to-transparent rounded-full"
+          style={{ 
+            animation: 'float-orb 30s ease-in-out infinite',
+            filter: 'blur(40px)'
+          }}
+        />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-radial from-emerald-500/20 via-emerald-500/10 to-transparent rounded-full"
+          style={{ 
+            animation: 'float-orb 35s ease-in-out infinite reverse',
+            filter: 'blur(40px)'
+          }}
+        />
+        
+        {/* Effets de lumière subtils */}
+        <div className="absolute top-1/2 left-0 w-px h-64 bg-gradient-to-b from-transparent via-cyan-500/20 to-transparent animate-pulse"
+          style={{ animationDuration: '4s' }} />
+        <div className="absolute top-1/3 right-0 w-px h-64 bg-gradient-to-b from-transparent via-emerald-500/20 to-transparent animate-pulse"
+          style={{ animationDuration: '4s', animationDelay: '2s' }} />
       </div>
     </>
   );
 });
 
-FondParticulesUltra.displayName = 'FondParticulesUltra';
+FondAniméUltra.displayName = 'FondAniméUltra';
 
 // Types for card
 interface CarteInteractiveUltraProps {
@@ -559,7 +545,7 @@ interface CarteInteractiveUltraProps {
   delay?: number;
 }
 
-// Composant Carte Interactive optimisé
+// Composant Carte Interactive avec animations de scroll améliorées
 const CarteInteractiveUltra = memo(({ 
   icon: Icon,
   title,
@@ -586,7 +572,10 @@ const CarteInteractiveUltra = memo(({
           }, delay);
         }
       },
-      { threshold: 0.1, rootMargin: '50px' }
+      { 
+        threshold: 0.05,
+        rootMargin: '100px 0px 100px 0px'
+      }
     );
     
     if (cardRef.current) {
@@ -624,70 +613,86 @@ const CarteInteractiveUltra = memo(({
   return (
     <div ref={cardRef} className="h-full">
       <WidgetFlottantPremium 
-        intensity={0.4} 
+        intensity={0.35} 
         glow={true}
-        minHeight="min-h-[280px]"
+        minHeight="min-h-[260px]"
         equalSize={equalSize}
         onHoverChange={setIsHovered}
         delay={delay}
         scrollReveal={true}
       >
-        <div
+        <motion.div
           onClick={handleClick}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
           className={`cursor-pointer h-full ${isPressed ? 'scale-[0.98]' : ''}`}
-          style={{
-            transform: isVisible ? 'translateY(0)' : 'translateY(50px)',
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ 
             opacity: isVisible ? 1 : 0,
-            transition: `transform 800ms cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms, opacity 600ms ease-out ${delay}ms`
+            y: isVisible ? 0 : 30
+          }}
+          transition={{ 
+            duration: 0.8,
+            delay: delay / 1000,
+            ease: "easeOut"
           }}
         >
           <Card className={`h-full border-0 overflow-hidden bg-transparent rounded-3xl`}>
             <CardContent className="p-6 text-center relative flex flex-col items-center justify-center h-full">
               {isActive && (
-                <div className="absolute top-4 right-4 z-20">
-                  <div className="w-3 h-3 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/50 animate-pulse" />
-                </div>
+                <motion.div
+                  className="absolute top-3 right-3 z-20"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring" }}
+                >
+                  <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/50 animate-pulse" />
+                </motion.div>
               )}
               
-              <div className={`relative w-20 h-20 rounded-2xl ${bg} 
-                            flex items-center justify-center mx-auto mb-6 overflow-hidden
-                            ${isHovered ? 'scale-105 shadow-xl' : 'shadow-lg'}
-                            ${isActive ? 'ring-2 ring-blue-500/40' : ''}
-                            transform-gpu`}
-                style={{
-                  transform: isHovered ? 'rotateY(3deg) rotateX(3deg)' : 'rotateY(0) rotateX(0)',
-                  transition: 'all 500ms cubic-bezier(0.34, 1.56, 0.64, 1)'
+              <motion.div
+                className={`relative w-20 h-20 rounded-2xl ${bg} 
+                          flex items-center justify-center mx-auto mb-6 overflow-hidden
+                          ${isHovered ? 'scale-110 shadow-xl' : 'shadow-lg'}
+                          ${isActive ? 'ring-2 ring-blue-500/40' : ''}
+                          transform-gpu`}
+                whileHover={{ 
+                  rotateY: 3,
+                  rotateX: 3,
+                  scale: 1.1
+                }}
+                transition={{ 
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 15
                 }}
               >
-                <Icon className={`relative z-10 w-10 h-10 ${color}
-                              ${isHovered ? 'scale-110 rotate-6' : ''}`} 
-                  style={{ transition: 'all 500ms cubic-bezier(0.34, 1.56, 0.64, 1)' }} />
-              </div>
+                <Icon className={`relative z-10 w-10 h-10 ${color}`} />
+              </motion.div>
               
-              <h3 className={`relative z-10 font-bold text-xl mb-3
-                            ${isHovered ? 'scale-105' : ''}`}
-                style={{ transition: 'all 500ms cubic-bezier(0.34, 1.56, 0.64, 1)' }}>
+              <motion.h3
+                className="relative z-10 font-bold text-xl mb-3"
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
                 <span className={`bg-gradient-to-r ${isHovered ? 'from-blue-400 via-emerald-400 to-cyan-400' : 'from-white to-white/80'} bg-clip-text text-transparent`}>
                   {title}
                 </span>
-              </h3>
+              </motion.h3>
               
-              <p className={`relative z-10 text-sm text-slate-300 mb-4 flex-grow
-                            ${isHovered ? 'scale-105' : ''}`}
-                style={{
-                  opacity: isVisible ? 1 : 0,
-                  transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
-                  transition: `all 500ms cubic-bezier(0.34, 1.56, 0.64, 1) ${delay + 200}ms`
-                }}>
+              <motion.p
+                className="relative z-10 text-sm text-slate-300 mb-4 flex-grow"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: isVisible ? 1 : 0 }}
+                transition={{ duration: 0.6, delay: (delay + 200) / 1000 }}
+              >
                 {description}
-              </p>
+              </motion.p>
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
       </WidgetFlottantPremium>
     </div>
   );
@@ -707,7 +712,7 @@ interface BinModalProps {
   bg?: string;
 }
 
-// Modal pour les détails des poubelles
+// Modal amélioré avec animations fluides
 const BinModal = memo(({ 
   isOpen,
   onClose,
@@ -715,36 +720,83 @@ const BinModal = memo(({
   title,
   description,
   details,
-  color = "text-primary",
-  bg = "bg-gradient-to-br from-primary/20 to-primary/10",
+  color = "text-blue-600",
+  bg = "bg-gradient-to-br from-blue-500/20 to-blue-500/10",
 }: BinModalProps) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
+  
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+  
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+      onClose();
+    }
+  };
+  
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={handleBackdropClick}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+          style={{ WebkitBackdropFilter: 'blur(8px)' }}
+        >
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-          />
-          
-          {/* Modal content */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="relative max-w-2xl w-full rounded-3xl overflow-hidden"
+            ref={modalRef}
+            initial={{ opacity: 0, scale: 0.9, y: 20, rotateX: 5 }}
+            animate={{ 
+              opacity: 1, 
+              scale: 1, 
+              y: 0,
+              rotateX: 0
+            }}
+            exit={{ 
+              opacity: 0, 
+              scale: 0.95, 
+              y: -20,
+              rotateX: -5
+            }}
+            transition={{ 
+              type: "spring",
+              damping: 25,
+              stiffness: 300,
+              mass: 0.8
+            }}
+            className="relative max-w-2xl w-full"
           >
-            <WidgetFlottantPremium intensity={0.2} glow={true} minHeight="min-h-0">
-              <Card className="border-2 border-white/20 overflow-hidden backdrop-blur-xl bg-slate-900/90">
+            <WidgetFlottantPremium intensity={0.2} glow={true} minHeight="min-h-0" interactive={true}>
+              <Card className="border-2 border-white/20 overflow-hidden backdrop-blur-xl bg-slate-900/95">
                 <CardContent className="p-8">
                   {/* Header */}
                   <div className="flex items-start justify-between mb-8">
-                    <div className="flex items-center gap-4">
+                    <motion.div 
+                      className="flex items-center gap-4"
+                      initial={{ x: -20, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ delay: 0.1 }}
+                    >
                       <div className={`w-16 h-16 rounded-xl ${bg} flex items-center justify-center`}>
                         <Icon className={`w-8 h-8 ${color}`} />
                       </div>
@@ -752,41 +804,64 @@ const BinModal = memo(({
                         <h3 className="text-3xl font-bold text-white mb-2">{title}</h3>
                         <p className="text-white/70">{description}</p>
                       </div>
-                    </div>
+                    </motion.div>
                     
-                    <button
+                    <motion.button
                       onClick={onClose}
                       className="p-2 hover:bg-white/10 rounded-xl transition-colors"
                       aria-label="Fermer"
+                      whileHover={{ scale: 1.1, rotate: 90 }}
+                      whileTap={{ scale: 0.9 }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.2 }}
                     >
                       <X className="w-6 h-6" />
-                    </button>
+                    </motion.button>
                   </div>
                   
                   {/* Details */}
                   <div className="space-y-6">
-                    <div>
+                    <motion.div
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.3 }}
+                    >
                       <h4 className="font-semibold text-lg mb-3 text-blue-400">Description</h4>
                       <p className="text-white/80 leading-relaxed">{details}</p>
-                    </div>
+                    </motion.div>
                     
-                    {/* Quick tips */}
-                    <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
-                      <h4 className="font-semibold text-sm mb-2 text-blue-400">💡 CONSEILS DE TRI</h4>
+                    <motion.div
+                      className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20"
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.4 }}
+                    >
+                      <h4 className="font-semibold text-sm mb-2 text-blue-400 flex items-center gap-2">
+                        <Sparkles className="w-4 h-4" />
+                        CONSEILS DE TRI
+                      </h4>
                       <ul className="text-sm text-white/80 space-y-1">
                         <li>• Bien nettoyer les contenants</li>
                         <li>• Retirer les couvercles non-recyclables</li>
                         <li>• Compacter pour gagner de l'espace</li>
+                        <li>• Vérifier les consignes locales</li>
                       </ul>
-                    </div>
+                    </motion.div>
                   </div>
                   
                   {/* Actions */}
-                  <div className="flex gap-4 mt-8 pt-6 border-t border-white/20">
+                  <motion.div 
+                    className="flex gap-4 mt-8 pt-6 border-t border-white/20"
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.5 }}
+                  >
                     <BoutonAnimePremium
                       variant="outline"
                       size="sm"
                       onClick={onClose}
+                      className="flex-1"
                     >
                       Fermer
                     </BoutonAnimePremium>
@@ -795,15 +870,18 @@ const BinModal = memo(({
                       variant="gradient"
                       size="sm"
                       href="/guide"
+                      className="flex-1"
+                      glow={true}
                     >
+                      <BookOpen className="w-4 h-4 mr-2" />
                       Guide Complet
                     </BoutonAnimePremium>
-                  </div>
+                  </motion.div>
                 </CardContent>
               </Card>
             </WidgetFlottantPremium>
           </motion.div>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );
@@ -811,20 +889,18 @@ const BinModal = memo(({
 
 BinModal.displayName = 'BinModal';
 
-// Composant principal ultra optimisé
+// Composant principal optimisé
 export default function ProjectUltra() {
-  
   // États optimisés
   const [activeBinIndex, setActiveBinIndex] = useState(0);
   const [isAutoRotating, setIsAutoRotating] = useState(true);
   const [openModalIndex, setOpenModalIndex] = useState<number | null>(null);
-  const [activeGoalIndex, setActiveGoalIndex] = useState<number | null>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   
   const autoRotationInterval = useRef<NodeJS.Timeout>();
   const mountedRef = useRef(true);
   
-  // Données simplifiées
+  // Données optimisées
   const bins = useMemo(() => [
     { 
       icon: FileText, 
@@ -832,7 +908,7 @@ export default function ProjectUltra() {
       bg: "bg-gradient-to-br from-amber-500/20 to-amber-600/10", 
       label: "Papier & Carton",
       description: "Journaux, magazines, cartons",
-      details: "Le papier et le carton représentent environ 25% de nos déchets ménagers. Leur recyclage permet de sauver des arbres et réduire la consommation d'eau et d'énergie."
+      details: "Le papier et le carton représentent environ 25% de nos déchets ménagers. Leur recyclage permet de sauver des arbres et réduire la consommation d'eau et d'énergie. Notre système de collecte optimisé garantit un taux de recyclage optimal."
     },
     { 
       icon: Package, 
@@ -840,7 +916,7 @@ export default function ProjectUltra() {
       bg: "bg-gradient-to-br from-blue-500/20 to-cyan-600/10", 
       label: "Plastique",
       description: "Bouteilles, emballages plastiques",
-      details: "Les plastiques peuvent mettre jusqu'à 500 ans à se décomposer. Notre programme de recyclage les transforme en nouvelles ressources."
+      details: "Les plastiques peuvent mettre jusqu'à 500 ans à se décomposer dans la nature. Notre programme de recyclage innovant transforme les plastiques usagés en nouvelles ressources grâce à des technologies de tri optique avancées."
     },
     { 
       icon: Trash2, 
@@ -848,7 +924,7 @@ export default function ProjectUltra() {
       bg: "bg-gradient-to-br from-gray-500/20 to-gray-600/10", 
       label: "Métal",
       description: "Cannettes, boîtes de conserve",
-      details: "Le recyclage des métaux permet d'économiser jusqu'à 95% de l'énergie nécessaire à leur production primaire."
+      details: "Le recyclage des métaux est particulièrement efficace avec une économie d'énergie allant jusqu'à 95% par rapport à la production primaire. Nous utilisons des aimants puissants pour une séparation précise à 99%."
     },
     { 
       icon: Apple, 
@@ -856,7 +932,7 @@ export default function ProjectUltra() {
       bg: "bg-gradient-to-br from-green-500/20 to-emerald-600/10", 
       label: "Organique",
       description: "Déchets alimentaires, compostables",
-      details: "Transformés en compost pour enrichir les sols des jardins communautaires et espaces verts."
+      details: "Transformés en compost de haute qualité pour enrichir les sols des jardins communautaires et espaces verts publics, contribuant ainsi à l'économie circulaire locale."
     },
   ], []);
   
@@ -895,7 +971,7 @@ export default function ProjectUltra() {
     {
       icon: Calendar,
       title: "Événements",
-      description: "Participez à nos activités communautaires",
+      description: "Activités et événements communautaires",
       color: "text-blue-600",
       bg: "bg-gradient-to-br from-blue-500/20 to-cyan-600/10",
       href: "/activities"
@@ -903,21 +979,21 @@ export default function ProjectUltra() {
     {
       icon: BookOpen,
       title: "Ressources",
-      description: "Formations et guides pratiques",
+      description: "Guides et documents pédagogiques",
       color: "text-green-600",
       bg: "bg-gradient-to-br from-green-500/20 to-emerald-600/10",
       href: "/resources"
     },
     {
       icon: Home,
-      title: "Guides",
-      description: "Solutions pour un foyer écologique",
+      title: "Guides Pratiques",
+      description: "Conseils pour un foyer écologique",
       color: "text-purple-600",
       bg: "bg-gradient-to-br from-purple-500/20 to-pink-600/10",
       href: "/guide"
     },
     {
-      icon: Award,
+      icon: Share2,
       title: "Projets",
       description: "Découvrez nos initiatives en cours",
       color: "text-amber-600",
@@ -926,13 +1002,21 @@ export default function ProjectUltra() {
     }
   ], []);
   
-  // Animation de scroll
+  // Animation de scroll optimisée
   useEffect(() => {
+    let ticking = false;
+    
     const handleScroll = () => {
-      const scrollTop = window.scrollY;
-      const docHeight = document.body.scrollHeight - window.innerHeight;
-      const progress = (scrollTop / docHeight) * 100;
-      setScrollProgress(progress);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrollTop = window.scrollY;
+          const docHeight = document.body.scrollHeight - window.innerHeight;
+          const progress = Math.min((scrollTop / docHeight) * 100, 100);
+          setScrollProgress(progress);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
     
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -965,7 +1049,7 @@ export default function ProjectUltra() {
     };
   }, [isAutoRotating, openModalIndex, bins.length]);
   
-  // Gestion des interactions optimisées
+  // Gestion des interactions
   const handleBinClick = useCallback((index: number) => {
     setActiveBinIndex(index);
     setOpenModalIndex(index);
@@ -974,66 +1058,93 @@ export default function ProjectUltra() {
   
   const handleCloseModal = useCallback(() => {
     setOpenModalIndex(null);
-    setIsAutoRotating(true);
+    setTimeout(() => {
+      setIsAutoRotating(true);
+    }, 500);
   }, []);
-  
-  const handleGoalClick = useCallback((index: number) => {
-    setActiveGoalIndex(index === activeGoalIndex ? null : index);
-  }, [activeGoalIndex]);
   
   return (
     <div className="min-h-screen overflow-hidden">
-      <FondParticulesUltra />
+      <FondAniméUltra />
       
-      {/* Indicateur de progression du scroll */}
-      <div className="fixed top-0 left-0 w-full h-1 z-40 bg-background/50 backdrop-blur-sm">
-        <div 
-          className="h-full bg-gradient-to-r from-blue-600 via-emerald-600 to-cyan-600 transition-all duration-300 rounded-r-full"
+      {/* Indicateur de progression du scroll amélioré */}
+      <motion.div 
+        className="fixed top-0 left-0 w-full h-1 z-40 bg-background/30 backdrop-blur-sm"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+      >
+        <motion.div 
+          className="h-full bg-gradient-to-r from-blue-600 via-emerald-600 to-cyan-600 rounded-r-full"
           style={{ width: `${scrollProgress}%` }}
+          transition={{ type: "spring", damping: 30, stiffness: 100 }}
         />
-      </div>
+      </motion.div>
       
       <div className="container mx-auto px-4 py-8 md:py-12 lg:py-16">
-        {/* Section Héro optimisée */}
+        {/* Section Héro avec animations fluides */}
         <motion.section
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1.2 }}
+          transition={{ duration: 1, ease: "easeOut" }}
           className="max-w-6xl mx-auto text-center mb-16 md:mb-24 pt-16"
         >
           <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.2 }}
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ 
+              type: "spring",
+              stiffness: 200,
+              damping: 15,
+              delay: 0.2
+            }}
             className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-600/30 via-emerald-500/30 to-cyan-500/30 
                        text-white px-6 py-3 rounded-full text-sm font-medium mb-8 
-                       border border-white/20 backdrop-blur-xl"
+                       border border-white/20 backdrop-blur-xl shadow-lg"
           >
             <Sparkles className="w-4 h-4" />
             <span>Initiative Écologique 2025</span>
           </motion.div>
           
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.4 }}
+            transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
             className="mb-8"
           >
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-black mb-6 tracking-tighter">
-              <span className="bg-gradient-to-r from-blue-600 via-emerald-600 to-cyan-600 bg-clip-text text-transparent leading-none">
+              <motion.span
+                className="bg-gradient-to-r from-blue-600 via-emerald-600 to-cyan-600 bg-clip-text text-transparent leading-none inline-block"
+                animate={{ 
+                  backgroundPosition: ['0% 50%', '100% 50%', '0% 50%']
+                }}
+                transition={{ 
+                  duration: 10,
+                  repeat: Infinity,
+                  ease: "linear"
+                }}
+                style={{ 
+                  backgroundSize: '200% auto'
+                }}
+              >
                 Écologie
-              </span>
+              </motion.span>
             </h1>
             
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
+            <motion.h2
+              className="text-3xl md:text-4xl font-bold mb-6 text-white"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+            >
               Notre Planète, Notre Avenir
-            </h2>
+            </motion.h2>
           </motion.div>
           
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.6 }}
+            transition={{ duration: 0.8, delay: 0.8, ease: "easeOut" }}
             className="max-w-2xl mx-auto mb-8"
           >
             <p className="text-xl text-white/80 leading-relaxed mb-6">
@@ -1045,7 +1156,7 @@ export default function ProjectUltra() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.8 }}
+            transition={{ duration: 0.8, delay: 1, ease: "easeOut" }}
             className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12"
           >
             <BoutonAnimePremium
@@ -1054,8 +1165,9 @@ export default function ProjectUltra() {
               icon={<Rocket className="w-5 h-5" />}
               href="/project"
               glow={true}
+              pulse={true}
             >
-              Découvrir
+              Découvrir nos Projets
             </BoutonAnimePremium>
             
             <BoutonAnimePremium
@@ -1069,21 +1181,27 @@ export default function ProjectUltra() {
           </motion.div>
         </motion.section>
         
-        {/* Section Objectifs optimisée */}
+        {/* Section Objectifs avec animations de scroll */}
         <motion.section
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 1 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
           className="max-w-7xl mx-auto mb-20"
         >
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
-            <Target className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+            <motion.div
+              whileHover={{ rotate: 360 }}
+              transition={{ duration: 1, ease: "easeInOut" }}
+            >
+              <Target className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+            </motion.div>
             <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
               Nos Objectifs
             </h2>
@@ -1096,10 +1214,10 @@ export default function ProjectUltra() {
             {goals.map((goal, index) => (
               <motion.div
                 key={goal.title}
-                initial={{ opacity: 0, y: 40 }}
+                initial={{ opacity: 0, y: 60 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.6, delay: index * 0.1, ease: "easeOut" }}
                 className="h-full"
               >
                 <CarteInteractiveUltra
@@ -1108,8 +1226,6 @@ export default function ProjectUltra() {
                   description={goal.description}
                   color={goal.color}
                   bg={goal.bg}
-                  onClick={() => handleGoalClick(index)}
-                  isActive={activeGoalIndex === index}
                   equalSize={true}
                   delay={index * 100}
                 />
@@ -1118,21 +1234,27 @@ export default function ProjectUltra() {
           </div>
         </motion.section>
         
-        {/* Section Tri Sélectif optimisée */}
+        {/* Section Tri Sélectif avec animations fluides */}
         <motion.section
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 1 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
           className="max-w-7xl mx-auto mb-20"
         >
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
-            <Recycle className="w-12 h-12 text-emerald-600 mx-auto mb-4 animate-spin" style={{ animationDuration: '15s' }} />
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+            >
+              <Recycle className="w-12 h-12 text-emerald-600 mx-auto mb-4" />
+            </motion.div>
             <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
               Tri Sélectif
             </h2>
@@ -1145,10 +1267,16 @@ export default function ProjectUltra() {
             {bins.map((bin, index) => (
               <motion.div
                 key={bin.label}
-                initial={{ opacity: 0, y: 40 }}
+                initial={{ opacity: 0, y: 60 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ 
+                  duration: 0.6, 
+                  delay: index * 0.1, 
+                  ease: "easeOut",
+                  type: "spring",
+                  stiffness: 100
+                }}
                 className="h-full"
               >
                 <CarteInteractiveUltra
@@ -1166,29 +1294,44 @@ export default function ProjectUltra() {
             ))}
           </div>
           
-          {/* Indicateurs de navigation */}
+          {/* Indicateurs de navigation améliorés */}
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.4 }}
             className="flex flex-col items-center gap-4 mt-8"
           >
             <div className="flex items-center gap-2">
               {bins.map((_, index) => (
-                <button
+                <motion.button
                   key={index}
                   onClick={() => handleBinClick(index)}
-                  className={`relative w-3 h-3 rounded-full transition-all duration-300 hover:scale-150 ${
+                  className={`relative w-3 h-3 rounded-full transition-colors duration-300 ${
                     index === activeBinIndex 
-                      ? 'w-8 bg-gradient-to-r from-blue-600 to-emerald-600' 
+                      ? 'bg-gradient-to-r from-blue-600 to-emerald-600' 
                       : 'bg-white/30 hover:bg-white/50'
                   }`}
+                  whileHover={{ scale: 1.5 }}
+                  whileTap={{ scale: 0.8 }}
                   aria-label={`Voir ${bins[index].label}`}
-                />
+                >
+                  {index === activeBinIndex && (
+                    <motion.div
+                      className="absolute -inset-2 rounded-full border-2 border-emerald-500/30"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring" }}
+                    />
+                  )}
+                </motion.button>
               ))}
             </div>
             
-            <div className="text-center">
+            <motion.div
+              className="text-center"
+              whileHover={{ scale: 1.05 }}
+            >
               <BoutonAnimePremium
                 variant="outline"
                 size="sm"
@@ -1197,25 +1340,38 @@ export default function ProjectUltra() {
               >
                 {isAutoRotating ? 'Pause' : 'Reprendre'}
               </BoutonAnimePremium>
-            </div>
+            </motion.div>
           </motion.div>
         </motion.section>
         
-        {/* Section Actions optimisée */}
+        {/* Section Actions avec animations */}
         <motion.section
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 1 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
           className="max-w-7xl mx-auto mb-20"
         >
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
-            <Zap className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+            <motion.div
+              animate={{ 
+                scale: [1, 1.2, 1],
+                rotate: [0, 10, -10, 0]
+              }}
+              transition={{ 
+                duration: 2,
+                repeat: Infinity,
+                repeatType: "reverse"
+              }}
+            >
+              <Zap className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+            </motion.div>
             <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
               Passez à l'Action
             </h2>
@@ -1228,10 +1384,14 @@ export default function ProjectUltra() {
             {actions.map((action, index) => (
               <motion.div
                 key={action.title}
-                initial={{ opacity: 0, y: 40 }}
+                initial={{ opacity: 0, y: 60 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ 
+                  duration: 0.6, 
+                  delay: index * 0.1,
+                  ease: "easeOut" 
+                }}
                 className="h-full"
               >
                 <CarteInteractiveUltra
@@ -1240,7 +1400,7 @@ export default function ProjectUltra() {
                   description={action.description}
                   color={action.color}
                   bg={action.bg}
-                  onClick={() => action.href && window.open(action.href, '_self')}
+                  onClick={() => window.history.pushState({}, '', action.href)}
                   equalSize={true}
                   delay={index * 100}
                 />
@@ -1248,30 +1408,49 @@ export default function ProjectUltra() {
             ))}
           </div>
           
-          {/* Call to Action intermédiaire */}
+          {/* Call to Action final */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mt-12"
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="mt-16"
           >
-            <div className="relative rounded-2xl overflow-hidden p-8 text-center bg-gradient-to-r from-blue-600/20 to-emerald-600/20 backdrop-blur-sm">
-              <h3 className="text-2xl font-bold mb-4 text-white">
-                Rejoignez notre communauté
-              </h3>
-              <p className="text-white/80 mb-6">
-                Ensemble, nous pouvons faire la différence
-              </p>
-              <BoutonAnimePremium
-                variant="gradient"
-                size="lg"
-                icon={<Users className="w-5 h-5" />}
-                href="/contact"
-                glow={true}
-              >
-                Nous Contacter
-              </BoutonAnimePremium>
-            </div>
+            <WidgetFlottantPremium intensity={0.2} glow={true} minHeight="min-h-0">
+              <Card className="border-2 border-white/20 overflow-hidden backdrop-blur-xl 
+                             bg-gradient-to-br from-blue-600/20 via-emerald-600/20 to-cyan-600/20">
+                <CardContent className="p-8 text-center">
+                  <Heart className="w-16 h-16 text-pink-500 mx-auto mb-6 animate-pulse" />
+                  <h3 className="text-3xl font-bold text-white mb-4">
+                    Votre Engagement Compte
+                  </h3>
+                  <p className="text-white/80 mb-6 max-w-2xl mx-auto">
+                    Chaque geste que vous posez pour l'environnement a un impact réel. 
+                    Ensemble, nous pouvons créer un changement durable.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <BoutonAnimePremium
+                      variant="gradient"
+                      size="lg"
+                      icon={<Users className="w-5 h-5" />}
+                      href="/contact"
+                      glow={true}
+                    >
+                      Nous Contacter
+                    </BoutonAnimePremium>
+                    
+                    <BoutonAnimePremium
+                      variant="outline"
+                      size="lg"
+                      icon={<Calendar className="w-5 h-5" />}
+                      href="/activities"
+                    >
+                      Voir les Activités
+                    </BoutonAnimePremium>
+                  </div>
+                </CardContent>
+              </Card>
+            </WidgetFlottantPremium>
           </motion.div>
         </motion.section>
       </div>
@@ -1298,13 +1477,27 @@ export default function ProjectUltra() {
         }
         
         @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: .5; }
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.7; transform: scale(1.05); }
         }
         
-        @keyframes gradient-pan {
+        @keyframes float-gentle {
+          0%, 100% { transform: translateY(0px) translateX(0px); }
+          25% { transform: translateY(-20px) translateX(10px); }
+          50% { transform: translateY(0px) translateX(20px); }
+          75% { transform: translateY(20px) translateX(10px); }
+        }
+        
+        @keyframes float-orb {
+          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.4; }
+          33% { transform: translate(40px, -30px) scale(1.1); opacity: 0.6; }
+          66% { transform: translate(-20px, 40px) scale(0.9); opacity: 0.3; }
+        }
+        
+        @keyframes gradient-flow {
           0% { background-position: 0% 50%; }
-          100% { background-position: 200% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
         }
         
         .animate-spin {
@@ -1312,7 +1505,19 @@ export default function ProjectUltra() {
         }
         
         .animate-pulse {
-          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+          animation: pulse 2s ease-in-out infinite;
+        }
+        
+        * {
+          -webkit-tap-highlight-color: transparent;
+        }
+        
+        .transform-gpu {
+          transform: translateZ(0);
+        }
+        
+        .will-change-transform {
+          will-change: transform;
         }
       `}</style>
     </div>
