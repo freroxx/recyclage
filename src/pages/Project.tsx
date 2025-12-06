@@ -100,7 +100,7 @@ interface BoutonAnimeProps {
   pulse?: boolean;
 }
 
-// Composant Bouton avec support thème
+// Composant Bouton avec support thème amélioré
 const BoutonAnime = memo(({ 
   children, 
   variant = "default",
@@ -147,42 +147,42 @@ const BoutonAnime = memo(({
     lg: "px-9 py-4 text-lg",
   };
   
-  // Classes variant pour thème clair/sombre
+  // Classes variant pour thème clair/sombre avec meilleur contraste
   const variantClasses: Record<string, string> = {
     default: `
       dark:bg-gradient-to-r dark:from-blue-600 dark:to-blue-500 
       dark:hover:from-blue-500 dark:hover:to-blue-600 
       dark:shadow-xl dark:hover:shadow-blue-500/40
-      light:bg-gradient-to-r light:from-blue-500 light:to-blue-400 
-      light:hover:from-blue-400 light:hover:to-blue-500 
-      light:shadow-xl light:hover:shadow-blue-500/30
+      bg-gradient-to-r from-blue-500 to-blue-400
+      hover:from-blue-400 hover:to-blue-500 
+      shadow-xl hover:shadow-blue-500/30
       text-white
     `,
     outline: `
       dark:border-2 dark:border-blue-400/40 dark:bg-slate-900/90 
       dark:hover:border-blue-400/80 dark:hover:bg-blue-500/15 
       dark:hover:shadow-blue-500/30
-      light:border-2 light:border-blue-500/60 light:bg-white/90 
-      light:hover:border-blue-500/80 light:hover:bg-blue-50 
-      light:hover:shadow-blue-500/20
-      dark:text-white light:text-blue-900
+      border-2 border-blue-500/60 bg-white/90
+      hover:border-blue-500/80 hover:bg-blue-50 
+      hover:shadow-blue-500/20
+      dark:text-white text-blue-900
     `,
     gradient: `
       dark:bg-gradient-to-r dark:from-blue-600 dark:via-emerald-600 dark:to-cyan-600 
       dark:hover:from-blue-500 dark:hover:via-emerald-700 dark:hover:to-cyan-700 
       dark:shadow-xl dark:hover:shadow-blue-500/40
-      light:bg-gradient-to-r light:from-blue-500 light:via-emerald-500 light:to-cyan-500 
-      light:hover:from-blue-400 light:hover:via-emerald-600 light:hover:to-cyan-600 
-      light:shadow-xl light:hover:shadow-blue-500/30
+      bg-gradient-to-r from-blue-500 via-emerald-500 to-cyan-500
+      hover:from-blue-400 hover:via-emerald-600 hover:to-cyan-600 
+      shadow-xl hover:shadow-blue-500/30
       text-white
     `,
     eco: `
       dark:bg-gradient-to-r dark:from-emerald-500 dark:via-green-500 dark:to-teal-500 
       dark:hover:from-emerald-600 dark:hover:via-green-600 dark:hover:to-teal-600 
       dark:shadow-xl dark:hover:shadow-emerald-500/40
-      light:bg-gradient-to-r light:from-emerald-400 light:via-green-400 light:to-teal-400 
-      light:hover:from-emerald-500 light:hover:via-green-500 light:hover:to-teal-500 
-      light:shadow-xl light:hover:shadow-emerald-500/30
+      bg-gradient-to-r from-emerald-400 via-green-400 to-teal-400
+      hover:from-emerald-500 hover:via-green-500 hover:to-teal-500 
+      shadow-xl hover:shadow-emerald-500/30
       text-white
     `,
   };
@@ -191,7 +191,7 @@ const BoutonAnime = memo(({
     relative overflow-hidden rounded-2xl font-bold
     transition-all duration-500
     disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
-    focus:outline-none focus:ring-4 dark:focus:ring-blue-500/30 light:focus:ring-blue-500/20
+    focus:outline-none focus:ring-4 dark:focus:ring-blue-500/30 focus:ring-blue-500/20
     ${fullWidth ? 'w-full' : ''}
     group ${sizeClasses[size]} ${variantClasses[variant]} ${className}
     ${isHovered ? 'shadow-2xl scale-105' : 'shadow-xl'}
@@ -205,7 +205,7 @@ const BoutonAnime = memo(({
           absolute -inset-2 rounded-2xl blur-xl transition-all duration-700
           ${isHovered ? 'opacity-100' : 'opacity-0'}
           dark:bg-gradient-to-r dark:from-blue-500/30 dark:via-emerald-500/20 dark:to-cyan-500/30
-          light:bg-gradient-to-r light:from-blue-400/20 light:via-emerald-400/15 light:to-cyan-400/20
+          bg-gradient-to-r from-blue-400/20 via-emerald-400/15 to-cyan-400/20
         `} />
       )}
       
@@ -214,13 +214,13 @@ const BoutonAnime = memo(({
           absolute -inset-2 rounded-2xl transition-opacity duration-500
           ${isHovered ? 'opacity-100' : 'opacity-50'}
           dark:bg-gradient-to-r dark:from-blue-500/40 dark:via-emerald-500/30 dark:to-cyan-500/40
-          light:bg-gradient-to-r light:from-blue-400/30 light:via-emerald-400/20 light:to-cyan-400/30
+          bg-gradient-to-r from-blue-400/30 via-emerald-400/20 to-cyan-400/30
         `} style={{ animation: 'pulse 3s ease-in-out infinite' }} />
       )}
       
       {loading && (
-        <span className="absolute inset-0 flex items-center justify-center bg-black/20 dark:bg-black/20 light:bg-white/20 backdrop-blur-sm rounded-2xl">
-          <span className="rounded-full h-8 w-8 border-t-3 border-b-3 dark:border-white light:border-blue-600 animate-spin"></span>
+        <span className="absolute inset-0 flex items-center justify-center dark:bg-black/20 bg-white/20 backdrop-blur-sm rounded-2xl">
+          <span className="rounded-full h-8 w-8 border-t-3 border-b-3 dark:border-white border-blue-600 animate-spin"></span>
         </span>
       )}
       
@@ -296,14 +296,14 @@ interface WidgetFlottantProps {
   scrollReveal?: boolean;
 }
 
-// Widget avec support thème
+// Widget avec support thème amélioré
 const WidgetFlottant = memo(({
   children,
   intensity = 0.3,
   className = "",
   interactive = true,
   glow = true,
-  minHeight = "min-h-[260px]",
+  minHeight = "min-h-[240px]",
   equalSize = true,
   onHoverChange,
   delay = 0,
@@ -396,7 +396,7 @@ const WidgetFlottant = memo(({
           absolute -inset-3 rounded-3xl transition-all duration-700
           ${isHovered ? 'opacity-100 blur-2xl' : 'opacity-0 blur-xl'}
           dark:bg-gradient-to-br dark:from-blue-500/25 dark:via-emerald-500/20 dark:to-cyan-500/25
-          light:bg-gradient-to-br light:from-blue-400/20 light:via-emerald-400/15 light:to-cyan-400/20
+          bg-gradient-to-br from-blue-400/15 via-emerald-400/10 to-cyan-400/15
         `} />
       )}
       
@@ -404,8 +404,8 @@ const WidgetFlottant = memo(({
         absolute inset-0 rounded-3xl shadow-xl transition-all duration-700
         ${isHovered ? 'shadow-2xl' : ''}
         dark:bg-gradient-to-br dark:from-slate-800/95 dark:via-slate-900/90 dark:to-slate-800/85
-        light:bg-gradient-to-br light:from-white/95 light:via-gray-50/90 light:to-white/85
-        light:border light:border-gray-200
+        bg-gradient-to-br from-white/95 via-gray-50/90 to-white/85
+        border dark:border-white/10 border-gray-200
       `} />
       
       <div className={`absolute inset-0 rounded-3xl overflow-hidden`}>
@@ -413,7 +413,7 @@ const WidgetFlottant = memo(({
           absolute -inset-full transition-transform duration-1200
           ${isHovered ? 'translate-x-full' : '-translate-x-full'}
           dark:bg-gradient-to-r dark:from-transparent dark:via-white/10 dark:to-transparent
-          light:bg-gradient-to-r light:from-transparent light:via-blue-500/5 light:to-transparent
+          bg-gradient-to-r from-transparent via-blue-500/5 to-transparent
         `} />
       </div>
       
@@ -426,13 +426,13 @@ const WidgetFlottant = memo(({
 
 WidgetFlottant.displayName = 'WidgetFlottant';
 
-// Arrière-plan optimisé avec thème
+// Arrière-plan animé optimisé
 const FondAnime = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
   const particlesRef = useRef<Array<{
     x: number; y: number; size: number; speedX: number; speedY: number;
-    color: string; alpha: number; pulseSpeed: number;
+    color: string; alpha: number; pulseSpeed: number; type: 'dot' | 'sparkle';
   }>>([]);
   const timeRef = useRef(0);
   
@@ -443,75 +443,124 @@ const FondAnime = memo(() => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
-    const isDark = document.documentElement.classList.contains('dark');
-    
     const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      canvas.width = window.innerWidth * window.devicePixelRatio;
+      canvas.height = window.innerHeight * window.devicePixelRatio;
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
       initParticles();
     };
     
     const initParticles = () => {
       particlesRef.current = [];
-      const particleCount = Math.min(Math.floor((canvas.width * canvas.height) / 25000), 50);
+      const particleCount = Math.min(Math.floor((canvas.width * canvas.height) / 30000), 80);
+      const isDark = document.documentElement.classList.contains('dark');
       
-      const baseColors = isDark 
-        ? ['#60a5fa', '#34d399', '#22d3ee'] // Bleu, Vert, Cyan pour dark
-        : ['#3b82f6', '#10b981', '#06b6d4']; // Bleu, Vert, Cyan pour light
+      const colors = isDark 
+        ? ['#60a5fa', '#34d399', '#22d3ee', '#c084fc'] // Bleu, Vert, Cyan, Violet
+        : ['#3b82f6', '#10b981', '#06b6d4', '#8b5cf6']; // Bleu, Vert, Cyan, Violet
       
       for (let i = 0; i < particleCount; i++) {
         particlesRef.current.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          size: Math.random() * 1.5 + 0.5,
-          speedX: Math.random() * 0.2 - 0.1,
-          speedY: Math.random() * 0.2 - 0.1,
-          color: baseColors[Math.floor(Math.random() * baseColors.length)],
-          alpha: Math.random() * 0.15 + 0.05,
-          pulseSpeed: Math.random() * 0.015 + 0.005,
+          size: Math.random() * 2 + 0.5,
+          speedX: Math.random() * 0.3 - 0.15,
+          speedY: Math.random() * 0.3 - 0.15,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          alpha: Math.random() * 0.2 + 0.1,
+          pulseSpeed: Math.random() * 0.02 + 0.005,
+          type: Math.random() > 0.8 ? 'sparkle' : 'dot'
         });
       }
+    };
+    
+    const drawParticle = (particle: typeof particlesRef.current[0], ctx: CanvasRenderingContext2D) => {
+      ctx.save();
+      ctx.globalAlpha = particle.alpha;
+      
+      if (particle.type === 'sparkle') {
+        // Effet étincelle
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = particle.color;
+        
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Rayons
+        for (let i = 0; i < 6; i++) {
+          const angle = (i * Math.PI) / 3;
+          const x1 = particle.x + Math.cos(angle) * particle.size;
+          const y1 = particle.y + Math.sin(angle) * particle.size;
+          const x2 = particle.x + Math.cos(angle) * particle.size * 4;
+          const y2 = particle.y + Math.sin(angle) * particle.size * 4;
+          
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.lineWidth = 0.5;
+          ctx.strokeStyle = '#ffffff';
+          ctx.stroke();
+        }
+      } else {
+        // Point normal avec halo
+        ctx.fillStyle = particle.color;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = particle.color;
+        
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      
+      ctx.restore();
     };
     
     const animate = () => {
       timeRef.current += 0.01;
       
-      const isDarkNow = document.documentElement.classList.contains('dark');
+      ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      // Fond avec gradient adaptatif
-      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      if (isDarkNow) {
-        gradient.addColorStop(0, 'rgba(15, 23, 42, 0.1)');
-        gradient.addColorStop(0.5, 'rgba(30, 41, 59, 0.08)');
-        gradient.addColorStop(1, 'rgba(15, 23, 42, 0.1)');
+      const isDark = document.documentElement.classList.contains('dark');
+      
+      // Fond dégradé animé
+      const gradient = ctx.createLinearGradient(
+        0, 0,
+        canvas.width * Math.cos(timeRef.current * 0.1),
+        canvas.height * Math.sin(timeRef.current * 0.1)
+      );
+      
+      if (isDark) {
+        gradient.addColorStop(0, 'rgba(15, 23, 42, 0.2)');
+        gradient.addColorStop(0.5, 'rgba(30, 41, 59, 0.15)');
+        gradient.addColorStop(1, 'rgba(15, 23, 42, 0.2)');
       } else {
-        gradient.addColorStop(0, 'rgba(249, 250, 251, 0.1)');
-        gradient.addColorStop(0.5, 'rgba(243, 244, 246, 0.08)');
-        gradient.addColorStop(1, 'rgba(249, 250, 251, 0.1)');
+        gradient.addColorStop(0, 'rgba(249, 250, 251, 0.3)');
+        gradient.addColorStop(0.5, 'rgba(243, 244, 246, 0.2)');
+        gradient.addColorStop(1, 'rgba(249, 250, 251, 0.3)');
       }
       
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      // Particules
+      // Mettre à jour et dessiner les particules
       particlesRef.current.forEach(particle => {
         particle.x += particle.speedX;
         particle.y += particle.speedY;
         
+        // Rebond sur les bords
         if (particle.x > canvas.width) particle.x = 0;
         if (particle.x < 0) particle.x = canvas.width;
         if (particle.y > canvas.height) particle.y = 0;
         if (particle.y < 0) particle.y = canvas.height;
         
-        particle.alpha = 0.08 + Math.sin(timeRef.current * particle.pulseSpeed) * 0.07;
+        // Animation de pulsation
+        particle.alpha = 0.15 + Math.sin(timeRef.current * particle.pulseSpeed) * 0.1;
         
-        ctx.save();
-        ctx.globalAlpha = particle.alpha;
-        ctx.fillStyle = particle.color;
-        ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+        drawParticle(particle, ctx);
       });
       
       animationRef.current = requestAnimationFrame(animate);
@@ -536,24 +585,28 @@ const FondAnime = memo(() => {
       />
       
       <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-        {/* Orbes flottants adaptatifs */}
+        {/* Gradients animés */}
         <div className={`
-          absolute top-1/4 left-1/4 w-96 h-96 rounded-full
-          dark:bg-gradient-radial dark:from-blue-500/20 dark:via-blue-500/10 dark:to-transparent
-          light:bg-gradient-radial light:from-blue-400/15 light:via-blue-400/8 light:to-transparent
-        `} style={{ 
-          animation: 'float-orb 30s ease-in-out infinite',
-          filter: 'blur(40px)'
-        }} />
+          absolute inset-0
+          dark:bg-gradient-to-br dark:from-blue-900/10 dark:via-transparent dark:to-emerald-900/10
+          bg-gradient-to-br from-blue-50/20 via-transparent to-emerald-50/20
+          animate-gradient-flow
+        `} />
+        
+        {/* Effets de lumière */}
+        <div className={`
+          absolute top-0 left-0 right-0 h-64
+          dark:bg-gradient-to-b dark:from-blue-500/10 dark:to-transparent
+          bg-gradient-to-b from-blue-400/10 to-transparent
+          animate-float-gentle
+        `} />
         
         <div className={`
-          absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full
-          dark:bg-gradient-radial dark:from-emerald-500/20 dark:via-emerald-500/10 dark:to-transparent
-          light:bg-gradient-radial light:from-emerald-400/15 light:via-emerald-400/8 light:to-transparent
-        `} style={{ 
-          animation: 'float-orb 35s ease-in-out infinite reverse',
-          filter: 'blur(40px)'
-        }} />
+          absolute bottom-0 left-0 right-0 h-64
+          dark:bg-gradient-to-t dark:from-emerald-500/10 dark:to-transparent
+          bg-gradient-to-t from-emerald-400/10 to-transparent
+          animate-float-gentle-reverse
+        `} />
       </div>
     </>
   );
@@ -573,13 +626,13 @@ interface CarteInteractiveProps {
   delay?: number;
 }
 
-// Carte interactive avec support thème
+// Carte interactive améliorée
 const CarteInteractive = memo(({ 
   icon: Icon,
   title,
   description,
-  color = "text-blue-600",
-  bg = "bg-gradient-to-br from-blue-500/20 to-blue-500/10",
+  color = "dark:text-blue-600 text-blue-500",
+  bg = "dark:bg-gradient-to-br dark:from-blue-500/20 dark:to-blue-500/10 bg-gradient-to-br from-blue-400/20 to-blue-400/10",
   onClick,
   isActive = false,
   delay = 0,
@@ -609,7 +662,7 @@ const CarteInteractive = memo(({
       <WidgetFlottant 
         intensity={0.35}
         glow={true}
-        minHeight="min-h-[240px]"
+        minHeight="min-h-[220px]"
         onHoverChange={setIsHovered}
         delay={delay}
       >
@@ -650,7 +703,7 @@ const CarteInteractive = memo(({
               >
                 <span className={`
                   bg-gradient-to-r bg-clip-text text-transparent
-                  ${isHovered ? 'from-blue-500 via-emerald-500 to-cyan-500' : 'dark:from-white dark:to-white/80 light:from-gray-900 light:to-gray-700'}
+                  ${isHovered ? 'from-blue-500 via-emerald-500 to-cyan-500' : 'dark:from-white dark:to-white/80 from-gray-900 to-gray-700'}
                 `}>
                   {title}
                 </span>
@@ -662,7 +715,7 @@ const CarteInteractive = memo(({
                 animate={{ opacity: isVisible ? 1 : 0 }}
                 transition={{ duration: 0.4, delay: (delay + 200) / 1000 }}
               >
-                <span className="dark:text-gray-300 light:text-gray-600">
+                <span className="dark:text-gray-300 text-gray-600">
                   {description}
                 </span>
               </motion.p>
@@ -688,7 +741,7 @@ interface BinModalProps {
   bg?: string;
 }
 
-// Modal optimisé avec animations fluides
+// Modal optimisé sans barres de défilement
 const BinModal = memo(({ 
   isOpen,
   onClose,
@@ -696,8 +749,8 @@ const BinModal = memo(({
   title,
   description,
   details,
-  color = "text-blue-600",
-  bg = "bg-gradient-to-br from-blue-500/20 to-blue-500/10",
+  color = "dark:text-blue-600 text-blue-500",
+  bg = "dark:bg-gradient-to-br dark:from-blue-500/20 dark:to-blue-500/10 bg-gradient-to-br from-blue-400/20 to-blue-400/10",
 }: BinModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
   
@@ -754,13 +807,15 @@ const BinModal = memo(({
               stiffness: 300,
               mass: 0.8
             }}
-            className="relative max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            className="relative w-full max-w-2xl"
           >
             <WidgetFlottant intensity={0.2} glow={true} minHeight="min-h-0">
               <Card className={`
                 border overflow-hidden
                 dark:border-white/20 dark:bg-slate-900/95
-                light:border-gray-300 light:bg-white/95
+                border-gray-300 bg-white/95
+                max-h-[85vh] overflow-y-auto
+                [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]
               `}>
                 <CardContent className="p-6">
                   {/* Header */}
@@ -777,13 +832,13 @@ const BinModal = memo(({
                       <div>
                         <h3 className={`
                           text-2xl font-bold mb-1
-                          dark:text-white light:text-gray-900
+                          dark:text-white text-gray-900
                         `}>
                           {title}
                         </h3>
                         <p className={`
                           text-sm
-                          dark:text-gray-300 light:text-gray-600
+                          dark:text-gray-300 text-gray-600
                         `}>
                           {description}
                         </p>
@@ -793,8 +848,8 @@ const BinModal = memo(({
                     <motion.button
                       onClick={onClose}
                       className={`
-                        p-2 rounded-xl transition-colors
-                        dark:hover:bg-white/10 light:hover:bg-gray-100
+                        p-2 rounded-xl transition-colors flex-shrink-0
+                        dark:hover:bg-white/10 hover:bg-gray-100
                       `}
                       aria-label="Fermer"
                       whileHover={{ scale: 1.1, rotate: 90 }}
@@ -805,7 +860,7 @@ const BinModal = memo(({
                     >
                       <X className={`
                         w-6 h-6
-                        dark:text-white light:text-gray-700
+                        dark:text-white text-gray-700
                       `} />
                     </motion.button>
                   </div>
@@ -819,13 +874,13 @@ const BinModal = memo(({
                     >
                       <h4 className={`
                         font-semibold text-lg mb-3
-                        dark:text-blue-400 light:text-blue-600
+                        dark:text-blue-400 text-blue-600
                       `}>
                         Description
                       </h4>
                       <p className={`
                         leading-relaxed
-                        dark:text-gray-300 light:text-gray-700
+                        dark:text-gray-300 text-gray-700
                       `}>
                         {details}
                       </p>
@@ -835,7 +890,7 @@ const BinModal = memo(({
                       className={`
                         p-4 rounded-xl border
                         dark:bg-blue-500/10 dark:border-blue-500/20
-                        light:bg-blue-50 light:border-blue-200
+                        bg-blue-50 border-blue-200
                       `}
                       initial={{ y: 20, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
@@ -843,20 +898,20 @@ const BinModal = memo(({
                     >
                       <h4 className={`
                         font-semibold text-sm mb-2 flex items-center gap-2
-                        dark:text-blue-400 light:text-blue-600
+                        dark:text-blue-400 text-blue-600
                       `}>
                         <Sparkles className="w-4 h-4" />
                         CONSEILS DE TRI
                       </h4>
                       <ul className="text-sm space-y-1">
                         <li className={`
-                          dark:text-gray-300 light:text-gray-700
+                          dark:text-gray-300 text-gray-700
                         `}>• Bien nettoyer les contenants</li>
                         <li className={`
-                          dark:text-gray-300 light:text-gray-700
+                          dark:text-gray-300 text-gray-700
                         `}>• Retirer les couvercles non-recyclables</li>
                         <li className={`
-                          dark:text-gray-300 light:text-gray-700
+                          dark:text-gray-300 text-gray-700
                         `}>• Compacter pour gagner de l'espace</li>
                       </ul>
                     </motion.div>
@@ -866,7 +921,7 @@ const BinModal = memo(({
                   <motion.div 
                     className={`
                       flex gap-4 mt-8 pt-6 border-t
-                      dark:border-white/20 light:border-gray-200
+                      dark:border-white/20 border-gray-200
                     `}
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
@@ -914,8 +969,8 @@ const ThemeSwitch = memo(() => {
       className={`
         relative p-3 rounded-xl transition-colors
         dark:bg-slate-800/50 dark:hover:bg-slate-700/50
-        light:bg-gray-100 light:hover:bg-gray-200
-        border dark:border-white/10 light:border-gray-300
+        bg-gray-100 hover:bg-gray-200
+        border dark:border-white/10 border-gray-300
       `}
       aria-label={theme === 'dark' ? 'Passer au mode clair' : 'Passer au mode sombre'}
       whileHover={{ scale: 1.05 }}
@@ -955,32 +1010,32 @@ export default function ProjectEco() {
   const bins = useMemo(() => [
     { 
       icon: FileText, 
-      color: "text-amber-600", 
-      bg: "bg-gradient-to-br from-amber-500/20 to-amber-600/10", 
+      color: "dark:text-amber-600 text-amber-500", 
+      bg: "dark:bg-gradient-to-br dark:from-amber-500/20 dark:to-amber-600/10 bg-gradient-to-br from-amber-400/20 to-amber-500/10", 
       label: "Papier & Carton",
       description: "Journaux, magazines, cartons",
       details: "Le papier et le carton représentent environ 25% de nos déchets ménagers. Leur recyclage permet de sauver des arbres et réduire la consommation d'eau et d'énergie."
     },
     { 
       icon: Package, 
-      color: "text-blue-600", 
-      bg: "bg-gradient-to-br from-blue-500/20 to-cyan-600/10", 
+      color: "dark:text-blue-600 text-blue-500", 
+      bg: "dark:bg-gradient-to-br dark:from-blue-500/20 dark:to-cyan-600/10 bg-gradient-to-br from-blue-400/20 to-cyan-500/10", 
       label: "Plastique",
       description: "Bouteilles, emballages plastiques",
       details: "Les plastiques peuvent mettre jusqu'à 500 ans à se décomposer. Notre programme de recyclage les transforme en nouvelles ressources."
     },
     { 
       icon: Trash2, 
-      color: "text-gray-600", 
-      bg: "bg-gradient-to-br from-gray-500/20 to-gray-600/10", 
+      color: "dark:text-gray-600 text-gray-500", 
+      bg: "dark:bg-gradient-to-br dark:from-gray-500/20 dark:to-gray-600/10 bg-gradient-to-br from-gray-400/20 to-gray-500/10", 
       label: "Métal",
       description: "Cannettes, boîtes de conserve",
       details: "Le recyclage des métaux permet d'économiser jusqu'à 95% de l'énergie nécessaire à leur production primaire."
     },
     { 
       icon: Apple, 
-      color: "text-green-600", 
-      bg: "bg-gradient-to-br from-green-500/20 to-emerald-600/10", 
+      color: "dark:text-green-600 text-green-500", 
+      bg: "dark:bg-gradient-to-br dark:from-green-500/20 dark:to-emerald-600/10 bg-gradient-to-br from-green-400/20 to-emerald-500/10", 
       label: "Organique",
       description: "Déchets alimentaires, compostables",
       details: "Transformés en compost pour enrichir les sols des jardins communautaires et espaces verts publics."
@@ -992,29 +1047,29 @@ export default function ProjectEco() {
       icon: Target,
       title: "Mission Éducative",
       description: "Sensibiliser aux enjeux environnementaux",
-      color: "text-blue-600",
-      bg: "bg-gradient-to-br from-blue-500/20 to-cyan-600/10",
+      color: "dark:text-blue-600 text-blue-500",
+      bg: "dark:bg-gradient-to-br dark:from-blue-500/20 dark:to-cyan-600/10 bg-gradient-to-br from-blue-400/20 to-cyan-500/10",
     },
     {
       icon: Users,
       title: "Engagement Communautaire",
       description: "Créer une communauté active et engagée",
-      color: "text-green-600",
-      bg: "bg-gradient-to-br from-green-500/20 to-emerald-600/10",
+      color: "dark:text-green-600 text-green-500",
+      bg: "dark:bg-gradient-to-br dark:from-green-500/20 dark:to-emerald-600/10 bg-gradient-to-br from-green-400/20 to-emerald-500/10",
     },
     {
       icon: Recycle,
       title: "Innovation Technologique",
       description: "Développer des solutions innovantes",
-      color: "text-purple-600",
-      bg: "bg-gradient-to-br from-purple-500/20 to-pink-600/10",
+      color: "dark:text-purple-600 text-purple-500",
+      bg: "dark:bg-gradient-to-br dark:from-purple-500/20 dark:to-pink-600/10 bg-gradient-to-br from-purple-400/20 to-pink-500/10",
     },
     {
       icon: Award,
       title: "Impact Mesurable",
       description: "Atteindre des résultats concrets",
-      color: "text-amber-600",
-      bg: "bg-gradient-to-br from-amber-500/20 to-orange-600/10",
+      color: "dark:text-amber-600 text-amber-500",
+      bg: "dark:bg-gradient-to-br dark:from-amber-500/20 dark:to-orange-600/10 bg-gradient-to-br from-amber-400/20 to-orange-500/10",
     }
   ], []);
   
@@ -1023,32 +1078,32 @@ export default function ProjectEco() {
       icon: Calendar,
       title: "Événements",
       description: "Activités et événements communautaires",
-      color: "text-blue-600",
-      bg: "bg-gradient-to-br from-blue-500/20 to-cyan-600/10",
+      color: "dark:text-blue-600 text-blue-500",
+      bg: "dark:bg-gradient-to-br dark:from-blue-500/20 dark:to-cyan-600/10 bg-gradient-to-br from-blue-400/20 to-cyan-500/10",
       href: "/activities"
     },
     {
       icon: BookOpen,
       title: "Ressources",
       description: "Guides et documents pédagogiques",
-      color: "text-green-600",
-      bg: "bg-gradient-to-br from-green-500/20 to-emerald-600/10",
+      color: "dark:text-green-600 text-green-500",
+      bg: "dark:bg-gradient-to-br dark:from-green-500/20 dark:to-emerald-600/10 bg-gradient-to-br from-green-400/20 to-emerald-500/10",
       href: "/resources"
     },
     {
       icon: Home,
       title: "Guides",
       description: "Conseils pour un foyer écologique",
-      color: "text-purple-600",
-      bg: "bg-gradient-to-br from-purple-500/20 to-pink-600/10",
+      color: "dark:text-purple-600 text-purple-500",
+      bg: "dark:bg-gradient-to-br dark:from-purple-500/20 dark:to-pink-600/10 bg-gradient-to-br from-purple-400/20 to-pink-500/10",
       href: "/guide"
     },
     {
       icon: Share2,
       title: "Projets",
       description: "Découvrez nos initiatives en cours",
-      color: "text-amber-600",
-      bg: "bg-gradient-to-br from-amber-500/20 to-orange-600/10",
+      color: "dark:text-amber-600 text-amber-500",
+      bg: "dark:bg-gradient-to-br dark:from-amber-500/20 dark:to-orange-600/10 bg-gradient-to-br from-amber-400/20 to-orange-500/10",
       href: "/project"
     }
   ], []);
@@ -1127,14 +1182,14 @@ export default function ProjectEco() {
       >
         <div className={`
           w-full h-full
-          dark:bg-slate-900/30 light:bg-gray-100/30
+          dark:bg-slate-900/30 bg-gray-100/30
           backdrop-blur-sm
         `}>
           <motion.div 
             className={`
               h-full rounded-r-full
               dark:bg-gradient-to-r dark:from-blue-600 dark:via-emerald-600 dark:to-cyan-600
-              light:bg-gradient-to-r light:from-blue-500 light:via-emerald-500 light:to-cyan-500
+              bg-gradient-to-r from-blue-500 via-emerald-500 to-cyan-500
             `}
             style={{ width: `${scrollProgress}%` }}
             transition={{ type: "spring", damping: 30, stiffness: 100 }}
@@ -1148,7 +1203,7 @@ export default function ProjectEco() {
       </div>
       
       <div className="container mx-auto px-4 py-8 md:py-12 lg:py-16">
-        {/* Section Héro */}
+        {/* Section Héro avec meilleur contraste */}
         <motion.section
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -1164,8 +1219,8 @@ export default function ProjectEco() {
               backdrop-blur-xl shadow-lg border
               dark:bg-gradient-to-r dark:from-blue-600/30 dark:via-emerald-500/30 dark:to-cyan-500/30
               dark:border-white/20 dark:text-white
-              light:bg-gradient-to-r light:from-blue-500/20 light:via-emerald-400/20 light:to-cyan-400/20
-              light:border-gray-300 light:text-gray-800
+              bg-gradient-to-r from-blue-500/20 via-emerald-400/20 to-cyan-400/20
+              border-gray-300 text-gray-800
             `}
           >
             <Sparkles className="w-4 h-4" />
@@ -1183,7 +1238,7 @@ export default function ProjectEco() {
                 className={`
                   bg-gradient-to-r bg-clip-text text-transparent inline-block
                   dark:from-blue-600 dark:via-emerald-600 dark:to-cyan-600
-                  light:from-blue-500 light:via-emerald-500 light:to-cyan-500
+                  from-blue-500 via-emerald-500 to-cyan-500
                 `}
                 animate={{ 
                   backgroundPosition: ['0% 50%', '100% 50%', '0% 50%']
@@ -1206,7 +1261,7 @@ export default function ProjectEco() {
               transition={{ delay: 0.6 }}
             >
               <span className={`
-                dark:text-white light:text-gray-900
+                dark:text-white text-gray-900
               `}>
                 Notre Planète, Notre Avenir
               </span>
@@ -1221,7 +1276,7 @@ export default function ProjectEco() {
           >
             <p className={`
               text-xl leading-relaxed mb-6
-              dark:text-gray-300 light:text-gray-700
+              dark:text-gray-300 text-gray-700
             `}>
               Bienvenue dans notre mouvement écologique communautaire. 
               Ensemble, nous créons un avenir durable pour les générations à venir.
@@ -1276,18 +1331,18 @@ export default function ProjectEco() {
             >
               <Target className={`
                 w-12 h-12 mx-auto mb-4
-                dark:text-blue-600 light:text-blue-500
+                dark:text-blue-600 text-blue-500
               `} />
             </motion.div>
             <h2 className={`
               text-4xl md:text-5xl font-bold mb-4
-              dark:text-white light:text-gray-900
+              dark:text-white text-gray-900
             `}>
               Nos Objectifs
             </h2>
             <p className={`
               text-lg
-              dark:text-gray-400 light:text-gray-600
+              dark:text-gray-300 text-gray-600
             `}>
               Construire un avenir durable ensemble
             </p>
@@ -1336,18 +1391,18 @@ export default function ProjectEco() {
             >
               <Recycle className={`
                 w-12 h-12 mx-auto mb-4
-                dark:text-emerald-600 light:text-emerald-500
+                dark:text-emerald-600 text-emerald-500
               `} />
             </motion.div>
             <h2 className={`
               text-4xl md:text-5xl font-bold mb-4
-              dark:text-white light:text-gray-900
+              dark:text-white text-gray-900
             `}>
               Tri Sélectif
             </h2>
             <p className={`
               text-lg
-              dark:text-gray-400 light:text-gray-600
+              dark:text-gray-300 text-gray-600
             `}>
               Un système simple pour un impact maximal
             </p>
@@ -1392,8 +1447,8 @@ export default function ProjectEco() {
                   className={`
                     relative w-3 h-3 rounded-full transition-colors duration-300
                     ${index === activeBinIndex 
-                      ? 'dark:bg-gradient-to-r dark:from-blue-600 dark:to-emerald-600 light:bg-gradient-to-r light:from-blue-500 light:to-emerald-500' 
-                      : 'dark:bg-white/30 dark:hover:bg-white/50 light:bg-gray-400 light:hover:bg-gray-600'
+                      ? 'dark:bg-gradient-to-r dark:from-blue-600 dark:to-emerald-600 bg-gradient-to-r from-blue-500 to-emerald-500' 
+                      : 'dark:bg-white/30 dark:hover:bg-white/50 bg-gray-400 hover:bg-gray-600'
                     }
                   `}
                   whileHover={{ scale: 1.5 }}
@@ -1409,7 +1464,7 @@ export default function ProjectEco() {
                     >
                       <div className={`
                         w-full h-full rounded-full
-                        dark:border-emerald-500/30 light:border-emerald-400/30
+                        dark:border-emerald-500/30 border-emerald-400/30
                       `} />
                     </motion.div>
                   )}
@@ -1450,18 +1505,18 @@ export default function ProjectEco() {
             >
               <Zap className={`
                 w-12 h-12 mx-auto mb-4
-                dark:text-yellow-500 light:text-yellow-500
+                dark:text-yellow-500 text-yellow-500
               `} />
             </motion.div>
             <h2 className={`
               text-4xl md:text-5xl font-bold mb-4
-              dark:text-white light:text-gray-900
+              dark:text-white text-gray-900
             `}>
               Passez à l'Action
             </h2>
             <p className={`
               text-lg
-              dark:text-gray-400 light:text-gray-600
+              dark:text-gray-300 text-gray-600
             `}>
               Des initiatives concrètes pour s'engager
             </p>
@@ -1502,23 +1557,23 @@ export default function ProjectEco() {
               <Card className={`
                 border overflow-hidden
                 dark:bg-gradient-to-br dark:from-blue-600/20 dark:via-emerald-600/20 dark:to-cyan-600/20
-                light:bg-gradient-to-br light:from-blue-500/15 light:via-emerald-500/15 light:to-cyan-500/15
-                dark:border-white/20 light:border-gray-300
+                bg-gradient-to-br from-blue-500/15 via-emerald-500/15 to-cyan-500/15
+                dark:border-white/20 border-gray-300
               `}>
                 <CardContent className="p-8 text-center">
                   <Heart className={`
                     w-16 h-16 mx-auto mb-6 animate-pulse
-                    dark:text-pink-500 light:text-pink-500
+                    dark:text-pink-500 text-pink-500
                   `} />
                   <h3 className={`
                     text-3xl font-bold mb-4
-                    dark:text-white light:text-gray-900
+                    dark:text-white text-gray-900
                   `}>
                     Votre Engagement Compte
                   </h3>
                   <p className={`
                     mb-6 max-w-2xl mx-auto
-                    dark:text-gray-300 light:text-gray-700
+                    dark:text-gray-300 text-gray-700
                   `}>
                     Chaque geste que vous posez pour l'environnement a un impact réel. 
                     Ensemble, nous pouvons créer un changement durable.
@@ -1588,12 +1643,35 @@ export default function ProjectEco() {
           100% { background-position: 0% 50%; }
         }
         
+        @keyframes float-gentle {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes float-gentle-reverse {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(10px); }
+        }
+        
         .animate-spin {
           animation: spin 1s linear infinite;
         }
         
         .animate-pulse {
           animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .animate-gradient-flow {
+          animation: gradient-flow 20s ease infinite;
+          background-size: 200% 200%;
+        }
+        
+        .animate-float-gentle {
+          animation: float-gentle 10s ease-in-out infinite;
+        }
+        
+        .animate-float-gentle-reverse {
+          animation: float-gentle-reverse 12s ease-in-out infinite;
         }
         
         * {
@@ -1608,9 +1686,19 @@ export default function ProjectEco() {
           will-change: transform;
         }
         
+        /* Cache les scrollbars */
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        
         /* Smooth transitions for theme changes */
         * {
-          transition: background-color 0.3s ease, border-color 0.3s ease;
+          transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
         }
       `}</style>
     </div>
