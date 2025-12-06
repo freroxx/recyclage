@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "react-confetti": "^6.1.0"
     "lodash-es": "^4.17.21",
     "framer-motion": "^10.0.0",
     "@hookform/resolvers": "^3.10.0",
