@@ -20,9 +20,8 @@ interface Video {
 }
 
 export default function Videos() {
-  const { t } = useLanguage();
+  useLanguage();
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
-  const [hoveredVideo, setHoveredVideo] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   useScrollReveal();
 
@@ -160,8 +159,6 @@ export default function Videos() {
               >
                 <Card
                   className="group relative h-full border-border/30 hover:border-primary/30 overflow-hidden bg-gradient-to-b from-card to-card/50 backdrop-blur-sm cursor-pointer transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 active:scale-95"
-                  onMouseEnter={() => setHoveredVideo(video.id)}
-                  onMouseLeave={() => setHoveredVideo(null)}
                   onClick={() => setSelectedVideo(video)}
                 >
                   {/* Effet de Lueur */}
@@ -436,7 +433,7 @@ export default function Videos() {
       </Dialog>
 
       {/* Ajouter des animations CSS personnalisées */}
-      <style jsx>{`
+      <style>{`
         @keyframes fadeInUp {
           from {
             opacity: 0;

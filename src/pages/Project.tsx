@@ -1,5 +1,4 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Link } from "react-router-dom";
 import { useState, useEffect, useMemo, useCallback, useRef, memo } from "react";
@@ -10,43 +9,18 @@ import {
   Package, 
   Target, 
   Users, 
-  Lightbulb, 
-  TrendingUp, 
   Leaf, 
   Recycle, 
   CheckCircle2,
   ArrowRight,
   Sparkles,
-  Play,
-  ExternalLink,
-  ChevronDown,
-  Globe,
-  Shield,
   Award,
   BookOpen,
-  Heart as HeartIcon,
-  Info,
   Calendar,
   Home,
-  Gift,
-  ChevronLeft,
-  ChevronRight,
   X,
   Share2,
-  Rocket,
-  Star,
-  Zap,
-  Lock,
-  Unlock,
-  Eye,
-  Bell,
-  Mail,
-  Phone,
-  Map,
-  Navigation,
-  Camera,
-  Video,
-  Mic
+  Rocket
 } from "lucide-react";
 
 // Hook pour le chargement différé de framer-motion
@@ -389,8 +363,8 @@ const FondParticulesPremium = memo(() => {
       pulseSpeed: number;
       
       constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
+        this.x = Math.random() * canvas!.width;
+        this.y = Math.random() * canvas!.height;
         this.size = Math.random() * 2 + 0.5;
         this.speedX = Math.random() * 0.4 - 0.2;
         this.speedY = Math.random() * 0.4 - 0.2;
@@ -404,8 +378,8 @@ const FondParticulesPremium = memo(() => {
         this.y += this.speedY;
         
         // Rebond sur les bords
-        if (this.x > canvas.width || this.x < 0) this.speedX = -this.speedX;
-        if (this.y > canvas.height || this.y < 0) this.speedY = -this.speedY;
+        if (this.x > canvas!.width || this.x < 0) this.speedX = -this.speedX;
+        if (this.y > canvas!.height || this.y < 0) this.speedY = -this.speedY;
         
         // Animation de pulsation
         this.alpha = 0.1 + Math.sin(Date.now() * this.pulseSpeed) * 0.2;
@@ -682,7 +656,7 @@ PanelDetails.displayName = 'PanelDetails';
 
 // Composant principal amélioré
 export default function Project() {
-  const { t, language } = useLanguage();
+  useLanguage();
   const { motion, error: framerMotionError, loading: framerMotionLoading } = useLazyFramerMotion();
   
   // États améliorés
@@ -957,7 +931,7 @@ export default function Project() {
               href="/guide"
               fullWidth={true}
             >
-              Découvrir le Projet
+              Guide du Tri
             </BoutonAnime>
             
             <BoutonAnime
@@ -1260,20 +1234,20 @@ export default function Project() {
                     variant="gradient"
                     size="lg"
                     icon={<Leaf className="w-6 h-6" />}
-                    href="/rejoindre"
+                    href="/contact"
                     fullWidth={true}
                   >
-                    Rejoindre Maintenant
+                    Nous Contacter
                   </BoutonAnime>
                   
                   <BoutonAnime
                     variant="outline"
                     size="lg"
                     icon={<BookOpen className="w-6 h-6" />}
-                    href="/decouvrir"
+                    href="/activites"
                     fullWidth={true}
                   >
-                    Découvrir nos Projets
+                    Voir nos Activités
                   </BoutonAnime>
                 </div>
               </CardContent>
@@ -1283,7 +1257,7 @@ export default function Project() {
       </div>
       
       {/* Styles globaux pour les animations améliorées */}
-      <style jsx>{`
+      <style>{`
         @keyframes gradient-smooth {
           0%, 100% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
