@@ -23,7 +23,8 @@ import {
   Maximize2,
   Minimize2,
   Globe,
-  Image as ImageIcon
+  Image as ImageIcon,
+  AlertCircle
 } from "lucide-react";
 
 interface Poster {
@@ -39,6 +40,7 @@ interface Poster {
   source?: string;
   type: "image" | "embed";
   embedUrl?: string;
+  thumbnailUrl?: string;
 }
 
 // Mock data for development when images fail to load
@@ -78,46 +80,80 @@ interface LightboxState {
   poster: Poster | null;
 }
 
-// Canva embed component
+// Canva embed component with proper 9:16 aspect ratio
 const CanvaEmbed = ({ embedUrl, title }: { embedUrl: string; title: string }) => {
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
-    const handleLoad = () => setIsLoading(false);
+    const handleLoad = () => {
+      setIsLoading(false);
+      setHasError(false);
+    };
+    
+    const handleError = () => {
+      setIsLoading(false);
+      setHasError(true);
+    };
+    
     const iframe = iframeRef.current;
     
     if (iframe) {
       iframe.addEventListener('load', handleLoad);
-      return () => iframe.removeEventListener('load', handleLoad);
+      iframe.addEventListener('error', handleError);
+      
+      // Set a timeout to hide loader in case iframe never loads
+      const timeoutId = setTimeout(() => {
+        if (isLoading) {
+          setIsLoading(false);
+        }
+      }, 5000);
+      
+      return () => {
+        iframe.removeEventListener('load', handleLoad);
+        iframe.removeEventListener('error', handleError);
+        clearTimeout(timeoutId);
+      };
     }
-  }, []);
+  }, [isLoading]);
 
   return (
-    <div className="relative w-full h-full min-h-[500px] bg-gray-100 dark:bg-gray-900 rounded-xl overflow-hidden">
+    <div className="relative w-full h-full bg-gray-100 dark:bg-gray-900 rounded-xl overflow-hidden">
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-gray-900 dark:to-emerald-950/30">
+        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-gray-900 dark:to-emerald-950/30 z-10">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-emerald-500/10 rounded-full animate-spin mx-auto mb-4">
               <div className="w-full h-full border-4 border-transparent border-t-emerald-500 rounded-full"></div>
             </div>
-            <p className="text-emerald-600 dark:text-emerald-400 font-medium">Loading Canva design...</p>
+            <p className="text-emerald-600 dark:text-emerald-400 font-medium">Loading interactive poster...</p>
           </div>
         </div>
       )}
       
-      <div className="relative w-full" style={{ paddingTop: '141.4286%' }}>
-        <iframe
-          ref={iframeRef}
-          src={embedUrl}
-          className="absolute top-0 left-0 w-full h-full border-0"
-          title={title}
-          allowFullScreen
-          allow="fullscreen"
-          loading="lazy"
-          sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-        />
-      </div>
+      {hasError ? (
+        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-gray-900 dark:to-emerald-950/30 z-10">
+          <div className="text-center p-6">
+            <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <p className="text-red-600 dark:text-red-400 font-medium mb-2">Failed to load interactive poster</p>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">The Canva embed could not be loaded</p>
+          </div>
+        </div>
+      ) : (
+        <div className="relative w-full h-full">
+          <iframe
+            ref={iframeRef}
+            src={embedUrl}
+            className="absolute inset-0 w-full h-full border-0"
+            title={title}
+            allowFullScreen
+            allow="fullscreen"
+            loading="lazy"
+            sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+            referrerPolicy="no-referrer"
+          />
+        </div>
+      )}
     </div>
   );
 };
@@ -137,9 +173,151 @@ export default function Posters() {
     poster: null
   });
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   
   const lightboxRef = useRef<HTMLDivElement>(null);
-  const imageContainerRef = useRef<HTMLDivElement>(null);
+
+  // Stable poster data initialization
+  const initializePosters = useCallback((currentLanguage: string): Poster[] => {
+    if (currentLanguage === 'fr') {
+      return [
+        // Yahia's Canva embeds (French)
+        {
+          id: 1,
+          imageUrl: "https://i.ibb.co/h7tSmRD/yahia-poster2.jpg",
+          thumbnailUrl: "https://i.ibb.co/h7tSmRD/yahia-poster2.jpg",
+          title: "Allons Recycler",
+          description: "Design minimaliste et moderne pour promouvoir le recyclage au quotidien avec des visuels épurés",
+          author: "Yahia Ikni",
+          language: "fr",
+          tags: ["recyclage", "minimaliste", "moderne", "quotidien", "3R", "design"],
+          views: 2456,
+          likes: 189,
+          source: "Canva Design",
+          type: "embed",
+          embedUrl: "https://www.canva.com/design/DAG5KD43qYg/EosXIeHvs1gVf3UKtzN-Mg/view?embed"
+        },
+        {
+          id: 2,
+          imageUrl: "https://i.ibb.co/nb0gWJv/yahia-poster1.jpg",
+          thumbnailUrl: "https://i.ibb.co/nb0gWJv/yahia-poster1.jpg",
+          title: "Sauvons la Terre avec les 3R",
+          description: "Design illustratif vibrant mettant en avant les principes Réduire, Réutiliser, Recycler avec des couleurs vives",
+          author: "Yahia Ikni",
+          language: "fr",
+          tags: ["3R", "sauver la terre", "illustration", "vibrant", "éducation", "écologie"],
+          views: 3120,
+          likes: 245,
+          source: "Canva Design",
+          type: "embed",
+          embedUrl: "https://www.canva.com/design/DAG5KNBOplY/Ne4tr6huXflwQyGMv3_zXQ/view?embed"
+        },
+        // Salsabile's French posters (images)
+        {
+          id: 3,
+          imageUrl: "https://i.ibb.co/FLg4Bk0/fr1.jpg",
+          title: "Guide du Recyclage Quotidien",
+          description: "Infographie pratique pour intégrer le recyclage dans votre routine journalière avec des étapes simples",
+          author: "Salsabile",
+          language: "fr",
+          tags: ["guide", "pratique", "infographie", "tutoriel", "quotidien", "étapes"],
+          views: 1890,
+          likes: 156,
+          type: "image"
+        },
+        {
+          id: 4,
+          imageUrl: "https://i.ibb.co/YSbCfC6/fr2.jpg",
+          title: "École Écoresponsable",
+          description: "Poster éducatif pour sensibiliser les élèves aux gestes écologiques à l'école avec des illustrations engageantes",
+          author: "Salsabile",
+          language: "fr",
+          tags: ["école", "éducation", "sensibilisation", "écocitoyenneté", "jeunesse", "pédagogie"],
+          views: 1678,
+          likes: 134,
+          type: "image"
+        },
+        // Additional French poster
+        {
+          id: 5,
+          imageUrl: "https://images.unsplash.com/photo-1578558288137-7207cb8c0e85?w=800&auto=format&fit=crop&q=80",
+          title: "Famille Zéro Déchet",
+          description: "Illustration familiale montrant comment adopter un mode de vie sans déchets de manière progressive",
+          author: "Éco-Famille Collective",
+          language: "fr",
+          tags: ["zéro déchet", "famille", "mode de vie", "écologie", "durabilité", "responsable"],
+          views: 2345,
+          likes: 198,
+          type: "image"
+        }
+      ];
+    } else {
+      return [
+        // Salsabile's English posters (images)
+        {
+          id: 6,
+          imageUrl: "https://i.ibb.co/TBjKSzD/english1.jpg",
+          title: "Earth Day Conversation Starters",
+          description: "Engaging questions and prompts to spark meaningful environmental discussions in communities",
+          author: "Salsabile",
+          language: "en",
+          tags: ["earth day", "conversation", "discussion", "engagement", "community", "dialogue"],
+          views: 2100,
+          likes: 167,
+          type: "image"
+        },
+        {
+          id: 7,
+          imageUrl: "https://i.ibb.co/cKY4Rj0/english2.jpg",
+          title: "Recycling Mascot Adventures",
+          description: "Fun and educational poster featuring our recycling mascot teaching kids about sustainability through stories",
+          author: "Salsabile",
+          language: "en",
+          tags: ["mascot", "fun", "educational", "kids", "playful", "stories"],
+          views: 1987,
+          likes: 154,
+          type: "image"
+        },
+        {
+          id: 8,
+          imageUrl: "https://i.ibb.co/1tyxTwJ/english3.jpg",
+          title: "Simple Zero Waste Lifestyle",
+          description: "Step-by-step guide to achieving a zero waste lifestyle with practical tips and visual aids",
+          author: "Salsabile",
+          language: "en",
+          tags: ["zero waste", "simple", "lifestyle", "guide", "tips", "practical"],
+          views: 2245,
+          likes: 189,
+          type: "image"
+        },
+        // Additional English posters
+        {
+          id: 9,
+          imageUrl: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&auto=format&fit=crop&q=80",
+          title: "Green Campus Initiative",
+          description: "Promoting sustainable practices in educational institutions for a greener future through collective action",
+          author: "Eco Education Team",
+          language: "en",
+          tags: ["campus", "education", "sustainability", "green", "future", "initiative"],
+          views: 1876,
+          likes: 143,
+          type: "image"
+        },
+        {
+          id: 10,
+          imageUrl: "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=800&auto=format&fit=crop&q=80",
+          title: "Sustainable Living Guide",
+          description: "Comprehensive guide to adopting sustainable habits in daily life with actionable recommendations",
+          author: "Green Living Collective",
+          language: "en",
+          tags: ["sustainable", "guide", "living", "habits", "daily", "actionable"],
+          views: 2567,
+          likes: 210,
+          type: "image"
+        }
+      ];
+    }
+  }, []);
 
   // Initialize mounted state and load posters
   useEffect(() => {
@@ -147,186 +325,75 @@ export default function Posters() {
     
     const loadPosters = () => {
       const currentLanguage = language || 'en';
-      const posters: Poster[] = [];
-      
-      if (currentLanguage === 'fr') {
-        // French posters
-        posters.push(
-          // Yahia's Canva embeds (French)
-          {
-            id: 1,
-            imageUrl: "https://i.ibb.co/h7tSmRD/yahia-poster2.jpg",
-            title: "Allons Recycler",
-            description: "Design minimaliste et moderne pour promouvoir le recyclage au quotidien avec des visuels épurés",
-            author: "Yahia Ikni",
-            language: "fr",
-            tags: ["recyclage", "minimaliste", "moderne", "quotidien", "3R", "design"],
-            views: 2456,
-            likes: 189,
-            source: "Canva Design",
-            type: "embed",
-            embedUrl: "https://www.canva.com/design/DAG5KD43qYg/EosXIeHvs1gVf3UKtzN-Mg/view?embed"
-          },
-          {
-            id: 2,
-            imageUrl: "https://i.ibb.co/nb0gWJv/yahia-poster1.jpg",
-            title: "Sauvons la Terre avec les 3R",
-            description: "Design illustratif vibrant mettant en avant les principes Réduire, Réutiliser, Recycler avec des couleurs vives",
-            author: "Yahia Ikni",
-            language: "fr",
-            tags: ["3R", "sauver la terre", "illustration", "vibrant", "éducation", "écologie"],
-            views: 3120,
-            likes: 245,
-            source: "Canva Design",
-            type: "embed",
-            embedUrl: "https://www.canva.com/design/DAG5KNBOplY/Ne4tr6huXflwQyGMv3_zXQ/view?embed"
-          },
-          // Salsabile's French posters (images)
-          {
-            id: 3,
-            imageUrl: "https://i.ibb.co/FLg4Bk0/fr1.jpg",
-            title: "Guide du Recyclage Quotidien",
-            description: "Infographie pratique pour intégrer le recyclage dans votre routine journalière avec des étapes simples",
-            author: "Salsabile",
-            language: "fr",
-            tags: ["guide", "pratique", "infographie", "tutoriel", "quotidien", "étapes"],
-            views: 1890,
-            likes: 156,
-            type: "image"
-          },
-          {
-            id: 4,
-            imageUrl: "https://i.ibb.co/YSbCfC6/fr2.jpg",
-            title: "École Écoresponsable",
-            description: "Poster éducatif pour sensibiliser les élèves aux gestes écologiques à l'école avec des illustrations engageantes",
-            author: "Salsabile",
-            language: "fr",
-            tags: ["école", "éducation", "sensibilisation", "écocitoyenneté", "jeunesse", "pédagogie"],
-            views: 1678,
-            likes: 134,
-            type: "image"
-          },
-          // Additional French poster
-          {
-            id: 5,
-            imageUrl: "https://images.unsplash.com/photo-1578558288137-7207cb8c0e85?w=800&auto=format&fit=crop&q=80",
-            title: "Famille Zéro Déchet",
-            description: "Illustration familiale montrant comment adopter un mode de vie sans déchets de manière progressive",
-            author: "Éco-Famille Collective",
-            language: "fr",
-            tags: ["zéro déchet", "famille", "mode de vie", "écologie", "durabilité", "responsable"],
-            views: 2345,
-            likes: 198,
-            type: "image"
-          }
-        );
-      } else {
-        // English posters
-        posters.push(
-          // Salsabile's English posters (images)
-          {
-            id: 6,
-            imageUrl: "https://i.ibb.co/TBjKSzD/english1.jpg",
-            title: "Earth Day Conversation Starters",
-            description: "Engaging questions and prompts to spark meaningful environmental discussions in communities",
-            author: "Salsabile",
-            language: "en",
-            tags: ["earth day", "conversation", "discussion", "engagement", "community", "dialogue"],
-            views: 2100,
-            likes: 167,
-            type: "image"
-          },
-          {
-            id: 7,
-            imageUrl: "https://i.ibb.co/cKY4Rj0/english2.jpg",
-            title: "Recycling Mascot Adventures",
-            description: "Fun and educational poster featuring our recycling mascot teaching kids about sustainability through stories",
-            author: "Salsabile",
-            language: "en",
-            tags: ["mascot", "fun", "educational", "kids", "playful", "stories"],
-            views: 1987,
-            likes: 154,
-            type: "image"
-          },
-          {
-            id: 8,
-            imageUrl: "https://i.ibb.co/1tyxTwJ/english3.jpg",
-            title: "Simple Zero Waste Lifestyle",
-            description: "Step-by-step guide to achieving a zero waste lifestyle with practical tips and visual aids",
-            author: "Salsabile",
-            language: "en",
-            tags: ["zero waste", "simple", "lifestyle", "guide", "tips", "practical"],
-            views: 2245,
-            likes: 189,
-            type: "image"
-          },
-          // Additional English posters
-          {
-            id: 9,
-            imageUrl: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&auto=format&fit=crop&q=80",
-            title: "Green Campus Initiative",
-            description: "Promoting sustainable practices in educational institutions for a greener future through collective action",
-            author: "Eco Education Team",
-            language: "en",
-            tags: ["campus", "education", "sustainability", "green", "future", "initiative"],
-            views: 1876,
-            likes: 143,
-            type: "image"
-          },
-          {
-            id: 10,
-            imageUrl: "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=800&auto=format&fit=crop&q=80",
-            title: "Sustainable Living Guide",
-            description: "Comprehensive guide to adopting sustainable habits in daily life with actionable recommendations",
-            author: "Green Living Collective",
-            language: "en",
-            tags: ["sustainable", "guide", "living", "habits", "daily", "actionable"],
-            views: 2567,
-            likes: 210,
-            type: "image"
-          }
-        );
-      }
+      const posters = initializePosters(currentLanguage);
       
       setPostersData(posters);
+      setLoadError(false);
       
-      // Preload images only for image-type posters
-      posters.forEach(poster => {
-        if (poster.type === 'image') {
-          const img = new Image();
-          img.src = poster.imageUrl;
-          img.onload = () => {
+      // Preload images for better UX
+      const imagePromises = posters.map(poster => {
+        return new Promise<void>((resolve) => {
+          if (poster.type === 'image' || poster.thumbnailUrl) {
+            const img = new Image();
+            img.src = poster.thumbnailUrl || poster.imageUrl;
+            img.onload = () => {
+              setLoadedImages(prev => new Set(prev).add(poster.id));
+              resolve();
+            };
+            img.onerror = () => {
+              console.warn(`Failed to load image for poster ${poster.id}`);
+              // Use fallback image
+              const fallbackImage = currentLanguage === 'fr' 
+                ? FALLBACK_POSTERS.fr[0].imageUrl
+                : FALLBACK_POSTERS.en[0].imageUrl;
+              
+              if (poster.type === 'image') {
+                poster.imageUrl = fallbackImage;
+              }
+              if (poster.thumbnailUrl) {
+                poster.thumbnailUrl = fallbackImage;
+              }
+              
+              setLoadedImages(prev => new Set(prev).add(poster.id));
+              resolve();
+            };
+          } else {
+            // For embed posters without thumbnail, consider them loaded
             setLoadedImages(prev => new Set(prev).add(poster.id));
-          };
-          img.onerror = () => {
-            console.warn(`Failed to load image for poster ${poster.id}`);
-            if (poster.id <= 5) {
-              poster.imageUrl = FALLBACK_POSTERS.fr[0].imageUrl;
-            } else {
-              poster.imageUrl = FALLBACK_POSTERS.en[0].imageUrl;
-            }
-            setLoadedImages(prev => new Set(prev).add(poster.id));
-          };
-        } else {
-          // For embed posters, consider them loaded
-          setLoadedImages(prev => new Set(prev).add(poster.id));
-        }
+            resolve();
+          }
+        });
       });
+      
+      // Set timeout to ensure loading state doesn't get stuck
+      const loadTimeout = setTimeout(() => {
+        Promise.allSettled(imagePromises).then(() => {
+          setIsLoading(false);
+        });
+      }, 1500);
+      
+      // Also set a maximum timeout
+      const failSafeTimeout = setTimeout(() => {
+        setIsLoading(false);
+        if (loadedImages.size === 0) {
+          const fallbackPosters = currentLanguage === 'fr' ? FALLBACK_POSTERS.fr : FALLBACK_POSTERS.en;
+          setPostersData(fallbackPosters);
+          setLoadError(true);
+        }
+      }, 5000);
+      
+      return () => {
+        clearTimeout(loadTimeout);
+        clearTimeout(failSafeTimeout);
+      };
     };
     
-    loadPosters();
+    const cleanup = loadPosters();
     
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      if (loadedImages.size === 0) {
-        const currentLanguage = language || 'en';
-        const fallbackPosters = currentLanguage === 'fr' ? FALLBACK_POSTERS.fr : FALLBACK_POSTERS.en;
-        setPostersData(fallbackPosters);
-      }
-    }, 1500);
-    
-    return () => clearTimeout(timer);
-  }, [language]);
+    return () => {
+      if (cleanup) cleanup();
+    };
+  }, [language, initializePosters, loadedImages.size]);
 
   // Filter posters based on search query
   const filteredPosters = useMemo(() => {
@@ -379,7 +446,11 @@ export default function Posters() {
     
     setPostersData(prev => prev.map(p => 
       p.id === poster.id 
-        ? { ...p, imageUrl: fallbackImage }
+        ? { 
+            ...p, 
+            imageUrl: fallbackImage,
+            thumbnailUrl: poster.thumbnailUrl || fallbackImage
+          }
         : p
     ));
   }, [language]);
@@ -466,20 +537,6 @@ export default function Posters() {
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [lightbox.isOpen, closeLightbox]);
-
-  // Handle click outside to close lightbox
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (lightboxRef.current && 
-          !lightboxRef.current.contains(e.target as Node) && 
-          lightbox.isOpen) {
-        closeLightbox();
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [lightbox.isOpen, closeLightbox]);
 
   // Get direct Canva link from embed URL
@@ -653,7 +710,32 @@ export default function Posters() {
               </div>
 
               {/* Results */}
-              {filteredPosters.length === 0 ? (
+              {loadError ? (
+                <div className="text-center py-24 animate-fade-in">
+                  <div className="inline-flex flex-col items-center gap-6 max-w-md mx-auto">
+                    <AlertCircle className="w-16 h-16 text-red-500 animate-pulse" />
+                    <div>
+                      <h3 className="text-xl font-bold text-red-900 dark:text-red-100 mb-2">
+                        {currentLanguage === 'fr' ? "Erreur de chargement" : "Loading Error"}
+                      </h3>
+                      <p className="text-red-700/70 dark:text-red-300/70 mb-4">
+                        {currentLanguage === 'fr' 
+                          ? "Impossible de charger les affiches. Veuillez réessayer." 
+                          : "Unable to load posters. Please try again."}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => window.location.reload()}
+                      className="px-8 py-3 rounded-full relative overflow-hidden group
+                               bg-gradient-to-r from-red-600 to-orange-500 text-white 
+                               font-semibold hover:shadow-lg hover:shadow-red-500/30
+                               transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95"
+                    >
+                      <span className="relative z-10">{currentLanguage === 'fr' ? "Réessayer" : "Retry"}</span>
+                    </button>
+                  </div>
+                </div>
+              ) : filteredPosters.length === 0 ? (
                 <div className="text-center py-24 animate-fade-in">
                   <div className="inline-flex flex-col items-center gap-6 max-w-md">
                     <div className="relative">
@@ -742,51 +824,31 @@ export default function Posters() {
                                      hover:-translate-y-1 cursor-pointer"
                           onClick={() => openLightbox(poster)}
                         >
-                          {/* Poster Image/Embed Preview */}
-                          <div className="relative w-full pt-[125%] sm:pt-[140%] overflow-hidden 
-                                        bg-gradient-to-br from-emerald-500/5 to-teal-500/5">
+                          {/* Poster Image/Embed Preview - 9:16 Aspect Ratio */}
+                          <div className="relative w-full pt-[177.78%] overflow-hidden bg-gradient-to-br from-emerald-500/5 to-teal-500/5">
                             <div className="absolute inset-0">
-                              {poster.type === 'embed' ? (
-                                // Embed poster preview
-                                <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
-                                  <div className="relative w-full h-full rounded-lg overflow-hidden bg-gradient-to-br from-emerald-500/10 to-teal-500/10">
-                                    <img
-                                      src={poster.imageUrl}
-                                      alt={poster.title}
-                                      className="absolute w-full h-full top-0 left-0 object-cover opacity-90 
-                                               group-hover:scale-105 transition-transform duration-500 ease-out"
-                                      loading="lazy"
-                                      decoding="async"
-                                      onError={(e) => handleImageError(e, poster)}
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent 
-                                                  flex items-end p-4">
-                                      <div className="flex items-center gap-2 text-white/90">
-                                        <Globe className="w-4 h-4" />
-                                        <span className="text-xs font-medium bg-black/50 px-2 py-1 rounded-full">
-                                          {currentLanguage === 'fr' ? "Affiche interactive" : "Interactive Poster"}
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                      <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full 
-                                                    p-3 transform group-hover:scale-110 transition-transform duration-300">
-                                        <ExternalLink className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-                                      </div>
-                                    </div>
+                              {/* Always show thumbnail image for both image and embed posters */}
+                              <img
+                                src={poster.thumbnailUrl || poster.imageUrl}
+                                alt={poster.title}
+                                className="absolute w-full h-full top-0 left-0 object-cover 
+                                         group-hover:scale-105 transition-transform duration-500 ease-out"
+                                loading="lazy"
+                                decoding="async"
+                                onError={(e) => handleImageError(e, poster)}
+                              />
+                              
+                              {/* Embed overlay indicator */}
+                              {poster.type === 'embed' && (
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent 
+                                              flex items-end p-4">
+                                  <div className="flex items-center gap-2 text-white/90">
+                                    <Globe className="w-4 h-4" />
+                                    <span className="text-xs font-medium bg-black/50 px-2 py-1 rounded-full">
+                                      {currentLanguage === 'fr' ? "Affiche interactive" : "Interactive Poster"}
+                                    </span>
                                   </div>
                                 </div>
-                              ) : (
-                                // Image poster preview
-                                <img
-                                  src={poster.imageUrl}
-                                  alt={poster.title}
-                                  className="absolute w-full h-full top-0 left-0 object-cover 
-                                           group-hover:scale-105 transition-transform duration-500 ease-out"
-                                  loading="lazy"
-                                  decoding="async"
-                                  onError={(e) => handleImageError(e, poster)}
-                                />
                               )}
                               
                               {/* Hover Overlay */}
@@ -856,7 +918,7 @@ export default function Posters() {
                                   >
                                     <Download className="w-4 h-4 transition-transform group-hover/btn:-translate-y-0.5" />
                                     {poster.type === 'embed' 
-                                      ? (currentLanguage === 'fr' ? "Voir sur Canva" : "View on Canva") 
+                                      ? (currentLanguage === 'fr' ? "Canva" : "Canva") 
                                       : (currentLanguage === 'fr' ? "Télécharger" : "Download")}
                                   </button>
                                 </div>
@@ -957,7 +1019,7 @@ export default function Posters() {
               )}
 
               {/* Footer Message */}
-              {!searchQuery && filteredPosters.length > 0 && (
+              {!searchQuery && filteredPosters.length > 0 && !loadError && (
                 <div className="mt-20 text-center animate-fade-in-up">
                   <div className="inline-block max-w-xl mx-auto transform hover:-translate-y-1 transition-transform duration-300 group">
                     <div className="p-8 rounded-2xl bg-gradient-to-br from-white/60 to-emerald-500/10 
@@ -1221,80 +1283,80 @@ export default function Posters() {
         </div>
       </div>
 
-      {/* Lightbox Modal */}
+      {/* Lightbox Modal - Fixed 9:16 Vertical Aspect Ratio */}
       {lightbox.isOpen && lightbox.poster && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-fade-in">
           <div 
             ref={lightboxRef}
-            className="relative w-full max-w-6xl h-full max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden flex flex-col"
+            className="relative w-full max-w-md md:max-w-lg lg:max-w-xl h-[90vh] max-h-[160vw] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden flex flex-col"
+            style={{ aspectRatio: '9/16' }}
           >
             {/* Lightbox Header */}
-            <div className="flex items-center justify-between p-6 border-b border-emerald-500/20 bg-white/95 dark:bg-gray-900/95">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${lightbox.poster.language === 'fr' ? 'bg-teal-500' : 'bg-emerald-500'}`} />
-                  <span className="font-semibold text-emerald-900 dark:text-emerald-100">
+            <div className="flex items-center justify-between p-4 border-b border-emerald-500/20 bg-white/95 dark:bg-gray-900/95 shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${lightbox.poster.language === 'fr' ? 'bg-teal-500' : 'bg-emerald-500'}`} />
+                  <span className="font-semibold text-emerald-900 dark:text-emerald-100 truncate text-sm md:text-base">
                     {lightbox.poster.title}
                   </span>
                 </div>
-                <span className="px-2 py-1 text-xs rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
-                  {lightbox.poster.language.toUpperCase()}
-                </span>
-                {lightbox.poster.type === 'embed' && (
-                  <span className="px-2 py-1 text-xs rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-300">
-                    INTERACTIVE
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <span className="px-2 py-0.5 text-xs rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                    {lightbox.poster.language.toUpperCase()}
                   </span>
-                )}
+                  {lightbox.poster.type === 'embed' && (
+                    <span className="px-2 py-0.5 text-xs rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-300">
+                      INTERACTIVE
+                    </span>
+                  )}
+                </div>
               </div>
               
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 flex-shrink-0">
                 {lightbox.poster.type === 'embed' && (
                   <button
                     onClick={() => handleOpenNewTab(getCanvaDirectLink(lightbox.poster.embedUrl))}
-                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-purple-500 
-                             text-white text-sm font-medium hover:shadow-lg hover:shadow-purple-500/30
+                    className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-purple-500 
+                             text-white text-xs font-medium hover:shadow-lg hover:shadow-purple-500/30
                              transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95
-                             flex items-center gap-2"
+                             flex items-center gap-1"
                   >
-                    <ExternalLink className="w-4 h-4" />
-                    {currentLanguage === 'fr' ? "Ouvrir dans Canva" : "Open in Canva"}
+                    <ExternalLink className="w-3 h-3" />
+                    <span className="hidden sm:inline">{currentLanguage === 'fr' ? "Canva" : "Canva"}</span>
                   </button>
                 )}
                 
                 <button
                   onClick={toggleFullscreen}
-                  className="p-2 rounded-lg hover:bg-emerald-500/10 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-emerald-500/10 transition-colors"
                   title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
                 >
                   {isFullscreen ? (
-                    <Minimize2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                    <Minimize2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   ) : (
-                    <Maximize2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                    <Maximize2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   )}
                 </button>
                 
                 <button
                   onClick={closeLightbox}
-                  className="p-2 rounded-lg hover:bg-emerald-500/10 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-emerald-500/10 transition-colors"
                   title="Close"
                 >
-                  <X className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                  <X className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 </button>
               </div>
             </div>
 
-            {/* Lightbox Content */}
-            <div className="flex-1 overflow-hidden relative p-4">
-              <div 
-                ref={imageContainerRef}
-                className="absolute inset-4 flex items-center justify-center"
-              >
-                {lightbox.poster.type === 'embed' && lightbox.poster.embedUrl ? (
-                  <CanvaEmbed 
-                    embedUrl={lightbox.poster.embedUrl}
-                    title={lightbox.poster.title}
-                  />
-                ) : (
+            {/* Lightbox Content - 9:16 Vertical */}
+            <div className="flex-1 overflow-hidden relative p-2">
+              {lightbox.poster.type === 'embed' && lightbox.poster.embedUrl ? (
+                <CanvaEmbed 
+                  embedUrl={lightbox.poster.embedUrl}
+                  title={lightbox.poster.title}
+                />
+              ) : (
+                <div className="absolute inset-2 flex items-center justify-center">
                   <img
                     src={lightbox.poster.imageUrl}
                     alt={lightbox.poster.title}
@@ -1307,17 +1369,17 @@ export default function Posters() {
                         : FALLBACK_POSTERS.en[0].imageUrl;
                     }}
                   />
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
             {/* Lightbox Footer */}
-            <div className="p-6 border-t border-emerald-500/20 bg-white/95 dark:bg-gray-900/95">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 animate-pulse" />
-                    <span className="text-sm text-emerald-700/80 dark:text-emerald-300/80">
+            <div className="p-4 border-t border-emerald-500/20 bg-white/95 dark:bg-gray-900/95 shrink-0">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-center gap-1 min-w-0">
+                    <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 animate-pulse flex-shrink-0" />
+                    <span className="text-xs text-emerald-700/80 dark:text-emerald-300/80 truncate">
                       {currentLanguage === 'fr' ? "Par" : "By"}{" "}
                       <span className="font-semibold text-emerald-800 dark:text-emerald-200">
                         {lightbox.poster.author}
@@ -1325,22 +1387,22 @@ export default function Posters() {
                     </span>
                   </div>
                   
-                  <div className="flex items-center gap-4 text-sm">
-                    <span className="flex items-center gap-1 text-emerald-600/70 dark:text-emerald-400/70">
-                      <Eye className="w-4 h-4" />
+                  <div className="flex items-center gap-2 text-xs flex-shrink-0">
+                    <span className="flex items-center gap-0.5 text-emerald-600/70 dark:text-emerald-400/70">
+                      <Eye className="w-3 h-3" />
                       {lightbox.poster.views?.toLocaleString() || '1.2k'}
                     </span>
                     <button 
                       onClick={() => handleLikePoster(lightbox.poster!.id)}
-                      className={`flex items-center gap-1 ${likedPosts.has(lightbox.poster!.id) ? 'text-red-500' : 'text-emerald-600/70 dark:text-emerald-400/70'}`}
+                      className={`flex items-center gap-0.5 ${likedPosts.has(lightbox.poster!.id) ? 'text-red-500' : 'text-emerald-600/70 dark:text-emerald-400/70'}`}
                     >
-                      <Heart className={`w-4 h-4 ${likedPosts.has(lightbox.poster!.id) ? 'fill-current' : ''}`} />
+                      <Heart className={`w-3 h-3 ${likedPosts.has(lightbox.poster!.id) ? 'fill-current' : ''}`} />
                       {((lightbox.poster.likes || 0) + (likedPosts.has(lightbox.poster!.id) ? 1 : 0)).toLocaleString()}
                     </button>
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   <button
                     onClick={() => {
                       if (lightbox.poster.type === 'embed') {
@@ -1349,45 +1411,52 @@ export default function Posters() {
                         handleOpenNewTab(lightbox.poster.imageUrl);
                       }
                     }}
-                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-500 
-                             text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30
+                    className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-500 
+                             text-white text-xs font-medium hover:shadow-lg hover:shadow-emerald-500/30
                              transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95
-                             flex items-center gap-2"
+                             flex items-center gap-1"
                   >
-                    <Download className="w-4 h-4" />
-                    {lightbox.poster.type === 'embed' 
-                      ? (currentLanguage === 'fr' ? "Ouvrir sur Canva" : "Open on Canva") 
-                      : (currentLanguage === 'fr' ? "Télécharger" : "Download")}
+                    <Download className="w-3 h-3" />
+                    <span className="hidden sm:inline">
+                      {lightbox.poster.type === 'embed' 
+                        ? (currentLanguage === 'fr' ? "Canva" : "Canva") 
+                        : (currentLanguage === 'fr' ? "Télécharger" : "Download")}
+                    </span>
                   </button>
                   
                   <button
                     onClick={() => handleSharePoster(lightbox.poster!)}
-                    className="px-4 py-2 rounded-lg bg-white/80 dark:bg-gray-800/80 
-                             text-emerald-700 dark:text-emerald-300 font-medium border border-emerald-500/20
+                    className="px-3 py-1.5 rounded-lg bg-white/80 dark:bg-gray-800/80 
+                             text-emerald-700 dark:text-emerald-300 text-xs font-medium border border-emerald-500/20
                              hover:bg-emerald-50 dark:hover:bg-gray-700/80 transition-all duration-300
-                             transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-2"
+                             transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-1"
                   >
-                    <Share2 className="w-4 h-4" />
-                    {currentLanguage === 'fr' ? "Partager" : "Share"}
+                    <Share2 className="w-3 h-3" />
                   </button>
                 </div>
               </div>
               
-              <p className="mb-4 text-emerald-700/80 dark:text-emerald-300/80">
+              <p className="text-xs text-emerald-700/80 dark:text-emerald-300/80 mb-3 line-clamp-2">
                 {lightbox.poster.description}
               </p>
               
-              <div className="flex flex-wrap gap-2">
-                {lightbox.poster.tags.map((tag, index) => (
+              <div className="flex flex-wrap gap-1">
+                {lightbox.poster.tags.slice(0, 3).map((tag, index) => (
                   <span
                     key={index}
-                    className="px-3 py-1 text-xs rounded-full bg-emerald-500/10 
+                    className="px-2 py-0.5 text-xs rounded-full bg-emerald-500/10 
                              text-emerald-700 dark:text-emerald-300 
                              border border-emerald-500/20"
                   >
                     {tag}
                   </span>
                 ))}
+                {lightbox.poster.tags.length > 3 && (
+                  <span className="px-2 py-0.5 text-xs rounded-full bg-emerald-500/5 
+                                 text-emerald-600/60 dark:text-emerald-400/60">
+                    +{lightbox.poster.tags.length - 3}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -1516,6 +1585,22 @@ export default function Posters() {
         .animation-delay-300 { animation-delay: 300ms !important; }
         .animation-delay-1000 { animation-delay: 1000ms !important; }
         .animation-delay-2000 { animation-delay: 2000ms !important; }
+
+        /* Fix for mobile responsiveness */
+        @media (max-width: 640px) {
+          .container {
+            padding-left: 1rem;
+            padding-right: 1rem;
+          }
+          
+          h1 {
+            font-size: 2.5rem !important;
+          }
+          
+          .grid {
+            gap: 1rem !important;
+          }
+        }
       `}</style>
     </div>
   );
