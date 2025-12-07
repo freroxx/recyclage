@@ -2,7 +2,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { Card } from "@/components/ui/card";
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Search, ExternalLink, Sparkles, Leaf, Zap, Mail, Instagram, Upload, User, Palette, Send, Heart, Eye, Download, Share2 } from "lucide-react";
+import { Search, ExternalLink, Sparkles, Leaf, Zap, Mail, Instagram, Upload, User, Palette, Send, Heart, Eye, Download } from "lucide-react";
 
 interface Poster {
   id: number;
@@ -35,7 +35,11 @@ export default function Posters() {
 
   // Handle image errors
   const handleImageError = useCallback((posterId: number) => {
-    setImageErrors(prev => new Set(prev).add(posterId));
+    setImageErrors(prev => {
+      const newSet = new Set(prev);
+      newSet.add(posterId);
+      return newSet;
+    });
   }, []);
 
   // Memoized poster data with correct URLs and text
@@ -68,10 +72,10 @@ export default function Posters() {
           views: 987,
           likes: 67
         },
-        // Salsabile's French posters
+        // Salsabile's French posters - FIXED: Using correct image URLs
         {
           id: 3,
-          imageUrl: "https://i.ibb.co/FLg4Bk0b/fr1.jpg",
+          imageUrl: "https://i.ibb.co/FLg4Bk0/fr1.jpg", // Fixed URL
           title: "Guide du Recyclage Quotidien",
           description: "Infographie pratique pour intégrer le recyclage dans votre routine journalière",
           author: "Salsabile",
@@ -105,11 +109,11 @@ export default function Posters() {
         }
       );
     } else {
-      // English posters
+      // English posters - FIXED: Using correct image URLs
       posters.push(
         {
           id: 6,
-          imageUrl: "https://i.ibb.co/TBjKSzDk/english1.jpg",
+          imageUrl: "https://i.ibb.co/TBjKSzD/english1.jpg", // Fixed URL
           title: "Earth Day Conversation Starters",
           description: "Engaging questions and prompts to spark meaningful environmental discussions",
           author: "Salsabile",
@@ -120,7 +124,7 @@ export default function Posters() {
         },
         {
           id: 7,
-          imageUrl: "https://i.ibb.co/cKY4Rj0B/english2.jpg",
+          imageUrl: "https://i.ibb.co/cKY4Rj0/english2.jpg", // Fixed URL
           title: "Recycling Mascot Adventures",
           description: "Fun and educational poster featuring our recycling mascot teaching kids about sustainability",
           author: "Salsabile",
@@ -131,7 +135,7 @@ export default function Posters() {
         },
         {
           id: 8,
-          imageUrl: "https://i.ibb.co/1tyxTwJy/english3.jpg",
+          imageUrl: "https://i.ibb.co/1tyxTwJ/english3.jpg", // Fixed URL
           title: "Simple Zero Waste Lifestyle",
           description: "Step-by-step guide to achieving a zero waste lifestyle with practical tips",
           author: "Salsabile",
@@ -187,9 +191,22 @@ export default function Posters() {
 
   // Copy contact info to clipboard
   const copyToClipboard = useCallback((text: string) => {
-    navigator.clipboard.writeText(text);
-    // Toast notification would be better here
-    alert(`${language === 'en' ? 'Copied to clipboard!' : 'Copié dans le presse-papier!'}`);
+    navigator.clipboard.writeText(text).then(() => {
+      alert(`${language === 'en' ? 'Copied to clipboard!' : 'Copié dans le presse-papier!'}`);
+    }).catch(() => {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        alert(`${language === 'en' ? 'Copied to clipboard!' : 'Copié dans le presse-papier!'}`);
+      } catch (err) {
+        console.error('Failed to copy text: ', err);
+      }
+      document.body.removeChild(textArea);
+    });
   }, [language]);
 
   // Loading state
@@ -273,33 +290,30 @@ export default function Posters() {
                            flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-base
                            transform hover:-translate-y-0.5 active:scale-95
                            ${activeSection === "gallery" 
-  ? `bg-gradient-to-r from-emerald-600 to-teal-500 text-white
-     shadow-lg shadow-emerald-500/30 dark:shadow-emerald-500/20
-     hover:shadow-xl hover:shadow-emerald-500/40`
-  : `bg-white/90 dark:bg-gray-800/90 text-emerald-700 dark:text-emerald-300
-     hover:bg-emerald-50 dark:hover:bg-gray-700/90 border border-emerald-500/20
-     hover:border-emerald-500/30 dark:border-emerald-500/30`
-}
-
-                          
-
+                             ? `bg-gradient-to-r from-emerald-600 to-teal-500 text-white
+                                shadow-lg shadow-emerald-500/30 dark:shadow-emerald-500/20
+                                hover:shadow-xl hover:shadow-emerald-500/40`
+                             : `bg-white/90 dark:bg-gray-800/90 text-emerald-700 dark:text-emerald-300
+                                hover:bg-emerald-50 dark:hover:bg-gray-700/90 border border-emerald-500/20
+                                hover:border-emerald-500/30 dark:border-emerald-500/30`
+                           }`}
               >
                 <Palette className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover:scale-110" />
                 {language === 'en' ? "Gallery" : "Galerie"}
               </button>
               <button
-               onClick={() => setActiveSection("share")}
-className={`px-5 sm:px-6 md:px-8 py-3 rounded-full font-semibold transition-all duration-300 
-           flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-base
-           transform hover:-translate-y-0.5 active:scale-95
-           ${activeSection === "share" 
-             ? `bg-gradient-to-r from-emerald-600 to-teal-500 text-white 
-                shadow-lg shadow-emerald-500/30 dark:shadow-emerald-500/20 
-                hover:shadow-xl hover:shadow-emerald-500/40` 
-             : `bg-white/90 dark:bg-gray-800/90 text-emerald-700 dark:text-emerald-300
-                hover:bg-emerald-50 dark:hover:bg-gray-700/90 border border-emerald-500/20
-                hover:border-emerald-500/30 dark:border-emerald-500/30`}`}
-
+                onClick={() => setActiveSection("share")}
+                className={`px-5 sm:px-6 md:px-8 py-3 rounded-full font-semibold transition-all duration-300 
+                           flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-base
+                           transform hover:-translate-y-0.5 active:scale-95
+                           ${activeSection === "share" 
+                             ? `bg-gradient-to-r from-emerald-600 to-teal-500 text-white 
+                                shadow-lg shadow-emerald-500/30 dark:shadow-emerald-500/20 
+                                hover:shadow-xl hover:shadow-emerald-500/40` 
+                             : `bg-white/90 dark:bg-gray-800/90 text-emerald-700 dark:text-emerald-300
+                                hover:bg-emerald-50 dark:hover:bg-gray-700/90 border border-emerald-500/20
+                                hover:border-emerald-500/30 dark:border-emerald-500/30`
+                           }`}
               >
                 <Upload className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover:scale-110" />
                 {language === 'en' ? "Share Your Art" : "Partagez votre art"}
