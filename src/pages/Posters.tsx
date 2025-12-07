@@ -21,7 +21,9 @@ import {
   Check,
   X,
   Maximize2,
-  Minimize2
+  Minimize2,
+  Globe,
+  Image as ImageIcon
 } from "lucide-react";
 
 interface Poster {
@@ -35,6 +37,8 @@ interface Poster {
   views?: number;
   likes?: number;
   source?: string;
+  type: "image" | "embed";
+  embedUrl?: string;
 }
 
 // Mock data for development when images fail to load
@@ -49,7 +53,8 @@ const FALLBACK_POSTERS = {
       language: "fr" as const,
       tags: ["environnement", "protection", "nature", "écologie"],
       views: 1500,
-      likes: 120
+      likes: 120,
+      type: "image" as const
     }
   ],
   en: [
@@ -62,7 +67,8 @@ const FALLBACK_POSTERS = {
       language: "en" as const,
       tags: ["environment", "protection", "nature", "ecology"],
       views: 1800,
-      likes: 150
+      likes: 150,
+      type: "image" as const
     }
   ]
 };
@@ -71,6 +77,50 @@ interface LightboxState {
   isOpen: boolean;
   poster: Poster | null;
 }
+
+// Canva embed component
+const CanvaEmbed = ({ embedUrl, title }: { embedUrl: string; title: string }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    const handleLoad = () => setIsLoading(false);
+    const iframe = iframeRef.current;
+    
+    if (iframe) {
+      iframe.addEventListener('load', handleLoad);
+      return () => iframe.removeEventListener('load', handleLoad);
+    }
+  }, []);
+
+  return (
+    <div className="relative w-full h-full min-h-[500px] bg-gray-100 dark:bg-gray-900 rounded-xl overflow-hidden">
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-gray-900 dark:to-emerald-950/30">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-emerald-500/10 rounded-full animate-spin mx-auto mb-4">
+              <div className="w-full h-full border-4 border-transparent border-t-emerald-500 rounded-full"></div>
+            </div>
+            <p className="text-emerald-600 dark:text-emerald-400 font-medium">Loading Canva design...</p>
+          </div>
+        </div>
+      )}
+      
+      <div className="relative w-full" style={{ paddingTop: '141.4286%' }}>
+        <iframe
+          ref={iframeRef}
+          src={embedUrl}
+          className="absolute top-0 left-0 w-full h-full border-0"
+          title={title}
+          allowFullScreen
+          allow="fullscreen"
+          loading="lazy"
+          sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+        />
+      </div>
+    </div>
+  );
+};
 
 export default function Posters() {
   const { t, language = 'en' } = useLanguage();
@@ -102,142 +152,165 @@ export default function Posters() {
       if (currentLanguage === 'fr') {
         // French posters
         posters.push(
+          // Yahia's Canva embeds (French)
           {
             id: 1,
             imageUrl: "https://i.ibb.co/h7tSmRD/yahia-poster2.jpg",
             title: "Allons Recycler",
-            description: "Un design minimaliste et moderne pour promouvoir le recyclage au quotidien",
+            description: "Design minimaliste et moderne pour promouvoir le recyclage au quotidien avec des visuels épurés",
             author: "Yahia Ikni",
             language: "fr",
-            tags: ["recyclage", "minimaliste", "moderne", "quotidien", "3R"],
+            tags: ["recyclage", "minimaliste", "moderne", "quotidien", "3R", "design"],
             views: 2456,
             likes: 189,
-            source: "Canva Design"
+            source: "Canva Design",
+            type: "embed",
+            embedUrl: "https://www.canva.com/design/DAG5KD43qYg/EosXIeHvs1gVf3UKtzN-Mg/view?embed"
           },
           {
             id: 2,
             imageUrl: "https://i.ibb.co/nb0gWJv/yahia-poster1.jpg",
             title: "Sauvons la Terre avec les 3R",
-            description: "Design illustratif vibrant mettant en avant les principes Réduire, Réutiliser, Recycler",
+            description: "Design illustratif vibrant mettant en avant les principes Réduire, Réutiliser, Recycler avec des couleurs vives",
             author: "Yahia Ikni",
             language: "fr",
-            tags: ["3R", "sauver la terre", "illustration", "vibrant", "éducation"],
+            tags: ["3R", "sauver la terre", "illustration", "vibrant", "éducation", "écologie"],
             views: 3120,
             likes: 245,
-            source: "Canva Design"
+            source: "Canva Design",
+            type: "embed",
+            embedUrl: "https://www.canva.com/design/DAG5KNBOplY/Ne4tr6huXflwQyGMv3_zXQ/view?embed"
           },
+          // Salsabile's French posters (images)
           {
             id: 3,
             imageUrl: "https://i.ibb.co/FLg4Bk0/fr1.jpg",
             title: "Guide du Recyclage Quotidien",
-            description: "Infographie pratique pour intégrer le recyclage dans votre routine journalière",
+            description: "Infographie pratique pour intégrer le recyclage dans votre routine journalière avec des étapes simples",
             author: "Salsabile",
             language: "fr",
-            tags: ["guide", "pratique", "infographie", "tutoriel", "quotidien"],
+            tags: ["guide", "pratique", "infographie", "tutoriel", "quotidien", "étapes"],
             views: 1890,
-            likes: 156
+            likes: 156,
+            type: "image"
           },
           {
             id: 4,
             imageUrl: "https://i.ibb.co/YSbCfC6/fr2.jpg",
             title: "École Écoresponsable",
-            description: "Poster éducatif pour sensibiliser les élèves aux gestes écologiques à l'école",
+            description: "Poster éducatif pour sensibiliser les élèves aux gestes écologiques à l'école avec des illustrations engageantes",
             author: "Salsabile",
             language: "fr",
-            tags: ["école", "éducation", "sensibilisation", "écocitoyenneté", "jeunesse"],
+            tags: ["école", "éducation", "sensibilisation", "écocitoyenneté", "jeunesse", "pédagogie"],
             views: 1678,
-            likes: 134
+            likes: 134,
+            type: "image"
           },
+          // Additional French poster
           {
             id: 5,
             imageUrl: "https://images.unsplash.com/photo-1578558288137-7207cb8c0e85?w=800&auto=format&fit=crop&q=80",
             title: "Famille Zéro Déchet",
-            description: "Illustration familiale montrant comment adopter un mode de vie sans déchets",
+            description: "Illustration familiale montrant comment adopter un mode de vie sans déchets de manière progressive",
             author: "Éco-Famille Collective",
             language: "fr",
-            tags: ["zéro déchet", "famille", "mode de vie", "écologie", "durabilité"],
+            tags: ["zéro déchet", "famille", "mode de vie", "écologie", "durabilité", "responsable"],
             views: 2345,
-            likes: 198
+            likes: 198,
+            type: "image"
           }
         );
       } else {
         // English posters
         posters.push(
+          // Salsabile's English posters (images)
           {
             id: 6,
             imageUrl: "https://i.ibb.co/TBjKSzD/english1.jpg",
             title: "Earth Day Conversation Starters",
-            description: "Engaging questions and prompts to spark meaningful environmental discussions",
+            description: "Engaging questions and prompts to spark meaningful environmental discussions in communities",
             author: "Salsabile",
             language: "en",
-            tags: ["earth day", "conversation", "discussion", "engagement", "community"],
+            tags: ["earth day", "conversation", "discussion", "engagement", "community", "dialogue"],
             views: 2100,
-            likes: 167
+            likes: 167,
+            type: "image"
           },
           {
             id: 7,
             imageUrl: "https://i.ibb.co/cKY4Rj0/english2.jpg",
             title: "Recycling Mascot Adventures",
-            description: "Fun and educational poster featuring our recycling mascot teaching kids about sustainability",
+            description: "Fun and educational poster featuring our recycling mascot teaching kids about sustainability through stories",
             author: "Salsabile",
             language: "en",
-            tags: ["mascot", "fun", "educational", "kids", "playful"],
+            tags: ["mascot", "fun", "educational", "kids", "playful", "stories"],
             views: 1987,
-            likes: 154
+            likes: 154,
+            type: "image"
           },
           {
             id: 8,
             imageUrl: "https://i.ibb.co/1tyxTwJ/english3.jpg",
             title: "Simple Zero Waste Lifestyle",
-            description: "Step-by-step guide to achieving a zero waste lifestyle with practical tips",
+            description: "Step-by-step guide to achieving a zero waste lifestyle with practical tips and visual aids",
             author: "Salsabile",
             language: "en",
-            tags: ["zero waste", "simple", "lifestyle", "guide", "tips"],
+            tags: ["zero waste", "simple", "lifestyle", "guide", "tips", "practical"],
             views: 2245,
-            likes: 189
+            likes: 189,
+            type: "image"
           },
+          // Additional English posters
           {
             id: 9,
             imageUrl: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&auto=format&fit=crop&q=80",
             title: "Green Campus Initiative",
-            description: "Promoting sustainable practices in educational institutions for a greener future",
+            description: "Promoting sustainable practices in educational institutions for a greener future through collective action",
             author: "Eco Education Team",
             language: "en",
-            tags: ["campus", "education", "sustainability", "green", "future"],
+            tags: ["campus", "education", "sustainability", "green", "future", "initiative"],
             views: 1876,
-            likes: 143
+            likes: 143,
+            type: "image"
           },
           {
             id: 10,
             imageUrl: "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=800&auto=format&fit=crop&q=80",
             title: "Sustainable Living Guide",
-            description: "Comprehensive guide to adopting sustainable habits in daily life",
+            description: "Comprehensive guide to adopting sustainable habits in daily life with actionable recommendations",
             author: "Green Living Collective",
             language: "en",
-            tags: ["sustainable", "guide", "living", "habits", "daily"],
+            tags: ["sustainable", "guide", "living", "habits", "daily", "actionable"],
             views: 2567,
-            likes: 210
+            likes: 210,
+            type: "image"
           }
         );
       }
       
       setPostersData(posters);
       
+      // Preload images only for image-type posters
       posters.forEach(poster => {
-        const img = new Image();
-        img.src = poster.imageUrl;
-        img.onload = () => {
+        if (poster.type === 'image') {
+          const img = new Image();
+          img.src = poster.imageUrl;
+          img.onload = () => {
+            setLoadedImages(prev => new Set(prev).add(poster.id));
+          };
+          img.onerror = () => {
+            console.warn(`Failed to load image for poster ${poster.id}`);
+            if (poster.id <= 5) {
+              poster.imageUrl = FALLBACK_POSTERS.fr[0].imageUrl;
+            } else {
+              poster.imageUrl = FALLBACK_POSTERS.en[0].imageUrl;
+            }
+            setLoadedImages(prev => new Set(prev).add(poster.id));
+          };
+        } else {
+          // For embed posters, consider them loaded
           setLoadedImages(prev => new Set(prev).add(poster.id));
-        };
-        img.onerror = () => {
-          console.warn(`Failed to load image for poster ${poster.id}`);
-          if (poster.id <= 5) {
-            poster.imageUrl = FALLBACK_POSTERS.fr[0].imageUrl;
-          } else {
-            poster.imageUrl = FALLBACK_POSTERS.en[0].imageUrl;
-          }
-          setLoadedImages(prev => new Set(prev).add(poster.id));
-        };
+        }
       });
     };
     
@@ -250,7 +323,7 @@ export default function Posters() {
         const fallbackPosters = currentLanguage === 'fr' ? FALLBACK_POSTERS.fr : FALLBACK_POSTERS.en;
         setPostersData(fallbackPosters);
       }
-    }, 1000);
+    }, 1500);
     
     return () => clearTimeout(timer);
   }, [language]);
@@ -329,7 +402,7 @@ export default function Posters() {
     const shareData = {
       title: poster.title,
       text: `${poster.title} by ${poster.author} - ${poster.description}`,
-      url: poster.imageUrl,
+      url: poster.type === 'embed' ? `https://www.canva.com/design/${poster.embedUrl?.split('/').slice(-3, -1).join('/')}` : poster.imageUrl,
     };
 
     if (navigator.share && navigator.canShare?.(shareData)) {
@@ -337,10 +410,10 @@ export default function Posters() {
         await navigator.share(shareData);
       } catch (err) {
         console.log('Error sharing:', err);
-        copyToClipboard(poster.imageUrl);
+        copyToClipboard(shareData.url);
       }
     } else {
-      copyToClipboard(poster.imageUrl);
+      copyToClipboard(shareData.url);
     }
   }, [copyToClipboard]);
 
@@ -408,6 +481,17 @@ export default function Posters() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [lightbox.isOpen, closeLightbox]);
+
+  // Get direct Canva link from embed URL
+  const getCanvaDirectLink = useCallback((embedUrl?: string) => {
+    if (!embedUrl) return '#';
+    // Convert embed URL to direct Canva view link
+    const match = embedUrl.match(/\/design\/([^\/]+)\/([^\/]+)\/view/);
+    if (match) {
+      return `https://www.canva.com/design/${match[1]}/view?utm_content=${match[1]}&utm_campaign=designshare&utm_medium=embeds&utm_source=link`;
+    }
+    return embedUrl;
+  }, []);
 
   // Loading state
   if (!mounted || isLoading) {
@@ -478,8 +562,8 @@ export default function Posters() {
                           max-w-3xl mx-auto leading-relaxed font-light mb-8 animate-fade-in">
               {t("posters.subtitle") || 
                (currentLanguage === 'fr' 
-                 ? "Découvrez des affiches environnementales inspirantes" 
-                 : "Discover inspiring environmental posters")}
+                 ? "Découvrez des affiches environnementales inspirantes créées par notre communauté" 
+                 : "Discover inspiring environmental posters created by our community")}
             </p>
             
             {/* Navigation Tabs */}
@@ -537,8 +621,8 @@ export default function Posters() {
                     <input
                       type="text"
                       placeholder={currentLanguage === 'fr' 
-                        ? "Rechercher des affiches..." 
-                        : "Search posters..."}
+                        ? "Rechercher des affiches, tags ou auteurs..." 
+                        : "Search posters, tags, or authors..."}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full pl-16 pr-12 py-4 
@@ -582,12 +666,12 @@ export default function Posters() {
                     </div>
                     <div>
                       <h3 className="text-xl font-bold text-emerald-900 dark:text-emerald-100 mb-2">
-                        {currentLanguage === 'fr' ? "Aucune affiche" : "No posters"}
+                        {currentLanguage === 'fr' ? "Aucune affiche trouvée" : "No posters found"}
                       </h3>
                       <p className="text-emerald-700/70 dark:text-emerald-300/70">
                         {currentLanguage === 'fr' 
-                          ? "Essayez d'autres mots-clés" 
-                          : "Try different keywords"}
+                          ? "Essayez d'autres mots-clés ou parcourez toutes les affiches" 
+                          : "Try different keywords or browse all posters"}
                       </p>
                     </div>
                     <button
@@ -597,7 +681,7 @@ export default function Posters() {
                                font-semibold hover:shadow-lg hover:shadow-emerald-500/30
                                transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95"
                     >
-                      <span className="relative z-10">{currentLanguage === 'fr' ? "Tout voir" : "View All"}</span>
+                      <span className="relative z-10">{currentLanguage === 'fr' ? "Voir toutes les affiches" : "View All Posters"}</span>
                       <span className="absolute inset-0 bg-gradient-to-r from-teal-600 to-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
                     </button>
                   </div>
@@ -658,24 +742,58 @@ export default function Posters() {
                                      hover:-translate-y-1 cursor-pointer"
                           onClick={() => openLightbox(poster)}
                         >
-                          {/* Poster Image */}
+                          {/* Poster Image/Embed Preview */}
                           <div className="relative w-full pt-[125%] sm:pt-[140%] overflow-hidden 
                                         bg-gradient-to-br from-emerald-500/5 to-teal-500/5">
                             <div className="absolute inset-0">
-                              <img
-                                src={poster.imageUrl}
-                                alt={poster.title}
-                                className="absolute w-full h-full top-0 left-0 object-cover 
-                                         group-hover:scale-105 transition-transform duration-500 ease-out"
-                                loading="lazy"
-                                decoding="async"
-                                onError={(e) => handleImageError(e, poster)}
-                              />
+                              {poster.type === 'embed' ? (
+                                // Embed poster preview
+                                <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+                                  <div className="relative w-full h-full rounded-lg overflow-hidden bg-gradient-to-br from-emerald-500/10 to-teal-500/10">
+                                    <img
+                                      src={poster.imageUrl}
+                                      alt={poster.title}
+                                      className="absolute w-full h-full top-0 left-0 object-cover opacity-90 
+                                               group-hover:scale-105 transition-transform duration-500 ease-out"
+                                      loading="lazy"
+                                      decoding="async"
+                                      onError={(e) => handleImageError(e, poster)}
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent 
+                                                  flex items-end p-4">
+                                      <div className="flex items-center gap-2 text-white/90">
+                                        <Globe className="w-4 h-4" />
+                                        <span className="text-xs font-medium bg-black/50 px-2 py-1 rounded-full">
+                                          {currentLanguage === 'fr' ? "Affiche interactive" : "Interactive Poster"}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                      <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full 
+                                                    p-3 transform group-hover:scale-110 transition-transform duration-300">
+                                        <ExternalLink className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : (
+                                // Image poster preview
+                                <img
+                                  src={poster.imageUrl}
+                                  alt={poster.title}
+                                  className="absolute w-full h-full top-0 left-0 object-cover 
+                                           group-hover:scale-105 transition-transform duration-500 ease-out"
+                                  loading="lazy"
+                                  decoding="async"
+                                  onError={(e) => handleImageError(e, poster)}
+                                />
+                              )}
                               
                               {/* Hover Overlay */}
                               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent 
                                             opacity-0 group-hover:opacity-100 transition-all duration-300 
                                             flex flex-col justify-end p-4">
+                                {/* Stats */}
                                 <div className="flex items-center justify-between mb-3 transform translate-y-2 
                                               group-hover:translate-y-0 opacity-0 group-hover:opacity-100 
                                               transition-all duration-300 delay-100">
@@ -698,6 +816,7 @@ export default function Posters() {
                                   </button>
                                 </div>
                                 
+                                {/* Action Buttons */}
                                 <div className="grid grid-cols-2 gap-2 transform translate-y-4 group-hover:translate-y-0 
                                               opacity-0 group-hover:opacity-100 transition-all duration-300 delay-150">
                                   <button
@@ -709,13 +828,26 @@ export default function Posters() {
                                              hover:bg-white hover:scale-105 active:scale-95 transition-all duration-200 
                                              flex items-center justify-center gap-2 text-sm group/btn"
                                   >
-                                    <Maximize2 className="w-4 h-4 transition-transform group-hover/btn:rotate-12" />
-                                    {currentLanguage === 'fr' ? "Agrandir" : "Expand"}
+                                    {poster.type === 'embed' ? (
+                                      <>
+                                        <Globe className="w-4 h-4 transition-transform group-hover/btn:rotate-12" />
+                                        {currentLanguage === 'fr' ? "Ouvrir" : "Open"}
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Maximize2 className="w-4 h-4 transition-transform group-hover/btn:rotate-12" />
+                                        {currentLanguage === 'fr' ? "Agrandir" : "Expand"}
+                                      </>
+                                    )}
                                   </button>
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleOpenNewTab(poster.imageUrl);
+                                      if (poster.type === 'embed') {
+                                        handleOpenNewTab(getCanvaDirectLink(poster.embedUrl));
+                                      } else {
+                                        handleOpenNewTab(poster.imageUrl);
+                                      }
                                     }}
                                     className="px-3 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-500 
                                              text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 
@@ -723,15 +855,28 @@ export default function Posters() {
                                              flex items-center justify-center gap-2 text-sm group/btn"
                                   >
                                     <Download className="w-4 h-4 transition-transform group-hover/btn:-translate-y-0.5" />
-                                    {currentLanguage === 'fr' ? "Télécharger" : "Save"}
+                                    {poster.type === 'embed' 
+                                      ? (currentLanguage === 'fr' ? "Voir sur Canva" : "View on Canva") 
+                                      : (currentLanguage === 'fr' ? "Télécharger" : "Download")}
                                   </button>
                                 </div>
                               </div>
                               
-                              {/* Language Badge */}
+                              {/* Type Badge */}
                               <div className="absolute top-3 right-3">
                                 <span className={`px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md 
                                                transition-all duration-300 group-hover:scale-110
+                                               ${poster.type === 'embed' 
+                                                 ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-white' 
+                                                 : 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white'}`}>
+                                  {poster.type === 'embed' ? 'INTERACTIVE' : 'IMAGE'}
+                                </span>
+                              </div>
+
+                              {/* Language Badge */}
+                              <div className="absolute top-3 left-3">
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md 
+                                               transition-all duration-300
                                                ${poster.language === 'en' 
                                                  ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white' 
                                                  : 'bg-gradient-to-r from-teal-600 to-teal-500 text-white'}`}>
@@ -741,7 +886,7 @@ export default function Posters() {
 
                               {/* Source badge */}
                               {poster.source && (
-                                <div className="absolute top-3 left-3">
+                                <div className="absolute bottom-3 left-3">
                                   <span className="px-2 py-1 rounded-full text-xs font-medium backdrop-blur-md 
                                                  bg-black/60 text-white/90">
                                     {poster.source}
@@ -774,6 +919,12 @@ export default function Posters() {
                                   {tag}
                                 </span>
                               ))}
+                              {poster.tags.length > 3 && (
+                                <span className="px-2 py-1 text-xs rounded-full bg-emerald-500/5 
+                                               text-emerald-600/60 dark:text-emerald-400/60">
+                                  +{poster.tags.length - 3}
+                                </span>
+                              )}
                             </div>
                             
                             <div className="pt-3 border-t border-emerald-500/10">
@@ -788,6 +939,13 @@ export default function Posters() {
                                     </span>
                                   </span>
                                 </div>
+                                <div className="flex items-center gap-2">
+                                  {poster.type === 'embed' ? (
+                                    <Globe className="w-4 h-4 text-purple-500" />
+                                  ) : (
+                                    <ImageIcon className="w-4 h-4 text-emerald-500" />
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -796,6 +954,37 @@ export default function Posters() {
                     ))}
                   </div>
                 </>
+              )}
+
+              {/* Footer Message */}
+              {!searchQuery && filteredPosters.length > 0 && (
+                <div className="mt-20 text-center animate-fade-in-up">
+                  <div className="inline-block max-w-xl mx-auto transform hover:-translate-y-1 transition-transform duration-300 group">
+                    <div className="p-8 rounded-2xl bg-gradient-to-br from-white/60 to-emerald-500/10 
+                                  backdrop-blur-sm border border-emerald-500/10 group-hover:border-emerald-500/20
+                                  transition-all duration-300">
+                      <Leaf className="w-10 h-10 text-emerald-500 mb-4 mx-auto animate-float-slow" />
+                      <p className="text-lg text-emerald-800/80 dark:text-emerald-200/80 mb-6 leading-relaxed">
+                        {currentLanguage === 'fr' 
+                          ? "Rejoignez notre communauté d'artistes environnementaux ! Partagez vos créations pour inspirer le changement." 
+                          : "Join our community of environmental artists! Share your creations to inspire change."}
+                      </p>
+                      <button
+                        onClick={() => setActiveSection("share")}
+                        className="px-8 py-3 rounded-full relative overflow-hidden group/btn
+                                 bg-gradient-to-r from-emerald-600 to-teal-500 text-white 
+                                 font-semibold hover:shadow-lg hover:shadow-emerald-500/30
+                                 transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95"
+                      >
+                        <span className="relative z-10 flex items-center gap-2">
+                          <Upload className="w-5 h-5" />
+                          {currentLanguage === 'fr' ? "Partager mon art" : "Share My Art"}
+                        </span>
+                        <span className="absolute inset-0 bg-gradient-to-r from-teal-600 to-emerald-500 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               )}
             </>
           ) : (
@@ -806,12 +995,12 @@ export default function Posters() {
                              bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 
                              dark:from-emerald-400 dark:via-emerald-300 dark:to-teal-400 
                              bg-clip-text text-transparent animate-title-glow">
-                  {currentLanguage === 'fr' ? "Partagez votre création" : "Share Your Art"}
+                  {currentLanguage === 'fr' ? "Partagez votre création" : "Share Your Artwork"}
                 </h2>
                 <p className="text-xl text-emerald-700/80 dark:text-emerald-300/80 leading-relaxed">
                   {currentLanguage === 'fr' 
-                    ? "Rejoignez notre communauté d'artistes environnementaux" 
-                    : "Join our community of environmental artists"}
+                    ? "Rejoignez notre communauté et inspirez les autres avec votre art environnemental" 
+                    : "Join our community and inspire others with your environmental artwork"}
                 </p>
               </div>
 
@@ -823,24 +1012,24 @@ export default function Posters() {
                     icon: Palette,
                     title: currentLanguage === 'fr' ? "Créez" : "Create",
                     description: currentLanguage === 'fr' 
-                      ? "Créez des affiches inspirantes sur l'environnement"
-                      : "Design inspiring posters about the environment"
+                      ? "Créez des affiches inspirantes sur le recyclage, la durabilité ou la protection de l'environnement"
+                      : "Design inspiring posters about recycling, sustainability, or environmental protection"
                   },
                   {
                     step: 2,
                     icon: Send,
                     title: currentLanguage === 'fr' ? "Partagez" : "Share",
                     description: currentLanguage === 'fr' 
-                      ? "Envoyez-nous votre création pour crédit"
-                      : "Send us your creation for proper credit"
+                      ? "Envoyez votre création par email ou Instagram avec votre nom pour un crédit approprié"
+                      : "Send your creation via email or Instagram with your name for proper credit"
                   },
                   {
                     step: 3,
                     icon: User,
                     title: currentLanguage === 'fr' ? "Brillez" : "Shine",
                     description: currentLanguage === 'fr' 
-                      ? "Votre travail sera présenté dans la galerie"
-                      : "Your work will be featured in our gallery"
+                      ? "Votre travail sera présenté dans notre galerie communautaire pour inspirer les autres"
+                      : "Your work will be featured in our community gallery to inspire others"
                   }
                 ].map((item, index) => (
                   <div
@@ -978,10 +1167,42 @@ export default function Posters() {
                   </div>
                 </div>
 
+                {/* Requirements */}
+                <div className="mt-8 p-6 rounded-xl 
+                              bg-gradient-to-br from-emerald-500/5 to-teal-500/5 
+                              border border-emerald-500/20 transform hover:-translate-y-1 transition-all duration-300">
+                  <h4 className="font-semibold text-emerald-900 dark:text-emerald-100 mb-4 
+                               flex items-center gap-3">
+                    <Sparkles className="w-5 h-5 text-emerald-600 dark:text-emerald-400 
+                                       animate-pulse-gentle" />
+                    {currentLanguage === 'fr' ? "Directives de soumission" : "Submission Guidelines"}
+                  </h4>
+                  <ul className="space-y-3 text-emerald-700/80 dark:text-emerald-300/80">
+                    <li className="flex items-start gap-3">
+                      <span className="w-2 h-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 mt-2"></span>
+                      <span>{currentLanguage === 'fr' 
+                        ? "Incluez votre nom complet pour un crédit approprié" 
+                        : "Include your full name for proper credit"}</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="w-2 h-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 mt-2"></span>
+                      <span>{currentLanguage === 'fr' 
+                        ? "Formats acceptés : JPG, PNG, PDF (haute qualité recommandée)" 
+                        : "Accepted formats: JPG, PNG, PDF (high quality recommended)"}</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="w-2 h-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 mt-2"></span>
+                      <span>{currentLanguage === 'fr' 
+                        ? "Gardez le contenu éducatif et inspirant sur les thèmes environnementaux" 
+                        : "Keep content educational and inspiring about environmental topics"}</span>
+                    </li>
+                  </ul>
+                </div>
+
                 {/* Quick Action */}
                 <div className="mt-8 text-center">
                   <button
-                    onClick={() => window.open("mailto:recyclagemaria@gmail.com", "_blank")}
+                    onClick={() => window.open("mailto:recyclagemaria@gmail.com?subject=Poster Submission&body=Hi, I'd like to submit my environmental poster for the community gallery!", "_blank")}
                     className="px-8 py-4 rounded-full relative overflow-hidden group
                              bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 
                              text-white font-semibold text-lg
@@ -1019,9 +1240,27 @@ export default function Posters() {
                 <span className="px-2 py-1 text-xs rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
                   {lightbox.poster.language.toUpperCase()}
                 </span>
+                {lightbox.poster.type === 'embed' && (
+                  <span className="px-2 py-1 text-xs rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-300">
+                    INTERACTIVE
+                  </span>
+                )}
               </div>
               
               <div className="flex items-center gap-2">
+                {lightbox.poster.type === 'embed' && (
+                  <button
+                    onClick={() => handleOpenNewTab(getCanvaDirectLink(lightbox.poster.embedUrl))}
+                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-purple-500 
+                             text-white text-sm font-medium hover:shadow-lg hover:shadow-purple-500/30
+                             transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95
+                             flex items-center gap-2"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    {currentLanguage === 'fr' ? "Ouvrir dans Canva" : "Open in Canva"}
+                  </button>
+                )}
+                
                 <button
                   onClick={toggleFullscreen}
                   className="p-2 rounded-lg hover:bg-emerald-500/10 transition-colors"
@@ -1045,29 +1284,36 @@ export default function Posters() {
             </div>
 
             {/* Lightbox Content */}
-            <div className="flex-1 overflow-hidden relative">
+            <div className="flex-1 overflow-hidden relative p-4">
               <div 
                 ref={imageContainerRef}
-                className="absolute inset-0 flex items-center justify-center p-4"
+                className="absolute inset-4 flex items-center justify-center"
               >
-                <img
-                  src={lightbox.poster.imageUrl}
-                  alt={lightbox.poster.title}
-                  className="max-w-full max-h-full object-contain"
-                  onError={(e) => {
-                    const img = e.target as HTMLImageElement;
-                    const currentLanguage = language || 'en';
-                    img.src = currentLanguage === 'fr' 
-                      ? FALLBACK_POSTERS.fr[0].imageUrl
-                      : FALLBACK_POSTERS.en[0].imageUrl;
-                  }}
-                />
+                {lightbox.poster.type === 'embed' && lightbox.poster.embedUrl ? (
+                  <CanvaEmbed 
+                    embedUrl={lightbox.poster.embedUrl}
+                    title={lightbox.poster.title}
+                  />
+                ) : (
+                  <img
+                    src={lightbox.poster.imageUrl}
+                    alt={lightbox.poster.title}
+                    className="max-w-full max-h-full object-contain"
+                    onError={(e) => {
+                      const img = e.target as HTMLImageElement;
+                      const currentLanguage = language || 'en';
+                      img.src = currentLanguage === 'fr' 
+                        ? FALLBACK_POSTERS.fr[0].imageUrl
+                        : FALLBACK_POSTERS.en[0].imageUrl;
+                    }}
+                  />
+                )}
               </div>
             </div>
 
             {/* Lightbox Footer */}
             <div className="p-6 border-t border-emerald-500/20 bg-white/95 dark:bg-gray-900/95">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 animate-pulse" />
@@ -1096,14 +1342,22 @@ export default function Posters() {
                 
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => handleOpenNewTab(lightbox.poster!.imageUrl)}
+                    onClick={() => {
+                      if (lightbox.poster.type === 'embed') {
+                        handleOpenNewTab(getCanvaDirectLink(lightbox.poster.embedUrl));
+                      } else {
+                        handleOpenNewTab(lightbox.poster.imageUrl);
+                      }
+                    }}
                     className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-500 
                              text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30
                              transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95
                              flex items-center gap-2"
                   >
                     <Download className="w-4 h-4" />
-                    {currentLanguage === 'fr' ? "Télécharger" : "Download"}
+                    {lightbox.poster.type === 'embed' 
+                      ? (currentLanguage === 'fr' ? "Ouvrir sur Canva" : "Open on Canva") 
+                      : (currentLanguage === 'fr' ? "Télécharger" : "Download")}
                   </button>
                   
                   <button
@@ -1119,11 +1373,11 @@ export default function Posters() {
                 </div>
               </div>
               
-              <p className="mt-4 text-emerald-700/80 dark:text-emerald-300/80">
+              <p className="mb-4 text-emerald-700/80 dark:text-emerald-300/80">
                 {lightbox.poster.description}
               </p>
               
-              <div className="flex flex-wrap gap-2 mt-4">
+              <div className="flex flex-wrap gap-2">
                 {lightbox.poster.tags.map((tag, index) => (
                   <span
                     key={index}
