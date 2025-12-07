@@ -2,7 +2,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { Card } from "@/components/ui/card";
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Search, ExternalLink, Globe, Sparkles } from "lucide-react";
+import { Search, ExternalLink, Sparkles, Leaf, Zap, Filter } from "lucide-react";
 
 interface Poster {
   id: number;
@@ -22,10 +22,17 @@ export default function Posters() {
   const [isLoading, setIsLoading] = useState(true);
   const [hoveredPoster, setHoveredPoster] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [mounted, setMounted] = useState(false);
+
+  // Initialize mounted state
+  useEffect(() => {
+    setMounted(true);
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Memoized poster data
   const yahiaPosters = useMemo<Poster[]>(() => {
-    // Only show Yahia's posters in French
     if (language !== 'fr') return [];
     
     return [
@@ -110,9 +117,9 @@ export default function Posters() {
   const allPosters = useMemo(() => [...yahiaPosters, ...salsabilePosters], [yahiaPosters, salsabilePosters]);
 
   const filteredPosters = useMemo(() => {
-    if (!searchQuery) return allPosters;
+    if (!searchQuery.trim()) return allPosters;
     
-    const query = searchQuery.toLowerCase();
+    const query = searchQuery.toLowerCase().trim();
     return allPosters.filter(poster =>
       poster.title.toLowerCase().includes(query) ||
       poster.description.toLowerCase().includes(query) ||
@@ -123,24 +130,20 @@ export default function Posters() {
 
   // Handle opening in new tab
   const handleOpenNewTab = useCallback((url: string) => {
+    if (!url) return;
     window.open(url, '_blank', 'noopener,noreferrer');
   }, []);
 
-  // Loading effect
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 600);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isLoading) {
+  if (!mounted || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5">
         <div className="relative">
-          <div className="w-20 h-20 border-4 border-primary/10 rounded-full animate-spin">
-            <div className="absolute inset-0 border-4 border-transparent border-t-primary rounded-full animate-ping animation-delay-300"></div>
+          <div className="w-24 h-24 border-4 border-primary/10 rounded-full animate-spin">
+            <div className="absolute inset-0 border-4 border-transparent border-t-emerald-500 rounded-full animate-ping animation-delay-300"></div>
+            <div className="absolute inset-0 border-4 border-transparent border-b-emerald-300 rounded-full animate-pulse animation-delay-600"></div>
           </div>
-          <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-primary animate-pulse" />
-          <Sparkles className="absolute -bottom-2 -left-2 w-6 h-6 text-secondary animate-pulse animation-delay-500" />
+          <Leaf className="absolute -top-3 -right-3 w-8 h-8 text-emerald-500 animate-bounce animation-delay-400" />
+          <Zap className="absolute -bottom-3 -left-3 w-8 h-8 text-emerald-400 animate-pulse animation-delay-800" />
         </div>
       </div>
     );
@@ -150,117 +153,164 @@ export default function Posters() {
     <div className="relative min-h-screen overflow-hidden">
       {/* Enhanced Animated Background */}
       <div className="absolute inset-0 z-0 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-background via-background/95 to-primary/5"></div>
+        {/* Gradient Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/20 via-background to-emerald-900/5"></div>
         
-        {/* Animated gradient orbs */}
-        <div className="absolute top-1/4 -left-32 w-96 h-96 bg-gradient-to-r from-primary/10 to-transparent rounded-full blur-3xl animate-float-slow"></div>
-        <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-gradient-to-l from-secondary/10 to-transparent rounded-full blur-3xl animate-float-slow animation-delay-1000"></div>
+        {/* Animated gradient mesh */}
+        <div className="absolute inset-0 opacity-40">
+          <div 
+            className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-r from-emerald-400/10 to-transparent rounded-full blur-3xl animate-orb-float"
+            style={{ animationDelay: '0s' }}
+          />
+          <div 
+            className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-gradient-to-l from-emerald-600/5 to-transparent rounded-full blur-3xl animate-orb-float"
+            style={{ animationDelay: '2s' }}
+          />
+        </div>
         
-        {/* Floating particles */}
-        {Array.from({ length: 15 }).map((_, i) => (
+        {/* Animated floating particles */}
+        {Array.from({ length: 12 }).map((_, i) => (
           <div
             key={i}
-            className="absolute rounded-full animate-particle"
+            className="absolute w-1 h-1 bg-emerald-400/30 rounded-full animate-particle-float"
             style={{
-              '--delay': `${i * 200}ms`,
-              '--duration': `${3 + Math.random() * 4}s`,
-              '--x-start': `${Math.random() * 100}%`,
-              '--y-start': `${Math.random() * 100}%`,
-              '--size': `${Math.random() * 3 + 1}px`,
-            } as React.CSSProperties}
+              animationDelay: `${i * 0.3}s`,
+              animationDuration: `${3 + i * 0.5}s`,
+              left: `${10 + (i * 7)}%`,
+              top: `${20 + (i * 6)}%`,
+            }}
           />
         ))}
+        
+        {/* Subtle grid pattern */}
+        <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(90deg,#22c55e_1px,transparent_1px),linear-gradient(180deg,#22c55e_1px,transparent_1px)] bg-[size:20px_20px]"></div>
       </div>
 
       <div className="container mx-auto px-4 py-12 relative z-10">
         <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-12">
-            <div className="inline-block mb-8 relative animate-fade-in-down">
+          {/* Header with enhanced styling */}
+          <div className="text-center mb-16">
+            <div className="inline-block mb-10 relative">
               <div className="relative">
-                <h1 className="relative text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent animate-gradient">
+                {/* Decorative elements */}
+                <Leaf className="absolute -left-10 top-1/2 w-8 h-8 text-emerald-400/60 animate-float-slow" />
+                <Sparkles className="absolute -right-10 top-1/2 w-8 h-8 text-emerald-300/60 animate-float-slow animation-delay-1000" />
+                
+                {/* Main title */}
+                <h1 className="relative text-5xl md:text-7xl lg:text-8xl font-black mb-8 bg-gradient-to-r from-emerald-600 via-emerald-400 to-emerald-700 bg-clip-text text-transparent animate-gradient tracking-tight">
                   {t("posters.title")}
                 </h1>
-                <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-48 h-1 bg-gradient-to-r from-transparent via-primary to-transparent animate-pulse"></div>
+                
+                {/* Animated underline */}
+                <div className="relative h-1 overflow-hidden max-w-2xl mx-auto">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-500 to-transparent animate-shimmer"></div>
+                </div>
               </div>
             </div>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed animate-fade-in-up animation-delay-300">
+            
+            {/* Subtitle */}
+            <p className="text-xl md:text-2xl text-emerald-800/70 dark:text-emerald-200/70 max-w-3xl mx-auto leading-relaxed font-light mb-6 animate-fade-in">
               {t("posters.subtitle")}
             </p>
-          </div>
-
-          {/* Search Bar */}
-          <div className="max-w-2xl mx-auto mb-12 animate-fade-in-up animation-delay-500">
-            <div className="relative group">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5 transition-colors duration-300 group-focus-within:text-primary" />
-              <input
-                type="text"
-                placeholder={language === 'en' 
-                  ? "Search posters by title, description, or tags..." 
-                  : "Rechercher des affiches par titre, description ou tags..."}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-10 py-4 bg-card/60 backdrop-blur-sm border-2 border-primary/10 rounded-2xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/20 transition-all duration-300 hover:border-primary/30"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors duration-200"
-                  aria-label="Clear search"
-                >
-                  ✕
-                </button>
-              )}
+            
+            {/* Community badge */}
+            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-emerald-500/10 to-emerald-600/10 border border-emerald-500/20 backdrop-blur-sm animate-pulse-gentle">
+              <div className="relative">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-ping absolute"></div>
+                <div className="w-2 h-2 bg-emerald-500 rounded-full relative"></div>
+              </div>
+              <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                {t("posters.allCommunityMade")}
+              </span>
             </div>
           </div>
 
-          {/* Results Info */}
+          {/* Search Section */}
+          <div className="max-w-3xl mx-auto mb-16 animate-fade-in-up">
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-emerald-600/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="relative">
+                <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 text-emerald-600/70 w-6 h-6 transition-all duration-300 group-focus-within:text-emerald-500 group-focus-within:scale-110" />
+                <input
+                  type="text"
+                  placeholder={language === 'en' 
+                    ? "🔍 Search posters by title, description, or tags..." 
+                    : "🔍 Rechercher des affiches par titre, description ou tags..."}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-16 pr-12 py-5 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-2 border-emerald-500/20 rounded-2xl text-lg text-emerald-900 dark:text-emerald-100 placeholder:text-emerald-600/50 dark:placeholder:text-emerald-400/50 focus:outline-none focus:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-300 hover:border-emerald-500/30"
+                />
+                <div className="absolute right-5 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="text-emerald-600/70 hover:text-emerald-500 transition-colors duration-200 p-1"
+                      aria-label="Clear search"
+                    >
+                      ✕
+                    </button>
+                  )}
+                  <Filter className="w-5 h-5 text-emerald-600/50" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Results Section */}
           {filteredPosters.length === 0 ? (
-            <div className="text-center py-20 animate-fade-in">
-              <div className="inline-flex flex-col items-center gap-4 max-w-sm">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center animate-pulse">
-                  <Search className="w-10 h-10 text-muted-foreground" />
+            <div className="text-center py-24 animate-fade-in">
+              <div className="inline-flex flex-col items-center gap-6 max-w-md">
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-500/10 to-emerald-600/10 flex items-center justify-center animate-pulse-gentle">
+                    <Search className="w-12 h-12 text-emerald-500/50" />
+                  </div>
+                  <Zap className="absolute -top-2 -right-2 w-8 h-8 text-emerald-400 animate-bounce" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-foreground mb-2">
+                  <h3 className="text-2xl font-bold text-emerald-900 dark:text-emerald-100 mb-3">
                     {language === 'en' ? "No posters found" : "Aucune affiche trouvée"}
                   </h3>
-                  <p className="text-muted-foreground">
+                  <p className="text-emerald-700/70 dark:text-emerald-300/70">
                     {language === 'en' 
-                      ? "Try different search terms or browse all posters" 
-                      : "Essayez d'autres termes de recherche ou parcourez toutes les affiches"}
+                      ? "Try different keywords or browse all community posters" 
+                      : "Essayez d'autres mots-clés ou parcourez toutes les affiches de la communauté"}
                   </p>
                 </div>
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="px-6 py-2.5 rounded-full bg-gradient-to-r from-primary to-secondary text-white font-medium hover:shadow-lg hover:shadow-primary/25 transition-all duration-300 active:scale-95"
+                  className="px-8 py-3 rounded-full bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-semibold hover:shadow-2xl hover:shadow-emerald-500/30 transition-all duration-300 active:scale-95 transform hover:-translate-y-0.5"
                 >
-                  {language === 'en' ? "Browse All" : "Parcourir tout"}
+                  {language === 'en' ? "View All Posters" : "Voir toutes les affiches"}
                 </button>
               </div>
             </div>
           ) : (
             <>
-              {/* Results Count */}
-              <div className="mb-8 animate-fade-in">
+              {/* Results Header */}
+              <div className="mb-10 animate-fade-in">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Globe className="w-5 h-5 text-primary" />
-                    <h3 className="text-lg font-semibold text-foreground">
-                      {filteredPosters.length} {language === 'en' ? "posters" : "affiches"}
-                    </h3>
-                    {searchQuery && (
-                      <span className="text-sm text-muted-foreground">
-                        {language === 'en' ? "for" : "pour"} "{searchQuery}"
-                      </span>
-                    )}
+                    <div className="p-2 rounded-full bg-emerald-500/10">
+                      <Zap className="w-5 h-5 text-emerald-500" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-emerald-900 dark:text-emerald-100">
+                        {filteredPosters.length} {language === 'en' ? "community posters" : "affiches communautaires"}
+                      </h3>
+                      {searchQuery && (
+                        <p className="text-sm text-emerald-700/70 dark:text-emerald-300/70 mt-1">
+                          {language === 'en' ? "Showing results for" : "Résultats pour"} "
+                          <span className="font-semibold text-emerald-600 dark:text-emerald-400">{searchQuery}</span>"
+                        </p>
+                      )}
+                    </div>
                   </div>
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery("")}
-                      className="text-sm text-primary hover:text-secondary transition-colors duration-200 flex items-center gap-1"
+                      className="text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors duration-200 flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20"
                     >
-                      {language === 'en' ? "Clear search" : "Effacer la recherche"}
+                      {language === 'en' ? "Clear search" : "Effacer"}
                     </button>
                   )}
                 </div>
@@ -271,81 +321,94 @@ export default function Posters() {
                 {filteredPosters.map((poster, index) => (
                   <div
                     key={poster.id}
-                    className="animate-fade-in-up scroll-reveal"
+                    className="animate-card-enter scroll-reveal"
                     style={{
-                      animationDelay: `${index * 150}ms`,
+                      animationDelay: `${index * 100}ms`,
                       animationFillMode: 'both'
                     }}
+                    onMouseEnter={() => setHoveredPoster(poster.id)}
+                    onMouseLeave={() => setHoveredPoster(null)}
                   >
                     <Card 
-                      className="overflow-hidden hover:shadow-2xl transition-all duration-500 border border-primary/10 backdrop-blur-sm bg-card/60 h-full group"
-                      onMouseEnter={() => setHoveredPoster(poster.id)}
-                      onMouseLeave={() => setHoveredPoster(null)}
+                      className="overflow-hidden border-2 border-emerald-500/10 bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm h-full group hover:border-emerald-500/30 hover:shadow-2xl hover:shadow-emerald-500/20 transition-all duration-500"
                     >
-                      {/* Poster Content */}
-                      <div className="relative w-full h-0 pb-[125%] overflow-hidden rounded-t-lg">
-                        {/* Poster Image/Embed */}
-                        {poster.embedUrl ? (
-                          <iframe
-                            loading="lazy"
-                            className="absolute w-full h-full top-0 left-0 border-none"
-                            src={poster.embedUrl}
-                            allowFullScreen
-                            allow="fullscreen"
-                            title={poster.title}
-                          />
-                        ) : (
-                          <img
-                            src={poster.imageUrl}
-                            alt={poster.title}
-                            className="absolute w-full h-full top-0 left-0 object-cover group-hover:scale-105 transition-transform duration-700"
-                            loading="lazy"
-                          />
-                        )}
+                      {/* Poster Container */}
+                      <div className="relative w-full h-0 pb-[130%] overflow-hidden">
+                        {/* Background Gradient */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-emerald-600/5"></div>
                         
-                        {/* Overlay gradient */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                        
-                        {/* Language Badge */}
-                        <div className="absolute top-4 right-4">
-                          <span className={`px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-md ${
-                            poster.language === 'en' 
-                              ? 'bg-blue-500/20 text-blue-500 border border-blue-500/30'
-                              : 'bg-purple-500/20 text-purple-500 border border-purple-500/30'
-                          }`}>
-                            {poster.language.toUpperCase()}
-                          </span>
-                        </div>
-                        
-                        {/* Open Button - Always visible under embed */}
-                        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-[calc(100%-2rem)]">
-                          <button
-                            onClick={() => handleOpenNewTab(poster.viewUrl || poster.imageUrl || poster.embedUrl || '#')}
-                            className="w-full px-4 py-3 bg-white/95 backdrop-blur-sm rounded-lg font-medium text-foreground hover:bg-white transition-all duration-300 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl active:scale-95"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                            {language === 'en' ? "Open in new tab" : "Ouvrir dans un nouvel onglet"}
-                          </button>
+                        {/* Poster Content */}
+                        <div className="absolute inset-2 rounded-lg overflow-hidden">
+                          {poster.embedUrl ? (
+                            <iframe
+                              loading="lazy"
+                              className="absolute w-full h-full top-0 left-0 border-none"
+                              src={poster.embedUrl}
+                              allowFullScreen
+                              allow="fullscreen"
+                              title={poster.title}
+                            />
+                          ) : (
+                            <img
+                              src={poster.imageUrl}
+                              alt={poster.title}
+                              className="absolute w-full h-full top-0 left-0 object-cover group-hover:scale-105 transition-transform duration-700"
+                              loading="lazy"
+                            />
+                          )}
+                          
+                          {/* Overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-emerald-900/50 via-emerald-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                          
+                          {/* Language Badge */}
+                          <div className="absolute top-3 right-3 transform group-hover:scale-110 transition-transform duration-300">
+                            <span className={`px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-md shadow-lg ${
+                              poster.language === 'en' 
+                                ? 'bg-emerald-600/90 text-white border border-emerald-700'
+                                : 'bg-emerald-700/90 text-white border border-emerald-800'
+                            }`}>
+                              {poster.language.toUpperCase()}
+                            </span>
+                          </div>
+                          
+                          {/* Author Tag */}
+                          <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-x-2 group-hover:translate-x-0">
+                            <span className="px-3 py-1.5 bg-emerald-900/90 backdrop-blur-sm rounded-full text-xs text-white font-medium shadow-lg">
+                              {poster.author}
+                            </span>
+                          </div>
+                          
+                          {/* Open in New Tab Button - Positioned prominently */}
+                          <div className="absolute bottom-3 left-3 right-3">
+                            <button
+                              onClick={() => handleOpenNewTab(poster.viewUrl || poster.imageUrl || poster.embedUrl || '')}
+                              className="w-full px-4 py-3 rounded-lg bg-gradient-to-r from-emerald-700 to-emerald-600 text-white font-semibold hover:shadow-xl hover:shadow-emerald-600/30 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-3 active:scale-95 group-hover:delay-100"
+                            >
+                              <ExternalLink className="w-5 h-5" />
+                              {language === 'en' ? "Open in new tab" : "Ouvrir dans un nouvel onglet"}
+                            </button>
+                          </div>
                         </div>
                       </div>
                       
                       {/* Poster Info */}
-                      <div className="p-5 bg-gradient-to-b from-card to-card/80">
-                        <div className="mb-3">
-                          <h3 className="font-bold text-lg mb-2 group-hover:text-primary transition-colors duration-300">
+                      <div className="p-5 bg-gradient-to-b from-white/50 to-white/30 dark:from-gray-900/50 dark:to-gray-900/30">
+                        {/* Title and Description */}
+                        <div className="mb-4">
+                          <h3 className="font-bold text-xl text-emerald-900 dark:text-emerald-100 mb-2 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors duration-300 line-clamp-1">
                             {poster.title}
                           </h3>
-                          <p className="text-sm text-muted-foreground line-clamp-2">
+                          <p className="text-sm text-emerald-800/70 dark:text-emerald-300/70 line-clamp-2 leading-relaxed">
                             {poster.description}
                           </p>
                         </div>
                         
                         {/* Tags */}
-                        <div className="flex flex-wrap gap-1.5 mb-4">
-                          {poster.tags.slice(0, 3).map((tag, tagIndex) => (
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {poster.tags.slice(0, 4).map((tag, tagIndex) => (
                             <span
                               key={tagIndex}
-                              className="px-2 py-1 text-xs rounded-full bg-primary/5 text-primary/80 border border-primary/10 transition-colors duration-300 hover:bg-primary/10 hover:text-primary"
+                              className="px-3 py-1 text-xs rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500/20 hover:border-emerald-500/30 transition-all duration-300 cursor-default"
                             >
                               {tag}
                             </span>
@@ -353,17 +416,22 @@ export default function Posters() {
                         </div>
                         
                         {/* Footer */}
-                        <div className="flex items-center justify-between pt-3 border-t border-primary/10">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${
-                              poster.author === "Yahia Ikni" 
-                                ? 'bg-blue-500 animate-pulse' 
-                                : 'bg-purple-500 animate-pulse'
-                            }`}></div>
-                            <span className="text-sm text-muted-foreground">
-                              {t("home.presentation.by")}{" "}
-                              <span className="font-medium text-foreground">{poster.author}</span>
-                            </span>
+                        <div className="pt-4 border-t border-emerald-500/10">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-3 h-3 rounded-full ${
+                                poster.author === "Yahia Ikni" 
+                                  ? 'bg-emerald-500 animate-pulse' 
+                                  : 'bg-emerald-400 animate-pulse animation-delay-500'
+                              }`}></div>
+                              <span className="text-sm text-emerald-700/80 dark:text-emerald-300/80">
+                                {t("home.presentation.by")}{" "}
+                                <span className="font-semibold text-emerald-800 dark:text-emerald-200">{poster.author}</span>
+                              </span>
+                            </div>
+                            <div className="text-xs text-emerald-600/60 dark:text-emerald-400/60">
+                              {poster.language === 'en' ? 'EN' : 'FR'}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -374,21 +442,25 @@ export default function Posters() {
             </>
           )}
 
-          {/* Footer Note */}
-          {!searchQuery && (
-            <div className="mt-16 text-center animate-fade-in-up animation-delay-1000">
+          {/* Footer Message */}
+          {!searchQuery && filteredPosters.length > 0 && (
+            <div className="mt-20 text-center animate-fade-in-up animation-delay-1000">
               <div className="inline-block max-w-xl mx-auto">
-                <p className="text-muted-foreground mb-4">
-                  {t("posters.communityNote")}
-                </p>
-                <div className="flex items-center justify-center gap-3">
-                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent"></div>
-                  <Sparkles className="w-4 h-4 text-primary/60 animate-pulse" />
-                  <span className="text-sm text-muted-foreground">
-                    {language === 'en' ? "Community powered" : "Propulsé par la communauté"}
-                  </span>
-                  <Sparkles className="w-4 h-4 text-secondary/60 animate-pulse animation-delay-500" />
-                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-secondary/20 to-transparent"></div>
+                <div className="relative">
+                  <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/5 to-emerald-600/5 rounded-full blur-xl"></div>
+                  <div className="relative p-6 rounded-2xl bg-gradient-to-br from-white/30 to-emerald-500/5 backdrop-blur-sm border border-emerald-500/10">
+                    <Leaf className="w-8 h-8 text-emerald-500 mb-4 mx-auto animate-float-slow" />
+                    <p className="text-lg text-emerald-800/80 dark:text-emerald-200/80 mb-4">
+                      {t("posters.communityNote")}
+                    </p>
+                    <div className="flex items-center justify-center gap-4">
+                      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent"></div>
+                      <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                        {language === 'en' ? "Made with ♻️ by the community" : "Fait avec ♻️ par la communauté"}
+                      </span>
+                      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-emerald-400/30 to-transparent"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -397,23 +469,40 @@ export default function Posters() {
       </div>
 
       <style jsx global>{`
-        @keyframes float-slow {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(20px, -20px) scale(1.05); }
+        @keyframes orb-float {
+          0%, 100% { 
+            transform: translate(0, 0) scale(1) rotate(0deg);
+            opacity: 0.3;
+          }
+          33% { 
+            transform: translate(30px, -40px) scale(1.1) rotate(120deg);
+            opacity: 0.5;
+          }
+          66% { 
+            transform: translate(-20px, 20px) scale(0.9) rotate(240deg);
+            opacity: 0.4;
+          }
         }
 
         @keyframes particle-float {
           0%, 100% { 
-            transform: translate(var(--x-start), var(--y-start)) scale(1);
+            transform: translateY(0) rotate(0deg);
             opacity: 0.3;
           }
           50% { 
-            transform: translate(
-              calc(var(--x-start) + 20px),
-              calc(var(--y-start) - 30px)
-            ) scale(1.2);
-            opacity: 0.6;
+            transform: translateY(-30px) rotate(180deg);
+            opacity: 0.8;
           }
+        }
+
+        @keyframes float-slow {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
         }
 
         @keyframes gradient {
@@ -421,36 +510,32 @@ export default function Posters() {
           50% { background-position: 100% 50%; }
         }
 
-        .animate-float-slow {
-          animation: float-slow 8s ease-in-out infinite;
-        }
-
-        .animate-particle {
-          background: radial-gradient(circle, rgba(var(--primary-rgb), 0.2) 0%, transparent 70%);
-          animation: particle-float var(--duration) ease-in-out infinite var(--delay);
-          width: var(--size);
-          height: var(--size);
-          left: var(--x-start);
-          top: var(--y-start);
-        }
-
-        .animate-gradient {
-          background-size: 300% auto;
-          animation: gradient 4s ease-in-out infinite;
-        }
-
-        @keyframes fadeInDown {
+        @keyframes card-enter {
           from {
             opacity: 0;
-            transform: translateY(-20px);
+            transform: translateY(30px) scale(0.95);
           }
           to {
             opacity: 1;
-            transform: translateY(0);
+            transform: translateY(0) scale(1);
           }
         }
 
-        @keyframes fadeInUp {
+        @keyframes pulse-gentle {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
+
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes fade-in-up {
           from {
             opacity: 0;
             transform: translateY(20px);
@@ -461,17 +546,64 @@ export default function Posters() {
           }
         }
 
-        .animate-fade-in-down {
-          animation: fadeInDown 0.8s ease-out forwards;
+        /* Animation classes */
+        .animate-orb-float {
+          animation: orb-float 15s ease-in-out infinite;
         }
 
-        .animate-fade-in-up {
-          animation: fadeInUp 0.8s ease-out forwards;
+        .animate-particle-float {
+          animation: particle-float var(--duration, 3s) ease-in-out infinite var(--delay, 0s);
+        }
+
+        .animate-float-slow {
+          animation: float-slow 3s ease-in-out infinite;
+        }
+
+        .animate-shimmer {
+          animation: shimmer 2s ease-in-out infinite;
+        }
+
+        .animate-gradient {
+          background-size: 300% auto;
+          animation: gradient 6s ease-in-out infinite;
+        }
+
+        .animate-card-enter {
+          animation: card-enter 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
           opacity: 0;
         }
 
+        .animate-pulse-gentle {
+          animation: pulse-gentle 2s ease-in-out infinite;
+        }
+
         .animate-fade-in {
-          animation: fadeInUp 0.6s ease-out forwards;
+          animation: fade-in 1s ease-out forwards;
+        }
+
+        .animate-fade-in-up {
+          animation: fade-in-up 0.8s ease-out forwards;
+          opacity: 0;
+        }
+
+        .scroll-reveal {
+          opacity: 0;
+          transform: translateY(30px);
+          transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), 
+                      transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .scroll-reveal.scroll-reveal-active {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        /* Utility classes */
+        .line-clamp-1 {
+          display: -webkit-box;
+          -webkit-line-clamp: 1;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
         }
 
         .line-clamp-2 {
@@ -481,20 +613,16 @@ export default function Posters() {
           overflow: hidden;
         }
 
-        .scroll-reveal {
-          opacity: 0;
-          transform: translateY(30px);
-          transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-        }
-
-        .scroll-reveal.scroll-reveal-active {
-          opacity: 1;
-          transform: translateY(0);
-        }
-
         .animation-delay-300 { animation-delay: 300ms !important; }
         .animation-delay-500 { animation-delay: 500ms !important; }
+        .animation-delay-600 { animation-delay: 600ms !important; }
+        .animation-delay-800 { animation-delay: 800ms !important; }
         .animation-delay-1000 { animation-delay: 1000ms !important; }
+
+        /* Group delays */
+        .group-hover\\:delay-100 {
+          transition-delay: 100ms;
+        }
       `}</style>
     </div>
   );
