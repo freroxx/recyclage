@@ -1,5 +1,3 @@
-import { useLanguage } from "@/contexts/LanguageContext";
-import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { Card } from "@/components/ui/card";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Search, ExternalLink, Sparkles, Leaf, Zap, Mail, Instagram, Upload, User, Palette, Send, Heart, Eye, Download } from "lucide-react";
@@ -16,175 +14,166 @@ interface Poster {
   likes?: number;
 }
 
-// Fallback images in case external URLs fail
-const FALLBACK_IMAGES = {
-  fr: "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=800&auto=format&fit=crop&q=80",
-  en: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&auto=format&fit=crop&q=80"
-};
+// Fallback images that are guaranteed to work
+const FALLBACK_IMAGES = [
+  "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=800&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=800&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1578558288137-7207cb8c0e85?w=800&auto=format&fit=crop&q=80"
+];
 
 export default function Posters() {
-  const { t, language = 'en' } = useLanguage();
-  useScrollReveal();
   const [isLoading, setIsLoading] = useState(true);
   const [hoveredPoster, setHoveredPoster] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [mounted, setMounted] = useState(false);
   const [activeSection, setActiveSection] = useState<"gallery" | "share">("gallery");
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
-  const [postersData, setPostersData] = useState<Poster[]>([]);
+  const [language, setLanguage] = useState<"fr" | "en">("en");
 
-  // Initialize mounted state and load posters
+  // Initialize mounted state and set language
   useEffect(() => {
     setMounted(true);
     
-    // Load posters based on language
-    const loadPosters = () => {
-      const currentLanguage = language || 'en';
-      const posters: Poster[] = [];
-      
-      if (currentLanguage === 'fr') {
-        // French posters
-        posters.push(
-          {
-            id: 1,
-            imageUrl: "https://images.unsplash.com/photo-1597822738124-151fb72dcb79?w=800&auto=format&fit=crop&q=80",
-            title: "Sauver la Terre avec les 3R",
-            description: "Un design vibrant illustrant le concept Réduire, Réutiliser, Recycler pour protéger notre planète",
-            author: "Yahia Ikni",
-            language: "fr",
-            tags: ["3R", "écologie", "concept", "réduction", "développement durable"],
-            views: 1245,
-            likes: 89
-          },
-          {
-            id: 2,
-            imageUrl: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800&auto=format&fit=crop&q=80",
-            title: "Campagne de Recyclage Minimaliste",
-            description: "Design épuré et moderne promouvant les bonnes habitudes de recyclage au quotidien",
-            author: "Yahia Ikni",
-            language: "fr",
-            tags: ["minimaliste", "campagne", "design", "habitudes", "écoresponsable"],
-            views: 987,
-            likes: 67
-          },
-          {
-            id: 3,
-            imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop&q=80",
-            title: "Guide du Recyclage Quotidien",
-            description: "Infographie pratique pour intégrer le recyclage dans votre routine journalière",
-            author: "Salsabile",
-            language: "fr",
-            tags: ["guide", "pratique", "quotidien", "infographie", "tutoriel"],
-            views: 1567,
-            likes: 112
-          },
-          {
-            id: 4,
-            imageUrl: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=800&auto=format&fit=crop&q=80",
-            title: "École Écoresponsable",
-            description: "Poster éducatif pour sensibiliser les élèves aux gestes écologiques à l'école",
-            author: "Salsabile",
-            language: "fr",
-            tags: ["éducation", "école", "sensibilisation", "jeunesse", "écocitoyenneté"],
-            views: 1342,
-            likes: 95
-          },
-          {
-            id: 5,
-            imageUrl: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&auto=format&fit=crop&q=80",
-            title: "Zéro Déchet Facile",
-            description: "Astuces simples pour réduire vos déchets et adopter un mode de vie plus écologique",
-            author: "Éco-Design Collective",
-            language: "fr",
-            tags: ["zéro déchet", "écologie", "astuces", "lifestyle", "durabilité"],
-            views: 2100,
-            likes: 156
-          }
-        );
-      } else {
-        // English posters
-        posters.push(
-          {
-            id: 6,
-            imageUrl: "https://images.unsplash.com/photo-1578558288137-7207cb8c0e85?w=800&auto=format&fit=crop&q=80",
-            title: "Earth Day Conversation Starters",
-            description: "Engaging questions and prompts to spark meaningful environmental discussions",
-            author: "Salsabile",
-            language: "en",
-            tags: ["earth day", "conversation", "discussion", "engagement", "education"],
-            views: 1890,
-            likes: 134
-          },
-          {
-            id: 7,
-            imageUrl: "https://images.unsplash.com/photo-1565402170291-8491f14678db?w=800&auto=format&fit=crop&q=80",
-            title: "Recycling Mascot Adventures",
-            description: "Fun and educational poster featuring our recycling mascot teaching kids about sustainability",
-            author: "Salsabile",
-            language: "en",
-            tags: ["fun", "mascot", "educational", "kids", "playful"],
-            views: 1765,
-            likes: 121
-          },
-          {
-            id: 8,
-            imageUrl: "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=800&auto=format&fit=crop&q=80",
-            title: "Simple Zero Waste Lifestyle",
-            description: "Step-by-step guide to achieving a zero waste lifestyle with practical tips",
-            author: "Salsabile",
-            language: "en",
-            tags: ["zero waste", "simple", "lifestyle", "eco-friendly", "guide"],
-            views: 1954,
-            likes: 142
-          },
-          {
-            id: 9,
-            imageUrl: "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=800&auto=format&fit=crop&q=80",
-            title: "Green Campus Initiative",
-            description: "Promoting sustainable practices in educational institutions for a greener future",
-            author: "Eco Education Team",
-            language: "en",
-            tags: ["campus", "education", "sustainability", "green", "future"],
-            views: 1678,
-            likes: 98
-          },
-          {
-            id: 10,
-            imageUrl: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&auto=format&fit=crop&q=80",
-            title: "Sustainable Living Guide",
-            description: "Comprehensive guide to adopting sustainable habits in daily life",
-            author: "Green Living Collective",
-            language: "en",
-            tags: ["sustainable", "guide", "living", "habits", "eco"],
-            views: 2243,
-            likes: 167
-          }
-        );
-      }
-      
-      setPostersData(posters);
-    };
+    // Detect browser language or use default
+    const browserLang = navigator.language.startsWith('fr') ? 'fr' : 'en';
+    setLanguage(browserLang);
     
-    loadPosters();
-    
-    const timer = setTimeout(() => setIsLoading(false), 800);
+    const timer = setTimeout(() => setIsLoading(false), 600);
     return () => clearTimeout(timer);
-  }, [language]); // Reload posters when language changes
+  }, []);
 
-  // Reset image errors when language changes
-  useEffect(() => {
-    setImageErrors(new Set());
-  }, [language]);
-
-  // Handle image errors with fallback
+  // Simplified image error handling
   const handleImageError = useCallback((posterId: number, e: React.SyntheticEvent<HTMLImageElement>) => {
-    console.log(`Image failed to load for poster ${posterId}`);
+    console.log(`Image failed to load for poster ${posterId}, using fallback`);
     setImageErrors(prev => new Set(prev).add(posterId));
     
-    // Set fallback image
+    // Use a fallback image based on the poster ID
     const img = e.target as HTMLImageElement;
+    const fallbackIndex = posterId % FALLBACK_IMAGES.length;
+    img.src = FALLBACK_IMAGES[fallbackIndex];
+  }, []);
+
+  // Simplified posters data - always available, with guaranteed images
+  const postersData = useMemo<Poster[]>(() => {
     const currentLanguage = language || 'en';
-    img.src = FALLBACK_IMAGES[currentLanguage as keyof typeof FALLBACK_IMAGES];
+    
+    const basePosters = currentLanguage === 'fr' ? [
+      {
+        id: 1,
+        imageUrl: "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=800&auto=format&fit=crop&q=80",
+        title: "Sauver la Terre avec les 3R",
+        description: "Un design vibrant illustrant le concept Réduire, Réutiliser, Recycler pour protéger notre planète",
+        author: "Yahia Ikni",
+        language: "fr" as const,
+        tags: ["3R", "écologie", "concept", "réduction", "développement durable"],
+        views: 1245,
+        likes: 89
+      },
+      {
+        id: 2,
+        imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop&q=80",
+        title: "Campagne de Recyclage Minimaliste",
+        description: "Design épuré et moderne promouvant les bonnes habitudes de recyclage au quotidien",
+        author: "Yahia Ikni",
+        language: "fr" as const,
+        tags: ["minimaliste", "campagne", "design", "habitudes", "écoresponsable"],
+        views: 987,
+        likes: 67
+      },
+      {
+        id: 3,
+        imageUrl: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=800&auto=format&fit=crop&q=80",
+        title: "Guide du Recyclage Quotidien",
+        description: "Infographie pratique pour intégrer le recyclage dans votre routine journalière",
+        author: "Salsabile",
+        language: "fr" as const,
+        tags: ["guide", "pratique", "quotidien", "infographie", "tutoriel"],
+        views: 1567,
+        likes: 112
+      },
+      {
+        id: 4,
+        imageUrl: "https://images.unsplash.com/photo-1578558288137-7207cb8c0e85?w=800&auto=format&fit=crop&q=80",
+        title: "École Écoresponsable",
+        description: "Poster éducatif pour sensibiliser les élèves aux gestes écologiques à l'école",
+        author: "Salsabile",
+        language: "fr" as const,
+        tags: ["éducation", "école", "sensibilisation", "jeunesse", "écocitoyenneté"],
+        views: 1342,
+        likes: 95
+      },
+      {
+        id: 5,
+        imageUrl: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&auto=format&fit=crop&q=80",
+        title: "Zéro Déchet Facile",
+        description: "Astuces simples pour réduire vos déchets et adopter un mode de vie plus écologique",
+        author: "Éco-Design Collective",
+        language: "fr" as const,
+        tags: ["zéro déchet", "écologie", "astuces", "lifestyle", "durabilité"],
+        views: 2100,
+        likes: 156
+      }
+    ] : [
+      {
+        id: 6,
+        imageUrl: "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=800&auto=format&fit=crop&q=80",
+        title: "Earth Day Conversation Starters",
+        description: "Engaging questions and prompts to spark meaningful environmental discussions",
+        author: "Salsabile",
+        language: "en" as const,
+        tags: ["earth day", "conversation", "discussion", "engagement", "education"],
+        views: 1890,
+        likes: 134
+      },
+      {
+        id: 7,
+        imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop&q=80",
+        title: "Recycling Mascot Adventures",
+        description: "Fun and educational poster featuring our recycling mascot teaching kids about sustainability",
+        author: "Salsabile",
+        language: "en" as const,
+        tags: ["fun", "mascot", "educational", "kids", "playful"],
+        views: 1765,
+        likes: 121
+      },
+      {
+        id: 8,
+        imageUrl: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=800&auto=format&fit=crop&q=80",
+        title: "Simple Zero Waste Lifestyle",
+        description: "Step-by-step guide to achieving a zero waste lifestyle with practical tips",
+        author: "Salsabile",
+        language: "en" as const,
+        tags: ["zero waste", "simple", "lifestyle", "eco-friendly", "guide"],
+        views: 1954,
+        likes: 142
+      },
+      {
+        id: 9,
+        imageUrl: "https://images.unsplash.com/photo-1578558288137-7207cb8c0e85?w=800&auto=format&fit=crop&q=80",
+        title: "Green Campus Initiative",
+        description: "Promoting sustainable practices in educational institutions for a greener future",
+        author: "Eco Education Team",
+        language: "en" as const,
+        tags: ["campus", "education", "sustainability", "green", "future"],
+        views: 1678,
+        likes: 98
+      },
+      {
+        id: 10,
+        imageUrl: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&auto=format&fit=crop&q=80",
+        title: "Sustainable Living Guide",
+        description: "Comprehensive guide to adopting sustainable habits in daily life",
+        author: "Green Living Collective",
+        language: "en" as const,
+        tags: ["sustainable", "guide", "living", "habits", "eco"],
+        views: 2243,
+        likes: 167
+      }
+    ];
+    
+    return basePosters;
   }, [language]);
 
   const filteredPosters = useMemo(() => {
@@ -209,7 +198,6 @@ export default function Posters() {
     navigator.clipboard.writeText(text).then(() => {
       alert(`${language === 'fr' ? 'Copié dans le presse-papier!' : 'Copied to clipboard!'}`);
     }).catch(() => {
-      // Fallback for older browsers
       const textArea = document.createElement('textarea');
       textArea.value = text;
       document.body.appendChild(textArea);
@@ -244,7 +232,7 @@ export default function Posters() {
 
   return (
     <div className="relative min-h-screen overflow-auto bg-background">
-      {/* Enhanced Background with Theme Support */}
+      {/* Enhanced Background */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/40 via-background to-teal-50/30 
                         dark:from-gray-950 dark:via-gray-900 dark:to-emerald-950/20"></div>
@@ -270,7 +258,7 @@ export default function Posters() {
                                bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 
                                dark:from-emerald-400 dark:via-emerald-300 dark:to-teal-400 
                                bg-clip-text text-transparent tracking-tight leading-tight">
-                  {t("posters.title") || (currentLanguage === 'fr' ? "Galerie d'Affiches Écologiques" : "Eco Posters Gallery")}
+                  {currentLanguage === 'fr' ? "Galerie d'Affiches Écologiques" : "Eco Posters Gallery"}
                 </h1>
                 
                 <div className="relative h-0.5 md:h-1 overflow-hidden max-w-lg md:max-w-2xl mx-auto">
@@ -282,10 +270,9 @@ export default function Posters() {
             
             <p className="text-base sm:text-lg md:text-xl text-emerald-800/80 dark:text-emerald-200/80 
                           max-w-lg md:max-w-3xl mx-auto leading-relaxed font-light mb-6 px-2">
-              {t("posters.subtitle") || 
-               (currentLanguage === 'fr' 
-                 ? "Découvrez des affiches environnementales inspirantes de notre communauté créative" 
-                 : "Discover inspiring environmental posters from our creative community")}
+              {currentLanguage === 'fr' 
+                ? "Découvrez des affiches environnementales inspirantes de notre communauté créative" 
+                : "Discover inspiring environmental posters from our creative community"}
             </p>
             
             {/* Navigation Tabs */}
@@ -327,6 +314,7 @@ export default function Posters() {
             </div>
           </div>
 
+          {/* Main Content */}
           {activeSection === "gallery" ? (
             <>
               {/* Search Section */}
@@ -373,7 +361,7 @@ export default function Posters() {
                 </div>
               </div>
 
-              {/* Results Section */}
+              {/* Gallery Content */}
               {filteredPosters.length === 0 ? (
                 <div className="text-center py-12 md:py-24 px-4 animate-fade-in-up">
                   <div className="inline-flex flex-col items-center gap-4 md:gap-6 max-w-md">
@@ -448,7 +436,7 @@ export default function Posters() {
                     {filteredPosters.map((poster, index) => (
                       <div
                         key={poster.id}
-                        className="scroll-reveal animate-card-enter"
+                        className="animate-card-enter"
                         style={{
                           animationDelay: `${Math.min(index * 100, 600)}ms`,
                           animationFillMode: 'both'
@@ -484,7 +472,6 @@ export default function Posters() {
                               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent 
                                             opacity-0 group-hover:opacity-100 transition-all duration-300 
                                             flex flex-col justify-end p-3 sm:p-4">
-                                {/* Stats */}
                                 <div className="flex items-center justify-between mb-3 transform translate-y-2 
                                               group-hover:translate-y-0 opacity-0 group-hover:opacity-100 
                                               transition-all duration-300 delay-100">
@@ -897,18 +884,6 @@ export default function Posters() {
           opacity: 0;
         }
 
-        .scroll-reveal {
-          opacity: 0;
-          transform: translateY(30px);
-          transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), 
-                      transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .scroll-reveal.scroll-reveal-active {
-          opacity: 1;
-          transform: translateY(0);
-        }
-
         .line-clamp-1 {
           display: -webkit-box;
           -webkit-line-clamp: 1;
@@ -937,8 +912,7 @@ export default function Posters() {
           .animate-shimmer,
           .animate-card-enter,
           .animate-pulse-gentle,
-          .animate-fade-in-up,
-          .scroll-reveal {
+          .animate-fade-in-up {
             animation: none !important;
             transition: opacity 0.3s ease !important;
           }
