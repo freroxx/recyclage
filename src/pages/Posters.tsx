@@ -146,6 +146,7 @@ export default function Posters() {
   const [lightboxVisible, setLightboxVisible] = useState(false);
   const [imageDimensions, setImageDimensions] = useState<{width: number; height: number}>({width: 0, height: 0});
   const [hoveredPosterId, setHoveredPosterId] = useState<number | null>(null);
+  const [loadedEmbeds, setLoadedEmbeds] = useState<Set<number>>(new Set());
   
   const lightboxRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -406,6 +407,11 @@ export default function Posters() {
     setIsFullscreen(!isFullscreen);
   }, [isFullscreen]);
 
+  // Handle embed load
+  const handleEmbedLoad = useCallback((posterId: number) => {
+    setLoadedEmbeds(prev => new Set(prev).add(posterId));
+  }, []);
+
   // Event listeners
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -518,7 +524,7 @@ export default function Posters() {
             <div className="flex justify-center gap-3 mb-12">
               <button
                 onClick={() => setActiveSection("gallery")}
-                className={`px-6 py-3 rounded-full font-semibold transition-all duration-500 
+                className={`px-6 py-3 rounded-full font-semibold transition-all duration-500 ease-out
                            flex items-center gap-2 relative overflow-hidden group
                            transform hover:-translate-y-1 active:scale-95
                            hover:shadow-xl hover:shadow-emerald-500/20
@@ -533,11 +539,11 @@ export default function Posters() {
                 <Palette className="w-4 h-4 group-hover:scale-110 transition-transform duration-300" />
                 {currentLanguage === 'fr' ? "Galerie" : "Gallery"}
                 <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent 
-                               -translate-x-full group-hover:translate-x-full transition-transform duration-700"></span>
+                               -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out"></span>
               </button>
               <button
                 onClick={() => setActiveSection("share")}
-                className={`px-6 py-3 rounded-full font-semibold transition-all duration-500 
+                className={`px-6 py-3 rounded-full font-semibold transition-all duration-500 ease-out
                            flex items-center gap-2 relative overflow-hidden group
                            transform hover:-translate-y-1 active:scale-95
                            hover:shadow-xl hover:shadow-emerald-500/20
@@ -552,21 +558,21 @@ export default function Posters() {
                 <Upload className="w-4 h-4 group-hover:scale-110 transition-transform duration-300" />
                 {currentLanguage === 'fr' ? "Partager" : "Share"}
                 <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent 
-                               -translate-x-full group-hover:translate-x-full transition-transform duration-700"></span>
+                               -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out"></span>
               </button>
             </div>
           </div>
 
           {activeSection === "gallery" ? (
             <>
-              {/* Search Section - Removed flickering glow */}
+              {/* Search Section */}
               <div className="max-w-2xl mx-auto mb-12 md:mb-16 animate-fade-up animation-delay-100">
                 <div className="relative group">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-2xl blur opacity-0 group-hover:opacity-30 transition-opacity duration-700"></div>
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-2xl blur opacity-0 group-hover:opacity-30 transition-opacity duration-700 ease-out"></div>
                   <div className="relative">
                     <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 
                                      text-gray-600/70 dark:text-gray-400/70 w-4 h-4
-                                     transition-all duration-500 group-hover:scale-125 group-hover:text-emerald-500" />
+                                     transition-all duration-500 ease-out group-hover:scale-125 group-hover:text-emerald-500" />
                     <input
                       ref={searchInputRef}
                       type="text"
@@ -583,7 +589,7 @@ export default function Posters() {
                                placeholder:text-gray-600/50 dark:placeholder:text-gray-400/50 
                                focus:outline-none focus:border-emerald-500 
                                focus:ring-2 focus:ring-emerald-500/30 
-                               transition-all duration-500
+                               transition-all duration-500 ease-out
                                hover:shadow-xl hover:shadow-emerald-500/20"
                     />
                     {searchQuery && (
@@ -591,7 +597,7 @@ export default function Posters() {
                         onClick={() => setSearchQuery("")}
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 
                                  text-gray-600/70 dark:text-gray-400/70 hover:text-gray-500 
-                                 transition-all duration-300 p-1 hover:scale-125"
+                                 transition-all duration-300 ease-out p-1 hover:scale-125"
                         aria-label="Clear search"
                       >
                         <X className="w-4 h-4" />
@@ -627,7 +633,7 @@ export default function Posters() {
                       className="px-6 py-2.5 rounded-full 
                                bg-gradient-to-r from-gray-900 to-emerald-800 text-white 
                                font-semibold hover:shadow-xl hover:shadow-emerald-500/30
-                               transition-all duration-500 transform hover:-translate-y-1
+                               transition-all duration-500 ease-out transform hover:-translate-y-1
                                hover:scale-105 active:scale-95"
                     >
                       {currentLanguage === 'fr' ? "Tout afficher" : "View All"}
@@ -661,7 +667,7 @@ export default function Posters() {
                           className="text-sm font-medium text-emerald-600 dark:text-emerald-400 
                                    hover:text-emerald-700 px-3 py-1.5 rounded-lg 
                                    bg-emerald-500/10 dark:bg-emerald-500/20 hover:bg-emerald-500/20 
-                                   transition-all duration-500 transform hover:scale-110"
+                                   transition-all duration-500 ease-out transform hover:scale-110"
                         >
                           {currentLanguage === 'fr' ? "Effacer" : "Clear"}
                         </button>
@@ -687,58 +693,62 @@ export default function Posters() {
                           className="overflow-hidden border border-gray-300 dark:border-emerald-900/50 
                                      bg-white dark:bg-[#1a2a22] h-full relative
                                      hover:border-emerald-500/70 hover:shadow-2xl hover:shadow-emerald-500/20 
-                                     transition-all duration-700 cursor-pointer
+                                     transition-all duration-700 ease-out cursor-pointer
                                      hover:scale-[1.03] active:scale-[0.98]"
                           onClick={() => openLightbox(poster)}
                         >
                           {/* Gradient Border Effect */}
                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-500/10 to-transparent 
-                                        opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                                        opacity-0 group-hover:opacity-100 transition-opacity duration-700 ease-out"></div>
                           
                           {/* Poster Preview Container */}
                           <div className="relative w-full pt-[141.4286%] overflow-hidden bg-gray-100 dark:bg-[#0f1a15]">
-                            {/* Image or Embed Preview - Fixed to only show embed on hover for Yahia's posters */}
+                            {/* Image or Embed Preview - Fixed: Yahia's posters show embed preview only on hover */}
                             {poster.type === 'embed' ? (
                               <div className="absolute inset-0">
-                                {/* Show embed only when this specific poster is hovered */}
-                                {hoveredPosterId === poster.id && poster.embedUrl ? (
-                                  <div className="relative w-full h-full">
-                                    <div className="absolute inset-0">
-                                      <iframe
-                                        src={poster.embedUrl}
-                                        className="absolute top-0 left-0 w-full h-full border-0"
-                                        title={`${poster.title} - Preview`}
-                                        loading="lazy"
-                                        sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-                                        referrerPolicy="no-referrer"
-                                      />
-                                    </div>
+                                {/* Default state (not hovered) - Shows interactive placeholder */}
+                                <div className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br from-emerald-50/10 to-teal-50/10 dark:from-emerald-900/10 dark:to-teal-900/10 transition-all duration-500 ease-out ${hoveredPosterId === poster.id ? 'opacity-0' : 'opacity-100'}`}>
+                                  <div className="text-center p-4">
+                                    <Globe className="w-12 h-12 text-emerald-500 dark:text-emerald-400 mx-auto mb-3 animate-pulse" />
+                                    <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                                      Interactive Poster
+                                    </p>
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                      Hover to preview
+                                    </p>
                                   </div>
-                                ) : (
-                                  <img
-                                    src={poster.imageUrl}
-                                    alt={poster.title}
-                                    className="absolute inset-0 w-full h-full object-cover 
-                                             group-hover:scale-105 transition-transform duration-700"
-                                    onError={(e) => handleImageError(e, poster.id)}
-                                  />
-                                )}
+                                </div>
+                                
+                                {/* Hover state - Shows Canva embed */}
+                                <div className={`absolute inset-0 transition-all duration-700 ease-out ${hoveredPosterId === poster.id ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+                                  {hoveredPosterId === poster.id && poster.embedUrl && (
+                                    <iframe
+                                      src={poster.embedUrl}
+                                      className="absolute top-0 left-0 w-full h-full border-0"
+                                      title={`${poster.title} - Preview`}
+                                      loading="lazy"
+                                      sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                                      referrerPolicy="no-referrer"
+                                      onLoad={() => handleEmbedLoad(poster.id)}
+                                    />
+                                  )}
+                                </div>
                               </div>
                             ) : (
                               <img
                                 src={poster.imageUrl}
                                 alt={poster.title}
                                 className="absolute inset-0 w-full h-full object-cover 
-                                         group-hover:scale-110 transition-transform duration-700"
+                                         group-hover:scale-110 transition-transform duration-700 ease-out"
                                 onError={(e) => handleImageError(e, poster.id)}
                               />
                             )}
                             
                             {/* Hover Expand Effect */}
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent 
-                                          opacity-0 group-hover:opacity-100 transition-all duration-700">
+                                          opacity-0 group-hover:opacity-100 transition-all duration-700 ease-out">
                               <div className="absolute bottom-4 left-4 right-4 text-white transform translate-y-4 
-                                            group-hover:translate-y-0 transition-transform duration-500">
+                                            group-hover:translate-y-0 transition-transform duration-500 ease-out">
                                 <Maximize2 className="w-5 h-5 mb-2 mx-auto animate-pulse" />
                                 <p className="text-xs text-center opacity-90">
                                   {currentLanguage === 'fr' ? "Cliquez pour agrandir" : "Click to expand"}
@@ -773,7 +783,7 @@ export default function Posters() {
                           <div className="p-4 relative z-10 bg-white dark:bg-[#1a2a22]">
                             <h3 className="font-semibold text-gray-900 dark:text-gray-100 
                                          line-clamp-1 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 
-                                         transition-colors duration-300">
+                                         transition-colors duration-300 ease-out">
                               {poster.title}
                             </h3>
                             <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 line-clamp-2">
@@ -791,12 +801,12 @@ export default function Posters() {
                               <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                                 {poster.type === 'embed' ? (
                                   <>
-                                    <Globe className="w-3 h-3 group-hover:scale-110 transition-transform duration-300" />
+                                    <Globe className="w-3 h-3 group-hover:scale-110 transition-transform duration-300 ease-out" />
                                     <span>Canva</span>
                                   </>
                                 ) : (
                                   <>
-                                    <ImageIcon className="w-3 h-3 group-hover:scale-110 transition-transform duration-300" />
+                                    <ImageIcon className="w-3 h-3 group-hover:scale-110 transition-transform duration-300 ease-out" />
                                     <span>Image</span>
                                   </>
                                 )}
@@ -807,7 +817,7 @@ export default function Posters() {
                           {/* Shine Effect */}
                           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-emerald-500 to-transparent 
                                         opacity-0 group-hover:opacity-100 transform -translate-x-full group-hover:translate-x-full 
-                                        transition-all duration-1000"></div>
+                                        transition-all duration-1000 ease-out"></div>
                         </Card>
                       </div>
                     ))}
@@ -871,13 +881,13 @@ export default function Posters() {
                     style={{ animationDelay: `${index * 200}ms` }}
                   >
                     <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/10 to-emerald-500/10 
-                                  rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                                  rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-700 ease-out"></div>
                     <div className="relative bg-white/80 dark:bg-[#1a2a22]/80 backdrop-blur-sm p-6 
-                                  rounded-xl border border-gray-300 dark:border-emerald-900/50 transition-all duration-700
+                                  rounded-xl border border-gray-300 dark:border-emerald-900/50 transition-all duration-700 ease-out
                                   hover:scale-[1.03]">
                       <div className="inline-flex items-center justify-center w-12 h-12 
                                     rounded-full bg-gradient-to-br from-gray-900 to-emerald-800 
-                                    text-white mb-4 group-hover:scale-110 transition-transform duration-500
+                                    text-white mb-4 group-hover:scale-110 transition-transform duration-500 ease-out
                                     hover:shadow-xl hover:shadow-emerald-500/30">
                         <item.icon className="w-5 h-5" />
                       </div>
@@ -904,7 +914,7 @@ export default function Posters() {
                     <div className="flex items-start gap-4">
                       <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-500/10
                                     group-hover:from-emerald-500/20 group-hover:to-emerald-500/20 
-                                    transition-all duration-500">
+                                    transition-all duration-500 ease-out">
                         <Mail className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                       </div>
                       <div className="flex-1">
@@ -914,7 +924,7 @@ export default function Posters() {
                           </h4>
                           <button
                             onClick={() => copyToClipboard("recyclagemaria@gmail.com")}
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-500 
+                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-500 ease-out 
                                      transform hover:scale-110 active:scale-95
                                      ${copiedEmail 
                                        ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' 
@@ -946,7 +956,7 @@ export default function Posters() {
                     <div className="flex items-start gap-4">
                       <div className="p-3 rounded-xl bg-gradient-to-br from-pink-500/10 to-purple-500/10
                                     group-hover:from-pink-500/20 group-hover:to-purple-500/20 
-                                    transition-all duration-500">
+                                    transition-all duration-500 ease-out">
                         <Instagram className="w-5 h-5 text-pink-600 dark:text-pink-400" />
                       </div>
                       <div className="flex-1">
@@ -958,10 +968,10 @@ export default function Posters() {
                             onClick={() => window.open("https://www.instagram.com/recyclage_projet", "_blank")}
                             className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-pink-600 to-purple-500 
                                      text-white text-sm font-medium hover:shadow-xl hover:shadow-pink-500/30
-                                     transition-all duration-500 flex items-center gap-1
+                                     transition-all duration-500 ease-out flex items-center gap-1
                                      transform hover:scale-110 active:scale-95"
                           >
-                            <Instagram className="w-3 h-3 group-hover:scale-110 transition-transform duration-300" />
+                            <Instagram className="w-3 h-3 group-hover:scale-110 transition-transform duration-300 ease-out" />
                             {currentLanguage === 'fr' ? "Suivre" : "Follow"}
                           </button>
                         </div>
@@ -1001,14 +1011,14 @@ export default function Posters() {
                   </ul>
                 </div>
 
-                {/* Quick Submit - Changed to use client-side navigation without new tab or reload */}
+                {/* Quick Submit */}
                 <div className="mt-8 text-center animate-fade-up animation-delay-1100">
                   <a
                     href="/contact"
                     className="inline-block px-8 py-3 rounded-full 
                              bg-gradient-to-r from-gray-900 to-emerald-800 text-white 
                              font-semibold hover:shadow-xl hover:shadow-emerald-500/30
-                             transition-all duration-500 transform hover:-translate-y-1
+                             transition-all duration-500 ease-out transform hover:-translate-y-1
                              hover:scale-105 active:scale-95
                              animate-glow"
                   >
@@ -1021,14 +1031,14 @@ export default function Posters() {
         </div>
       </div>
 
-      {/* Enhanced Vertical Lightbox Modal - Removed description */}
+      {/* Enhanced Vertical Lightbox Modal */}
       {lightbox.isOpen && lightbox.poster && (
-        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0f1a15]/95 backdrop-blur-md transition-all duration-500 ${
+        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0f1a15]/95 backdrop-blur-md transition-all duration-500 ease-out ${
           lightboxVisible ? 'opacity-100' : 'opacity-0'
         }`}>
           <div 
             ref={lightboxRef}
-            className={`relative bg-white dark:bg-[#1a2a22] rounded-2xl overflow-hidden flex flex-col shadow-2xl transform transition-all duration-500 ${
+            className={`relative bg-white dark:bg-[#1a2a22] rounded-2xl overflow-hidden flex flex-col shadow-2xl transform transition-all duration-500 ease-out ${
               lightboxVisible ? 'scale-100 opacity-100 translate-y-0' : 'scale-90 opacity-0 translate-y-4'
             }`}
             style={{
@@ -1060,13 +1070,13 @@ export default function Posters() {
                 <button
                   onClick={toggleFullscreen}
                   className="p-2 md:p-3 rounded-lg bg-gray-100 dark:bg-emerald-900/20 hover:bg-gray-200 dark:hover:bg-emerald-800/30 
-                           transition-all duration-500 group transform hover:scale-125 active:scale-95"
+                           transition-all duration-500 ease-out group transform hover:scale-125 active:scale-95"
                   title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
                 >
                   {isFullscreen ? (
-                    <Minimize2 className="w-4 h-4 text-gray-700 dark:text-emerald-400 group-hover:scale-110 transition-transform duration-300" />
+                    <Minimize2 className="w-4 h-4 text-gray-700 dark:text-emerald-400 group-hover:scale-110 transition-transform duration-300 ease-out" />
                   ) : (
-                    <Maximize2 className="w-4 h-4 text-gray-700 dark:text-emerald-400 group-hover:scale-110 transition-transform duration-300" />
+                    <Maximize2 className="w-4 h-4 text-gray-700 dark:text-emerald-400 group-hover:scale-110 transition-transform duration-300 ease-out" />
                   )}
                 </button>
                 <button
@@ -1075,20 +1085,20 @@ export default function Posters() {
                       ? getCanvaDirectLink((lightbox.poster as any).embedUrl) 
                       : (lightbox.poster as any).imageUrl
                   )}
-                  className="p-2 md:p-3 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 transition-all duration-500 
+                  className="p-2 md:p-3 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 transition-all duration-500 ease-out 
                            text-white group transform hover:scale-125 active:scale-95
                            hover:shadow-xl hover:shadow-emerald-500/30"
                   title={currentLanguage === 'fr' ? "Ouvrir dans un nouvel onglet" : "Open in new tab"}
                 >
-                  <ExternalLink className="w-4 h-4 group-hover:scale-110 transition-transform duration-300" />
+                  <ExternalLink className="w-4 h-4 group-hover:scale-110 transition-transform duration-300 ease-out" />
                 </button>
                 <button
                   onClick={closeLightbox}
                   className="p-2 md:p-3 rounded-lg bg-gray-100 dark:bg-emerald-900/20 hover:bg-gray-200 dark:hover:bg-emerald-800/30 
-                           transition-all duration-500 group transform hover:scale-125 active:scale-95"
+                           transition-all duration-500 ease-out group transform hover:scale-125 active:scale-95"
                   title={currentLanguage === 'fr' ? "Fermer" : "Close"}
                 >
-                  <X className="w-4 h-4 text-gray-700 dark:text-emerald-400 group-hover:scale-110 transition-transform duration-300" />
+                  <X className="w-4 h-4 text-gray-700 dark:text-emerald-400 group-hover:scale-110 transition-transform duration-300 ease-out" />
                 </button>
               </div>
             </div>
@@ -1109,7 +1119,7 @@ export default function Posters() {
                       ref={imageRef}
                       src={(lightbox.poster as any).imageUrl}
                       alt={(lightbox.poster as any).title}
-                      className="max-w-full max-h-full object-contain rounded-lg transition-transform duration-700 hover:scale-105"
+                      className="max-w-full max-h-full object-contain rounded-lg transition-transform duration-700 ease-out hover:scale-105"
                       onLoad={(e) => {
                         const img = e.target as HTMLImageElement;
                         setImageDimensions({width: img.naturalWidth, height: img.naturalHeight});
@@ -1120,7 +1130,7 @@ export default function Posters() {
               </div>
             </div>
 
-            {/* Footer - Removed description paragraph */}
+            {/* Footer */}
             <div className="p-4 md:p-6 border-t border-gray-300 dark:border-emerald-900/50">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
