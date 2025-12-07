@@ -273,12 +273,16 @@ export default function Posters() {
                            flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-base
                            transform hover:-translate-y-0.5 active:scale-95
                            ${activeSection === "gallery" 
-                             ? `bg-gradient-to-r from-emerald-600 to-teal-500 text-white
-                                shadow-lg shadow-emerald-500/30 dark:shadow-emerald-500/20
-                                hover:shadow-xl hover:shadow-emerald-500/40`
-                             : "bg-white/90 dark:bg-gray-800/90 text-emerald-700 dark:text-emerald-300
-                                hover:bg-emerald-50 dark:hover:bg-gray-700/90 border border-emerald-500/20
-                                hover:border-emerald-500/30 dark:border-emerald-500/30"}`}
+  ? `bg-gradient-to-r from-emerald-600 to-teal-500 text-white
+     shadow-lg shadow-emerald-500/30 dark:shadow-emerald-500/20
+     hover:shadow-xl hover:shadow-emerald-500/40`
+  : `bg-white/90 dark:bg-gray-800/90 text-emerald-700 dark:text-emerald-300
+     hover:bg-emerald-50 dark:hover:bg-gray-700/90 border border-emerald-500/20
+     hover:border-emerald-500/30 dark:border-emerald-500/30`
+}
+
+                          
+
               >
                 <Palette className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover:scale-110" />
                 {language === 'en' ? "Gallery" : "Galerie"}
