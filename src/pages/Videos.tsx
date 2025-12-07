@@ -12,7 +12,6 @@ import {
   Clock, 
   TrendingUp, 
   Users, 
-  Tag, 
   Sparkles,
   Leaf,
   Recycle,
@@ -21,10 +20,7 @@ import {
   Maximize2,
   Minimize2,
   Globe,
-  Shield,
-  ThumbsUp,
-  MessageSquare,
-  Eye
+  Shield
 } from "lucide-react";
 
 interface Video {
@@ -35,11 +31,8 @@ interface Video {
   duration?: string;
   publishDate?: string;
   category?: { fr: string; en: string };
-  tags?: { fr: string[]; en: string[] };
   type: 'tutorial' | 'community';
   aspect?: 'landscape' | 'portrait';
-  views?: string;
-  likes?: string;
   creator?: { name: string; role: string };
 }
 
@@ -67,18 +60,12 @@ export default function Videos() {
         en: "Created by Salsabile - Daily inspiration for a sustainable future"
       },
       youtubeId: "CtcgvPj1vGk",
-      duration: "0:59",
+      duration: "0:36",
       publishDate: "2025-12-06",
       category: { fr: "Communauté", en: "Community" },
       type: "community",
       aspect: "portrait",
-      views: "1.2K",
-      likes: "156",
-      creator: { name: "Salsabile", role: "Éco-Artiste" },
-      tags: {
-        fr: ["Inspiration", "Communauté", "Futur Durable", "Écologie", "Créativité"],
-        en: ["Inspiration", "Community", "Sustainable Future", "Ecology", "Creativity"]
-      }
+      creator: { name: "Salsabile", role: "Éco-Artiste" }
     },
     {
       id: "community2",
@@ -91,18 +78,12 @@ export default function Videos() {
         en: "Created by Salsabile - Simple tips for daily recycling"
       },
       youtubeId: "g8MBdRd99LU",
-      duration: "0:59",
+      duration: "1:12",
       publishDate: "2025-12-07",
       category: { fr: "Communauté", en: "Community" },
       type: "community",
       aspect: "portrait",
-      views: "890",
-      likes: "98",
-      creator: { name: "Salsabile", role: "Éco-Influenceur" },
-      tags: {
-        fr: ["Recyclage Quotidien", "Astuces", "Communauté", "Éco-Gestes", "Tutoriel Court"],
-        en: ["Daily Recycling", "Tips", "Community", "Eco-Actions", "Short Tutorial"]
-      }
+      creator: { name: "Salsabile", role: "Éco-Influenceur" }
     },
     {
       id: "1",
@@ -115,17 +96,11 @@ export default function Videos() {
         en: "Discover the basics of recycling and its importance for the environment"
       },
       youtubeId: "c5sPRL0YKUw",
-      duration: "5:42",
+      duration: "7:03",
       publishDate: "2024-01-15",
       category: { fr: "Éducation", en: "Education" },
       type: "tutorial",
-      aspect: "landscape",
-      views: "24K",
-      likes: "1.8K",
-      tags: {
-        fr: ["Recyclage", "Environnement", "Débutant", "Écologie", "Guide"],
-        en: ["Recycling", "Environment", "Beginner", "Ecology", "Guide"]
-      }
+      aspect: "landscape"
     },
     {
       id: "2",
@@ -138,17 +113,11 @@ export default function Videos() {
         en: "Complete process of paper and cardboard recycling"
       },
       youtubeId: "s003IbGz-rA",
-      duration: "18:25",
+      duration: "3:01",
       publishDate: "2024-02-10",
       category: { fr: "Processus", en: "Process" },
       type: "tutorial",
-      aspect: "landscape",
-      views: "18K",
-      likes: "1.2K",
-      tags: {
-        fr: ["Papier", "Carton", "Processus", "Transformation", "Industrie"],
-        en: ["Paper", "Cardboard", "Process", "Transformation", "Industry"]
-      }
+      aspect: "landscape"
     },
     {
       id: "3",
@@ -161,17 +130,11 @@ export default function Videos() {
         en: "Journey of recyclable waste from sorting to transformation"
       },
       youtubeId: "p67EWIamCIw",
-      duration: "32:10",
+      duration: "5:33",
       publishDate: "2024-03-05",
       category: { fr: "Documentaire", en: "Documentary" },
       type: "tutorial",
-      aspect: "landscape",
-      views: "42K",
-      likes: "3.5K",
-      tags: {
-        fr: ["Tri", "Déchets", "Recyclables", "Parcours", "Documentaire"],
-        en: ["Sorting", "Waste", "Recyclables", "Journey", "Documentary"]
-      }
+      aspect: "landscape"
     }
   ], []);
 
@@ -435,36 +398,13 @@ export default function Videos() {
                             {getLocalizedText(video.description)}
                           </p>
                           
-                          {video.views && (
-                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <Eye className="w-3 h-3" />
-                                {video.views}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <ThumbsUp className="w-3 h-3" />
-                                {video.likes}
-                              </span>
-                            </div>
-                          )}
-                          
-                          {video.tags && video.tags[language] && video.tags[language].length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                              {video.tags[language].slice(0, 2).map((tag) => (
-                                <span 
-                                  key={tag}
-                                  className="text-xs px-2.5 py-1 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 rounded-full border border-emerald-500/20"
-                                >
-                                  {tag}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                          
                           <div className="flex items-center justify-between pt-4 border-t border-border/50">
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
                               <Calendar className="w-3 h-3" />
                               <span>{formatDate(video.publishDate || '')}</span>
+                              <span className="mx-2">•</span>
+                              <Clock className="w-3 h-3" />
+                              <span>{video.duration}</span>
                             </div>
                             
                             <Button
@@ -576,44 +516,20 @@ export default function Videos() {
                                     <span className="text-sm font-medium">{video.creator.name}</span>
                                   </div>
                                 )}
-                                
-                                {video.views && (
-                                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    <Eye className="w-3 h-3" />
-                                    {video.views}
-                                    {video.likes && (
-                                      <>
-                                        <span className="mx-1">•</span>
-                                        <ThumbsUp className="w-3 h-3" />
-                                        {video.likes}
-                                      </>
-                                    )}
-                                  </div>
-                                )}
                               </div>
                               
                               <p className="text-sm text-muted-foreground mb-3">
                                 {getLocalizedText(video.description)}
                               </p>
-                              
-                              {video.tags && video.tags[language] && video.tags[language].length > 0 && (
-                                <div className="flex flex-wrap gap-2 mb-4">
-                                  {video.tags[language].slice(0, 3).map((tag) => (
-                                    <span 
-                                      key={tag}
-                                      className="text-xs px-2.5 py-1 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 rounded-full border border-emerald-500/20"
-                                    >
-                                      {tag}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
                             </div>
                             
                             <div className="flex items-center justify-between pt-4 border-t border-border/50">
                               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <Calendar className="w-3 h-3" />
                                 <span>{formatDate(video.publishDate || '')}</span>
+                                <span className="mx-2">•</span>
+                                <Clock className="w-3 h-3" />
+                                <span>{video.duration}</span>
                               </div>
                               
                               <div className="flex gap-2">
@@ -624,15 +540,6 @@ export default function Videos() {
                                 >
                                   <Play className="w-4 h-4" />
                                   {language === 'fr' ? 'Regarder' : 'Watch'}
-                                </Button>
-                                
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="border-emerald-500/30 hover:border-emerald-500/50 hover:bg-emerald-500/10"
-                                  onClick={() => openInYouTube(video.youtubeId)}
-                                >
-                                  <ExternalLink className="w-4 h-4" />
                                 </Button>
                               </div>
                             </div>
@@ -724,20 +631,21 @@ export default function Videos() {
         </div>
       </div>
 
-      {/* Enhanced Video Modal with Perfect Centering */}
+      {/* Enhanced Video Modal with Mobile Improvements */}
       <Dialog open={isModalOpen} onOpenChange={() => {
         setSelectedVideo(null);
         setIsFullscreen(false);
       }}>
         <DialogContent 
           ref={modalRef}
-          className="fixed inset-0 m-auto border-none bg-black shadow-2xl overflow-hidden p-0 w-[95vw] h-[85vh] transition-all duration-300 z-50"
+          className="fixed inset-0 m-auto border-none bg-black shadow-2xl overflow-hidden p-0 w-full h-full sm:w-[95vw] sm:h-[85vh] transition-all duration-300 z-50"
           style={{
-            maxWidth: selectedVideo?.aspect === 'portrait' ? '350px' : '900px',
-            maxHeight: selectedVideo?.aspect === 'portrait' ? '620px' : '506px',
+            maxWidth: selectedVideo?.aspect === 'portrait' ? '350px' : 'min(900px, 95vw)',
+            maxHeight: selectedVideo?.aspect === 'portrait' ? '620px' : 'min(506px, 85vh)',
             aspectRatio: selectedVideo?.aspect === 'portrait' ? '9/16' : '16/9',
           }}
           onMouseMove={handleMouseMove}
+          onTouchMove={handleMouseMove}
           onMouseLeave={() => {
             if (controlsTimeoutRef.current) {
               clearTimeout(controlsTimeoutRef.current);
@@ -758,18 +666,18 @@ export default function Videos() {
             </div>
           )}
           
-          {/* Enhanced Top Controls Bar */}
+          {/* Top Controls Bar */}
           <div 
-            className={`absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/90 via-black/80 to-transparent p-4 transition-all duration-200 ${
+            className={`absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/90 via-black/80 to-transparent p-3 sm:p-4 transition-all duration-200 ${
               showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'
             }`}
           >
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 transition-all duration-200 hover:border-emerald-500/50"
+                  className="h-10 w-10 sm:h-9 sm:w-9 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 transition-all duration-200 hover:border-emerald-500/50"
                   onClick={() => {
                     setSelectedVideo(null);
                     setIsFullscreen(false);
@@ -779,8 +687,8 @@ export default function Videos() {
                 </Button>
                 
                 {selectedVideo && (
-                  <div className="ml-2">
-                    <h3 className="text-sm font-semibold text-white/95 truncate max-w-[200px]">
+                  <div className="ml-1 sm:ml-2 max-w-[180px] sm:max-w-[200px]">
+                    <h3 className="text-sm font-semibold text-white/95 truncate">
                       {getLocalizedText(selectedVideo.title)}
                     </h3>
                     {selectedVideo.creator && (
@@ -792,26 +700,11 @@ export default function Videos() {
                 )}
               </div>
               
-              <div className="flex items-center gap-2">
-                {selectedVideo?.views && (
-                  <div className="hidden sm:flex items-center gap-3 mr-2 text-xs text-white/80">
-                    <span className="flex items-center gap-1">
-                      <Eye className="w-3 h-3" />
-                      {selectedVideo.views}
-                    </span>
-                    {selectedVideo.likes && (
-                      <span className="flex items-center gap-1">
-                        <ThumbsUp className="w-3 h-3" />
-                        {selectedVideo.likes}
-                      </span>
-                    )}
-                  </div>
-                )}
-                
+              <div className="flex items-center gap-1 sm:gap-2">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 transition-all duration-200 hover:border-emerald-500/50"
+                  className="h-10 w-10 sm:h-9 sm:w-9 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 transition-all duration-200 hover:border-emerald-500/50"
                   onClick={() => selectedVideo && openInYouTube(selectedVideo.youtubeId)}
                   title={language === 'fr' ? 'Ouvrir sur YouTube' : 'Open on YouTube'}
                 >
@@ -821,7 +714,7 @@ export default function Videos() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 transition-all duration-200 hover:border-emerald-500/50"
+                  className="h-10 w-10 sm:h-9 sm:w-9 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 transition-all duration-200 hover:border-emerald-500/50"
                   onClick={toggleFullscreen}
                   title={language === 'fr' ? 'Plein écran' : 'Fullscreen'}
                 >
@@ -833,19 +726,6 @@ export default function Videos() {
                 </Button>
               </div>
             </div>
-            
-            {selectedVideo && selectedVideo.tags && selectedVideo.tags[language] && (
-              <div className="flex flex-wrap gap-2 mt-3">
-                {selectedVideo.tags[language].slice(0, 3).map((tag) => (
-                  <span 
-                    key={tag}
-                    className="text-xs px-2.5 py-1 bg-emerald-500/20 text-emerald-300 rounded-full border border-emerald-500/30"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
           
           {/* Video Player */}
@@ -856,7 +736,7 @@ export default function Videos() {
                 <iframe
                   width="100%"
                   height="100%"
-                  src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}?autoplay=1&rel=0&modestbranding=1&playsinline=1&controls=0`}
+                  src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}?autoplay=1&rel=0&modestbranding=1&playsinline=1&controls=1`}
                   title={getLocalizedText(selectedVideo.title)}
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -872,12 +752,12 @@ export default function Videos() {
 
           {/* Bottom Controls Bar */}
           <div 
-            className={`absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/90 via-black/80 to-transparent p-4 transition-all duration-200 ${
+            className={`absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/90 via-black/80 to-transparent p-3 sm:p-4 transition-all duration-200 ${
               showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full pointer-events-none'
             }`}
           >
             {selectedVideo && (
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 <div>
                   <h3 className="text-base font-semibold text-white line-clamp-1">
                     {getLocalizedText(selectedVideo.title)}
@@ -887,29 +767,31 @@ export default function Videos() {
                   </p>
                 </div>
                 
-                <div className="flex items-center justify-between pt-3 border-t border-white/20">
-                  <div className="flex items-center gap-4">
+                <div className="flex items-center justify-between pt-2 sm:pt-3 border-t border-white/20">
+                  <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-white/70">
                     {selectedVideo.publishDate && (
-                      <span className="text-xs text-white/70 flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {formatDate(selectedVideo.publishDate)}
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span className="hidden sm:inline">{formatDate(selectedVideo.publishDate)}</span>
+                        <span className="sm:hidden text-xs">{formatDate(selectedVideo.publishDate)}</span>
                       </span>
                     )}
                     {selectedVideo.duration && (
-                      <span className="text-xs text-white/70 flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {selectedVideo.duration}
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span>{selectedVideo.duration}</span>
                       </span>
                     )}
                   </div>
                   
                   <Button
                     size="sm"
-                    className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600"
+                    className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-xs sm:text-sm"
                     onClick={() => selectedVideo && openInYouTube(selectedVideo.youtubeId)}
                   >
-                    <ExternalLink className="w-4 h-4" />
-                    {language === 'fr' ? 'YouTube' : 'YouTube'}
+                    <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline">YouTube</span>
+                    <span className="sm:hidden">YT</span>
                   </Button>
                 </div>
               </div>
@@ -1045,6 +927,19 @@ export default function Videos() {
         /* Smooth scroll */
         html {
           scroll-behavior: smooth;
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 640px) {
+          .card-hover:hover {
+            transform: none;
+            box-shadow: none;
+          }
+          
+          .card-hover:active {
+            transform: scale(0.98);
+            transition: transform 0.1s ease;
+          }
         }
       `}</style>
     </div>
