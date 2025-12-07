@@ -49,7 +49,7 @@ const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1586075010923-2dd4570f
 
 interface LightboxState {
   isOpen: boolean;
-  poster: Poster | null;
+  poster: null;
 }
 
 const CanvaEmbed = ({ embedUrl, title }: { embedUrl: string; title: string }) => {
@@ -145,6 +145,7 @@ export default function Posters() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [lightboxVisible, setLightboxVisible] = useState(false);
   const [imageDimensions, setImageDimensions] = useState<{width: number; height: number}>({width: 0, height: 0});
+  const [hoveredPosterId, setHoveredPosterId] = useState<number | null>(null);
   
   const lightboxRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -363,7 +364,7 @@ export default function Posters() {
 
   // Lightbox functions with animations
   const openLightbox = useCallback((poster: Poster) => {
-    setLightbox({ isOpen: true, poster });
+    setLightbox({ isOpen: true, poster: poster as any });
     document.body.style.overflow = 'hidden';
     
     // Preload image for dimension calculation
@@ -517,40 +518,40 @@ export default function Posters() {
             <div className="flex justify-center gap-3 mb-12">
               <button
                 onClick={() => setActiveSection("gallery")}
-                className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 
+                className={`px-6 py-3 rounded-full font-semibold transition-all duration-500 
                            flex items-center gap-2 relative overflow-hidden group
-                           transform hover:-translate-y-0.5 active:scale-95
-                           hover:shadow-lg hover:shadow-emerald-500/10
+                           transform hover:-translate-y-1 active:scale-95
+                           hover:shadow-xl hover:shadow-emerald-500/20
                            ${activeSection === "gallery" 
                              ? `bg-gradient-to-r from-gray-900 to-emerald-800 text-white
-                                shadow-lg shadow-emerald-500/25 dark:shadow-emerald-500/15
+                                shadow-xl shadow-emerald-500/30 dark:shadow-emerald-500/20
                                 animate-glow`
                              : `bg-white/80 dark:bg-[#1a2a22]/80 text-gray-700 dark:text-gray-300
                                 hover:bg-gray-50 dark:hover:bg-[#1a2a22] border border-gray-300 dark:border-emerald-900/50`
                            }`}
               >
-                <Palette className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                <Palette className="w-4 h-4 group-hover:scale-110 transition-transform duration-300" />
                 {currentLanguage === 'fr' ? "Galerie" : "Gallery"}
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent 
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent 
                                -translate-x-full group-hover:translate-x-full transition-transform duration-700"></span>
               </button>
               <button
                 onClick={() => setActiveSection("share")}
-                className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 
+                className={`px-6 py-3 rounded-full font-semibold transition-all duration-500 
                            flex items-center gap-2 relative overflow-hidden group
-                           transform hover:-translate-y-0.5 active:scale-95
-                           hover:shadow-lg hover:shadow-emerald-500/10
+                           transform hover:-translate-y-1 active:scale-95
+                           hover:shadow-xl hover:shadow-emerald-500/20
                            ${activeSection === "share" 
                              ? `bg-gradient-to-r from-gray-900 to-emerald-800 text-white
-                                shadow-lg shadow-emerald-500/25 dark:shadow-emerald-500/15
+                                shadow-xl shadow-emerald-500/30 dark:shadow-emerald-500/20
                                 animate-glow` 
                              : `bg-white/80 dark:bg-[#1a2a22]/80 text-gray-700 dark:text-gray-300
                                 hover:bg-gray-50 dark:hover:bg-[#1a2a22] border border-gray-300 dark:border-emerald-900/50`
                            }`}
               >
-                <Upload className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                <Upload className="w-4 h-4 group-hover:scale-110 transition-transform duration-300" />
                 {currentLanguage === 'fr' ? "Partager" : "Share"}
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent 
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent 
                                -translate-x-full group-hover:translate-x-full transition-transform duration-700"></span>
               </button>
             </div>
@@ -561,11 +562,11 @@ export default function Posters() {
               {/* Search Section - Removed flickering glow */}
               <div className="max-w-2xl mx-auto mb-12 md:mb-16 animate-fade-up animation-delay-100">
                 <div className="relative group">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-2xl blur opacity-0 group-hover:opacity-20 transition-opacity duration-500"></div>
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-2xl blur opacity-0 group-hover:opacity-30 transition-opacity duration-700"></div>
                   <div className="relative">
                     <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 
                                      text-gray-600/70 dark:text-gray-400/70 w-4 h-4
-                                     transition-all duration-300 group-hover:scale-110 group-hover:text-emerald-500" />
+                                     transition-all duration-500 group-hover:scale-125 group-hover:text-emerald-500" />
                     <input
                       ref={searchInputRef}
                       type="text"
@@ -581,16 +582,16 @@ export default function Posters() {
                                text-gray-900 dark:text-gray-100 
                                placeholder:text-gray-600/50 dark:placeholder:text-gray-400/50 
                                focus:outline-none focus:border-emerald-500 
-                               focus:ring-2 focus:ring-emerald-500/20 
-                               transition-all duration-300
-                               hover:shadow-lg hover:shadow-emerald-500/10"
+                               focus:ring-2 focus:ring-emerald-500/30 
+                               transition-all duration-500
+                               hover:shadow-xl hover:shadow-emerald-500/20"
                     />
                     {searchQuery && (
                       <button
                         onClick={() => setSearchQuery("")}
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 
                                  text-gray-600/70 dark:text-gray-400/70 hover:text-gray-500 
-                                 transition-all duration-200 p-1 hover:scale-110"
+                                 transition-all duration-300 p-1 hover:scale-125"
                         aria-label="Clear search"
                       >
                         <X className="w-4 h-4" />
@@ -625,8 +626,8 @@ export default function Posters() {
                       onClick={() => setSearchQuery("")}
                       className="px-6 py-2.5 rounded-full 
                                bg-gradient-to-r from-gray-900 to-emerald-800 text-white 
-                               font-semibold hover:shadow-lg hover:shadow-emerald-500/25
-                               transition-all duration-300 transform hover:-translate-y-0.5
+                               font-semibold hover:shadow-xl hover:shadow-emerald-500/30
+                               transition-all duration-500 transform hover:-translate-y-1
                                hover:scale-105 active:scale-95"
                     >
                       {currentLanguage === 'fr' ? "Tout afficher" : "View All"}
@@ -660,7 +661,7 @@ export default function Posters() {
                           className="text-sm font-medium text-emerald-600 dark:text-emerald-400 
                                    hover:text-emerald-700 px-3 py-1.5 rounded-lg 
                                    bg-emerald-500/10 dark:bg-emerald-500/20 hover:bg-emerald-500/20 
-                                   transition-all duration-300 transform hover:scale-105"
+                                   transition-all duration-500 transform hover:scale-110"
                         >
                           {currentLanguage === 'fr' ? "Effacer" : "Clear"}
                         </button>
@@ -668,7 +669,7 @@ export default function Posters() {
                     </div>
                   </div>
 
-                  {/* Modern Gallery Grid - Changed Yahia's posters to show embed preview */}
+                  {/* Modern Gallery Grid - Fixed Canva embeds for Yahia's posters */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {filteredPosters.map((poster, index) => (
                       <div
@@ -678,62 +679,50 @@ export default function Posters() {
                           animationDelay: `${index * 100}ms`,
                           animationFillMode: 'both'
                         }}
+                        onMouseEnter={() => poster.type === 'embed' && setHoveredPosterId(poster.id)}
+                        onMouseLeave={() => poster.type === 'embed' && setHoveredPosterId(null)}
                       >
                         {/* Poster Card */}
                         <Card 
                           className="overflow-hidden border border-gray-300 dark:border-emerald-900/50 
                                      bg-white dark:bg-[#1a2a22] h-full relative
-                                     hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-500/10 
-                                     transition-all duration-500 cursor-pointer
-                                     hover:scale-[1.02] active:scale-[0.98]"
+                                     hover:border-emerald-500/70 hover:shadow-2xl hover:shadow-emerald-500/20 
+                                     transition-all duration-700 cursor-pointer
+                                     hover:scale-[1.03] active:scale-[0.98]"
                           onClick={() => openLightbox(poster)}
                         >
                           {/* Gradient Border Effect */}
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-500/5 to-transparent 
-                                        opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-500/10 to-transparent 
+                                        opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
                           
                           {/* Poster Preview Container */}
                           <div className="relative w-full pt-[141.4286%] overflow-hidden bg-gray-100 dark:bg-[#0f1a15]">
-                            {/* Image or Embed Preview - For Yahia's posters (IDs 1,2), show Canva embed preview */}
+                            {/* Image or Embed Preview - Fixed to only show embed on hover for Yahia's posters */}
                             {poster.type === 'embed' ? (
                               <div className="absolute inset-0">
-                                {/* Use CanvaEmbed component for preview - scaled down version */}
-                                <div className="relative w-full h-full">
-                                  {poster.embedUrl && (
-                                    <>
-                                      {/* Loading state */}
-                                      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-emerald-50/10 to-teal-50/10 dark:from-[#0f1a15] dark:to-emerald-950/10">
-                                        <div className="text-center">
-                                          <div className="w-8 h-8 border-2 border-emerald-500/20 rounded-full animate-spin mx-auto mb-2">
-                                            <div className="w-full h-full border-2 border-transparent border-t-emerald-500 rounded-full"></div>
-                                          </div>
-                                          <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium animate-pulse">
-                                            Loading...
-                                          </p>
-                                        </div>
-                                      </div>
-                                      {/* Embedded Canva preview */}
-                                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
-                                        <iframe
-                                          src={poster.embedUrl}
-                                          className="absolute top-0 left-0 w-full h-full border-0"
-                                          title={`${poster.title} - Preview`}
-                                          loading="lazy"
-                                          sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-                                          referrerPolicy="no-referrer"
-                                        />
-                                      </div>
-                                      {/* Fallback image that shows when not hovering */}
-                                      <img
-                                        src={poster.imageUrl}
-                                        alt={poster.title}
-                                        className="absolute inset-0 w-full h-full object-cover 
-                                                 group-hover:opacity-0 transition-opacity duration-700"
-                                        onError={(e) => handleImageError(e, poster.id)}
+                                {/* Show embed only when this specific poster is hovered */}
+                                {hoveredPosterId === poster.id && poster.embedUrl ? (
+                                  <div className="relative w-full h-full">
+                                    <div className="absolute inset-0">
+                                      <iframe
+                                        src={poster.embedUrl}
+                                        className="absolute top-0 left-0 w-full h-full border-0"
+                                        title={`${poster.title} - Preview`}
+                                        loading="lazy"
+                                        sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                                        referrerPolicy="no-referrer"
                                       />
-                                    </>
-                                  )}
-                                </div>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <img
+                                    src={poster.imageUrl}
+                                    alt={poster.title}
+                                    className="absolute inset-0 w-full h-full object-cover 
+                                             group-hover:scale-105 transition-transform duration-700"
+                                    onError={(e) => handleImageError(e, poster.id)}
+                                  />
+                                )}
                               </div>
                             ) : (
                               <img
@@ -747,7 +736,7 @@ export default function Posters() {
                             
                             {/* Hover Expand Effect */}
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent 
-                                          opacity-0 group-hover:opacity-100 transition-all duration-500">
+                                          opacity-0 group-hover:opacity-100 transition-all duration-700">
                               <div className="absolute bottom-4 left-4 right-4 text-white transform translate-y-4 
                                             group-hover:translate-y-0 transition-transform duration-500">
                                 <Maximize2 className="w-5 h-5 mb-2 mx-auto animate-pulse" />
@@ -802,12 +791,12 @@ export default function Posters() {
                               <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                                 {poster.type === 'embed' ? (
                                   <>
-                                    <Globe className="w-3 h-3 group-hover:scale-110 transition-transform" />
+                                    <Globe className="w-3 h-3 group-hover:scale-110 transition-transform duration-300" />
                                     <span>Canva</span>
                                   </>
                                 ) : (
                                   <>
-                                    <ImageIcon className="w-3 h-3 group-hover:scale-110 transition-transform" />
+                                    <ImageIcon className="w-3 h-3 group-hover:scale-110 transition-transform duration-300" />
                                     <span>Image</span>
                                   </>
                                 )}
@@ -882,14 +871,14 @@ export default function Posters() {
                     style={{ animationDelay: `${index * 200}ms` }}
                   >
                     <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/10 to-emerald-500/10 
-                                  rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                                  rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
                     <div className="relative bg-white/80 dark:bg-[#1a2a22]/80 backdrop-blur-sm p-6 
-                                  rounded-xl border border-gray-300 dark:border-emerald-900/50 transition-all duration-300
-                                  hover:scale-[1.02]">
+                                  rounded-xl border border-gray-300 dark:border-emerald-900/50 transition-all duration-700
+                                  hover:scale-[1.03]">
                       <div className="inline-flex items-center justify-center w-12 h-12 
                                     rounded-full bg-gradient-to-br from-gray-900 to-emerald-800 
-                                    text-white mb-4 group-hover:scale-110 transition-transform duration-300
-                                    hover:shadow-lg hover:shadow-emerald-500/25">
+                                    text-white mb-4 group-hover:scale-110 transition-transform duration-500
+                                    hover:shadow-xl hover:shadow-emerald-500/30">
                         <item.icon className="w-5 h-5" />
                       </div>
                       <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
@@ -915,7 +904,7 @@ export default function Posters() {
                     <div className="flex items-start gap-4">
                       <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-500/10
                                     group-hover:from-emerald-500/20 group-hover:to-emerald-500/20 
-                                    transition-all duration-300">
+                                    transition-all duration-500">
                         <Mail className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                       </div>
                       <div className="flex-1">
@@ -925,11 +914,11 @@ export default function Posters() {
                           </h4>
                           <button
                             onClick={() => copyToClipboard("recyclagemaria@gmail.com")}
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-300 
-                                     transform hover:scale-105 active:scale-95
+                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-500 
+                                     transform hover:scale-110 active:scale-95
                                      ${copiedEmail 
                                        ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' 
-                                       : 'bg-gradient-to-r from-gray-900 to-emerald-800 text-white hover:shadow-lg hover:shadow-emerald-500/25'
+                                       : 'bg-gradient-to-r from-gray-900 to-emerald-800 text-white hover:shadow-xl hover:shadow-emerald-500/30'
                                      }`}
                           >
                             {copiedEmail ? (
@@ -957,7 +946,7 @@ export default function Posters() {
                     <div className="flex items-start gap-4">
                       <div className="p-3 rounded-xl bg-gradient-to-br from-pink-500/10 to-purple-500/10
                                     group-hover:from-pink-500/20 group-hover:to-purple-500/20 
-                                    transition-all duration-300">
+                                    transition-all duration-500">
                         <Instagram className="w-5 h-5 text-pink-600 dark:text-pink-400" />
                       </div>
                       <div className="flex-1">
@@ -968,11 +957,11 @@ export default function Posters() {
                           <button
                             onClick={() => window.open("https://www.instagram.com/recyclage_projet", "_blank")}
                             className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-pink-600 to-purple-500 
-                                     text-white text-sm font-medium hover:shadow-lg hover:shadow-pink-500/25
-                                     transition-all duration-300 flex items-center gap-1
-                                     transform hover:scale-105 active:scale-95"
+                                     text-white text-sm font-medium hover:shadow-xl hover:shadow-pink-500/30
+                                     transition-all duration-500 flex items-center gap-1
+                                     transform hover:scale-110 active:scale-95"
                           >
-                            <Instagram className="w-3 h-3 group-hover:scale-110 transition-transform" />
+                            <Instagram className="w-3 h-3 group-hover:scale-110 transition-transform duration-300" />
                             {currentLanguage === 'fr' ? "Suivre" : "Follow"}
                           </button>
                         </div>
@@ -1012,19 +1001,19 @@ export default function Posters() {
                   </ul>
                 </div>
 
-                {/* Quick Submit - Now redirects to /contact */}
+                {/* Quick Submit - Changed to use client-side navigation without new tab or reload */}
                 <div className="mt-8 text-center animate-fade-up animation-delay-1100">
-                  <button
-                    onClick={() => window.location.href = "/contact"}
-                    className="px-8 py-3 rounded-full 
+                  <a
+                    href="/contact"
+                    className="inline-block px-8 py-3 rounded-full 
                              bg-gradient-to-r from-gray-900 to-emerald-800 text-white 
-                             font-semibold hover:shadow-lg hover:shadow-emerald-500/25
-                             transition-all duration-300 transform hover:-translate-y-0.5
+                             font-semibold hover:shadow-xl hover:shadow-emerald-500/30
+                             transition-all duration-500 transform hover:-translate-y-1
                              hover:scale-105 active:scale-95
                              animate-glow"
                   >
                     {currentLanguage === 'fr' ? "Envoyer une création" : "Submit a Creation"}
-                  </button>
+                  </a>
                 </div>
               </div>
             </div>
@@ -1032,22 +1021,22 @@ export default function Posters() {
         </div>
       </div>
 
-      {/* Enhanced Vertical Lightbox Modal - Adapts to image/embed format */}
+      {/* Enhanced Vertical Lightbox Modal - Removed description */}
       {lightbox.isOpen && lightbox.poster && (
-        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0f1a15]/95 backdrop-blur-md transition-all duration-300 ${
+        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0f1a15]/95 backdrop-blur-md transition-all duration-500 ${
           lightboxVisible ? 'opacity-100' : 'opacity-0'
         }`}>
           <div 
             ref={lightboxRef}
-            className={`relative bg-white dark:bg-[#1a2a22] rounded-2xl overflow-hidden flex flex-col shadow-2xl transform transition-all duration-300 ${
+            className={`relative bg-white dark:bg-[#1a2a22] rounded-2xl overflow-hidden flex flex-col shadow-2xl transform transition-all duration-500 ${
               lightboxVisible ? 'scale-100 opacity-100 translate-y-0' : 'scale-90 opacity-0 translate-y-4'
             }`}
             style={{
               maxWidth: '90vw',
               maxHeight: '90vh',
-              width: lightbox.poster.type === 'embed' ? '400px' : 'auto',
-              height: lightbox.poster.type === 'embed' ? '711px' : 'auto',
-              aspectRatio: lightbox.poster.type === 'embed' ? '9/16' : imageDimensions.width && imageDimensions.height ? 
+              width: (lightbox.poster as any).type === 'embed' ? '400px' : 'auto',
+              height: (lightbox.poster as any).type === 'embed' ? '711px' : 'auto',
+              aspectRatio: (lightbox.poster as any).type === 'embed' ? '9/16' : imageDimensions.width && imageDimensions.height ? 
                 `${imageDimensions.width}/${imageDimensions.height}` : 'auto'
             }}
           >
@@ -1055,13 +1044,13 @@ export default function Posters() {
             <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-300 dark:border-emerald-900/50">
               <div className="flex items-center gap-4 min-w-0">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className={`w-3 h-3 rounded-full animate-pulse ${lightbox.poster.language === 'fr' ? 'bg-emerald-500' : 'bg-gray-500'}`} />
+                  <div className={`w-3 h-3 rounded-full animate-pulse ${(lightbox.poster as any).language === 'fr' ? 'bg-emerald-500' : 'bg-gray-500'}`} />
                   <div className="min-w-0">
                     <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100 truncate">
-                      {lightbox.poster.title}
+                      {(lightbox.poster as any).title}
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                      {currentLanguage === 'fr' ? 'Par' : 'By'} {lightbox.poster.author}
+                      {currentLanguage === 'fr' ? 'Par' : 'By'} {(lightbox.poster as any).author}
                     </p>
                   </div>
                 </div>
@@ -1071,35 +1060,35 @@ export default function Posters() {
                 <button
                   onClick={toggleFullscreen}
                   className="p-2 md:p-3 rounded-lg bg-gray-100 dark:bg-emerald-900/20 hover:bg-gray-200 dark:hover:bg-emerald-800/30 
-                           transition-all duration-300 group transform hover:scale-110 active:scale-95"
+                           transition-all duration-500 group transform hover:scale-125 active:scale-95"
                   title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
                 >
                   {isFullscreen ? (
-                    <Minimize2 className="w-4 h-4 text-gray-700 dark:text-emerald-400 group-hover:scale-110 transition-transform" />
+                    <Minimize2 className="w-4 h-4 text-gray-700 dark:text-emerald-400 group-hover:scale-110 transition-transform duration-300" />
                   ) : (
-                    <Maximize2 className="w-4 h-4 text-gray-700 dark:text-emerald-400 group-hover:scale-110 transition-transform" />
+                    <Maximize2 className="w-4 h-4 text-gray-700 dark:text-emerald-400 group-hover:scale-110 transition-transform duration-300" />
                   )}
                 </button>
                 <button
                   onClick={() => handleOpenNewTab(
-                    lightbox.poster!.type === 'embed' 
-                      ? getCanvaDirectLink(lightbox.poster!.embedUrl) 
-                      : lightbox.poster!.imageUrl
+                    (lightbox.poster as any).type === 'embed' 
+                      ? getCanvaDirectLink((lightbox.poster as any).embedUrl) 
+                      : (lightbox.poster as any).imageUrl
                   )}
-                  className="p-2 md:p-3 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 transition-all duration-300 
-                           text-white group transform hover:scale-110 active:scale-95
-                           hover:shadow-lg hover:shadow-emerald-500/25"
+                  className="p-2 md:p-3 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 transition-all duration-500 
+                           text-white group transform hover:scale-125 active:scale-95
+                           hover:shadow-xl hover:shadow-emerald-500/30"
                   title={currentLanguage === 'fr' ? "Ouvrir dans un nouvel onglet" : "Open in new tab"}
                 >
-                  <ExternalLink className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                  <ExternalLink className="w-4 h-4 group-hover:scale-110 transition-transform duration-300" />
                 </button>
                 <button
                   onClick={closeLightbox}
                   className="p-2 md:p-3 rounded-lg bg-gray-100 dark:bg-emerald-900/20 hover:bg-gray-200 dark:hover:bg-emerald-800/30 
-                           transition-all duration-300 group transform hover:scale-110 active:scale-95"
+                           transition-all duration-500 group transform hover:scale-125 active:scale-95"
                   title={currentLanguage === 'fr' ? "Fermer" : "Close"}
                 >
-                  <X className="w-4 h-4 text-gray-700 dark:text-emerald-400 group-hover:scale-110 transition-transform" />
+                  <X className="w-4 h-4 text-gray-700 dark:text-emerald-400 group-hover:scale-110 transition-transform duration-300" />
                 </button>
               </div>
             </div>
@@ -1107,20 +1096,20 @@ export default function Posters() {
             {/* Content - Adapts to image/embed format */}
             <div className="flex-1 overflow-auto p-4 md:p-6">
               <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-[#0f1a15] rounded-xl p-2">
-                {lightbox.poster.type === 'embed' && lightbox.poster.embedUrl ? (
+                {(lightbox.poster as any).type === 'embed' && (lightbox.poster as any).embedUrl ? (
                   <div className="w-full h-full min-h-[500px]" ref={embedRef}>
                     <CanvaEmbed 
-                      embedUrl={lightbox.poster.embedUrl}
-                      title={lightbox.poster.title}
+                      embedUrl={(lightbox.poster as any).embedUrl}
+                      title={(lightbox.poster as any).title}
                     />
                   </div>
                 ) : (
                   <div className="max-w-full max-h-full overflow-auto">
                     <img
                       ref={imageRef}
-                      src={lightbox.poster.imageUrl}
-                      alt={lightbox.poster.title}
-                      className="max-w-full max-h-full object-contain rounded-lg transition-transform duration-500 hover:scale-105"
+                      src={(lightbox.poster as any).imageUrl}
+                      alt={(lightbox.poster as any).title}
+                      className="max-w-full max-h-full object-contain rounded-lg transition-transform duration-700 hover:scale-105"
                       onLoad={(e) => {
                         const img = e.target as HTMLImageElement;
                         setImageDimensions({width: img.naturalWidth, height: img.naturalHeight});
@@ -1131,9 +1120,9 @@ export default function Posters() {
               </div>
             </div>
 
-            {/* Footer */}
+            {/* Footer - Removed description paragraph */}
             <div className="p-4 md:p-6 border-t border-gray-300 dark:border-emerald-900/50">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-gradient-to-r from-emerald-600 to-emerald-500 
@@ -1141,9 +1130,9 @@ export default function Posters() {
                       <User className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-gray-100">{lightbox.poster.author}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{(lightbox.poster as any).author}</p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {lightbox.poster.type === 'embed' ? 'Interactive Poster' : 'Static Poster'}
+                        {(lightbox.poster as any).type === 'embed' ? 'Interactive Poster' : 'Static Poster'}
                       </p>
                     </div>
                   </div>
@@ -1151,17 +1140,13 @@ export default function Posters() {
                 
                 <div className="flex items-center gap-3">
                   <span className={`px-3 py-1.5 rounded-full text-sm font-medium
-                                 ${lightbox.poster.language === 'fr' 
+                                 ${(lightbox.poster as any).language === 'fr' 
                                    ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20' 
                                    : 'bg-gray-500/10 text-gray-700 dark:text-gray-400 border border-gray-500/20'}`}>
-                    {lightbox.poster.language.toUpperCase()}
+                    {(lightbox.poster as any).language.toUpperCase()}
                   </span>
                 </div>
               </div>
-              
-              <p className="text-gray-700 dark:text-gray-300 mb-4">
-                {lightbox.poster.description}
-              </p>
             </div>
           </div>
         </div>
