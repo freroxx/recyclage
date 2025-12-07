@@ -144,10 +144,13 @@ export default function Posters() {
   });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [lightboxVisible, setLightboxVisible] = useState(false);
+  const [imageDimensions, setImageDimensions] = useState<{width: number; height: number}>({width: 0, height: 0});
   
   const lightboxRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const embedRef = useRef<HTMLDivElement>(null);
 
   // Initialize posters data
   const initializePosters = useCallback((currentLanguage: string): Poster[] => {
@@ -363,6 +366,17 @@ export default function Posters() {
     setLightbox({ isOpen: true, poster });
     document.body.style.overflow = 'hidden';
     
+    // Preload image for dimension calculation
+    if (poster.type === 'image') {
+      const img = new Image();
+      img.src = poster.imageUrl;
+      img.onload = () => {
+        const aspectRatio = img.width / img.height;
+        const isVertical = aspectRatio <= 0.75; // 3:4 ratio or more vertical
+        setImageDimensions({width: img.width, height: img.height});
+      };
+    }
+    
     // Trigger animation after state update
     setTimeout(() => {
       setLightboxVisible(true);
@@ -544,10 +558,10 @@ export default function Posters() {
 
           {activeSection === "gallery" ? (
             <>
-              {/* Search Section */}
+              {/* Search Section - Removed flickering glow */}
               <div className="max-w-2xl mx-auto mb-12 md:mb-16 animate-fade-up animation-delay-100">
                 <div className="relative group">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-2xl blur opacity-20 group-hover:opacity-30 transition-opacity duration-500 animate-pulse"></div>
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-2xl blur opacity-0 group-hover:opacity-20 transition-opacity duration-500"></div>
                   <div className="relative">
                     <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 
                                      text-gray-600/70 dark:text-gray-400/70 w-4 h-4
@@ -569,7 +583,7 @@ export default function Posters() {
                                focus:outline-none focus:border-emerald-500 
                                focus:ring-2 focus:ring-emerald-500/20 
                                transition-all duration-300
-                               hover:shadow-lg hover:shadow-emerald-500/5"
+                               hover:shadow-lg hover:shadow-emerald-500/10"
                     />
                     {searchQuery && (
                       <button
@@ -654,7 +668,7 @@ export default function Posters() {
                     </div>
                   </div>
 
-                  {/* Modern Gallery Grid */}
+                  {/* Modern Gallery Grid - Changed Yahia's posters to show embed preview */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {filteredPosters.map((poster, index) => (
                       <div
@@ -680,33 +694,45 @@ export default function Posters() {
                           
                           {/* Poster Preview Container */}
                           <div className="relative w-full pt-[141.4286%] overflow-hidden bg-gray-100 dark:bg-[#0f1a15]">
-                            {/* Image or Embed Preview */}
+                            {/* Image or Embed Preview - For Yahia's posters (IDs 1,2), show Canva embed preview */}
                             {poster.type === 'embed' ? (
-                              <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="absolute inset-0">
+                                {/* Use CanvaEmbed component for preview - scaled down version */}
                                 <div className="relative w-full h-full">
-                                  {/* Preview Image */}
-                                  <img
-                                    src={poster.imageUrl}
-                                    alt={poster.title}
-                                    className="absolute inset-0 w-full h-full object-cover 
-                                             group-hover:scale-105 transition-transform duration-700"
-                                    onError={(e) => handleImageError(e, poster.id)}
-                                  />
-                                  
-                                  {/* Interactive Overlay */}
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent 
-                                                opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
-                                  
-                                  {/* Play Button */}
-                                  <div className="absolute inset-0 flex items-center justify-center 
-                                                opacity-0 group-hover:opacity-100 transition-all duration-500">
-                                    <div className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-sm 
-                                                  flex items-center justify-center 
-                                                  transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500
-                                                  hover:scale-110 transition-transform">
-                                      <Globe className="w-8 h-8 text-white" />
-                                    </div>
-                                  </div>
+                                  {poster.embedUrl && (
+                                    <>
+                                      {/* Loading state */}
+                                      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-emerald-50/10 to-teal-50/10 dark:from-[#0f1a15] dark:to-emerald-950/10">
+                                        <div className="text-center">
+                                          <div className="w-8 h-8 border-2 border-emerald-500/20 rounded-full animate-spin mx-auto mb-2">
+                                            <div className="w-full h-full border-2 border-transparent border-t-emerald-500 rounded-full"></div>
+                                          </div>
+                                          <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium animate-pulse">
+                                            Loading...
+                                          </p>
+                                        </div>
+                                      </div>
+                                      {/* Embedded Canva preview */}
+                                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                                        <iframe
+                                          src={poster.embedUrl}
+                                          className="absolute top-0 left-0 w-full h-full border-0"
+                                          title={`${poster.title} - Preview`}
+                                          loading="lazy"
+                                          sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                                          referrerPolicy="no-referrer"
+                                        />
+                                      </div>
+                                      {/* Fallback image that shows when not hovering */}
+                                      <img
+                                        src={poster.imageUrl}
+                                        alt={poster.title}
+                                        className="absolute inset-0 w-full h-full object-cover 
+                                                 group-hover:opacity-0 transition-opacity duration-700"
+                                        onError={(e) => handleImageError(e, poster.id)}
+                                      />
+                                    </>
+                                  )}
                                 </div>
                               </div>
                             ) : (
@@ -1006,16 +1032,24 @@ export default function Posters() {
         </div>
       </div>
 
-      {/* Enhanced Vertical Lightbox Modal (9:16 aspect ratio) */}
+      {/* Enhanced Vertical Lightbox Modal - Adapts to image/embed format */}
       {lightbox.isOpen && lightbox.poster && (
-        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0f1a15]/95 backdrop-blur-sm transition-all duration-300 ${
+        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0f1a15]/95 backdrop-blur-md transition-all duration-300 ${
           lightboxVisible ? 'opacity-100' : 'opacity-0'
         }`}>
           <div 
             ref={lightboxRef}
-            className={`relative w-full max-w-[90vw] h-auto aspect-[9/16] max-h-[90vh] bg-white dark:bg-[#1a2a22] rounded-2xl overflow-hidden flex flex-col shadow-2xl transform transition-all duration-300 ${
-              lightboxVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+            className={`relative bg-white dark:bg-[#1a2a22] rounded-2xl overflow-hidden flex flex-col shadow-2xl transform transition-all duration-300 ${
+              lightboxVisible ? 'scale-100 opacity-100 translate-y-0' : 'scale-90 opacity-0 translate-y-4'
             }`}
+            style={{
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              width: lightbox.poster.type === 'embed' ? '400px' : 'auto',
+              height: lightbox.poster.type === 'embed' ? '711px' : 'auto',
+              aspectRatio: lightbox.poster.type === 'embed' ? '9/16' : imageDimensions.width && imageDimensions.height ? 
+                `${imageDimensions.width}/${imageDimensions.height}` : 'auto'
+            }}
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-300 dark:border-emerald-900/50">
@@ -1070,22 +1104,29 @@ export default function Posters() {
               </div>
             </div>
 
-            {/* Content - 9:16 aspect ratio */}
-            <div className="flex-1 overflow-hidden p-4 md:p-6">
-              <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-[#0f1a15] rounded-xl">
+            {/* Content - Adapts to image/embed format */}
+            <div className="flex-1 overflow-auto p-4 md:p-6">
+              <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-[#0f1a15] rounded-xl p-2">
                 {lightbox.poster.type === 'embed' && lightbox.poster.embedUrl ? (
-                  <div className="w-full h-full">
+                  <div className="w-full h-full min-h-[500px]" ref={embedRef}>
                     <CanvaEmbed 
                       embedUrl={lightbox.poster.embedUrl}
                       title={lightbox.poster.title}
                     />
                   </div>
                 ) : (
-                  <img
-                    src={lightbox.poster.imageUrl}
-                    alt={lightbox.poster.title}
-                    className="max-w-full max-h-full object-contain rounded-lg transition-transform duration-500 hover:scale-105"
-                  />
+                  <div className="max-w-full max-h-full overflow-auto">
+                    <img
+                      ref={imageRef}
+                      src={lightbox.poster.imageUrl}
+                      alt={lightbox.poster.title}
+                      className="max-w-full max-h-full object-contain rounded-lg transition-transform duration-500 hover:scale-105"
+                      onLoad={(e) => {
+                        const img = e.target as HTMLImageElement;
+                        setImageDimensions({width: img.naturalWidth, height: img.naturalHeight});
+                      }}
+                    />
+                  </div>
                 )}
               </div>
             </div>
