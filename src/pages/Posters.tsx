@@ -17,7 +17,7 @@ interface Poster {
 }
 
 export default function Posters() {
-  const { t, language } = useLanguage();
+  const { t, language = 'en' } = useLanguage(); // Added default value
   useScrollReveal();
   const [isLoading, setIsLoading] = useState(true);
   const [hoveredPoster, setHoveredPoster] = useState<number | null>(null);
@@ -46,7 +46,9 @@ export default function Posters() {
   const postersData = useMemo<Poster[]>(() => {
     const posters: Poster[] = [];
     
-    if (language === 'fr') {
+    const currentLanguage = language || 'en';
+    
+    if (currentLanguage === 'fr') {
       // French posters
       posters.push(
         // Yahia's posters (French)
@@ -72,10 +74,10 @@ export default function Posters() {
           views: 987,
           likes: 67
         },
-        // Salsabile's French posters - FIXED: Using correct image URLs
+        // Salsabile's French posters
         {
           id: 3,
-          imageUrl: "https://i.ibb.co/FLg4Bk0/fr1.jpg", // Fixed URL
+          imageUrl: "https://i.ibb.co/FLg4Bk0/fr1.jpg",
           title: "Guide du Recyclage Quotidien",
           description: "Infographie pratique pour intégrer le recyclage dans votre routine journalière",
           author: "Salsabile",
@@ -109,11 +111,11 @@ export default function Posters() {
         }
       );
     } else {
-      // English posters - FIXED: Using correct image URLs
+      // English posters
       posters.push(
         {
           id: 6,
-          imageUrl: "https://i.ibb.co/TBjKSzD/english1.jpg", // Fixed URL
+          imageUrl: "https://i.ibb.co/TBjKSzD/english1.jpg",
           title: "Earth Day Conversation Starters",
           description: "Engaging questions and prompts to spark meaningful environmental discussions",
           author: "Salsabile",
@@ -124,7 +126,7 @@ export default function Posters() {
         },
         {
           id: 7,
-          imageUrl: "https://i.ibb.co/cKY4Rj0/english2.jpg", // Fixed URL
+          imageUrl: "https://i.ibb.co/cKY4Rj0/english2.jpg",
           title: "Recycling Mascot Adventures",
           description: "Fun and educational poster featuring our recycling mascot teaching kids about sustainability",
           author: "Salsabile",
@@ -135,7 +137,7 @@ export default function Posters() {
         },
         {
           id: 8,
-          imageUrl: "https://i.ibb.co/1tyxTwJ/english3.jpg", // Fixed URL
+          imageUrl: "https://i.ibb.co/1tyxTwJ/english3.jpg",
           title: "Simple Zero Waste Lifestyle",
           description: "Step-by-step guide to achieving a zero waste lifestyle with practical tips",
           author: "Salsabile",
@@ -192,7 +194,7 @@ export default function Posters() {
   // Copy contact info to clipboard
   const copyToClipboard = useCallback((text: string) => {
     navigator.clipboard.writeText(text).then(() => {
-      alert(`${language === 'en' ? 'Copied to clipboard!' : 'Copié dans le presse-papier!'}`);
+      alert(`${language === 'fr' ? 'Copié dans le presse-papier!' : 'Copied to clipboard!'}`);
     }).catch(() => {
       // Fallback for older browsers
       const textArea = document.createElement('textarea');
@@ -201,7 +203,7 @@ export default function Posters() {
       textArea.select();
       try {
         document.execCommand('copy');
-        alert(`${language === 'en' ? 'Copied to clipboard!' : 'Copié dans le presse-papier!'}`);
+        alert(`${language === 'fr' ? 'Copié dans le presse-papier!' : 'Copied to clipboard!'}`);
       } catch (err) {
         console.error('Failed to copy text: ', err);
       }
@@ -224,6 +226,8 @@ export default function Posters() {
       </div>
     );
   }
+
+  const currentLanguage = language || 'en';
 
   return (
     <div className="relative min-h-screen overflow-auto bg-background">
@@ -262,7 +266,7 @@ export default function Posters() {
                                bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 
                                dark:from-emerald-400 dark:via-emerald-300 dark:to-teal-400 
                                bg-clip-text text-transparent tracking-tight leading-tight">
-                  {t("posters.title") || (language === 'en' ? "Eco Posters Gallery" : "Galerie d'Affiches Écologiques")}
+                  {t("posters.title") || (currentLanguage === 'fr' ? "Galerie d'Affiches Écologiques" : "Eco Posters Gallery")}
                 </h1>
                 
                 {/* Animated underline */}
@@ -277,9 +281,9 @@ export default function Posters() {
             <p className="text-base sm:text-lg md:text-xl text-emerald-800/80 dark:text-emerald-200/80 
                           max-w-lg md:max-w-3xl mx-auto leading-relaxed font-light mb-6 px-2">
               {t("posters.subtitle") || 
-               (language === 'en' 
-                 ? "Discover inspiring environmental posters from our creative community" 
-                 : "Découvrez des affiches environnementales inspirantes de notre communauté créative")}
+               (currentLanguage === 'fr' 
+                 ? "Découvrez des affiches environnementales inspirantes de notre communauté créative" 
+                 : "Discover inspiring environmental posters from our creative community")}
             </p>
             
             {/* Navigation Tabs - Mobile Optimized */}
@@ -299,7 +303,7 @@ export default function Posters() {
                            }`}
               >
                 <Palette className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover:scale-110" />
-                {language === 'en' ? "Gallery" : "Galerie"}
+                {currentLanguage === 'fr' ? "Galerie" : "Gallery"}
               </button>
               <button
                 onClick={() => setActiveSection("share")}
@@ -316,7 +320,7 @@ export default function Posters() {
                            }`}
               >
                 <Upload className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover:scale-110" />
-                {language === 'en' ? "Share Your Art" : "Partagez votre art"}
+                {currentLanguage === 'fr' ? "Partagez votre art" : "Share Your Art"}
               </button>
             </div>
           </div>
@@ -336,9 +340,9 @@ export default function Posters() {
                                      group-focus-within:scale-110 group-focus-within:text-emerald-500" />
                     <input
                       type="text"
-                      placeholder={language === 'en' 
-                        ? "Search posters, tags, or authors..." 
-                        : "Rechercher des affiches, tags ou auteurs..."}
+                      placeholder={currentLanguage === 'fr' 
+                        ? "Rechercher des affiches, tags ou auteurs..." 
+                        : "Search posters, tags, or authors..."}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full pl-10 sm:pl-12 md:pl-16 pr-9 sm:pr-10 md:pr-12 py-3 sm:py-4 
@@ -358,7 +362,7 @@ export default function Posters() {
                         className="absolute right-2 sm:right-3 md:right-4 top-1/2 transform -translate-y-1/2 
                                  text-emerald-600/70 dark:text-emerald-400/70 hover:text-emerald-500 
                                  transition-all duration-200 p-1 hover:scale-125"
-                        aria-label={language === 'en' ? "Clear search" : "Effacer la recherche"}
+                        aria-label={currentLanguage === 'fr' ? "Effacer la recherche" : "Clear search"}
                       >
                         ✕
                       </button>
@@ -381,12 +385,12 @@ export default function Posters() {
                     </div>
                     <div>
                       <h3 className="text-lg md:text-xl font-bold text-emerald-900 dark:text-emerald-100 mb-2">
-                        {language === 'en' ? "No posters found" : "Aucune affiche trouvée"}
+                        {currentLanguage === 'fr' ? "Aucune affiche trouvée" : "No posters found"}
                       </h3>
                       <p className="text-sm md:text-base text-emerald-700/70 dark:text-emerald-300/70">
-                        {language === 'en' 
-                          ? "Try different keywords or browse all community posters" 
-                          : "Essayez d'autres mots-clés ou parcourez toutes les affiches"}
+                        {currentLanguage === 'fr' 
+                          ? "Essayez d'autres mots-clés ou parcourez toutes les affiches" 
+                          : "Try different keywords or browse all community posters"}
                       </p>
                     </div>
                     <button
@@ -396,7 +400,7 @@ export default function Posters() {
                                font-semibold text-sm sm:text-base hover:shadow-lg hover:shadow-emerald-500/30
                                transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95"
                     >
-                      {language === 'en' ? "View All Posters" : "Voir toutes les affiches"}
+                      {currentLanguage === 'fr' ? "Voir toutes les affiches" : "View All Posters"}
                     </button>
                   </div>
                 </div>
@@ -412,11 +416,11 @@ export default function Posters() {
                         </div>
                         <div>
                           <h3 className="text-base sm:text-lg md:text-xl font-bold text-emerald-900 dark:text-emerald-100">
-                            {filteredPosters.length} {language === 'en' ? "community posters" : "affiches communautaires"}
+                            {filteredPosters.length} {currentLanguage === 'fr' ? "affiches communautaires" : "community posters"}
                           </h3>
                           {searchQuery && (
                             <p className="text-xs md:text-sm text-emerald-700/70 dark:text-emerald-300/70 mt-0.5">
-                              {language === 'en' ? "Showing results for" : "Résultats pour"} "
+                              {currentLanguage === 'fr' ? "Résultats pour" : "Showing results for"} "
                               <span className="font-semibold text-emerald-600 dark:text-emerald-400">{searchQuery}</span>"
                             </p>
                           )}
@@ -431,7 +435,7 @@ export default function Posters() {
                                    transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95
                                    whitespace-nowrap"
                         >
-                          {language === 'en' ? "Clear search" : "Effacer"}
+                          {currentLanguage === 'fr' ? "Effacer" : "Clear search"}
                         </button>
                       )}
                     </div>
@@ -470,7 +474,7 @@ export default function Posters() {
                                               flex flex-col items-center justify-center p-4">
                                   <Eye className="w-12 h-12 text-emerald-500/50 mb-3" />
                                   <span className="text-emerald-700/70 dark:text-emerald-300/70 text-sm text-center">
-                                    {language === 'en' ? "Image unavailable" : "Image non disponible"}
+                                    {currentLanguage === 'fr' ? "Image non disponible" : "Image unavailable"}
                                   </span>
                                 </div>
                               ) : (
@@ -498,7 +502,7 @@ export default function Posters() {
                                     <span className="text-xs sm:text-sm font-medium">{poster.views?.toLocaleString() || '1.2k'}</span>
                                   </div>
                                   <div className="flex items-center gap-2 text-white/90">
-                                    <Heart className="w-3 h-3 sm:w-4 sm:h-4 fill-current" />
+                                    <Heart className="w-3 h-3 sm:w-4 sm:h-4" />
                                     <span className="text-xs sm:text-sm font-medium">{poster.likes?.toLocaleString() || '89'}</span>
                                   </div>
                                 </div>
@@ -518,7 +522,7 @@ export default function Posters() {
                                              active:scale-95"
                                   >
                                     <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4" />
-                                    {language === 'en' ? "View" : "Voir"}
+                                    {currentLanguage === 'fr' ? "Voir" : "View"}
                                   </button>
                                   <button
                                     onClick={(e) => {
@@ -531,7 +535,7 @@ export default function Posters() {
                                              text-xs sm:text-sm active:scale-95"
                                   >
                                     <Download className="w-3 h-3 sm:w-4 sm:h-4" />
-                                    {language === 'en' ? "Save" : "Enregistrer"}
+                                    {currentLanguage === 'fr' ? "Enregistrer" : "Save"}
                                   </button>
                                 </div>
                               </div>
@@ -594,7 +598,7 @@ export default function Posters() {
                                   <div className="w-2 h-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 
                                                 animate-pulse"></div>
                                   <span className="text-xs sm:text-sm text-emerald-700/80 dark:text-emerald-300/80">
-                                    {language === 'en' ? "By" : "Par"}{" "}
+                                    {currentLanguage === 'fr' ? "Par" : "By"}{" "}
                                     <span className="font-semibold text-emerald-800 dark:text-emerald-200">
                                       {poster.author}
                                     </span>
@@ -622,14 +626,14 @@ export default function Posters() {
                                   border border-emerald-500/10 dark:border-emerald-500/20">
                       <Leaf className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-500 mb-3 sm:mb-4 mx-auto animate-float-slow" />
                       <p className="text-sm sm:text-base md:text-lg text-emerald-800/80 dark:text-emerald-200/80 mb-3 sm:mb-4">
-                        {language === 'en' 
-                          ? "Join our growing community of environmental artists and activists!" 
-                          : "Rejoignez notre communauté grandissante d'artistes et d'activistes environnementaux !"}
+                        {currentLanguage === 'fr' 
+                          ? "Rejoignez notre communauté grandissante d'artistes et d'activistes environnementaux !" 
+                          : "Join our growing community of environmental artists and activists!"}
                       </p>
                       <div className="flex items-center justify-center gap-3 sm:gap-4">
                         <div className="h-px flex-1 bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent"></div>
                         <span className="text-xs sm:text-sm font-medium text-emerald-600 dark:text-emerald-400 animate-pulse-gentle">
-                          {language === 'en' ? "Made with ♻️ by the community" : "Fait avec ♻️ par la communauté"}
+                          {currentLanguage === 'fr' ? "Fait avec ♻️ par la communauté" : "Made with ♻️ by the community"}
                         </span>
                         <div className="h-px flex-1 bg-gradient-to-r from-transparent via-emerald-400/30 to-transparent"></div>
                       </div>
@@ -643,12 +647,12 @@ export default function Posters() {
             <div className="max-w-4xl mx-auto animate-fade-in-up px-3 sm:px-4">
               <div className="text-center mb-8 md:mb-12">
                 <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-emerald-900 dark:text-emerald-100 mb-4 md:mb-6">
-                  {language === 'en' ? "Share Your Artwork" : "Partagez votre création"}
+                  {currentLanguage === 'fr' ? "Partagez votre création" : "Share Your Artwork"}
                 </h2>
                 <p className="text-base sm:text-lg md:text-xl text-emerald-700/80 dark:text-emerald-300/80">
-                  {language === 'en' 
-                    ? "Join our community and inspire others with your environmental artwork" 
-                    : "Rejoignez notre communauté et inspirez les autres avec votre art environnemental"}
+                  {currentLanguage === 'fr' 
+                    ? "Rejoignez notre communauté et inspirez les autres avec votre art environnemental" 
+                    : "Join our community and inspire others with your environmental artwork"}
                 </p>
               </div>
 
@@ -658,26 +662,26 @@ export default function Posters() {
                   {
                     step: 1,
                     icon: Palette,
-                    title: language === 'en' ? "Create Your Art" : "Créez votre art",
-                    description: language === 'en' 
-                      ? "Design inspiring posters about recycling, sustainability, or environmental protection"
-                      : "Créez des affiches inspirantes sur le recyclage, la durabilité ou la protection de l'environnement"
+                    title: currentLanguage === 'fr' ? "Créez votre art" : "Create Your Art",
+                    description: currentLanguage === 'fr' 
+                      ? "Créez des affiches inspirantes sur le recyclage, la durabilité ou la protection de l'environnement"
+                      : "Design inspiring posters about recycling, sustainability, or environmental protection"
                   },
                   {
                     step: 2,
                     icon: Send,
-                    title: language === 'en' ? "Share With Us" : "Partagez avec nous",
-                    description: language === 'en' 
-                      ? "Send your creation via email or Instagram with your name for proper credit"
-                      : "Envoyez votre création par email ou Instagram avec votre nom pour un crédit approprié"
+                    title: currentLanguage === 'fr' ? "Partagez avec nous" : "Share With Us",
+                    description: currentLanguage === 'fr' 
+                      ? "Envoyez votre création par email ou Instagram avec votre nom pour un crédit approprié"
+                      : "Send your creation via email or Instagram with your name for proper credit"
                   },
                   {
                     step: 3,
                     icon: User,
-                    title: language === 'en' ? "Get Featured" : "Soyez mis en avant",
-                    description: language === 'en' 
-                      ? "We'll feature your work in our community gallery to inspire others"
-                      : "Nous mettrons en avant votre travail dans notre galerie communautaire pour inspirer les autres"
+                    title: currentLanguage === 'fr' ? "Soyez mis en avant" : "Get Featured",
+                    description: currentLanguage === 'fr' 
+                      ? "Nous mettrons en avant votre travail dans notre galerie communautaire pour inspirer les autres"
+                      : "We'll feature your work in our community gallery to inspire others"
                   }
                 ].map((item, index) => (
                   <div
@@ -718,7 +722,7 @@ export default function Posters() {
                             backdrop-blur-sm rounded-xl sm:rounded-3xl border border-emerald-500/10 dark:border-emerald-500/20 
                             p-4 sm:p-6 md:p-8">
                 <h3 className="text-xl sm:text-2xl font-bold text-emerald-900 dark:text-emerald-100 mb-6 text-center">
-                  {language === 'en' ? "Contact Information" : "Coordonnées"}
+                  {currentLanguage === 'fr' ? "Coordonnées" : "Contact Information"}
                 </h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
@@ -735,10 +739,10 @@ export default function Posters() {
                         </div>
                         <div>
                           <h4 className="font-semibold text-emerald-900 dark:text-emerald-100 text-sm sm:text-base">
-                            {language === 'en' ? "Email" : "Courriel"}
+                            {currentLanguage === 'fr' ? "Courriel" : "Email"}
                           </h4>
                           <p className="text-xs sm:text-sm text-emerald-700/70 dark:text-emerald-300/70">
-                            {language === 'en' ? "Send your artwork to" : "Envoyez votre création à"}
+                            {currentLanguage === 'fr' ? "Envoyez votre création à" : "Send your artwork to"}
                           </p>
                         </div>
                       </div>
@@ -753,9 +757,9 @@ export default function Posters() {
                                    text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 
                                    transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95
                                    text-xs sm:text-sm whitespace-nowrap"
-                          title={language === 'en' ? "Copy email" : "Copier l'email"}
+                          title={currentLanguage === 'fr' ? "Copier l'email" : "Copy email"}
                         >
-                          {language === 'en' ? "Copy" : "Copier"}
+                          {currentLanguage === 'fr' ? "Copier" : "Copy"}
                         </button>
                       </div>
                     </div>
@@ -779,7 +783,7 @@ export default function Posters() {
                             Instagram
                           </h4>
                           <p className="text-xs sm:text-sm text-emerald-700/70 dark:text-emerald-300/70">
-                            {language === 'en' ? "DM us your artwork" : "Envoyez-nous votre création en MP"}
+                            {currentLanguage === 'fr' ? "Envoyez-nous votre création en MP" : "DM us your artwork"}
                           </p>
                         </div>
                       </div>
@@ -797,7 +801,7 @@ export default function Posters() {
                                    flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap"
                         >
                           <Instagram className="w-3 h-3 sm:w-4 sm:h-4" />
-                          {language === 'en' ? "Follow" : "Suivre"}
+                          {currentLanguage === 'fr' ? "Suivre" : "Follow"}
                         </button>
                       </div>
                     </div>
@@ -812,26 +816,26 @@ export default function Posters() {
                                flex items-center gap-2 text-sm sm:text-base">
                     <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 dark:text-emerald-400 
                                        animate-pulse-gentle" />
-                    {language === 'en' ? "Submission Guidelines" : "Directives de soumission"}
+                    {currentLanguage === 'fr' ? "Directives de soumission" : "Submission Guidelines"}
                   </h4>
                   <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-emerald-700/80 dark:text-emerald-300/80">
                     <li className="flex items-start gap-2">
                       <span className="text-emerald-600 dark:text-emerald-400 mt-0.5">•</span>
-                      <span>{language === 'en' 
-                        ? "Include your full name for proper credit" 
-                        : "Incluez votre nom complet pour un crédit approprié"}</span>
+                      <span>{currentLanguage === 'fr' 
+                        ? "Incluez votre nom complet pour un crédit approprié" 
+                        : "Include your full name for proper credit"}</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-emerald-600 dark:text-emerald-400 mt-0.5">•</span>
-                      <span>{language === 'en' 
-                        ? "Accepted formats: JPG, PNG, PDF, MP4 (for videos)" 
-                        : "Formats acceptés : JPG, PNG, PDF, MP4 (pour les vidéos)"}</span>
+                      <span>{currentLanguage === 'fr' 
+                        ? "Formats acceptés : JPG, PNG, PDF, MP4 (pour les vidéos)" 
+                        : "Accepted formats: JPG, PNG, PDF, MP4 (for videos)"}</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-emerald-600 dark:text-emerald-400 mt-0.5">•</span>
-                      <span>{language === 'en' 
-                        ? "Keep content educational and inspiring about environmental topics" 
-                        : "Gardez le contenu éducatif et inspirant sur les thèmes environnementaux"}</span>
+                      <span>{currentLanguage === 'fr' 
+                        ? "Gardez le contenu éducatif et inspirant sur les thèmes environnementaux" 
+                        : "Keep content educational and inspiring about environmental topics"}</span>
                     </li>
                   </ul>
                 </div>
