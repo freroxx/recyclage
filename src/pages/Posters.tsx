@@ -2,14 +2,16 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Card } from "@/components/ui/card";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Search, ExternalLink, Sparkles, Leaf, Zap, Mail, Instagram, Upload, User, Palette, Send, Eye, Maximize2, X, Globe } from "lucide-react";
-// Avant Next.js
-const router = useRouter();
-router.push("/some-page");
+import { useNavigate } from "react-router-dom";
 
-// Après React Router
-const navigate = useNavigate();
-navigate("/some-page");
+export default function Posters() {
+  const navigate = useNavigate(); // Hook OK ici, dans un composant
 
+  // Exemple : navigation sur clic
+  const goToPage = () => {
+    navigate("/some-page");
+  };
+  
 interface Poster {
   id: number;
   title: string;
