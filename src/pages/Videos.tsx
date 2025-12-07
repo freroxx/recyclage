@@ -52,12 +52,12 @@ export default function Videos() {
     {
       id: "community1",
       title: {
-        fr: "Avenir plus propre avec nos amis félins",
-        en: "Cleaner Future with Our Feline Friends"
+        fr: "Avenir plus propre avec Chat",
+        en: "Cleaner Future with Cat - Trailer"
       },
       description: {
-        fr: "Créé par Salsabile - Une inspiration quotidienne pour un avenir durable",
-        en: "Created by Salsabile - Daily inspiration for a sustainable future"
+        fr: "Créé par Salsabile - Un avenir durable avec Chat",
+        en: "Created by Salsabile - A sustainable future with Cat"
       },
       youtubeId: "CtcgvPj1vGk",
       duration: "0:36",
@@ -70,12 +70,12 @@ export default function Videos() {
     {
       id: "community2",
       title: {
-        fr: "Le recyclage au quotidien",
-        en: "Daily Recycling"
+        fr: "Crafting and recycling - Episode 1",
+        en: "Artisanat et recyclage - Episode 1"
       },
       description: {
-        fr: "Créé par Salsabile - Astuces simples pour recycler chaque jour",
-        en: "Created by Salsabile - Simple tips for daily recycling"
+        fr: "Créé par Salsabile - Astuces simples pour recycler",
+        en: "Created by Salsabile - Simple tips for recycling"
       },
       youtubeId: "g8MBdRd99LU",
       duration: "1:12",
