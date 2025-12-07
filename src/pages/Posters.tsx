@@ -1,3 +1,4 @@
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Card } from "@/components/ui/card";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Search, ExternalLink, Sparkles, Leaf, Zap, Mail, Instagram, Upload, User, Palette, Send, Heart, Eye, Download } from "lucide-react";
@@ -14,167 +15,155 @@ interface Poster {
   likes?: number;
 }
 
-// Fallback images that are guaranteed to work
-const FALLBACK_IMAGES = [
-  "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=800&auto=format&fit=crop&q=80",
-  "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&auto=format&fit=crop&q=80",
-  "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop&q=80",
-  "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=800&auto=format&fit=crop&q=80",
-  "https://images.unsplash.com/photo-1578558288137-7207cb8c0e85?w=800&auto=format&fit=crop&q=80"
-];
-
 export default function Posters() {
+  const { t, language = 'en' } = useLanguage();
   const [isLoading, setIsLoading] = useState(true);
   const [hoveredPoster, setHoveredPoster] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [mounted, setMounted] = useState(false);
   const [activeSection, setActiveSection] = useState<"gallery" | "share">("gallery");
-  const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
-  const [language, setLanguage] = useState<"fr" | "en">("en");
+  const [postersData, setPostersData] = useState<Poster[]>([]);
 
-  // Initialize mounted state and set language
+  // Initialize mounted state and load posters
   useEffect(() => {
     setMounted(true);
     
-    // Detect browser language or use default
-    const browserLang = navigator.language.startsWith('fr') ? 'fr' : 'en';
-    setLanguage(browserLang);
+    // Load posters based on current language
+    const loadPosters = () => {
+      const currentLanguage = language || 'en';
+      const posters: Poster[] = [];
+      
+      if (currentLanguage === 'fr') {
+        // French posters
+        posters.push(
+          // Yahia's posters (French)
+          {
+            id: 1,
+            imageUrl: "https://i.ibb.co/nb0gWJv/yahia-poster1.jpg",
+            title: "Sauver la Terre avec les 3R",
+            description: "Un design vibrant illustrant le concept Réduire, Réutiliser, Recycler pour protéger notre planète",
+            author: "Yahia Ikni",
+            language: "fr",
+            tags: ["3R", "écologie", "concept", "réduction", "développement durable"],
+            views: 1245,
+            likes: 89
+          },
+          {
+            id: 2,
+            imageUrl: "https://i.ibb.co/h7tSmRD/yahia-poster2.jpg",
+            title: "Campagne de Recyclage Minimaliste",
+            description: "Design épuré et moderne promouvant les bonnes habitudes de recyclage au quotidien",
+            author: "Yahia Ikni",
+            language: "fr",
+            tags: ["minimaliste", "campagne", "design", "habitudes", "écoresponsable"],
+            views: 987,
+            likes: 67
+          },
+          // Salsabile's French posters
+          {
+            id: 3,
+            imageUrl: "https://i.ibb.co/FLg4Bk0/fr1.jpg",
+            title: "Guide du Recyclage Quotidien",
+            description: "Infographie pratique pour intégrer le recyclage dans votre routine journalière",
+            author: "Salsabile",
+            language: "fr",
+            tags: ["guide", "pratique", "quotidien", "infographie", "tutoriel"],
+            views: 1567,
+            likes: 112
+          },
+          {
+            id: 4,
+            imageUrl: "https://i.ibb.co/YSbCfC6/fr2.jpg",
+            title: "École Écoresponsable",
+            description: "Poster éducatif pour sensibiliser les élèves aux gestes écologiques à l'école",
+            author: "Salsabile",
+            language: "fr",
+            tags: ["éducation", "école", "sensibilisation", "jeunesse", "écocitoyenneté"],
+            views: 1342,
+            likes: 95
+          },
+          // Additional French posters
+          {
+            id: 5,
+            imageUrl: "https://i.ibb.co/wKzW1t8/fr3.jpg",
+            title: "Zéro Déchet Facile",
+            description: "Astuces simples pour réduire vos déchets et adopter un mode de vie plus écologique",
+            author: "Éco-Design Collective",
+            language: "fr",
+            tags: ["zéro déchet", "écologie", "astuces", "lifestyle", "durabilité"],
+            views: 2100,
+            likes: 156
+          }
+        );
+      } else {
+        // English posters
+        posters.push(
+          {
+            id: 6,
+            imageUrl: "https://i.ibb.co/TBjKSzD/english1.jpg",
+            title: "Earth Day Conversation Starters",
+            description: "Engaging questions and prompts to spark meaningful environmental discussions",
+            author: "Salsabile",
+            language: "en",
+            tags: ["earth day", "conversation", "discussion", "engagement", "education"],
+            views: 1890,
+            likes: 134
+          },
+          {
+            id: 7,
+            imageUrl: "https://i.ibb.co/cKY4Rj0/english2.jpg",
+            title: "Recycling Mascot Adventures",
+            description: "Fun and educational poster featuring our recycling mascot teaching kids about sustainability",
+            author: "Salsabile",
+            language: "en",
+            tags: ["fun", "mascot", "educational", "kids", "playful"],
+            views: 1765,
+            likes: 121
+          },
+          {
+            id: 8,
+            imageUrl: "https://i.ibb.co/1tyxTwJ/english3.jpg",
+            title: "Simple Zero Waste Lifestyle",
+            description: "Step-by-step guide to achieving a zero waste lifestyle with practical tips",
+            author: "Salsabile",
+            language: "en",
+            tags: ["zero waste", "simple", "lifestyle", "eco-friendly", "guide"],
+            views: 1954,
+            likes: 142
+          },
+          {
+            id: 9,
+            imageUrl: "https://i.ibb.co/0jqWzqW/english4.jpg",
+            title: "Green Campus Initiative",
+            description: "Promoting sustainable practices in educational institutions for a greener future",
+            author: "Eco Education Team",
+            language: "en",
+            tags: ["campus", "education", "sustainability", "green", "future"],
+            views: 1678,
+            likes: 98
+          },
+          {
+            id: 10,
+            imageUrl: "https://i.ibb.co/LJ5hG6R/english5.jpg",
+            title: "Sustainable Living Guide",
+            description: "Comprehensive guide to adopting sustainable habits in daily life",
+            author: "Green Living Collective",
+            language: "en",
+            tags: ["sustainable", "guide", "living", "habits", "eco"],
+            views: 2243,
+            likes: 167
+          }
+        );
+      }
+      
+      setPostersData(posters);
+    };
     
-    const timer = setTimeout(() => setIsLoading(false), 600);
+    loadPosters();
+    
+    const timer = setTimeout(() => setIsLoading(false), 800);
     return () => clearTimeout(timer);
-  }, []);
-
-  // Simplified image error handling
-  const handleImageError = useCallback((posterId: number, e: React.SyntheticEvent<HTMLImageElement>) => {
-    console.log(`Image failed to load for poster ${posterId}, using fallback`);
-    setImageErrors(prev => new Set(prev).add(posterId));
-    
-    // Use a fallback image based on the poster ID
-    const img = e.target as HTMLImageElement;
-    const fallbackIndex = posterId % FALLBACK_IMAGES.length;
-    img.src = FALLBACK_IMAGES[fallbackIndex];
-  }, []);
-
-  // Simplified posters data - always available, with guaranteed images
-  const postersData = useMemo<Poster[]>(() => {
-    const currentLanguage = language || 'en';
-    
-    const basePosters = currentLanguage === 'fr' ? [
-      {
-        id: 1,
-        imageUrl: "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=800&auto=format&fit=crop&q=80",
-        title: "Sauver la Terre avec les 3R",
-        description: "Un design vibrant illustrant le concept Réduire, Réutiliser, Recycler pour protéger notre planète",
-        author: "Yahia Ikni",
-        language: "fr" as const,
-        tags: ["3R", "écologie", "concept", "réduction", "développement durable"],
-        views: 1245,
-        likes: 89
-      },
-      {
-        id: 2,
-        imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop&q=80",
-        title: "Campagne de Recyclage Minimaliste",
-        description: "Design épuré et moderne promouvant les bonnes habitudes de recyclage au quotidien",
-        author: "Yahia Ikni",
-        language: "fr" as const,
-        tags: ["minimaliste", "campagne", "design", "habitudes", "écoresponsable"],
-        views: 987,
-        likes: 67
-      },
-      {
-        id: 3,
-        imageUrl: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=800&auto=format&fit=crop&q=80",
-        title: "Guide du Recyclage Quotidien",
-        description: "Infographie pratique pour intégrer le recyclage dans votre routine journalière",
-        author: "Salsabile",
-        language: "fr" as const,
-        tags: ["guide", "pratique", "quotidien", "infographie", "tutoriel"],
-        views: 1567,
-        likes: 112
-      },
-      {
-        id: 4,
-        imageUrl: "https://images.unsplash.com/photo-1578558288137-7207cb8c0e85?w=800&auto=format&fit=crop&q=80",
-        title: "École Écoresponsable",
-        description: "Poster éducatif pour sensibiliser les élèves aux gestes écologiques à l'école",
-        author: "Salsabile",
-        language: "fr" as const,
-        tags: ["éducation", "école", "sensibilisation", "jeunesse", "écocitoyenneté"],
-        views: 1342,
-        likes: 95
-      },
-      {
-        id: 5,
-        imageUrl: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&auto=format&fit=crop&q=80",
-        title: "Zéro Déchet Facile",
-        description: "Astuces simples pour réduire vos déchets et adopter un mode de vie plus écologique",
-        author: "Éco-Design Collective",
-        language: "fr" as const,
-        tags: ["zéro déchet", "écologie", "astuces", "lifestyle", "durabilité"],
-        views: 2100,
-        likes: 156
-      }
-    ] : [
-      {
-        id: 6,
-        imageUrl: "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=800&auto=format&fit=crop&q=80",
-        title: "Earth Day Conversation Starters",
-        description: "Engaging questions and prompts to spark meaningful environmental discussions",
-        author: "Salsabile",
-        language: "en" as const,
-        tags: ["earth day", "conversation", "discussion", "engagement", "education"],
-        views: 1890,
-        likes: 134
-      },
-      {
-        id: 7,
-        imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop&q=80",
-        title: "Recycling Mascot Adventures",
-        description: "Fun and educational poster featuring our recycling mascot teaching kids about sustainability",
-        author: "Salsabile",
-        language: "en" as const,
-        tags: ["fun", "mascot", "educational", "kids", "playful"],
-        views: 1765,
-        likes: 121
-      },
-      {
-        id: 8,
-        imageUrl: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=800&auto=format&fit=crop&q=80",
-        title: "Simple Zero Waste Lifestyle",
-        description: "Step-by-step guide to achieving a zero waste lifestyle with practical tips",
-        author: "Salsabile",
-        language: "en" as const,
-        tags: ["zero waste", "simple", "lifestyle", "eco-friendly", "guide"],
-        views: 1954,
-        likes: 142
-      },
-      {
-        id: 9,
-        imageUrl: "https://images.unsplash.com/photo-1578558288137-7207cb8c0e85?w=800&auto=format&fit=crop&q=80",
-        title: "Green Campus Initiative",
-        description: "Promoting sustainable practices in educational institutions for a greener future",
-        author: "Eco Education Team",
-        language: "en" as const,
-        tags: ["campus", "education", "sustainability", "green", "future"],
-        views: 1678,
-        likes: 98
-      },
-      {
-        id: 10,
-        imageUrl: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&auto=format&fit=crop&q=80",
-        title: "Sustainable Living Guide",
-        description: "Comprehensive guide to adopting sustainable habits in daily life",
-        author: "Green Living Collective",
-        language: "en" as const,
-        tags: ["sustainable", "guide", "living", "habits", "eco"],
-        views: 2243,
-        likes: 167
-      }
-    ];
-    
-    return basePosters;
-  }, [language]);
+  }, [language]); // Reload posters when language changes
 
   const filteredPosters = useMemo(() => {
     if (!searchQuery.trim()) return postersData;
@@ -198,6 +187,7 @@ export default function Posters() {
     navigator.clipboard.writeText(text).then(() => {
       alert(`${language === 'fr' ? 'Copié dans le presse-papier!' : 'Copied to clipboard!'}`);
     }).catch(() => {
+      // Fallback for older browsers
       const textArea = document.createElement('textarea');
       textArea.value = text;
       document.body.appendChild(textArea);
@@ -232,11 +222,13 @@ export default function Posters() {
 
   return (
     <div className="relative min-h-screen overflow-auto bg-background">
-      {/* Enhanced Background */}
+      {/* Enhanced Background with Theme Support */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
+        {/* Gradient Background - Different for light/dark */}
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/40 via-background to-teal-50/30 
                         dark:from-gray-950 dark:via-gray-900 dark:to-emerald-950/20"></div>
         
+        {/* Animated orbs - Subtle for performance */}
         <div className="absolute top-1/4 left-1/4 w-[300px] h-[300px] md:w-[500px] md:h-[500px] 
                         bg-gradient-to-r from-emerald-400/5 to-teal-400/5 rounded-full blur-3xl 
                         animate-pulse-gentle"></div>
@@ -247,20 +239,23 @@ export default function Posters() {
 
       <div className="container mx-auto px-3 sm:px-4 py-8 md:py-12 relative z-10">
         <div className="max-w-7xl mx-auto">
-          {/* Header */}
+          {/* Header - Mobile Optimized */}
           <div className="text-center mb-10 md:mb-16 px-2">
             <div className="inline-block mb-6 md:mb-10 relative">
               <div className="relative">
+                {/* Decorative elements - Hidden on mobile */}
                 <Leaf className="hidden md:block absolute -left-12 top-1/2 w-8 h-8 text-emerald-400/60 dark:text-emerald-500/40 animate-float-slow" />
                 <Sparkles className="hidden md:block absolute -right-12 top-1/2 w-8 h-8 text-emerald-300/60 dark:text-emerald-400/40 animate-float-slow animation-delay-1000" />
                 
+                {/* Main title */}
                 <h1 className="relative text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black mb-4 md:mb-8 
                                bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 
                                dark:from-emerald-400 dark:via-emerald-300 dark:to-teal-400 
                                bg-clip-text text-transparent tracking-tight leading-tight">
-                  {currentLanguage === 'fr' ? "Galerie d'Affiches Écologiques" : "Eco Posters Gallery"}
+                  {t("posters.title") || (currentLanguage === 'fr' ? "Galerie d'Affiches Écologiques" : "Eco Posters Gallery")}
                 </h1>
                 
+                {/* Animated underline */}
                 <div className="relative h-0.5 md:h-1 overflow-hidden max-w-lg md:max-w-2xl mx-auto">
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-500 to-transparent 
                                   dark:via-emerald-400 animate-shimmer"></div>
@@ -268,14 +263,16 @@ export default function Posters() {
               </div>
             </div>
             
+            {/* Subtitle */}
             <p className="text-base sm:text-lg md:text-xl text-emerald-800/80 dark:text-emerald-200/80 
                           max-w-lg md:max-w-3xl mx-auto leading-relaxed font-light mb-6 px-2">
-              {currentLanguage === 'fr' 
-                ? "Découvrez des affiches environnementales inspirantes de notre communauté créative" 
-                : "Discover inspiring environmental posters from our creative community"}
+              {t("posters.subtitle") || 
+               (currentLanguage === 'fr' 
+                 ? "Découvrez des affiches environnementales inspirantes de notre communauté créative" 
+                 : "Discover inspiring environmental posters from our creative community")}
             </p>
             
-            {/* Navigation Tabs */}
+            {/* Navigation Tabs - Mobile Optimized */}
             <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mb-8 md:mb-12 px-2">
               <button
                 onClick={() => setActiveSection("gallery")}
@@ -314,11 +311,10 @@ export default function Posters() {
             </div>
           </div>
 
-          {/* Main Content */}
           {activeSection === "gallery" ? (
             <>
-              {/* Search Section */}
-              <div className="max-w-xl md:max-w-3xl mx-auto mb-10 md:mb-16 px-3 sm:px-4 animate-fade-in-up">
+              {/* Search Section - Mobile Optimized */}
+              <div className="max-w-xl md:max-w-3xl mx-auto mb-10 md:mb-16 px-3 sm:px-4">
                 <div className="relative group">
                   <div className="absolute -inset-0.5 sm:-inset-1 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 
                                 rounded-xl sm:rounded-2xl blur opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 
@@ -361,9 +357,9 @@ export default function Posters() {
                 </div>
               </div>
 
-              {/* Gallery Content */}
+              {/* Results Section */}
               {filteredPosters.length === 0 ? (
-                <div className="text-center py-12 md:py-24 px-4 animate-fade-in-up">
+                <div className="text-center py-12 md:py-24 px-4">
                   <div className="inline-flex flex-col items-center gap-4 md:gap-6 max-w-md">
                     <div className="relative">
                       <div className="w-16 h-16 md:w-20 md:h-20 rounded-full 
@@ -397,7 +393,7 @@ export default function Posters() {
               ) : (
                 <>
                   {/* Results Header */}
-                  <div className="mb-6 md:mb-10 px-3 sm:px-4 animate-fade-in-up animation-delay-300">
+                  <div className="mb-6 md:mb-10 px-3 sm:px-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div className="flex items-center gap-2 md:gap-3">
                         <div className="p-1.5 md:p-2 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 
@@ -431,7 +427,7 @@ export default function Posters() {
                     </div>
                   </div>
 
-                  {/* Posters Grid */}
+                  {/* Posters Grid - Mobile Optimized */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 px-3 sm:px-4">
                     {filteredPosters.map((poster, index) => (
                       <div
@@ -456,7 +452,7 @@ export default function Posters() {
                           <div className="relative w-full pb-[130%] sm:pb-[140%] overflow-hidden 
                                         bg-gradient-to-br from-emerald-500/5 to-teal-500/5 
                                         dark:from-emerald-900/10 dark:to-teal-900/10">
-                            {/* Image */}
+                            {/* Image with fallback */}
                             <div className="absolute inset-2 rounded-lg overflow-hidden">
                               <img
                                 src={poster.imageUrl}
@@ -465,13 +461,17 @@ export default function Posters() {
                                          group-hover:scale-105 transition-transform duration-500"
                                 loading="lazy"
                                 decoding="async"
-                                onError={(e) => handleImageError(poster.id, e)}
+                                onError={(e) => {
+                                  const img = e.target as HTMLImageElement;
+                                  img.src = "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=800&auto=format&fit=crop&q=80";
+                                }}
                               />
                               
                               {/* Overlay with stats */}
                               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent 
                                             opacity-0 group-hover:opacity-100 transition-all duration-300 
                                             flex flex-col justify-end p-3 sm:p-4">
+                                {/* Stats */}
                                 <div className="flex items-center justify-between mb-3 transform translate-y-2 
                                               group-hover:translate-y-0 opacity-0 group-hover:opacity-100 
                                               transition-all duration-300 delay-100">
@@ -528,8 +528,8 @@ export default function Posters() {
                                 </span>
                               </div>
                               
-                              {/* Author Tag */}
-                              <div className="absolute top-2 sm:top-3 left-2 sm:left-3">
+                              {/* Author Tag - Mobile Only */}
+                              <div className="absolute top-2 sm:top-3 left-2 sm:left-3 sm:hidden">
                                 <span className="px-2 py-1 bg-black/60 backdrop-blur-sm rounded-full 
                                                text-xs text-white font-medium">
                                   {poster.author.split(' ')[0]}
@@ -540,6 +540,7 @@ export default function Posters() {
                           
                           {/* Poster Info */}
                           <div className="p-3 sm:p-4 md:p-5">
+                            {/* Title and Description */}
                             <div className="mb-3 sm:mb-4">
                               <h3 className="font-bold text-base sm:text-lg md:text-xl text-emerald-900 dark:text-emerald-100 
                                            mb-1 sm:mb-2 line-clamp-1 group-hover:text-emerald-700 
@@ -596,7 +597,7 @@ export default function Posters() {
 
               {/* Footer Message */}
               {!searchQuery && filteredPosters.length > 0 && (
-                <div className="mt-12 md:mt-20 text-center px-3 sm:px-4 animate-fade-in-up animation-delay-1000">
+                <div className="mt-12 md:mt-20 text-center px-3 sm:px-4">
                   <div className="inline-block max-w-xl mx-auto transform hover:-translate-y-1 transition-transform duration-300">
                     <div className="p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-gradient-to-br from-white/50 to-emerald-500/5 
                                   dark:from-gray-900/50 dark:to-emerald-900/20 backdrop-blur-sm 
@@ -620,8 +621,8 @@ export default function Posters() {
               )}
             </>
           ) : (
-            /* Share Your Art Section */
-            <div className="max-w-4xl mx-auto animate-fade-in-up px-3 sm:px-4">
+            /* Share Your Art Section - Mobile Optimized */
+            <div className="max-w-4xl mx-auto px-3 sm:px-4">
               <div className="text-center mb-8 md:mb-12">
                 <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-emerald-900 dark:text-emerald-100 mb-4 md:mb-6">
                   {currentLanguage === 'fr' ? "Partagez votre création" : "Share Your Artwork"}
@@ -633,7 +634,7 @@ export default function Posters() {
                 </p>
               </div>
 
-              {/* Steps */}
+              {/* Steps - Mobile Responsive */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8 mb-8 md:mb-12">
                 {[
                   {
@@ -862,6 +863,7 @@ export default function Posters() {
           }
         }
 
+        /* Animation classes */
         .animate-float-slow {
           animation: float-slow 6s ease-in-out infinite;
         }
@@ -884,6 +886,7 @@ export default function Posters() {
           opacity: 0;
         }
 
+        /* Utility classes */
         .line-clamp-1 {
           display: -webkit-box;
           -webkit-line-clamp: 1;
@@ -903,10 +906,12 @@ export default function Posters() {
         .animation-delay-1000 { animation-delay: 1000ms !important; }
         .animation-delay-2000 { animation-delay: 2000ms !important; }
 
+        /* Touch optimizations */
         .touch-manipulation {
           touch-action: manipulation;
         }
 
+        /* Reduced motion support */
         @media (prefers-reduced-motion: reduce) {
           .animate-float-slow,
           .animate-shimmer,
@@ -921,6 +926,13 @@ export default function Posters() {
           .hover\\:transform,
           .group:hover .group-hover\\:transform {
             transform: none !important;
+          }
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 640px) {
+          .text-balance {
+            text-wrap: balance;
           }
         }
       `}</style>
