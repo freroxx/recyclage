@@ -234,8 +234,8 @@ export default function Posters() {
                 <input
                   type="text"
                   placeholder={language === 'en' 
-                    ? "🔍 Search posters by title, description, or tags..." 
-                    : "🔍 Rechercher des affiches par titre, description ou tags..."}
+                    ? "Search posters by title, description, or tags..." 
+                    : "Rechercher des affiches par titre, description ou tags..."}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-16 pr-12 py-5 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-2 border-emerald-500/20 rounded-2xl text-lg text-emerald-900 dark:text-emerald-100 placeholder:text-emerald-600/50 dark:placeholder:text-emerald-400/50 focus:outline-none focus:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-300 hover:border-emerald-500/30"
