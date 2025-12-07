@@ -74,6 +74,13 @@ const translations = {
     "posters.subtitle": "Découvrez nos affiches éducatives sur le recyclage",
     "posters.poster1": "Affiche Sauver la Terre avec les 3R",
     "posters.poster2": "Affiche Campagne de Recyclage Minimaliste",
+    "posters.yahiaSection": "Designs de Yahia",
+    "posters.salsabileSection": "Designs de Salsabile",
+    "posters.posters": "affiches",
+    "posters.allCommunityMade": "Toutes les affiches sont créées par la communauté",
+    "posters.clickToView": "Cliquer pour voir",
+    "posters.viewFullSize": "Voir en Taille Réelle",
+    "posters.communityNote": "Vous voulez présenter votre design ? Partagez-le avec la communauté !",
     
     // Videos
     "videos.title": "Vidéos Éducatives",
@@ -190,10 +197,17 @@ const translations = {
     "resources.view": "View",
     
     // Posters
-    "posters.title": "Recycling Posters",
-    "posters.subtitle": "Discover our educational posters on recycling",
+    "posters.title": "Community Posters",
+    "posters.subtitle": "Amazing designs created by our talented community members",
     "posters.poster1": "Save the Earth With 3R Poster",
     "posters.poster2": "Minimalist Recycling Campaign Poster",
+    "posters.yahiaSection": "Yahia's Designs",
+    "posters.salsabileSection": "Salsabile's Designs",
+    "posters.posters": "posters",
+    "posters.allCommunityMade": "All posters made by the community",
+    "posters.clickToView": "Click to view",
+    "posters.viewFullSize": "View Full Size",
+    "posters.communityNote": "Want to showcase your design? Share it with the community!",
     
     // Videos
     "videos.title": "Educational Videos",
