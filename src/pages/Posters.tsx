@@ -15,6 +15,36 @@ interface Poster {
   likes?: number;
 }
 
+// Mock data for development when images fail to load
+const FALLBACK_POSTERS = {
+  fr: [
+    {
+      id: 101,
+      imageUrl: "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=800&auto=format&fit=crop&q=80",
+      title: "Protection de l'Environnement",
+      description: "Un design inspirant pour la protection de notre planète",
+      author: "Éco-Designer",
+      language: "fr",
+      tags: ["environnement", "protection", "nature", "écologie"],
+      views: 1500,
+      likes: 120
+    }
+  ],
+  en: [
+    {
+      id: 201,
+      imageUrl: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&auto=format&fit=crop&q=80",
+      title: "Environmental Protection",
+      description: "An inspiring design for protecting our planet",
+      author: "Eco Designer",
+      language: "en",
+      tags: ["environment", "protection", "nature", "ecology"],
+      views: 1800,
+      likes: 150
+    }
+  ]
+};
+
 export default function Posters() {
   const { t, language = 'en' } = useLanguage();
   const [isLoading, setIsLoading] = useState(true);
@@ -23,6 +53,7 @@ export default function Posters() {
   const [mounted, setMounted] = useState(false);
   const [activeSection, setActiveSection] = useState<"gallery" | "share">("gallery");
   const [postersData, setPostersData] = useState<Poster[]>([]);
+  const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set());
 
   // Initialize mounted state and load posters
   useEffect(() => {
@@ -34,7 +65,7 @@ export default function Posters() {
       const posters: Poster[] = [];
       
       if (currentLanguage === 'fr') {
-        // French posters
+        // French posters with fallback URLs
         posters.push(
           // Yahia's posters (French)
           {
@@ -59,7 +90,7 @@ export default function Posters() {
             views: 987,
             likes: 67
           },
-          // Salsabile's French posters
+          // Salsabile's French posters with fallbacks
           {
             id: 3,
             imageUrl: "https://i.ibb.co/FLg4Bk0/fr1.jpg",
@@ -157,14 +188,43 @@ export default function Posters() {
       }
       
       setPostersData(posters);
+      
+      // Preload images
+      posters.forEach(poster => {
+        const img = new Image();
+        img.src = poster.imageUrl;
+        img.onload = () => {
+          setLoadedImages(prev => new Set(prev).add(poster.id));
+        };
+        img.onerror = () => {
+          console.warn(`Failed to load image for poster ${poster.id}: ${poster.imageUrl}`);
+          // Use fallback image
+          if (poster.id <= 5) {
+            poster.imageUrl = FALLBACK_POSTERS.fr[0].imageUrl;
+          } else {
+            poster.imageUrl = FALLBACK_POSTERS.en[0].imageUrl;
+          }
+          setLoadedImages(prev => new Set(prev).add(poster.id));
+        };
+      });
     };
     
     loadPosters();
     
-    const timer = setTimeout(() => setIsLoading(false), 800);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+      // If no images loaded after timeout, use fallback posters
+      if (loadedImages.size === 0) {
+        const currentLanguage = language || 'en';
+        const fallbackPosters = currentLanguage === 'fr' ? FALLBACK_POSTERS.fr : FALLBACK_POSTERS.en;
+        setPostersData(fallbackPosters);
+      }
+    }, 1000);
+    
     return () => clearTimeout(timer);
-  }, [language]); // Reload posters when language changes
+  }, [language]);
 
+  // Filter posters based on search query
   const filteredPosters = useMemo(() => {
     if (!searchQuery.trim()) return postersData;
     
@@ -185,7 +245,11 @@ export default function Posters() {
   // Copy contact info to clipboard
   const copyToClipboard = useCallback((text: string) => {
     navigator.clipboard.writeText(text).then(() => {
-      alert(`${language === 'fr' ? 'Copié dans le presse-papier!' : 'Copied to clipboard!'}`);
+      const message = language === 'fr' 
+        ? 'Copié dans le presse-papier!' 
+        : 'Copied to clipboard!';
+      // You could replace this with a toast notification
+      alert(message);
     }).catch(() => {
       // Fallback for older browsers
       const textArea = document.createElement('textarea');
@@ -194,12 +258,33 @@ export default function Posters() {
       textArea.select();
       try {
         document.execCommand('copy');
-        alert(`${language === 'fr' ? 'Copié dans le presse-papier!' : 'Copied to clipboard!'}`);
+        const message = language === 'fr' 
+          ? 'Copié dans le presse-papier!' 
+          : 'Copied to clipboard!';
+        alert(message);
       } catch (err) {
         console.error('Failed to copy text: ', err);
       }
       document.body.removeChild(textArea);
     });
+  }, [language]);
+
+  // Handle image error with fallback
+  const handleImageError = useCallback((e: React.SyntheticEvent<HTMLImageElement, Event>, poster: Poster) => {
+    const img = e.target as HTMLImageElement;
+    const currentLanguage = language || 'en';
+    const fallbackImage = currentLanguage === 'fr' 
+      ? FALLBACK_POSTERS.fr[0].imageUrl
+      : FALLBACK_POSTERS.en[0].imageUrl;
+    
+    img.src = fallbackImage;
+    
+    // Update the poster data with fallback
+    setPostersData(prev => prev.map(p => 
+      p.id === poster.id 
+        ? { ...p, imageUrl: fallbackImage }
+        : p
+    ));
   }, [language]);
 
   // Loading state
@@ -221,14 +306,11 @@ export default function Posters() {
   const currentLanguage = language || 'en';
 
   return (
-    <div className="relative min-h-screen overflow-auto bg-background">
-      {/* Enhanced Background with Theme Support */}
+    <div className="min-h-screen bg-background">
+      {/* Background */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
-        {/* Gradient Background - Different for light/dark */}
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/40 via-background to-teal-50/30 
                         dark:from-gray-950 dark:via-gray-900 dark:to-emerald-950/20"></div>
-        
-        {/* Animated orbs - Subtle for performance */}
         <div className="absolute top-1/4 left-1/4 w-[300px] h-[300px] md:w-[500px] md:h-[500px] 
                         bg-gradient-to-r from-emerald-400/5 to-teal-400/5 rounded-full blur-3xl 
                         animate-pulse-gentle"></div>
@@ -237,75 +319,67 @@ export default function Posters() {
                         animate-pulse-gentle animation-delay-2000"></div>
       </div>
 
-      <div className="container mx-auto px-3 sm:px-4 py-8 md:py-12 relative z-10">
+      <div className="container mx-auto px-4 py-8 md:py-12">
         <div className="max-w-7xl mx-auto">
-          {/* Header - Mobile Optimized */}
-          <div className="text-center mb-10 md:mb-16 px-2">
+          {/* Header */}
+          <div className="text-center mb-12 md:mb-16">
             <div className="inline-block mb-6 md:mb-10 relative">
               <div className="relative">
-                {/* Decorative elements - Hidden on mobile */}
                 <Leaf className="hidden md:block absolute -left-12 top-1/2 w-8 h-8 text-emerald-400/60 dark:text-emerald-500/40 animate-float-slow" />
                 <Sparkles className="hidden md:block absolute -right-12 top-1/2 w-8 h-8 text-emerald-300/60 dark:text-emerald-400/40 animate-float-slow animation-delay-1000" />
                 
-                {/* Main title */}
-                <h1 className="relative text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black mb-4 md:mb-8 
+                <h1 className="relative text-4xl md:text-6xl lg:text-7xl font-black mb-4 md:mb-8 
                                bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 
                                dark:from-emerald-400 dark:via-emerald-300 dark:to-teal-400 
-                               bg-clip-text text-transparent tracking-tight leading-tight">
+                               bg-clip-text text-transparent tracking-tight">
                   {t("posters.title") || (currentLanguage === 'fr' ? "Galerie d'Affiches Écologiques" : "Eco Posters Gallery")}
                 </h1>
                 
-                {/* Animated underline */}
-                <div className="relative h-0.5 md:h-1 overflow-hidden max-w-lg md:max-w-2xl mx-auto">
+                <div className="relative h-1 overflow-hidden max-w-2xl mx-auto">
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-500 to-transparent 
                                   dark:via-emerald-400 animate-shimmer"></div>
                 </div>
               </div>
             </div>
             
-            {/* Subtitle */}
-            <p className="text-base sm:text-lg md:text-xl text-emerald-800/80 dark:text-emerald-200/80 
-                          max-w-lg md:max-w-3xl mx-auto leading-relaxed font-light mb-6 px-2">
+            <p className="text-lg md:text-xl text-emerald-800/80 dark:text-emerald-200/80 
+                          max-w-3xl mx-auto leading-relaxed font-light mb-8">
               {t("posters.subtitle") || 
                (currentLanguage === 'fr' 
                  ? "Découvrez des affiches environnementales inspirantes de notre communauté créative" 
                  : "Discover inspiring environmental posters from our creative community")}
             </p>
             
-            {/* Navigation Tabs - Mobile Optimized */}
-            <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mb-8 md:mb-12 px-2">
+            {/* Navigation Tabs */}
+            <div className="flex justify-center gap-4 mb-12">
               <button
                 onClick={() => setActiveSection("gallery")}
-                className={`px-5 sm:px-6 md:px-8 py-3 rounded-full font-semibold transition-all duration-300 
-                           flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-base
+                className={`px-8 py-3 rounded-full font-semibold transition-all duration-300 
+                           flex items-center gap-3
                            transform hover:-translate-y-0.5 active:scale-95
                            ${activeSection === "gallery" 
                              ? `bg-gradient-to-r from-emerald-600 to-teal-500 text-white
-                                shadow-lg shadow-emerald-500/30 dark:shadow-emerald-500/20
-                                hover:shadow-xl hover:shadow-emerald-500/40`
+                                shadow-lg shadow-emerald-500/30 dark:shadow-emerald-500/20`
                              : `bg-white/90 dark:bg-gray-800/90 text-emerald-700 dark:text-emerald-300
-                                hover:bg-emerald-50 dark:hover:bg-gray-700/90 border border-emerald-500/20
-                                hover:border-emerald-500/30 dark:border-emerald-500/30`
+                                hover:bg-emerald-50 dark:hover:bg-gray-700/90 border border-emerald-500/20`
                            }`}
               >
-                <Palette className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover:scale-110" />
+                <Palette className="w-5 h-5" />
                 {currentLanguage === 'fr' ? "Galerie" : "Gallery"}
               </button>
               <button
                 onClick={() => setActiveSection("share")}
-                className={`px-5 sm:px-6 md:px-8 py-3 rounded-full font-semibold transition-all duration-300 
-                           flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-base
+                className={`px-8 py-3 rounded-full font-semibold transition-all duration-300 
+                           flex items-center gap-3
                            transform hover:-translate-y-0.5 active:scale-95
                            ${activeSection === "share" 
                              ? `bg-gradient-to-r from-emerald-600 to-teal-500 text-white 
-                                shadow-lg shadow-emerald-500/30 dark:shadow-emerald-500/20 
-                                hover:shadow-xl hover:shadow-emerald-500/40` 
+                                shadow-lg shadow-emerald-500/30 dark:shadow-emerald-500/20` 
                              : `bg-white/90 dark:bg-gray-800/90 text-emerald-700 dark:text-emerald-300
-                                hover:bg-emerald-50 dark:hover:bg-gray-700/90 border border-emerald-500/20
-                                hover:border-emerald-500/30 dark:border-emerald-500/30`
+                                hover:bg-emerald-50 dark:hover:bg-gray-700/90 border border-emerald-500/20`
                            }`}
               >
-                <Upload className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover:scale-110" />
+                <Upload className="w-5 h-5" />
                 {currentLanguage === 'fr' ? "Partagez votre art" : "Share Your Art"}
               </button>
             </div>
@@ -313,17 +387,16 @@ export default function Posters() {
 
           {activeSection === "gallery" ? (
             <>
-              {/* Search Section - Mobile Optimized */}
-              <div className="max-w-xl md:max-w-3xl mx-auto mb-10 md:mb-16 px-3 sm:px-4">
+              {/* Search Section */}
+              <div className="max-w-3xl mx-auto mb-12 md:mb-16">
                 <div className="relative group">
-                  <div className="absolute -inset-0.5 sm:-inset-1 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 
-                                rounded-xl sm:rounded-2xl blur opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 
+                  <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 
+                                rounded-2xl blur opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 
                                 transition-opacity duration-500"></div>
                   <div className="relative">
-                    <Search className="absolute left-3 sm:left-4 md:left-5 top-1/2 transform -translate-y-1/2 
-                                     text-emerald-600/70 dark:text-emerald-400/70 w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6
-                                     transition-all duration-300 group-hover:scale-110 group-hover:text-emerald-500
-                                     group-focus-within:scale-110 group-focus-within:text-emerald-500" />
+                    <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 
+                                     text-emerald-600/70 dark:text-emerald-400/70 w-5 h-5
+                                     transition-all duration-300 group-hover:scale-110 group-hover:text-emerald-500" />
                     <input
                       type="text"
                       placeholder={currentLanguage === 'fr' 
@@ -331,24 +404,22 @@ export default function Posters() {
                         : "Search posters, tags, or authors..."}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 sm:pl-12 md:pl-16 pr-9 sm:pr-10 md:pr-12 py-3 sm:py-4 
+                      className="w-full pl-16 pr-12 py-4 
                                bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm 
                                border border-emerald-500/20 dark:border-emerald-500/30 
-                               rounded-xl sm:rounded-2xl text-sm sm:text-base md:text-lg 
+                               rounded-2xl text-lg 
                                text-emerald-900 dark:text-emerald-100 
                                placeholder:text-emerald-600/50 dark:placeholder:text-emerald-400/50 
-                               focus:outline-none focus:border-emerald-500/40 dark:focus:border-emerald-400/40 
-                               focus:ring-2 focus:ring-emerald-500/20 dark:focus:ring-emerald-400/20 
-                               transition-all duration-300 hover:border-emerald-500/30 
-                               group-hover:scale-[1.01] group-focus-within:scale-[1.01]"
+                               focus:outline-none focus:border-emerald-500/40 
+                               focus:ring-2 focus:ring-emerald-500/20 
+                               transition-all duration-300"
                     />
                     {searchQuery && (
                       <button
                         onClick={() => setSearchQuery("")}
-                        className="absolute right-2 sm:right-3 md:right-4 top-1/2 transform -translate-y-1/2 
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 
                                  text-emerald-600/70 dark:text-emerald-400/70 hover:text-emerald-500 
                                  transition-all duration-200 p-1 hover:scale-125"
-                        aria-label={currentLanguage === 'fr' ? "Effacer la recherche" : "Clear search"}
                       >
                         ✕
                       </button>
@@ -359,21 +430,21 @@ export default function Posters() {
 
               {/* Results Section */}
               {filteredPosters.length === 0 ? (
-                <div className="text-center py-12 md:py-24 px-4">
-                  <div className="inline-flex flex-col items-center gap-4 md:gap-6 max-w-md">
+                <div className="text-center py-24">
+                  <div className="inline-flex flex-col items-center gap-6 max-w-md">
                     <div className="relative">
-                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full 
+                      <div className="w-20 h-20 rounded-full 
                                     bg-gradient-to-br from-emerald-500/10 to-teal-500/10 
                                     flex items-center justify-center animate-pulse-gentle">
-                        <Search className="w-8 h-8 md:w-10 md:h-10 text-emerald-500/50" />
+                        <Search className="w-10 h-10 text-emerald-500/50" />
                       </div>
-                      <Zap className="absolute -top-2 -right-2 w-6 h-6 md:w-8 md:h-8 text-emerald-400 animate-bounce" />
+                      <Zap className="absolute -top-2 -right-2 w-8 h-8 text-emerald-400 animate-bounce" />
                     </div>
                     <div>
-                      <h3 className="text-lg md:text-xl font-bold text-emerald-900 dark:text-emerald-100 mb-2">
+                      <h3 className="text-xl font-bold text-emerald-900 dark:text-emerald-100 mb-2">
                         {currentLanguage === 'fr' ? "Aucune affiche trouvée" : "No posters found"}
                       </h3>
-                      <p className="text-sm md:text-base text-emerald-700/70 dark:text-emerald-300/70">
+                      <p className="text-emerald-700/70 dark:text-emerald-300/70">
                         {currentLanguage === 'fr' 
                           ? "Essayez d'autres mots-clés ou parcourez toutes les affiches" 
                           : "Try different keywords or browse all community posters"}
@@ -381,10 +452,10 @@ export default function Posters() {
                     </div>
                     <button
                       onClick={() => setSearchQuery("")}
-                      className="px-5 sm:px-6 md:px-8 py-2.5 md:py-3 rounded-full 
+                      className="px-8 py-3 rounded-full 
                                bg-gradient-to-r from-emerald-600 to-teal-500 text-white 
-                               font-semibold text-sm sm:text-base hover:shadow-lg hover:shadow-emerald-500/30
-                               transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95"
+                               font-semibold hover:shadow-lg hover:shadow-emerald-500/30
+                               transition-all duration-300 transform hover:-translate-y-0.5"
                     >
                       {currentLanguage === 'fr' ? "Voir toutes les affiches" : "View All Posters"}
                     </button>
@@ -393,19 +464,19 @@ export default function Posters() {
               ) : (
                 <>
                   {/* Results Header */}
-                  <div className="mb-6 md:mb-10 px-3 sm:px-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex items-center gap-2 md:gap-3">
-                        <div className="p-1.5 md:p-2 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 
+                  <div className="mb-10">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 
                                       animate-pulse-gentle">
-                          <Zap className="w-4 h-4 md:w-5 md:h-5 text-emerald-500 dark:text-emerald-400" />
+                          <Zap className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
                         </div>
                         <div>
-                          <h3 className="text-base sm:text-lg md:text-xl font-bold text-emerald-900 dark:text-emerald-100">
+                          <h3 className="text-xl font-bold text-emerald-900 dark:text-emerald-100">
                             {filteredPosters.length} {currentLanguage === 'fr' ? "affiches communautaires" : "community posters"}
                           </h3>
                           {searchQuery && (
-                            <p className="text-xs md:text-sm text-emerald-700/70 dark:text-emerald-300/70 mt-0.5">
+                            <p className="text-sm text-emerald-700/70 dark:text-emerald-300/70 mt-0.5">
                               {currentLanguage === 'fr' ? "Résultats pour" : "Showing results for"} "
                               <span className="font-semibold text-emerald-600 dark:text-emerald-400">{searchQuery}</span>"
                             </p>
@@ -415,11 +486,10 @@ export default function Posters() {
                       {searchQuery && (
                         <button
                           onClick={() => setSearchQuery("")}
-                          className="self-start sm:self-center text-xs sm:text-sm font-medium text-emerald-600 dark:text-emerald-400 
-                                   hover:text-emerald-700 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full 
+                          className="font-medium text-emerald-600 dark:text-emerald-400 
+                                   hover:text-emerald-700 px-4 py-2 rounded-full 
                                    bg-emerald-500/10 dark:bg-emerald-500/20 hover:bg-emerald-500/20 
-                                   transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95
-                                   whitespace-nowrap"
+                                   transition-all duration-300 transform hover:-translate-y-0.5"
                         >
                           {currentLanguage === 'fr' ? "Effacer" : "Clear search"}
                         </button>
@@ -427,8 +497,8 @@ export default function Posters() {
                     </div>
                   </div>
 
-                  {/* Posters Grid - Mobile Optimized */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 px-3 sm:px-4">
+                  {/* Posters Grid - FIXED: Better aspect ratio */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                     {filteredPosters.map((poster, index) => (
                       <div
                         key={poster.id}
@@ -443,17 +513,14 @@ export default function Posters() {
                         <Card 
                           className="overflow-hidden border border-emerald-500/10 dark:border-emerald-500/20 
                                      bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm h-full group 
-                                     hover:border-emerald-500/30 dark:hover:border-emerald-400/30 
-                                     hover:shadow-xl hover:shadow-emerald-500/10 dark:hover:shadow-emerald-500/5 
-                                     transition-all duration-300 active:scale-95 sm:hover:-translate-y-1 
-                                     cursor-pointer touch-manipulation"
+                                     hover:border-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/10 
+                                     transition-all duration-300"
                         >
-                          {/* Poster Container */}
-                          <div className="relative w-full pb-[130%] sm:pb-[140%] overflow-hidden 
-                                        bg-gradient-to-br from-emerald-500/5 to-teal-500/5 
-                                        dark:from-emerald-900/10 dark:to-teal-900/10">
-                            {/* Image with fallback */}
-                            <div className="absolute inset-2 rounded-lg overflow-hidden">
+                          {/* Poster Container with better aspect ratio */}
+                          <div className="relative w-full pt-[125%] sm:pt-[140%] overflow-hidden 
+                                        bg-gradient-to-br from-emerald-500/5 to-teal-500/5">
+                            {/* Image with error handling */}
+                            <div className="absolute inset-0">
                               <img
                                 src={poster.imageUrl}
                                 alt={poster.title}
@@ -461,31 +528,26 @@ export default function Posters() {
                                          group-hover:scale-105 transition-transform duration-500"
                                 loading="lazy"
                                 decoding="async"
-                                onError={(e) => {
-                                  const img = e.target as HTMLImageElement;
-                                  img.src = "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=800&auto=format&fit=crop&q=80";
-                                }}
+                                onError={(e) => handleImageError(e, poster)}
                               />
                               
-                              {/* Overlay with stats */}
+                              {/* Overlay */}
                               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent 
                                             opacity-0 group-hover:opacity-100 transition-all duration-300 
-                                            flex flex-col justify-end p-3 sm:p-4">
-                                {/* Stats */}
+                                            flex flex-col justify-end p-4">
                                 <div className="flex items-center justify-between mb-3 transform translate-y-2 
                                               group-hover:translate-y-0 opacity-0 group-hover:opacity-100 
                                               transition-all duration-300 delay-100">
                                   <div className="flex items-center gap-2 text-white/90">
-                                    <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
-                                    <span className="text-xs sm:text-sm font-medium">{poster.views?.toLocaleString() || '1.2k'}</span>
+                                    <Eye className="w-4 h-4" />
+                                    <span className="text-sm font-medium">{poster.views?.toLocaleString() || '1.2k'}</span>
                                   </div>
                                   <div className="flex items-center gap-2 text-white/90">
-                                    <Heart className="w-3 h-3 sm:w-4 sm:h-4" />
-                                    <span className="text-xs sm:text-sm font-medium">{poster.likes?.toLocaleString() || '89'}</span>
+                                    <Heart className="w-4 h-4" />
+                                    <span className="text-sm font-medium">{poster.likes?.toLocaleString() || '89'}</span>
                                   </div>
                                 </div>
                                 
-                                {/* Action buttons */}
                                 <div className="grid grid-cols-2 gap-2 transform translate-y-4 group-hover:translate-y-0 
                                               opacity-0 group-hover:opacity-100 transition-all duration-300 delay-150">
                                   <button
@@ -493,13 +555,11 @@ export default function Posters() {
                                       e.stopPropagation();
                                       handleOpenNewTab(poster.imageUrl);
                                     }}
-                                    className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-white/90 dark:bg-gray-900/90 
-                                             text-emerald-700 dark:text-emerald-300 font-medium 
-                                             hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 
-                                             flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm
-                                             active:scale-95"
+                                    className="px-3 py-2 rounded-lg bg-white/90 text-emerald-700 font-medium 
+                                             hover:bg-white transition-all duration-200 
+                                             flex items-center justify-center gap-2 text-sm"
                                   >
-                                    <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4" />
+                                    <ExternalLink className="w-4 h-4" />
                                     {currentLanguage === 'fr' ? "Voir" : "View"}
                                   </button>
                                   <button
@@ -507,61 +567,48 @@ export default function Posters() {
                                       e.stopPropagation();
                                       handleOpenNewTab(poster.imageUrl);
                                     }}
-                                    className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-500 
+                                    className="px-3 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-500 
                                              text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 
-                                             transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 
-                                             text-xs sm:text-sm active:scale-95"
+                                             transition-all duration-200 flex items-center justify-center gap-2 text-sm"
                                   >
-                                    <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+                                    <Download className="w-4 h-4" />
                                     {currentLanguage === 'fr' ? "Enregistrer" : "Save"}
                                   </button>
                                 </div>
                               </div>
                               
                               {/* Language Badge */}
-                              <div className="absolute top-2 sm:top-3 right-2 sm:right-3">
-                                <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md 
+                              <div className="absolute top-3 right-3">
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md 
                                                ${poster.language === 'en' 
-                                                 ? 'bg-emerald-600/90 dark:bg-emerald-500/90 text-white' 
-                                                 : 'bg-teal-600/90 dark:bg-teal-500/90 text-white'}`}>
+                                                 ? 'bg-emerald-600/90 text-white' 
+                                                 : 'bg-teal-600/90 text-white'}`}>
                                   {poster.language.toUpperCase()}
-                                </span>
-                              </div>
-                              
-                              {/* Author Tag - Mobile Only */}
-                              <div className="absolute top-2 sm:top-3 left-2 sm:left-3 sm:hidden">
-                                <span className="px-2 py-1 bg-black/60 backdrop-blur-sm rounded-full 
-                                               text-xs text-white font-medium">
-                                  {poster.author.split(' ')[0]}
                                 </span>
                               </div>
                             </div>
                           </div>
                           
                           {/* Poster Info */}
-                          <div className="p-3 sm:p-4 md:p-5">
-                            {/* Title and Description */}
-                            <div className="mb-3 sm:mb-4">
-                              <h3 className="font-bold text-base sm:text-lg md:text-xl text-emerald-900 dark:text-emerald-100 
-                                           mb-1 sm:mb-2 line-clamp-1 group-hover:text-emerald-700 
-                                           dark:group-hover:text-emerald-400 transition-colors duration-300">
+                          <div className="p-5">
+                            <div className="mb-4">
+                              <h3 className="font-bold text-lg md:text-xl text-emerald-900 dark:text-emerald-100 
+                                           mb-2 line-clamp-1 group-hover:text-emerald-700 transition-colors">
                                 {poster.title}
                               </h3>
-                              <p className="text-xs sm:text-sm text-emerald-800/70 dark:text-emerald-300/70 
+                              <p className="text-sm text-emerald-800/70 dark:text-emerald-300/70 
                                           line-clamp-2 leading-relaxed">
                                 {poster.description}
                               </p>
                             </div>
                             
-                            {/* Tags */}
-                            <div className="flex flex-wrap gap-1.5 mb-3 sm:mb-4">
+                            <div className="flex flex-wrap gap-1.5 mb-4">
                               {poster.tags.slice(0, 3).map((tag, tagIndex) => (
                                 <span
                                   key={tagIndex}
-                                  className="px-2 py-1 text-[10px] sm:text-xs rounded-full bg-emerald-500/10 
-                                           dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 
-                                           border border-emerald-500/20 dark:border-emerald-500/30 
-                                           hover:bg-emerald-500/20 dark:hover:bg-emerald-500/30 
+                                  className="px-2 py-1 text-xs rounded-full bg-emerald-500/10 
+                                           text-emerald-700 dark:text-emerald-300 
+                                           border border-emerald-500/20 hover:bg-emerald-500/20 
                                            transition-all duration-300 cursor-default"
                                 >
                                   {tag}
@@ -569,20 +616,19 @@ export default function Posters() {
                               ))}
                             </div>
                             
-                            {/* Footer */}
-                            <div className="pt-2 sm:pt-3 border-t border-emerald-500/10 dark:border-emerald-500/20">
+                            <div className="pt-3 border-t border-emerald-500/10">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                   <div className="w-2 h-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 
                                                 animate-pulse"></div>
-                                  <span className="text-xs sm:text-sm text-emerald-700/80 dark:text-emerald-300/80">
+                                  <span className="text-sm text-emerald-700/80 dark:text-emerald-300/80">
                                     {currentLanguage === 'fr' ? "Par" : "By"}{" "}
                                     <span className="font-semibold text-emerald-800 dark:text-emerald-200">
                                       {poster.author}
                                     </span>
                                   </span>
                                 </div>
-                                <div className="text-[10px] sm:text-xs text-emerald-600/60 dark:text-emerald-400/60">
+                                <div className="text-xs text-emerald-600/60 dark:text-emerald-400/60">
                                   {poster.language === 'en' ? 'EN' : 'FR'}
                                 </div>
                               </div>
@@ -597,20 +643,19 @@ export default function Posters() {
 
               {/* Footer Message */}
               {!searchQuery && filteredPosters.length > 0 && (
-                <div className="mt-12 md:mt-20 text-center px-3 sm:px-4">
+                <div className="mt-20 text-center">
                   <div className="inline-block max-w-xl mx-auto transform hover:-translate-y-1 transition-transform duration-300">
-                    <div className="p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-gradient-to-br from-white/50 to-emerald-500/5 
-                                  dark:from-gray-900/50 dark:to-emerald-900/20 backdrop-blur-sm 
-                                  border border-emerald-500/10 dark:border-emerald-500/20">
-                      <Leaf className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-500 mb-3 sm:mb-4 mx-auto animate-float-slow" />
-                      <p className="text-sm sm:text-base md:text-lg text-emerald-800/80 dark:text-emerald-200/80 mb-3 sm:mb-4">
+                    <div className="p-6 rounded-2xl bg-gradient-to-br from-white/50 to-emerald-500/5 
+                                  backdrop-blur-sm border border-emerald-500/10">
+                      <Leaf className="w-8 h-8 text-emerald-500 mb-4 mx-auto animate-float-slow" />
+                      <p className="text-lg text-emerald-800/80 dark:text-emerald-200/80 mb-4">
                         {currentLanguage === 'fr' 
                           ? "Rejoignez notre communauté grandissante d'artistes et d'activistes environnementaux !" 
                           : "Join our growing community of environmental artists and activists!"}
                       </p>
-                      <div className="flex items-center justify-center gap-3 sm:gap-4">
+                      <div className="flex items-center justify-center gap-4">
                         <div className="h-px flex-1 bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent"></div>
-                        <span className="text-xs sm:text-sm font-medium text-emerald-600 dark:text-emerald-400 animate-pulse-gentle">
+                        <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400 animate-pulse-gentle">
                           {currentLanguage === 'fr' ? "Fait avec ♻️ par la communauté" : "Made with ♻️ by the community"}
                         </span>
                         <div className="h-px flex-1 bg-gradient-to-r from-transparent via-emerald-400/30 to-transparent"></div>
@@ -621,21 +666,21 @@ export default function Posters() {
               )}
             </>
           ) : (
-            /* Share Your Art Section - Mobile Optimized */
-            <div className="max-w-4xl mx-auto px-3 sm:px-4">
-              <div className="text-center mb-8 md:mb-12">
-                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-emerald-900 dark:text-emerald-100 mb-4 md:mb-6">
+            /* Share Your Art Section */
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-12">
+                <h2 className="text-4xl md:text-5xl font-bold text-emerald-900 dark:text-emerald-100 mb-6">
                   {currentLanguage === 'fr' ? "Partagez votre création" : "Share Your Artwork"}
                 </h2>
-                <p className="text-base sm:text-lg md:text-xl text-emerald-700/80 dark:text-emerald-300/80">
+                <p className="text-xl text-emerald-700/80 dark:text-emerald-300/80">
                   {currentLanguage === 'fr' 
                     ? "Rejoignez notre communauté et inspirez les autres avec votre art environnemental" 
                     : "Join our community and inspire others with your environmental artwork"}
                 </p>
               </div>
 
-              {/* Steps - Mobile Responsive */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8 mb-8 md:mb-12">
+              {/* Steps */}
+              <div className="grid md:grid-cols-3 gap-8 mb-12">
                 {[
                   {
                     step: 1,
@@ -667,27 +712,25 @@ export default function Posters() {
                     className="relative group"
                     style={{ animationDelay: `${index * 200}ms` }}
                   >
-                    <div className="absolute -inset-1 sm:-inset-2 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 
-                                  rounded-xl sm:rounded-2xl blur opacity-0 group-hover:opacity-100 
+                    <div className="absolute -inset-2 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 
+                                  rounded-2xl blur opacity-0 group-hover:opacity-100 
                                   transition-opacity duration-500"></div>
-                    <div className="relative bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-4 sm:p-6 md:p-8 
-                                  rounded-xl sm:rounded-2xl border border-emerald-500/10 dark:border-emerald-500/20 
-                                  h-full group-hover:border-emerald-500/30 transition-all duration-300
-                                  sm:transform sm:hover:-translate-y-1">
-                      <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 
+                    <div className="relative bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-8 
+                                  rounded-2xl border border-emerald-500/10 h-full group-hover:border-emerald-500/30 
+                                  transition-all duration-300 transform hover:-translate-y-1">
+                      <div className="inline-flex items-center justify-center w-16 h-16 
                                     rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 
-                                    text-white text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4
+                                    text-white text-2xl font-bold mb-4
                                     group-hover:scale-110 transition-transform duration-300">
                         {item.step}
                       </div>
-                      <item.icon className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-emerald-600 dark:text-emerald-400 
-                                          mb-3 sm:mb-4 mx-auto transform group-hover:scale-110 
-                                          transition-transform duration-300" />
-                      <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-emerald-900 dark:text-emerald-100 
-                                   mb-2 sm:mb-3 group-hover:text-emerald-700 transition-colors duration-300">
+                      <item.icon className="w-12 h-12 text-emerald-600 dark:text-emerald-400 
+                                          mb-4 mx-auto transform group-hover:scale-110 transition-transform duration-300" />
+                      <h3 className="text-2xl font-bold text-emerald-900 dark:text-emerald-100 
+                                   mb-3 group-hover:text-emerald-700 transition-colors">
                         {item.title}
                       </h3>
-                      <p className="text-sm sm:text-base text-emerald-700/80 dark:text-emerald-300/80">
+                      <p className="text-emerald-700/80 dark:text-emerald-300/80">
                         {item.description}
                       </p>
                     </div>
@@ -696,45 +739,41 @@ export default function Posters() {
               </div>
 
               {/* Contact Information */}
-              <div className="bg-gradient-to-br from-white/60 to-emerald-500/5 dark:from-gray-900/60 dark:to-emerald-900/20 
-                            backdrop-blur-sm rounded-xl sm:rounded-3xl border border-emerald-500/10 dark:border-emerald-500/20 
-                            p-4 sm:p-6 md:p-8">
-                <h3 className="text-xl sm:text-2xl font-bold text-emerald-900 dark:text-emerald-100 mb-6 text-center">
+              <div className="bg-gradient-to-br from-white/60 to-emerald-500/5 
+                            backdrop-blur-sm rounded-3xl border border-emerald-500/10 p-8">
+                <h3 className="text-2xl font-bold text-emerald-900 dark:text-emerald-100 mb-6 text-center">
                   {currentLanguage === 'fr' ? "Coordonnées" : "Contact Information"}
                 </h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                <div className="grid md:grid-cols-2 gap-6">
                   {/* Email */}
                   <div className="group">
-                    <div className="bg-white/80 dark:bg-gray-800/80 p-4 sm:p-6 rounded-xl 
-                                  border border-emerald-500/20 dark:border-emerald-500/30 
-                                  group-hover:border-emerald-500/30 transition-all duration-300">
-                      <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
-                        <div className="p-2 sm:p-3 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20
-                                      group-hover:bg-emerald-500/20 transition-colors duration-300">
-                          <Mail className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 dark:text-emerald-400 
-                                         group-hover:scale-110 transition-transform duration-300" />
+                    <div className="bg-white/80 dark:bg-gray-800/80 p-6 rounded-xl 
+                                  border border-emerald-500/20 group-hover:border-emerald-500/30 
+                                  transition-all duration-300">
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 rounded-full bg-emerald-500/10 
+                                      group-hover:bg-emerald-500/20 transition-colors">
+                          <Mail className="w-6 h-6 text-emerald-600 dark:text-emerald-400 
+                                         group-hover:scale-110 transition-transform" />
                         </div>
                         <div>
-                          <h4 className="font-semibold text-emerald-900 dark:text-emerald-100 text-sm sm:text-base">
+                          <h4 className="font-semibold text-emerald-900 dark:text-emerald-100">
                             {currentLanguage === 'fr' ? "Courriel" : "Email"}
                           </h4>
-                          <p className="text-xs sm:text-sm text-emerald-700/70 dark:text-emerald-300/70">
+                          <p className="text-sm text-emerald-700/70 dark:text-emerald-300/70">
                             {currentLanguage === 'fr' ? "Envoyez votre création à" : "Send your artwork to"}
                           </p>
                         </div>
                       </div>
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
-                        <code className="text-sm sm:text-base md:text-lg font-mono text-emerald-800 dark:text-emerald-200 
-                                       break-all mb-2 sm:mb-0">
+                      <div className="flex items-center justify-between">
+                        <code className="text-lg font-mono text-emerald-800 dark:text-emerald-200 break-all">
                           recyclagemaria@gmail.com
                         </code>
                         <button
                           onClick={() => copyToClipboard("recyclagemaria@gmail.com")}
-                          className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 
-                                   text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 
-                                   transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95
-                                   text-xs sm:text-sm whitespace-nowrap"
+                          className="px-4 py-2 rounded-lg bg-emerald-500/10 text-emerald-600 
+                                   hover:bg-emerald-500/20 transition-all duration-300 transform hover:-translate-y-0.5"
                           title={currentLanguage === 'fr' ? "Copier l'email" : "Copy email"}
                         >
                           {currentLanguage === 'fr' ? "Copier" : "Copy"}
@@ -745,40 +784,38 @@ export default function Posters() {
 
                   {/* Instagram */}
                   <div className="group">
-                    <div className="bg-white/80 dark:bg-gray-800/80 p-4 sm:p-6 rounded-xl 
-                                  border border-emerald-500/20 dark:border-emerald-500/30 
-                                  group-hover:border-pink-500/30 transition-all duration-300">
-                      <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
-                        <div className="p-2 sm:p-3 rounded-full bg-gradient-to-br from-pink-500/10 to-purple-500/10 
-                                      dark:from-pink-500/20 dark:to-purple-500/20
+                    <div className="bg-white/80 dark:bg-gray-800/80 p-6 rounded-xl 
+                                  border border-emerald-500/20 group-hover:border-pink-500/30 
+                                  transition-all duration-300">
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 rounded-full bg-gradient-to-br from-pink-500/10 to-purple-500/10
                                       group-hover:from-pink-500/20 group-hover:to-purple-500/20 
                                       transition-all duration-300">
-                          <Instagram className="w-5 h-5 sm:w-6 sm:h-6 text-pink-600 dark:text-pink-400 
-                                              group-hover:scale-110 transition-transform duration-300" />
+                          <Instagram className="w-6 h-6 text-pink-600 dark:text-pink-400 
+                                              group-hover:scale-110 transition-transform" />
                         </div>
                         <div>
-                          <h4 className="font-semibold text-emerald-900 dark:text-emerald-100 text-sm sm:text-base">
+                          <h4 className="font-semibold text-emerald-900 dark:text-emerald-100">
                             Instagram
                           </h4>
-                          <p className="text-xs sm:text-sm text-emerald-700/70 dark:text-emerald-300/70">
+                          <p className="text-sm text-emerald-700/70 dark:text-emerald-300/70">
                             {currentLanguage === 'fr' ? "Envoyez-nous votre création en MP" : "DM us your artwork"}
                           </p>
                         </div>
                       </div>
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
-                        <code className="text-sm sm:text-base md:text-lg font-mono text-emerald-800 dark:text-emerald-200 
-                                       break-all mb-2 sm:mb-0">
+                      <div className="flex items-center justify-between">
+                        <code className="text-lg font-mono text-emerald-800 dark:text-emerald-200 break-all">
                           @recyclage_projet
                         </code>
                         <button
                           onClick={() => window.open("https://www.instagram.com/recyclage_projet", "_blank")}
-                          className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg 
+                          className="px-4 py-2 rounded-lg 
                                    bg-gradient-to-r from-pink-500 to-purple-500 text-white 
                                    font-semibold hover:shadow-lg hover:shadow-pink-500/30
-                                   transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95
-                                   flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap"
+                                   transition-all duration-300 transform hover:-translate-y-0.5
+                                   flex items-center gap-2"
                         >
-                          <Instagram className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <Instagram className="w-4 h-4" />
                           {currentLanguage === 'fr' ? "Suivre" : "Follow"}
                         </button>
                       </div>
@@ -787,16 +824,15 @@ export default function Posters() {
                 </div>
 
                 {/* Requirements */}
-                <div className="mt-6 sm:mt-8 p-4 sm:p-6 rounded-xl 
-                              bg-emerald-500/5 dark:bg-emerald-500/10 
-                              border border-emerald-500/20 dark:border-emerald-500/30">
-                  <h4 className="font-semibold text-emerald-900 dark:text-emerald-100 mb-2 sm:mb-3 
-                               flex items-center gap-2 text-sm sm:text-base">
-                    <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 dark:text-emerald-400 
+                <div className="mt-8 p-6 rounded-xl 
+                              bg-emerald-500/5 border border-emerald-500/20">
+                  <h4 className="font-semibold text-emerald-900 dark:text-emerald-100 mb-3 
+                               flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-emerald-600 dark:text-emerald-400 
                                        animate-pulse-gentle" />
                     {currentLanguage === 'fr' ? "Directives de soumission" : "Submission Guidelines"}
                   </h4>
-                  <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-emerald-700/80 dark:text-emerald-300/80">
+                  <ul className="space-y-2 text-emerald-700/80 dark:text-emerald-300/80">
                     <li className="flex items-start gap-2">
                       <span className="text-emerald-600 dark:text-emerald-400 mt-0.5">•</span>
                       <span>{currentLanguage === 'fr' 
@@ -852,18 +888,6 @@ export default function Posters() {
           50% { opacity: 0.8; transform: scale(1.05); }
         }
 
-        @keyframes fade-in-up {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        /* Animation classes */
         .animate-float-slow {
           animation: float-slow 6s ease-in-out infinite;
         }
@@ -881,12 +905,6 @@ export default function Posters() {
           animation: pulse-gentle 3s ease-in-out infinite;
         }
 
-        .animate-fade-in-up {
-          animation: fade-in-up 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-          opacity: 0;
-        }
-
-        /* Utility classes */
         .line-clamp-1 {
           display: -webkit-box;
           -webkit-line-clamp: 1;
@@ -901,38 +919,23 @@ export default function Posters() {
           overflow: hidden;
         }
 
-        .animation-delay-200 { animation-delay: 200ms !important; }
         .animation-delay-300 { animation-delay: 300ms !important; }
         .animation-delay-1000 { animation-delay: 1000ms !important; }
         .animation-delay-2000 { animation-delay: 2000ms !important; }
 
-        /* Touch optimizations */
-        .touch-manipulation {
-          touch-action: manipulation;
-        }
-
-        /* Reduced motion support */
-        @media (prefers-reduced-motion: reduce) {
-          .animate-float-slow,
-          .animate-shimmer,
-          .animate-card-enter,
-          .animate-pulse-gentle,
-          .animate-fade-in-up {
-            animation: none !important;
-            transition: opacity 0.3s ease !important;
+        /* Responsive improvements */
+        @media (max-width: 640px) {
+          .container {
+            padding-left: 1rem;
+            padding-right: 1rem;
           }
           
-          .transform,
-          .hover\\:transform,
-          .group:hover .group-hover\\:transform {
-            transform: none !important;
+          h1 {
+            font-size: 2.5rem !important;
           }
-        }
-
-        /* Mobile optimizations */
-        @media (max-width: 640px) {
-          .text-balance {
-            text-wrap: balance;
+          
+          .grid {
+            gap: 1rem !important;
           }
         }
       `}</style>
