@@ -853,6 +853,7 @@ export default function Posters() {
           transition-delay: 100ms;
         }
       `}</style>
+      </div>
     </div>
   );
 }
