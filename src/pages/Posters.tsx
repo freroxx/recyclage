@@ -6,9 +6,7 @@ import { Search, ExternalLink, Sparkles, Leaf, Zap, Filter, Mail, Instagram, Upl
 
 interface Poster {
   id: number;
-  imageUrl?: string;
-  embedUrl?: string;
-  viewUrl?: string;
+  imageUrl: string;
   title: string;
   description: string;
   author: string;
@@ -32,17 +30,17 @@ export default function Posters() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Memoized poster data - FIXED: Correctly structured
+  // Memoized poster data with correct image URLs
   const postersData = useMemo<Poster[]>(() => {
     const posters: Poster[] = [];
     
-    // Yahia's posters (only for French)
     if (language === 'fr') {
+      // French posters
       posters.push(
+        // Yahia's posters (French only)
         {
           id: 1,
-          embedUrl: "https://www.canva.com/design/DAG5KNBOplY/Ne4tr6huXflwQyGMv3_zXQ/view?embed",
-          viewUrl: "https://www.canva.com/design/DAG5KNBOplY/Ne4tr6huXflwQyGMv3_zXQ/view",
+          imageUrl: "https://i.ibb.co/TBjKSzDk/english1.jpg", // Temporary placeholder - Yahia's French poster 1
           title: "Sauver la Terre avec les 3R",
           description: "Concept Réduire, Réutiliser, Recycler avec un design vibrant",
           author: "Yahia Ikni",
@@ -51,55 +49,17 @@ export default function Posters() {
         },
         {
           id: 2,
-          embedUrl: "https://www.canva.com/design/DAG5KD43qYg/EosXIeHvs1gVf3UKtzN-Mg/view?embed",
-          viewUrl: "https://www.canva.com/design/DAG5KD43qYg/EosXIeHvs1gVf3UKtzN-Mg/view",
+          imageUrl: "https://i.ibb.co/cKY4Rj0B/english2.jpg", // Temporary placeholder - Yahia's French poster 2
           title: "Campagne de Recyclage Minimaliste",
           description: "Design épuré et minimaliste promouvant les habitudes de recyclage",
           author: "Yahia Ikni",
           language: "fr",
           tags: ["minimaliste", "campagne", "épuré", "habitudes"]
-        }
-      );
-    }
-    
-    // Salsabile's posters (both languages)
-    if (language === 'en') {
-      // English posters
-      posters.push(
+        },
+        // Salsabile's French posters
         {
           id: 3,
-          imageUrl: "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=800&auto=format&fit=crop&q=80",
-          title: "Earth Day Conversation Starters",
-          description: "Engaging questions to spark environmental discussions",
-          author: "Salsabile",
-          language: "en",
-          tags: ["earth day", "conversation", "discussion", "engagement"]
-        },
-        {
-          id: 4,
-          imageUrl: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w-800&auto=format&fit=crop&q=80",
-          title: "Cat and His Recycling Bins",
-          description: "Fun and educational poster featuring recycling mascot",
-          author: "Salsabile",
-          language: "en",
-          tags: ["fun", "mascot", "educational", "playful"]
-        },
-        {
-          id: 5,
-          imageUrl: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w-800&auto=format&fit=crop&q=80",
-          title: "Easy Zero Waste",
-          description: "Simple steps to achieve zero waste lifestyle",
-          author: "Salsabile",
-          language: "en",
-          tags: ["zero waste", "simple", "lifestyle", "eco-friendly"]
-        }
-      );
-    } else {
-      // French posters (Salsabile)
-      posters.push(
-        {
-          id: 6,
-          imageUrl: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w-800&auto=format&fit=crop&q=80",
+          imageUrl: "https://i.ibb.co/FLg4Bk0b/fr1.jpg",
           title: "Recyclage au Quotidien",
           description: "Guide pratique pour le recyclage de tous les jours",
           author: "Salsabile",
@@ -107,13 +67,44 @@ export default function Posters() {
           tags: ["quotidien", "pratique", "guide", "recyclage"]
         },
         {
-          id: 7,
-          imageUrl: "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=800&auto=format&fit=crop&q=80",
+          id: 4,
+          imageUrl: "https://i.ibb.co/YSbCfC6/fr2.jpg",
           title: "École Verte et Responsable",
           description: "Poster éducatif pour une école plus respectueuse de l'environnement",
           author: "Salsabile",
           language: "fr",
           tags: ["école", "éducatif", "responsable", "vert"]
+        }
+      );
+    } else {
+      // English posters (Salsabile only)
+      posters.push(
+        {
+          id: 5,
+          imageUrl: "https://i.ibb.co/TBjKSzDk/english1.jpg",
+          title: "Earth Day Conversation Starters",
+          description: "Engaging questions to spark environmental discussions",
+          author: "Salsabile",
+          language: "en",
+          tags: ["earth day", "conversation", "discussion", "engagement"]
+        },
+        {
+          id: 6,
+          imageUrl: "https://i.ibb.co/cKY4Rj0B/english2.jpg",
+          title: "Cat and His Recycling Bins",
+          description: "Fun and educational poster featuring recycling mascot",
+          author: "Salsabile",
+          language: "en",
+          tags: ["fun", "mascot", "educational", "playful"]
+        },
+        {
+          id: 7,
+          imageUrl: "https://i.ibb.co/1tyxTwJy/english3.jpg",
+          title: "Easy Zero Waste",
+          description: "Simple steps to achieve zero waste lifestyle",
+          author: "Salsabile",
+          language: "en",
+          tags: ["zero waste", "simple", "lifestyle", "eco-friendly"]
         }
       );
     }
@@ -134,15 +125,13 @@ export default function Posters() {
   }, [postersData, searchQuery]);
 
   // Handle opening in new tab
-  const handleOpenNewTab = useCallback((url?: string) => {
-    if (!url) return;
+  const handleOpenNewTab = useCallback((url: string) => {
     window.open(url, '_blank', 'noopener,noreferrer');
   }, []);
 
   // Copy contact info to clipboard
   const copyToClipboard = useCallback((text: string) => {
     navigator.clipboard.writeText(text);
-    // You could add a toast notification here
     alert(`${language === 'en' ? 'Copied to clipboard!' : 'Copié dans le presse-papier!'}`);
   }, [language]);
 
@@ -166,7 +155,6 @@ export default function Posters() {
     <div className="relative min-h-screen overflow-auto">
       {/* Enhanced Animated Background */}
       <div className="absolute inset-0 z-0 overflow-hidden">
-        {/* Gradient Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/20 via-background to-emerald-900/5 
                         dark:from-gray-950 dark:via-gray-900 dark:to-emerald-950/20"></div>
         
@@ -180,14 +168,10 @@ export default function Posters() {
             className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-gradient-to-l from-emerald-600/5 to-transparent rounded-full blur-3xl animate-orb-float"
             style={{ animationDelay: '2s' }}
           />
-          <div 
-            className="absolute top-3/4 left-1/3 w-[400px] h-[400px] bg-gradient-to-tr from-emerald-900/10 to-transparent rounded-full blur-3xl animate-orb-float"
-            style={{ animationDelay: '1s' }}
-          />
         </div>
         
         {/* Animated floating particles */}
-        {Array.from({ length: 15 }).map((_, i) => (
+        {Array.from({ length: 12 }).map((_, i) => (
           <div
             key={i}
             className="absolute w-1 h-1 bg-emerald-400/20 rounded-full animate-particle-float"
@@ -199,24 +183,17 @@ export default function Posters() {
             }}
           />
         ))}
-        
-        {/* Subtle grid pattern */}
-        <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.02] 
-                        bg-[linear-gradient(90deg,#22c55e_1px,transparent_1px),linear-gradient(180deg,#22c55e_1px,transparent_1px)] 
-                        bg-[size:40px_40px]"></div>
       </div>
 
       <div className="container mx-auto px-4 py-12 relative z-10">
         <div className="max-w-7xl mx-auto">
-          {/* Header with enhanced styling */}
+          {/* Header */}
           <div className="text-center mb-16">
             <div className="inline-block mb-10 relative">
               <div className="relative">
-                {/* Decorative elements */}
                 <Leaf className="absolute -left-10 top-1/2 w-8 h-8 text-emerald-400/60 animate-float-slow" />
                 <Sparkles className="absolute -right-10 top-1/2 w-8 h-8 text-emerald-300/60 animate-float-slow animation-delay-1000" />
                 
-                {/* Main title */}
                 <h1 className="relative text-5xl md:text-7xl lg:text-8xl font-black mb-8 
                                bg-gradient-to-r from-emerald-600 via-emerald-400 to-emerald-700 
                                dark:from-emerald-400 dark:via-emerald-300 dark:to-emerald-500 
@@ -224,7 +201,6 @@ export default function Posters() {
                   {t("posters.title") || "Posters Gallery"}
                 </h1>
                 
-                {/* Animated underline */}
                 <div className="relative h-1 overflow-hidden max-w-2xl mx-auto">
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-500 to-transparent 
                                   animate-shimmer"></div>
@@ -232,16 +208,15 @@ export default function Posters() {
               </div>
             </div>
             
-            {/* Subtitle */}
             <p className="text-xl md:text-2xl text-emerald-800/70 dark:text-emerald-200/70 max-w-3xl mx-auto leading-relaxed font-light mb-6 animate-fade-in">
               {t("posters.subtitle") || "Browse and share environmental posters from our community"}
             </p>
             
-            {/* Navigation Tabs with enhanced animations */}
-            <div className="flex justify-center gap-4 mb-12">
+            {/* Navigation Tabs */}
+            <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12">
               <button
                 onClick={() => setActiveSection("gallery")}
-                className={`px-8 py-3 rounded-full font-semibold transition-all duration-500 flex items-center gap-3 
+                className={`px-8 py-3 rounded-full font-semibold transition-all duration-500 flex items-center justify-center gap-3 
                            transform hover:-translate-y-1 hover:scale-105 active:scale-95
                            ${activeSection === "gallery" 
                              ? "bg-gradient-to-r from-emerald-600 to-emerald-500 text-white shadow-2xl shadow-emerald-500/30 hover:shadow-3xl" 
@@ -252,7 +227,7 @@ export default function Posters() {
               </button>
               <button
                 onClick={() => setActiveSection("share")}
-                className={`px-8 py-3 rounded-full font-semibold transition-all duration-500 flex items-center gap-3 
+                className={`px-8 py-3 rounded-full font-semibold transition-all duration-500 flex items-center justify-center gap-3 
                            transform hover:-translate-y-1 hover:scale-105 active:scale-95
                            ${activeSection === "share" 
                              ? "bg-gradient-to-r from-emerald-600 to-emerald-500 text-white shadow-2xl shadow-emerald-500/30 hover:shadow-3xl" 
@@ -266,7 +241,7 @@ export default function Posters() {
 
           {activeSection === "gallery" ? (
             <>
-              {/* Search Section with enhanced animations */}
+              {/* Search Section */}
               <div className="max-w-3xl mx-auto mb-16 animate-fade-in-up">
                 <div className="relative group">
                   <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-emerald-600/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
@@ -291,7 +266,6 @@ export default function Posters() {
                           ✕
                         </button>
                       )}
-                      <Filter className="w-5 h-5 text-emerald-600/50 dark:text-emerald-400/50 group-hover:rotate-90 transition-transform duration-500" />
                     </div>
                   </div>
                 </div>
@@ -357,7 +331,7 @@ export default function Posters() {
                     </div>
                   </div>
 
-                  {/* Posters Grid with enhanced animations */}
+                  {/* Posters Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {filteredPosters.map((poster, index) => (
                       <div
@@ -379,34 +353,18 @@ export default function Posters() {
                         >
                           {/* Poster Container */}
                           <div className="relative w-full pb-[130%] overflow-hidden bg-gradient-to-br from-emerald-500/5 to-emerald-600/5">
-                            {/* Poster Content */}
                             <div className="absolute inset-2 rounded-lg overflow-hidden">
-                              {poster.embedUrl ? (
-                                <iframe
-                                  loading="lazy"
-                                  className="absolute w-full h-full top-0 left-0 border-none group-hover:scale-105 transition-transform duration-700"
-                                  src={poster.embedUrl}
-                                  allowFullScreen
-                                  allow="fullscreen"
-                                  title={poster.title}
-                                />
-                              ) : poster.imageUrl ? (
-                                <img
-                                  src={poster.imageUrl}
-                                  alt={poster.title}
-                                  className="absolute w-full h-full top-0 left-0 object-cover group-hover:scale-110 transition-transform duration-700"
-                                  loading="lazy"
-                                />
-                              ) : (
-                                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-emerald-600/10 flex items-center justify-center">
-                                  <span className="text-emerald-500/50">No preview available</span>
-                                </div>
-                              )}
+                              <img
+                                src={poster.imageUrl}
+                                alt={poster.title}
+                                className="absolute w-full h-full top-0 left-0 object-cover group-hover:scale-110 transition-transform duration-700"
+                                loading="lazy"
+                              />
                               
                               {/* Animated Overlay */}
                               <div className="absolute inset-0 bg-gradient-to-t from-emerald-900/60 via-emerald-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
                               
-                              {/* Language Badge with animation */}
+                              {/* Language Badge */}
                               <div className="absolute top-3 right-3 transform group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
                                 <span className={`px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-md shadow-lg ${
                                   poster.language === 'en' 
@@ -417,17 +375,17 @@ export default function Posters() {
                                 </span>
                               </div>
                               
-                              {/* Author Tag with slide-in animation */}
+                              {/* Author Tag */}
                               <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-all duration-500 transform -translate-x-4 group-hover:translate-x-0">
                                 <span className="px-3 py-1.5 bg-gradient-to-r from-emerald-900/90 to-emerald-800/90 backdrop-blur-sm rounded-full text-xs text-white font-medium shadow-lg">
                                   {poster.author}
                                 </span>
                               </div>
                               
-                              {/* View Button with enhanced animation */}
+                              {/* View Button */}
                               <div className="absolute bottom-3 left-3 right-3">
                                 <button
-                                  onClick={() => handleOpenNewTab(poster.viewUrl || poster.imageUrl || poster.embedUrl)}
+                                  onClick={() => handleOpenNewTab(poster.imageUrl)}
                                   className="w-full px-4 py-3 rounded-lg bg-gradient-to-r from-emerald-700 to-emerald-600 
                                             text-white font-semibold hover:shadow-xl hover:shadow-emerald-600/40 
                                             transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 
@@ -435,7 +393,7 @@ export default function Posters() {
                                             active:scale-95 group-hover:delay-100 hover:-translate-y-1"
                                 >
                                   <ExternalLink className="w-5 h-5 transition-transform group-hover:rotate-45" />
-                                  {language === 'en' ? "Open in new tab" : "Ouvrir dans un nouvel onglet"}
+                                  {language === 'en' ? "View Full Size" : "Voir en taille réelle"}
                                 </button>
                               </div>
                             </div>
@@ -455,7 +413,7 @@ export default function Posters() {
                               </p>
                             </div>
                             
-                            {/* Tags with hover animations */}
+                            {/* Tags */}
                             <div className="flex flex-wrap gap-2 mb-4">
                               {poster.tags.slice(0, 4).map((tag, tagIndex) => (
                                 <span
@@ -497,7 +455,7 @@ export default function Posters() {
                 </>
               )}
 
-              {/* Footer Message with animation */}
+              {/* Footer Message */}
               {!searchQuery && filteredPosters.length > 0 && (
                 <div className="mt-20 text-center animate-fade-in-up animation-delay-1000">
                   <div className="inline-block max-w-xl mx-auto transform hover:-translate-y-2 transition-transform duration-300">
@@ -524,7 +482,7 @@ export default function Posters() {
               )}
             </>
           ) : (
-            /* Share Your Art Section with enhanced animations */
+            /* Share Your Art Section */
             <div className="max-w-4xl mx-auto animate-fade-in-up">
               <div className="text-center mb-12">
                 <h2 className="text-4xl md:text-5xl font-bold text-emerald-900 dark:text-emerald-100 mb-6 animate-gradient">
@@ -537,7 +495,7 @@ export default function Posters() {
                 </p>
               </div>
 
-              {/* Steps with enhanced animations */}
+              {/* Steps */}
               <div className="grid md:grid-cols-3 gap-8 mb-12">
                 {[
                   {
@@ -587,7 +545,7 @@ export default function Posters() {
                 ))}
               </div>
 
-              {/* Contact Information with enhanced animations */}
+              {/* Contact Information */}
               <div className="bg-gradient-to-br from-white/50 to-emerald-500/5 dark:from-gray-900/50 dark:to-emerald-900/20 
                               backdrop-blur-sm rounded-3xl border-2 border-emerald-500/10 p-8 transform hover:scale-[1.01] transition-transform duration-300">
                 <h3 className="text-2xl font-bold text-emerald-900 dark:text-emerald-100 mb-8 text-center animate-gradient">
@@ -654,7 +612,7 @@ export default function Posters() {
                   </div>
                 </div>
 
-                {/* Requirements with animation */}
+                {/* Requirements */}
                 <div className="mt-8 p-6 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 hover:border-emerald-500/30 transition-all duration-300">
                   <h4 className="font-semibold text-emerald-900 dark:text-emerald-100 mb-3 flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-emerald-600 animate-pulse-gentle" />
@@ -815,12 +773,6 @@ export default function Posters() {
           transform: translateY(0);
         }
 
-        /* Enhanced hover transitions */
-        .transition-all {
-          transition-property: all;
-          transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
         /* Utility classes */
         .line-clamp-1 {
           display: -webkit-box;
@@ -843,20 +795,6 @@ export default function Posters() {
         .animation-delay-600 { animation-delay: 600ms !important; }
         .animation-delay-800 { animation-delay: 800ms !important; }
         .animation-delay-1000 { animation-delay: 1000ms !important; }
-
-        /* Group delays */
-        .group-hover\\:delay-100 {
-          transition-delay: 100ms;
-        }
-
-        /* Performance optimizations */
-        @media (prefers-reduced-motion: reduce) {
-          * {
-            animation-duration: 0.01ms !important;
-            animation-iteration-count: 1 !important;
-            transition-duration: 0.01ms !important;
-          }
-        }
       `}</style>
     </div>
   );
