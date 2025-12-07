@@ -24,7 +24,9 @@ import {
   Minimize2,
   Globe,
   Image as ImageIcon,
-  AlertCircle
+  AlertCircle,
+  Film,
+  Clock
 } from "lucide-react";
 
 interface Poster {
@@ -35,56 +37,26 @@ interface Poster {
   author: string;
   language: "fr" | "en";
   tags: string[];
-  views?: number;
-  likes?: number;
+  views: number;
+  likes: number;
   source?: string;
   type: "image" | "embed";
   embedUrl?: string;
-  thumbnailUrl?: string;
+  createdAt: string;
 }
 
-// Mock data for development when images fail to load
-const FALLBACK_POSTERS = {
-  fr: [
-    {
-      id: 101,
-      imageUrl: "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=800&auto=format&fit=crop&q=80",
-      title: "Protection de l'Environnement",
-      description: "Un design inspirant pour la protection de notre planète",
-      author: "Éco-Designer",
-      language: "fr" as const,
-      tags: ["environnement", "protection", "nature", "écologie"],
-      views: 1500,
-      likes: 120,
-      type: "image" as const
-    }
-  ],
-  en: [
-    {
-      id: 201,
-      imageUrl: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&auto=format&fit=crop&q=80",
-      title: "Environmental Protection",
-      description: "An inspiring design for protecting our planet",
-      author: "Eco Designer",
-      language: "en" as const,
-      tags: ["environment", "protection", "nature", "ecology"],
-      views: 1800,
-      likes: 150,
-      type: "image" as const
-    }
-  ]
-};
+const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=800&auto=format&fit=crop&q=80";
 
 interface LightboxState {
   isOpen: boolean;
   poster: Poster | null;
 }
 
-// Canva embed component with proper 9:16 aspect ratio
 const CanvaEmbed = ({ embedUrl, title }: { embedUrl: string; title: string }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleLoad = () => {
@@ -103,11 +75,8 @@ const CanvaEmbed = ({ embedUrl, title }: { embedUrl: string; title: string }) =>
       iframe.addEventListener('load', handleLoad);
       iframe.addEventListener('error', handleError);
       
-      // Set a timeout to hide loader in case iframe never loads
       const timeoutId = setTimeout(() => {
-        if (isLoading) {
-          setIsLoading(false);
-        }
+        if (isLoading) setIsLoading(false);
       }, 5000);
       
       return () => {
@@ -119,32 +88,34 @@ const CanvaEmbed = ({ embedUrl, title }: { embedUrl: string; title: string }) =>
   }, [isLoading]);
 
   return (
-    <div className="relative w-full h-full bg-gray-100 dark:bg-gray-900 rounded-xl overflow-hidden">
+    <div ref={containerRef} className="relative w-full h-full bg-gradient-to-br from-emerald-50/20 to-teal-50/20 dark:from-gray-900 dark:to-emerald-950/20 rounded-xl overflow-hidden">
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-gray-900 dark:to-emerald-950/30 z-10">
+        <div className="absolute inset-0 flex items-center justify-center z-20">
           <div className="text-center">
-            <div className="w-16 h-16 border-4 border-emerald-500/10 rounded-full animate-spin mx-auto mb-4">
+            <div className="w-16 h-16 border-4 border-emerald-500/20 rounded-full animate-spin mx-auto mb-4">
               <div className="w-full h-full border-4 border-transparent border-t-emerald-500 rounded-full"></div>
             </div>
-            <p className="text-emerald-600 dark:text-emerald-400 font-medium">Loading interactive poster...</p>
+            <p className="text-emerald-600 dark:text-emerald-400 font-medium animate-pulse">
+              Loading interactive poster...
+            </p>
           </div>
         </div>
       )}
       
       {hasError ? (
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-gray-900 dark:to-emerald-950/30 z-10">
+        <div className="absolute inset-0 flex items-center justify-center z-20">
           <div className="text-center p-6">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <p className="text-red-600 dark:text-red-400 font-medium mb-2">Failed to load interactive poster</p>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">The Canva embed could not be loaded</p>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">Please try opening in Canva directly</p>
           </div>
         </div>
       ) : (
-        <div className="relative w-full h-full">
+        <div className="relative w-full" style={{ paddingTop: '141.4286%' }}>
           <iframe
             ref={iframeRef}
             src={embedUrl}
-            className="absolute inset-0 w-full h-full border-0"
+            className="absolute top-0 left-0 w-full h-full border-0 rounded-lg"
             title={title}
             allowFullScreen
             allow="fullscreen"
@@ -173,227 +144,208 @@ export default function Posters() {
     poster: null
   });
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [loadError, setLoadError] = useState(false);
   
   const lightboxRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Stable poster data initialization
+  // Initialize posters data
   const initializePosters = useCallback((currentLanguage: string): Poster[] => {
+    const basePosters: Poster[] = [
+      // Yahia Ikni - Canva Embeds (French)
+      {
+        id: 1,
+        imageUrl: "https://i.ibb.co/h7tSmRD/yahia-poster2.jpg",
+        title: "ALLONS RECYCLER",
+        description: "Poster minimaliste et moderne pour promouvoir le recyclage quotidien avec un design épuré et des couleurs vibrantes qui capturent l'attention.",
+        author: "Yahia Ikni",
+        language: "fr",
+        tags: ["recyclage", "minimaliste", "moderne", "design", "écologie", "quotidien"],
+        views: 2856,
+        likes: 234,
+        source: "Canva Design",
+        type: "embed",
+        embedUrl: "https://www.canva.com/design/DAG5KD43qYg/EosXIeHvs1gVf3UKtzN-Mg/view?embed",
+        createdAt: "2024-01-15"
+      },
+      {
+        id: 2,
+        imageUrl: "https://i.ibb.co/nb0gWJv/yahia-poster1.jpg",
+        title: "Green Illustrative Save the Earth With 3R Poster",
+        description: "Illustration éducative vibrante présentant les principes des 3R (Réduire, Réutiliser, Recycler) avec des graphiques accrocheurs et un message environnemental fort.",
+        author: "Yahia Ikni",
+        language: "fr",
+        tags: ["3R", "illustration", "éducation", "environnement", "graphisme", "durabilité"],
+        views: 3420,
+        likes: 289,
+        source: "Canva Design",
+        type: "embed",
+        embedUrl: "https://www.canva.com/design/DAG5KNBOplY/Ne4tr6huXflwQyGMv3_zXQ/view?embed",
+        createdAt: "2024-01-10"
+      },
+      // Salsabile - French Posters
+      {
+        id: 3,
+        imageUrl: "https://i.ibb.co/FLg4Bk0/fr1.jpg",
+        title: "Guide du Recyclage Quotidien",
+        description: "Infographie détaillée présentant des étapes pratiques pour intégrer facilement le recyclage dans votre routine quotidienne, avec des icônes intuitives.",
+        author: "Salsabile",
+        language: "fr",
+        tags: ["guide", "infographie", "quotidien", "pratique", "tutoriel", "étapes"],
+        views: 2190,
+        likes: 187,
+        type: "image",
+        createdAt: "2024-01-20"
+      },
+      {
+        id: 4,
+        imageUrl: "https://i.ibb.co/YSbCfC6/fr2.jpg",
+        title: "École Écoresponsable",
+        description: "Poster éducatif conçu pour sensibiliser les élèves aux gestes écologiques à adopter à l'école, avec des illustrations engageantes et des messages clairs.",
+        author: "Salsabile",
+        language: "fr",
+        tags: ["école", "éducation", "sensibilisation", "jeunesse", "pédagogie", "écologie"],
+        views: 1978,
+        likes: 165,
+        type: "image",
+        createdAt: "2024-01-18"
+      },
+      // Salsabile - English Posters
+      {
+        id: 5,
+        imageUrl: "https://i.ibb.co/TBjKSzD/english1.jpg",
+        title: "Earth Day Conversation Starters",
+        description: "Collection de questions engageantes et de sujets de discussion pour stimuler des conversations significatives sur l'environnement et la durabilité.",
+        author: "Salsabile",
+        language: "en",
+        tags: ["earth day", "conversation", "discussion", "engagement", "community", "dialogue"],
+        views: 2410,
+        likes: 198,
+        type: "image",
+        createdAt: "2024-01-22"
+      },
+      {
+        id: 6,
+        imageUrl: "https://i.ibb.co/cKY4Rj0/english2.jpg",
+        title: "Recycling Mascot Adventures",
+        description: "Poster ludique et éducatif mettant en scène une mascotte de recyclage qui enseigne aux enfants l'importance de la durabilité à travers des aventures amusantes.",
+        author: "Salsabile",
+        language: "en",
+        tags: ["mascot", "fun", "educational", "kids", "playful", "stories", "adventure"],
+        views: 2287,
+        likes: 184,
+        type: "image",
+        createdAt: "2024-01-21"
+      },
+      {
+        id: 7,
+        imageUrl: "https://i.ibb.co/1tyxTwJ/english3.jpg",
+        title: "Simple Zero Waste Lifestyle",
+        description: "Guide visuel étape par étape pour adopter un mode de vie zéro déchet avec des conseils pratiques, des alternatives simples et des astuces faciles à suivre.",
+        author: "Salsabile",
+        language: "en",
+        tags: ["zero waste", "simple", "lifestyle", "guide", "tips", "practical", "sustainable"],
+        views: 2645,
+        likes: 219,
+        type: "image",
+        createdAt: "2024-01-19"
+      },
+      // Additional Environmental Posters
+      {
+        id: 8,
+        imageUrl: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&auto=format&fit=crop&q=80",
+        title: "Green Campus Initiative",
+        description: "Campagne visuelle pour promouvoir des pratiques durables dans les institutions éducatives, encourageant les étudiants à adopter des habitudes écologiques.",
+        author: "Eco Education Team",
+        language: "en",
+        tags: ["campus", "education", "sustainability", "green", "initiative", "students"],
+        views: 2176,
+        likes: 173,
+        type: "image",
+        createdAt: "2024-01-17"
+      },
+      {
+        id: 9,
+        imageUrl: "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=800&auto=format&fit=crop&q=80",
+        title: "Sustainable Living Guide",
+        description: "Guide complet présentant des habitudes durables faciles à intégrer dans la vie quotidienne, avec des visuels inspirants et des recommandations actionnables.",
+        author: "Green Living Collective",
+        language: "en",
+        tags: ["sustainable", "guide", "living", "habits", "daily", "actionable", "eco-friendly"],
+        views: 2867,
+        likes: 240,
+        type: "image",
+        createdAt: "2024-01-16"
+      },
+      {
+        id: 10,
+        imageUrl: "https://images.unsplash.com/photo-1578558288137-7207cb8c0e85?w=800&auto=format&fit=crop&q=80",
+        title: "Famille Zéro Déchet",
+        description: "Illustration familiale montrant comment toute la famille peut participer à la réduction des déchets avec des gestes simples et des alternatives durables.",
+        author: "Éco-Famille Collective",
+        language: "fr",
+        tags: ["zéro déchet", "famille", "mode de vie", "écologie", "durabilité", "responsable"],
+        views: 2545,
+        likes: 228,
+        type: "image",
+        createdAt: "2024-01-14"
+      }
+    ];
+
+    // Filter by language if needed, or show all posters
     if (currentLanguage === 'fr') {
-      return [
-        // Yahia's Canva embeds (French)
-        {
-          id: 1,
-          imageUrl: "https://i.ibb.co/h7tSmRD/yahia-poster2.jpg",
-          thumbnailUrl: "https://i.ibb.co/h7tSmRD/yahia-poster2.jpg",
-          title: "Allons Recycler",
-          description: "Design minimaliste et moderne pour promouvoir le recyclage au quotidien avec des visuels épurés",
-          author: "Yahia Ikni",
-          language: "fr",
-          tags: ["recyclage", "minimaliste", "moderne", "quotidien", "3R", "design"],
-          views: 2456,
-          likes: 189,
-          source: "Canva Design",
-          type: "embed",
-          embedUrl: "https://www.canva.com/design/DAG5KD43qYg/EosXIeHvs1gVf3UKtzN-Mg/view?embed"
-        },
-        {
-          id: 2,
-          imageUrl: "https://i.ibb.co/nb0gWJv/yahia-poster1.jpg",
-          thumbnailUrl: "https://i.ibb.co/nb0gWJv/yahia-poster1.jpg",
-          title: "Sauvons la Terre avec les 3R",
-          description: "Design illustratif vibrant mettant en avant les principes Réduire, Réutiliser, Recycler avec des couleurs vives",
-          author: "Yahia Ikni",
-          language: "fr",
-          tags: ["3R", "sauver la terre", "illustration", "vibrant", "éducation", "écologie"],
-          views: 3120,
-          likes: 245,
-          source: "Canva Design",
-          type: "embed",
-          embedUrl: "https://www.canva.com/design/DAG5KNBOplY/Ne4tr6huXflwQyGMv3_zXQ/view?embed"
-        },
-        // Salsabile's French posters (images)
-        {
-          id: 3,
-          imageUrl: "https://i.ibb.co/FLg4Bk0/fr1.jpg",
-          title: "Guide du Recyclage Quotidien",
-          description: "Infographie pratique pour intégrer le recyclage dans votre routine journalière avec des étapes simples",
-          author: "Salsabile",
-          language: "fr",
-          tags: ["guide", "pratique", "infographie", "tutoriel", "quotidien", "étapes"],
-          views: 1890,
-          likes: 156,
-          type: "image"
-        },
-        {
-          id: 4,
-          imageUrl: "https://i.ibb.co/YSbCfC6/fr2.jpg",
-          title: "École Écoresponsable",
-          description: "Poster éducatif pour sensibiliser les élèves aux gestes écologiques à l'école avec des illustrations engageantes",
-          author: "Salsabile",
-          language: "fr",
-          tags: ["école", "éducation", "sensibilisation", "écocitoyenneté", "jeunesse", "pédagogie"],
-          views: 1678,
-          likes: 134,
-          type: "image"
-        },
-        // Additional French poster
-        {
-          id: 5,
-          imageUrl: "https://images.unsplash.com/photo-1578558288137-7207cb8c0e85?w=800&auto=format&fit=crop&q=80",
-          title: "Famille Zéro Déchet",
-          description: "Illustration familiale montrant comment adopter un mode de vie sans déchets de manière progressive",
-          author: "Éco-Famille Collective",
-          language: "fr",
-          tags: ["zéro déchet", "famille", "mode de vie", "écologie", "durabilité", "responsable"],
-          views: 2345,
-          likes: 198,
-          type: "image"
-        }
-      ];
+      return basePosters.filter(poster => poster.language === 'fr');
     } else {
-      return [
-        // Salsabile's English posters (images)
-        {
-          id: 6,
-          imageUrl: "https://i.ibb.co/TBjKSzD/english1.jpg",
-          title: "Earth Day Conversation Starters",
-          description: "Engaging questions and prompts to spark meaningful environmental discussions in communities",
-          author: "Salsabile",
-          language: "en",
-          tags: ["earth day", "conversation", "discussion", "engagement", "community", "dialogue"],
-          views: 2100,
-          likes: 167,
-          type: "image"
-        },
-        {
-          id: 7,
-          imageUrl: "https://i.ibb.co/cKY4Rj0/english2.jpg",
-          title: "Recycling Mascot Adventures",
-          description: "Fun and educational poster featuring our recycling mascot teaching kids about sustainability through stories",
-          author: "Salsabile",
-          language: "en",
-          tags: ["mascot", "fun", "educational", "kids", "playful", "stories"],
-          views: 1987,
-          likes: 154,
-          type: "image"
-        },
-        {
-          id: 8,
-          imageUrl: "https://i.ibb.co/1tyxTwJ/english3.jpg",
-          title: "Simple Zero Waste Lifestyle",
-          description: "Step-by-step guide to achieving a zero waste lifestyle with practical tips and visual aids",
-          author: "Salsabile",
-          language: "en",
-          tags: ["zero waste", "simple", "lifestyle", "guide", "tips", "practical"],
-          views: 2245,
-          likes: 189,
-          type: "image"
-        },
-        // Additional English posters
-        {
-          id: 9,
-          imageUrl: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&auto=format&fit=crop&q=80",
-          title: "Green Campus Initiative",
-          description: "Promoting sustainable practices in educational institutions for a greener future through collective action",
-          author: "Eco Education Team",
-          language: "en",
-          tags: ["campus", "education", "sustainability", "green", "future", "initiative"],
-          views: 1876,
-          likes: 143,
-          type: "image"
-        },
-        {
-          id: 10,
-          imageUrl: "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=800&auto=format&fit=crop&q=80",
-          title: "Sustainable Living Guide",
-          description: "Comprehensive guide to adopting sustainable habits in daily life with actionable recommendations",
-          author: "Green Living Collective",
-          language: "en",
-          tags: ["sustainable", "guide", "living", "habits", "daily", "actionable"],
-          views: 2567,
-          likes: 210,
-          type: "image"
-        }
-      ];
+      return basePosters.filter(poster => poster.language === 'en');
     }
   }, []);
 
-  // Initialize mounted state and load posters
+  // Load posters on mount and language change
   useEffect(() => {
     setMounted(true);
     
-    const loadPosters = () => {
-      const currentLanguage = language || 'en';
-      const posters = initializePosters(currentLanguage);
-      
-      setPostersData(posters);
-      setLoadError(false);
-      
-      // Preload images for better UX
-      const imagePromises = posters.map(poster => {
-        return new Promise<void>((resolve) => {
-          if (poster.type === 'image' || poster.thumbnailUrl) {
-            const img = new Image();
-            img.src = poster.thumbnailUrl || poster.imageUrl;
-            img.onload = () => {
+    const loadPosters = async () => {
+      try {
+        const currentLanguage = language || 'en';
+        const posters = initializePosters(currentLanguage);
+        
+        // Set data immediately
+        setPostersData(posters);
+        
+        // Preload images
+        const loadPromises = posters.map(poster => {
+          return new Promise<void>((resolve) => {
+            if (poster.type === 'image') {
+              const img = new Image();
+              img.src = poster.imageUrl;
+              img.onload = () => {
+                setLoadedImages(prev => new Set(prev).add(poster.id));
+                resolve();
+              };
+              img.onerror = () => {
+                console.warn(`Failed to load image for poster ${poster.id}`);
+                poster.imageUrl = FALLBACK_IMAGE;
+                setLoadedImages(prev => new Set(prev).add(poster.id));
+                resolve();
+              };
+            } else {
+              // For embed posters, consider loaded immediately
               setLoadedImages(prev => new Set(prev).add(poster.id));
               resolve();
-            };
-            img.onerror = () => {
-              console.warn(`Failed to load image for poster ${poster.id}`);
-              // Use fallback image
-              const fallbackImage = currentLanguage === 'fr' 
-                ? FALLBACK_POSTERS.fr[0].imageUrl
-                : FALLBACK_POSTERS.en[0].imageUrl;
-              
-              if (poster.type === 'image') {
-                poster.imageUrl = fallbackImage;
-              }
-              if (poster.thumbnailUrl) {
-                poster.thumbnailUrl = fallbackImage;
-              }
-              
-              setLoadedImages(prev => new Set(prev).add(poster.id));
-              resolve();
-            };
-          } else {
-            // For embed posters without thumbnail, consider them loaded
-            setLoadedImages(prev => new Set(prev).add(poster.id));
-            resolve();
-          }
+            }
+          });
         });
-      });
-      
-      // Set timeout to ensure loading state doesn't get stuck
-      const loadTimeout = setTimeout(() => {
-        Promise.allSettled(imagePromises).then(() => {
-          setIsLoading(false);
-        });
-      }, 1500);
-      
-      // Also set a maximum timeout
-      const failSafeTimeout = setTimeout(() => {
+
+        await Promise.allSettled(loadPromises);
+        
+      } catch (error) {
+        console.error('Error loading posters:', error);
+      } finally {
         setIsLoading(false);
-        if (loadedImages.size === 0) {
-          const fallbackPosters = currentLanguage === 'fr' ? FALLBACK_POSTERS.fr : FALLBACK_POSTERS.en;
-          setPostersData(fallbackPosters);
-          setLoadError(true);
-        }
-      }, 5000);
-      
-      return () => {
-        clearTimeout(loadTimeout);
-        clearTimeout(failSafeTimeout);
-      };
+      }
     };
-    
-    const cleanup = loadPosters();
-    
-    return () => {
-      if (cleanup) cleanup();
-    };
-  }, [language, initializePosters, loadedImages.size]);
+
+    loadPosters();
+  }, [language, initializePosters]);
 
   // Filter posters based on search query
   const filteredPosters = useMemo(() => {
@@ -408,12 +360,18 @@ export default function Posters() {
     );
   }, [postersData, searchQuery]);
 
+  // Animation variants
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
   // Handle opening in new tab
   const handleOpenNewTab = useCallback((url: string) => {
     window.open(url, '_blank', 'noopener,noreferrer');
   }, []);
 
-  // Copy contact info to clipboard with visual feedback
+  // Copy to clipboard with visual feedback
   const copyToClipboard = useCallback((text: string) => {
     navigator.clipboard.writeText(text).then(() => {
       setCopiedEmail(true);
@@ -434,28 +392,19 @@ export default function Posters() {
     });
   }, []);
 
-  // Handle image error with fallback
-  const handleImageError = useCallback((e: React.SyntheticEvent<HTMLImageElement, Event>, poster: Poster) => {
+  // Handle image error
+  const handleImageError = useCallback((e: React.SyntheticEvent<HTMLImageElement, Event>, posterId: number) => {
     const img = e.target as HTMLImageElement;
-    const currentLanguage = language || 'en';
-    const fallbackImage = currentLanguage === 'fr' 
-      ? FALLBACK_POSTERS.fr[0].imageUrl
-      : FALLBACK_POSTERS.en[0].imageUrl;
-    
-    img.src = fallbackImage;
+    img.src = FALLBACK_IMAGE;
     
     setPostersData(prev => prev.map(p => 
-      p.id === poster.id 
-        ? { 
-            ...p, 
-            imageUrl: fallbackImage,
-            thumbnailUrl: poster.thumbnailUrl || fallbackImage
-          }
+      p.id === posterId 
+        ? { ...p, imageUrl: FALLBACK_IMAGE }
         : p
     ));
-  }, [language]);
+  }, []);
 
-  // Handle like/unlike a poster
+  // Handle like/unlike
   const handleLikePoster = useCallback((posterId: number) => {
     setLikedPosts(prev => {
       const newSet = new Set(prev);
@@ -480,7 +429,6 @@ export default function Posters() {
       try {
         await navigator.share(shareData);
       } catch (err) {
-        console.log('Error sharing:', err);
         copyToClipboard(shareData.url);
       }
     } else {
@@ -488,46 +436,30 @@ export default function Posters() {
     }
   }, [copyToClipboard]);
 
-  // Open lightbox
+  // Lightbox functions
   const openLightbox = useCallback((poster: Poster) => {
     setLightbox({ isOpen: true, poster });
     document.body.style.overflow = 'hidden';
   }, []);
 
-  // Close lightbox
   const closeLightbox = useCallback(() => {
     setLightbox({ isOpen: false, poster: null });
     setIsFullscreen(false);
     document.body.style.overflow = 'unset';
   }, []);
 
-  // Toggle fullscreen for lightbox
   const toggleFullscreen = useCallback(() => {
     if (!lightboxRef.current) return;
     
     if (!isFullscreen) {
-      if (lightboxRef.current.requestFullscreen) {
-        lightboxRef.current.requestFullscreen();
-      }
+      lightboxRef.current.requestFullscreen?.();
     } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
+      document.exitFullscreen?.();
     }
     setIsFullscreen(!isFullscreen);
   }, [isFullscreen]);
 
-  // Handle fullscreen change
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
-
-  // Handle escape key to close lightbox
+  // Event listeners
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && lightbox.isOpen) {
@@ -535,14 +467,22 @@ export default function Posters() {
       }
     };
 
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
     document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
   }, [lightbox.isOpen, closeLightbox]);
 
-  // Get direct Canva link from embed URL
+  // Get Canva direct link
   const getCanvaDirectLink = useCallback((embedUrl?: string) => {
     if (!embedUrl) return '#';
-    // Convert embed URL to direct Canva view link
     const match = embedUrl.match(/\/design\/([^\/]+)\/([^\/]+)\/view/);
     if (match) {
       return `https://www.canva.com/design/${match[1]}/view?utm_content=${match[1]}&utm_campaign=designshare&utm_medium=embeds&utm_source=link`;
@@ -550,22 +490,32 @@ export default function Posters() {
     return embedUrl;
   }, []);
 
-  // Loading state
+  // Format date
+  const formatDate = useCallback((dateString: string) => {
+    return new Date(dateString).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  }, [language]);
+
+  // Focus search on mount
+  useEffect(() => {
+    if (mounted && searchInputRef.current && activeSection === 'gallery') {
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 300);
+    }
+  }, [mounted, activeSection]);
+
   if (!mounted || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-background to-teal-50 
-                      dark:from-gray-950 dark:via-gray-900 dark:to-emerald-950/30">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-teal-50 dark:from-gray-950 dark:via-gray-900 dark:to-emerald-950/20">
         <div className="relative">
-          <div className="w-20 h-20 md:w-24 md:h-24 border-3 md:border-4 border-emerald-500/10 rounded-full animate-spin">
-            <div className="absolute inset-0 border-3 md:border-4 border-transparent border-t-emerald-500 rounded-full animate-ping"></div>
-            <div className="absolute inset-0 border-3 md:border-4 border-transparent border-b-emerald-300 rounded-full animate-pulse animation-delay-300"></div>
+          <div className="w-20 h-20 border-4 border-emerald-500/10 rounded-full animate-spin">
+            <div className="absolute inset-0 border-4 border-transparent border-t-emerald-500 rounded-full animate-ping"></div>
           </div>
-          <Leaf className="absolute -top-3 -right-3 w-6 h-6 md:w-8 md:h-8 text-emerald-500 animate-bounce animation-delay-400" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-sm text-emerald-600 dark:text-emerald-400 font-medium mt-28 animate-pulse">
-              {language === 'fr' ? 'Chargement des affiches...' : 'Loading posters...'}
-            </div>
-          </div>
+          <Leaf className="absolute -top-3 -right-3 w-6 h-6 text-emerald-500 animate-bounce animation-delay-400" />
         </div>
       </div>
     );
@@ -574,90 +524,79 @@ export default function Posters() {
   const currentLanguage = language || 'en';
 
   return (
-    <div className="min-h-screen bg-background relative">
-      {/* Background */}
+    <div className="min-h-screen bg-gradient-to-b from-white to-emerald-50/30 dark:from-gray-950 dark:to-emerald-950/10">
+      {/* Animated Background */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/40 via-background to-teal-50/30 
-                        dark:from-gray-950 dark:via-gray-900 dark:to-emerald-950/20"></div>
-        <div className="absolute top-1/4 left-1/4 w-[300px] h-[300px] md:w-[500px] md:h-[500px] 
-                        bg-gradient-to-r from-emerald-400/5 to-teal-400/5 rounded-full blur-3xl 
-                        animate-pulse-gentle"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-[350px] h-[350px] md:w-[600px] md:h-[600px] 
-                        bg-gradient-to-l from-teal-600/5 to-emerald-600/5 rounded-full blur-3xl 
-                        animate-pulse-gentle animation-delay-2000"></div>
-        
-        {/* Animated floating particles */}
-        <div className="absolute top-1/4 right-1/3 w-2 h-2 bg-emerald-400/20 rounded-full animate-float-particle animation-delay-0"></div>
-        <div className="absolute top-1/2 left-1/3 w-3 h-3 bg-teal-400/20 rounded-full animate-float-particle animation-delay-1000"></div>
-        <div className="absolute bottom-1/3 left-1/4 w-2 h-2 bg-emerald-300/20 rounded-full animate-float-particle animation-delay-2000"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/60 via-white/40 to-teal-50/50 dark:from-gray-950/90 dark:via-gray-900/80 dark:to-emerald-950/20"></div>
+        <div className="absolute top-20 left-10 w-64 h-64 md:w-96 md:h-96 bg-emerald-400/5 rounded-full blur-3xl animate-pulse-gentle"></div>
+        <div className="absolute bottom-20 right-10 w-72 h-72 md:w-[500px] md:h-[500px] bg-teal-600/5 rounded-full blur-3xl animate-pulse-gentle animation-delay-2000"></div>
       </div>
 
       <div className="container mx-auto px-4 py-8 md:py-12">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12 md:mb-16">
-            <div className="inline-block mb-6 md:mb-10 relative">
+            <div className="inline-block mb-8 md:mb-12 relative">
               <div className="relative">
-                <Leaf className="hidden md:block absolute -left-12 top-1/2 w-8 h-8 text-emerald-400/60 dark:text-emerald-500/40 animate-float-slow" />
-                <Sparkles className="hidden md:block absolute -right-12 top-1/2 w-8 h-8 text-emerald-300/60 dark:text-emerald-400/40 animate-float-slow animation-delay-1000" />
+                <Sparkles className="hidden md:block absolute -left-10 top-1/2 w-6 h-6 text-emerald-400 animate-float-slow" />
+                <Leaf className="hidden md:block absolute -right-10 top-1/2 w-6 h-6 text-emerald-300 animate-float-slow animation-delay-1000" />
                 
-                <h1 className="relative text-4xl md:text-6xl lg:text-7xl font-black mb-4 md:mb-8 
-                               bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 
+                <h1 className="relative text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 
+                               bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-600 
                                dark:from-emerald-400 dark:via-emerald-300 dark:to-teal-400 
-                               bg-clip-text text-transparent tracking-tight animate-title-glow">
-                  {t("posters.title") || (currentLanguage === 'fr' ? "Galerie d'Affiches" : "Posters Gallery")}
+                               bg-clip-text text-transparent tracking-tight">
+                  {currentLanguage === 'fr' ? "Galerie Écologique" : "Eco Gallery"}
                 </h1>
                 
-                <div className="relative h-1 overflow-hidden max-w-2xl mx-auto">
+                <div className="relative h-1.5 overflow-hidden max-w-xl mx-auto rounded-full">
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-500 to-transparent 
-                                  dark:via-emerald-400 animate-shimmer"></div>
+                                  dark:via-emerald-400 animate-shimmer rounded-full"></div>
                 </div>
               </div>
             </div>
             
             <p className="text-lg md:text-xl text-emerald-800/80 dark:text-emerald-200/80 
-                          max-w-3xl mx-auto leading-relaxed font-light mb-8 animate-fade-in">
-              {t("posters.subtitle") || 
-               (currentLanguage === 'fr' 
-                 ? "Découvrez des affiches environnementales inspirantes créées par notre communauté" 
-                 : "Discover inspiring environmental posters created by our community")}
+                          max-w-2xl mx-auto leading-relaxed font-light mb-8">
+              {currentLanguage === 'fr' 
+                ? "Découvrez des créations inspirantes pour un avenir durable" 
+                : "Discover inspiring creations for a sustainable future"}
             </p>
             
             {/* Navigation Tabs */}
-            <div className="flex justify-center gap-4 mb-12">
+            <div className="flex justify-center gap-3 mb-12">
               <button
                 onClick={() => setActiveSection("gallery")}
-                className={`px-8 py-3 rounded-full font-semibold transition-all duration-300 
-                           flex items-center gap-3 relative overflow-hidden group
-                           transform hover:-translate-y-1 active:scale-95
+                className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 
+                           flex items-center gap-2 relative overflow-hidden group
+                           transform hover:-translate-y-0.5 active:scale-95
                            ${activeSection === "gallery" 
-                             ? `bg-gradient-to-r from-emerald-600 to-teal-500 text-white
-                                shadow-lg shadow-emerald-500/30 dark:shadow-emerald-500/20`
-                             : `bg-white/90 dark:bg-gray-800/90 text-emerald-700 dark:text-emerald-300
-                                hover:bg-emerald-50 dark:hover:bg-gray-700/90 border border-emerald-500/20`
+                             ? `bg-gradient-to-r from-emerald-700 to-teal-600 text-white
+                                shadow-lg shadow-emerald-500/25 dark:shadow-emerald-500/15`
+                             : `bg-white/80 dark:bg-gray-800/80 text-emerald-700 dark:text-emerald-300
+                                hover:bg-emerald-50 dark:hover:bg-gray-700/80 border border-emerald-500/20`
                            }`}
               >
-                <Palette className="w-5 h-5 transition-transform group-hover:scale-110" />
+                <Palette className="w-4 h-4" />
                 {currentLanguage === 'fr' ? "Galerie" : "Gallery"}
                 <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent 
-                               -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
+                               -translate-x-full group-hover:translate-x-full transition-transform duration-700"></span>
               </button>
               <button
                 onClick={() => setActiveSection("share")}
-                className={`px-8 py-3 rounded-full font-semibold transition-all duration-300 
-                           flex items-center gap-3 relative overflow-hidden group
-                           transform hover:-translate-y-1 active:scale-95
+                className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 
+                           flex items-center gap-2 relative overflow-hidden group
+                           transform hover:-translate-y-0.5 active:scale-95
                            ${activeSection === "share" 
-                             ? `bg-gradient-to-r from-emerald-600 to-teal-500 text-white 
-                                shadow-lg shadow-emerald-500/30 dark:shadow-emerald-500/20` 
-                             : `bg-white/90 dark:bg-gray-800/90 text-emerald-700 dark:text-emerald-300
-                                hover:bg-emerald-50 dark:hover:bg-gray-700/90 border border-emerald-500/20`
+                             ? `bg-gradient-to-r from-emerald-700 to-teal-600 text-white
+                                shadow-lg shadow-emerald-500/25 dark:shadow-emerald-500/15` 
+                             : `bg-white/80 dark:bg-gray-800/80 text-emerald-700 dark:text-emerald-300
+                                hover:bg-emerald-50 dark:hover:bg-gray-700/80 border border-emerald-500/20`
                            }`}
               >
-                <Upload className="w-5 h-5 transition-transform group-hover:scale-110" />
-                {currentLanguage === 'fr' ? "Partagez" : "Share"}
+                <Upload className="w-4 h-4" />
+                {currentLanguage === 'fr' ? "Partager" : "Share"}
                 <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent 
-                               -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
+                               -translate-x-full group-hover:translate-x-full transition-transform duration-700"></span>
               </button>
             </div>
           </div>
@@ -665,44 +604,40 @@ export default function Posters() {
           {activeSection === "gallery" ? (
             <>
               {/* Search Section */}
-              <div className="max-w-3xl mx-auto mb-12 md:mb-16 animate-fade-in-up">
+              <div className="max-w-2xl mx-auto mb-12 md:mb-16">
                 <div className="relative group">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 
-                                rounded-2xl blur opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 
-                                transition-all duration-500"></div>
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-600 to-teal-500 rounded-2xl blur opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
                   <div className="relative">
-                    <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 
-                                     text-emerald-600/70 dark:text-emerald-400/70 w-5 h-5
-                                     transition-all duration-300 group-hover:scale-110 group-hover:text-emerald-500 
-                                     group-hover:rotate-12" />
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 
+                                     text-emerald-600/70 dark:text-emerald-400/70 w-4 h-4
+                                     transition-all duration-300 group-hover:scale-110 group-hover:text-emerald-500" />
                     <input
+                      ref={searchInputRef}
                       type="text"
                       placeholder={currentLanguage === 'fr' 
-                        ? "Rechercher des affiches, tags ou auteurs..." 
-                        : "Search posters, tags, or authors..."}
+                        ? "Rechercher par titre, auteur ou mot-clé..." 
+                        : "Search by title, author, or keyword..."}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-16 pr-12 py-4 
-                               bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm 
+                      className="w-full pl-12 pr-10 py-3 
+                               bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm 
                                border border-emerald-500/20 dark:border-emerald-500/30 
-                               rounded-2xl text-lg 
+                               rounded-xl text-base
                                text-emerald-900 dark:text-emerald-100 
                                placeholder:text-emerald-600/50 dark:placeholder:text-emerald-400/50 
                                focus:outline-none focus:border-emerald-500/40 
                                focus:ring-2 focus:ring-emerald-500/20 
-                               transition-all duration-300 group-hover:scale-[1.02]"
+                               transition-all duration-300"
                     />
                     {searchQuery && (
                       <button
                         onClick={() => setSearchQuery("")}
-                        className="absolute right-4 top-1/2 transform -translate-y-1/2 
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 
                                  text-emerald-600/70 dark:text-emerald-400/70 hover:text-emerald-500 
-                                 transition-all duration-200 p-1 hover:scale-125 active:scale-95"
-                        aria-label={currentLanguage === 'fr' ? "Effacer" : "Clear"}
+                                 transition-all duration-200 p-1"
+                        aria-label="Clear search"
                       >
-                        <span className="block w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center hover:bg-emerald-500/20 transition-colors">
-                          <X className="w-3 h-3" />
-                        </span>
+                        <X className="w-4 h-4" />
                       </button>
                     )}
                   </div>
@@ -710,82 +645,54 @@ export default function Posters() {
               </div>
 
               {/* Results */}
-              {loadError ? (
-                <div className="text-center py-24 animate-fade-in">
-                  <div className="inline-flex flex-col items-center gap-6 max-w-md mx-auto">
-                    <AlertCircle className="w-16 h-16 text-red-500 animate-pulse" />
-                    <div>
-                      <h3 className="text-xl font-bold text-red-900 dark:text-red-100 mb-2">
-                        {currentLanguage === 'fr' ? "Erreur de chargement" : "Loading Error"}
-                      </h3>
-                      <p className="text-red-700/70 dark:text-red-300/70 mb-4">
-                        {currentLanguage === 'fr' 
-                          ? "Impossible de charger les affiches. Veuillez réessayer." 
-                          : "Unable to load posters. Please try again."}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => window.location.reload()}
-                      className="px-8 py-3 rounded-full relative overflow-hidden group
-                               bg-gradient-to-r from-red-600 to-orange-500 text-white 
-                               font-semibold hover:shadow-lg hover:shadow-red-500/30
-                               transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95"
-                    >
-                      <span className="relative z-10">{currentLanguage === 'fr' ? "Réessayer" : "Retry"}</span>
-                    </button>
-                  </div>
-                </div>
-              ) : filteredPosters.length === 0 ? (
-                <div className="text-center py-24 animate-fade-in">
+              {filteredPosters.length === 0 ? (
+                <div className="text-center py-20">
                   <div className="inline-flex flex-col items-center gap-6 max-w-md">
                     <div className="relative">
-                      <div className="w-20 h-20 rounded-full 
+                      <div className="w-16 h-16 rounded-full 
                                     bg-gradient-to-br from-emerald-500/10 to-teal-500/10 
-                                    flex items-center justify-center animate-pulse-gentle">
-                        <Search className="w-10 h-10 text-emerald-500/50" />
+                                    flex items-center justify-center">
+                        <Search className="w-8 h-8 text-emerald-500/50" />
                       </div>
-                      <Zap className="absolute -top-2 -right-2 w-8 h-8 text-emerald-400 animate-bounce" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-emerald-900 dark:text-emerald-100 mb-2">
-                        {currentLanguage === 'fr' ? "Aucune affiche trouvée" : "No posters found"}
+                      <h3 className="text-xl font-semibold text-emerald-900 dark:text-emerald-100 mb-2">
+                        {currentLanguage === 'fr' ? "Aucun résultat" : "No results found"}
                       </h3>
                       <p className="text-emerald-700/70 dark:text-emerald-300/70">
                         {currentLanguage === 'fr' 
-                          ? "Essayez d'autres mots-clés ou parcourez toutes les affiches" 
-                          : "Try different keywords or browse all posters"}
+                          ? "Essayez d'autres termes de recherche" 
+                          : "Try different search terms"}
                       </p>
                     </div>
                     <button
                       onClick={() => setSearchQuery("")}
-                      className="px-8 py-3 rounded-full relative overflow-hidden group
-                               bg-gradient-to-r from-emerald-600 to-teal-500 text-white 
-                               font-semibold hover:shadow-lg hover:shadow-emerald-500/30
-                               transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95"
+                      className="px-6 py-2.5 rounded-full 
+                               bg-gradient-to-r from-emerald-700 to-teal-600 text-white 
+                               font-semibold hover:shadow-lg hover:shadow-emerald-500/25
+                               transition-all duration-300 transform hover:-translate-y-0.5"
                     >
-                      <span className="relative z-10">{currentLanguage === 'fr' ? "Voir toutes les affiches" : "View All Posters"}</span>
-                      <span className="absolute inset-0 bg-gradient-to-r from-teal-600 to-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                      {currentLanguage === 'fr' ? "Tout afficher" : "View All"}
                     </button>
                   </div>
                 </div>
               ) : (
                 <>
                   {/* Results Header */}
-                  <div className="mb-10 animate-fade-in-up">
+                  <div className="mb-8">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-full bg-gradient-to-br from-emerald-500/10 to-teal-500/10 
-                                      animate-pulse-gentle group cursor-pointer hover:scale-110 transition-transform duration-300">
-                          <Zap className="w-5 h-5 text-emerald-500 dark:text-emerald-400 group-hover:rotate-12 transition-transform" />
+                        <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500/10 to-teal-500/10">
+                          <Zap className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                         </div>
                         <div>
-                          <h3 className="text-xl font-bold text-emerald-900 dark:text-emerald-100">
-                            {filteredPosters.length} {currentLanguage === 'fr' ? "affiches" : "posters"}
+                          <h3 className="text-lg font-semibold text-emerald-900 dark:text-emerald-100">
+                            {filteredPosters.length} {currentLanguage === 'fr' ? "créations" : "creations"}
                           </h3>
                           {searchQuery && (
                             <p className="text-sm text-emerald-700/70 dark:text-emerald-300/70 mt-0.5">
                               {currentLanguage === 'fr' ? "Résultats pour" : "Results for"} "
-                              <span className="font-semibold text-emerald-600 dark:text-emerald-400 animate-pulse-gentle">{searchQuery}</span>"
+                              <span className="font-medium text-emerald-700 dark:text-emerald-300">{searchQuery}</span>"
                             </p>
                           )}
                         </div>
@@ -793,221 +700,135 @@ export default function Posters() {
                       {searchQuery && (
                         <button
                           onClick={() => setSearchQuery("")}
-                          className="font-medium text-emerald-600 dark:text-emerald-400 
-                                   hover:text-emerald-700 px-4 py-2 rounded-full relative overflow-hidden group
+                          className="text-sm font-medium text-emerald-600 dark:text-emerald-400 
+                                   hover:text-emerald-700 px-3 py-1.5 rounded-lg 
                                    bg-emerald-500/10 dark:bg-emerald-500/20 hover:bg-emerald-500/20 
-                                   transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95"
+                                   transition-all duration-300"
                         >
-                          <span className="relative z-10">{currentLanguage === 'fr' ? "Effacer" : "Clear"}</span>
-                          <span className="absolute inset-0 bg-emerald-500/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                          {currentLanguage === 'fr' ? "Effacer" : "Clear"}
                         </button>
                       )}
                     </div>
                   </div>
 
                   {/* Posters Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {filteredPosters.map((poster, index) => (
                       <div
                         key={poster.id}
-                        className="animate-card-enter"
+                        className="transform transition-all duration-300 hover:-translate-y-1"
                         style={{
-                          animationDelay: `${Math.min(index * 100, 600)}ms`,
+                          animationDelay: `${index * 100}ms`,
                           animationFillMode: 'both'
                         }}
                       >
                         <Card 
-                          className="overflow-hidden border border-emerald-500/10 dark:border-emerald-500/20 
-                                     bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm h-full group 
-                                     hover:border-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/10 
-                                     transition-all duration-300 hover:scale-[1.02] active:scale-100
-                                     hover:-translate-y-1 cursor-pointer"
+                          className="overflow-hidden border border-emerald-500/15 dark:border-emerald-500/20 
+                                     bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm h-full group 
+                                     hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/10 
+                                     transition-all duration-300 cursor-pointer"
                           onClick={() => openLightbox(poster)}
                         >
-                          {/* Poster Image/Embed Preview - 9:16 Aspect Ratio */}
-                          <div className="relative w-full pt-[177.78%] overflow-hidden bg-gradient-to-br from-emerald-500/5 to-teal-500/5">
-                            <div className="absolute inset-0">
-                              {/* Always show thumbnail image for both image and embed posters */}
-                              <img
-                                src={poster.thumbnailUrl || poster.imageUrl}
-                                alt={poster.title}
-                                className="absolute w-full h-full top-0 left-0 object-cover 
-                                         group-hover:scale-105 transition-transform duration-500 ease-out"
-                                loading="lazy"
-                                decoding="async"
-                                onError={(e) => handleImageError(e, poster)}
-                              />
-                              
-                              {/* Embed overlay indicator */}
-                              {poster.type === 'embed' && (
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent 
-                                              flex items-end p-4">
-                                  <div className="flex items-center gap-2 text-white/90">
-                                    <Globe className="w-4 h-4" />
-                                    <span className="text-xs font-medium bg-black/50 px-2 py-1 rounded-full">
-                                      {currentLanguage === 'fr' ? "Affiche interactive" : "Interactive Poster"}
-                                    </span>
-                                  </div>
-                                </div>
-                              )}
-                              
-                              {/* Hover Overlay */}
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent 
-                                            opacity-0 group-hover:opacity-100 transition-all duration-300 
-                                            flex flex-col justify-end p-4">
-                                {/* Stats */}
-                                <div className="flex items-center justify-between mb-3 transform translate-y-2 
-                                              group-hover:translate-y-0 opacity-0 group-hover:opacity-100 
-                                              transition-all duration-300 delay-100">
-                                  <div className="flex items-center gap-2 text-white/90">
-                                    <Eye className="w-4 h-4" />
-                                    <span className="text-sm font-medium">{poster.views?.toLocaleString() || '1.2k'}</span>
-                                  </div>
-                                  <button 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleLikePoster(poster.id);
-                                    }}
-                                    className={`flex items-center gap-2 ${likedPosts.has(poster.id) ? 'text-red-400' : 'text-white/90'} 
-                                             transition-all duration-300 hover:scale-110 active:scale-95`}
-                                  >
-                                    <Heart className={`w-4 h-4 ${likedPosts.has(poster.id) ? 'fill-current animate-heart-beat' : ''}`} />
-                                    <span className="text-sm font-medium">
-                                      {((poster.likes || 0) + (likedPosts.has(poster.id) ? 1 : 0)).toLocaleString()}
-                                    </span>
-                                  </button>
-                                </div>
-                                
-                                {/* Action Buttons */}
-                                <div className="grid grid-cols-2 gap-2 transform translate-y-4 group-hover:translate-y-0 
-                                              opacity-0 group-hover:opacity-100 transition-all duration-300 delay-150">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      openLightbox(poster);
-                                    }}
-                                    className="px-3 py-2 rounded-lg bg-white/90 text-emerald-700 font-medium 
-                                             hover:bg-white hover:scale-105 active:scale-95 transition-all duration-200 
-                                             flex items-center justify-center gap-2 text-sm group/btn"
-                                  >
-                                    {poster.type === 'embed' ? (
-                                      <>
-                                        <Globe className="w-4 h-4 transition-transform group-hover/btn:rotate-12" />
-                                        {currentLanguage === 'fr' ? "Ouvrir" : "Open"}
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Maximize2 className="w-4 h-4 transition-transform group-hover/btn:rotate-12" />
-                                        {currentLanguage === 'fr' ? "Agrandir" : "Expand"}
-                                      </>
-                                    )}
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (poster.type === 'embed') {
-                                        handleOpenNewTab(getCanvaDirectLink(poster.embedUrl));
-                                      } else {
-                                        handleOpenNewTab(poster.imageUrl);
-                                      }
-                                    }}
-                                    className="px-3 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-500 
-                                             text-white font-medium hover:shadow-lg hover:shadow-emerald-500/30 
-                                             hover:scale-105 active:scale-95 transition-all duration-200 
-                                             flex items-center justify-center gap-2 text-sm group/btn"
-                                  >
-                                    <Download className="w-4 h-4 transition-transform group-hover/btn:-translate-y-0.5" />
-                                    {poster.type === 'embed' 
-                                      ? (currentLanguage === 'fr' ? "Canva" : "Canva") 
-                                      : (currentLanguage === 'fr' ? "Télécharger" : "Download")}
-                                  </button>
-                                </div>
-                              </div>
-                              
-                              {/* Type Badge */}
+                          {/* Poster Preview */}
+                          <div className="relative w-full pt-[140%] overflow-hidden 
+                                        bg-gradient-to-br from-emerald-500/5 to-teal-500/5">
+                            {/* Image */}
+                            <img
+                              src={poster.imageUrl}
+                              alt={poster.title}
+                              className="absolute inset-0 w-full h-full object-cover 
+                                       group-hover:scale-105 transition-transform duration-500"
+                              onError={(e) => handleImageError(e, poster.id)}
+                            />
+                            
+                            {/* Overlay Gradient */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent 
+                                          opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
+                            
+                            {/* Interactive Badge for Canva */}
+                            {poster.type === 'embed' && (
                               <div className="absolute top-3 right-3">
-                                <span className={`px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md 
-                                               transition-all duration-300 group-hover:scale-110
-                                               ${poster.type === 'embed' 
-                                                 ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-white' 
-                                                 : 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white'}`}>
-                                  {poster.type === 'embed' ? 'INTERACTIVE' : 'IMAGE'}
+                                <span className="px-2 py-1 rounded-full text-xs font-medium backdrop-blur-md 
+                                               bg-gradient-to-r from-purple-600/90 to-purple-500/90 text-white">
+                                  <Globe className="w-3 h-3 inline mr-1" />
+                                  Interactive
                                 </span>
                               </div>
-
-                              {/* Language Badge */}
-                              <div className="absolute top-3 left-3">
-                                <span className={`px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md 
-                                               transition-all duration-300
-                                               ${poster.language === 'en' 
-                                                 ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white' 
-                                                 : 'bg-gradient-to-r from-teal-600 to-teal-500 text-white'}`}>
-                                  {poster.language.toUpperCase()}
-                                </span>
+                            )}
+                            
+                            {/* Language Badge */}
+                            <div className="absolute top-3 left-3">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium backdrop-blur-md 
+                                             ${poster.language === 'fr' 
+                                               ? 'bg-gradient-to-r from-teal-600/90 to-teal-500/90 text-white' 
+                                               : 'bg-gradient-to-r from-emerald-600/90 to-emerald-500/90 text-white'}`}>
+                                {poster.language.toUpperCase()}
+                              </span>
+                            </div>
+                            
+                            {/* Hover Actions */}
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                              <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full p-3 
+                                            transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                                <Maximize2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                               </div>
-
-                              {/* Source badge */}
-                              {poster.source && (
-                                <div className="absolute bottom-3 left-3">
-                                  <span className="px-2 py-1 rounded-full text-xs font-medium backdrop-blur-md 
-                                                 bg-black/60 text-white/90">
-                                    {poster.source}
-                                  </span>
+                            </div>
+                            
+                            {/* Stats at Bottom */}
+                            <div className="absolute bottom-0 left-0 right-0 p-3 
+                                          transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                              <div className="flex items-center justify-between text-white/90 text-xs">
+                                <div className="flex items-center gap-2">
+                                  <Eye className="w-3 h-3" />
+                                  <span>{poster.views.toLocaleString()}</span>
                                 </div>
-                              )}
+                                <div className="flex items-center gap-2">
+                                  <Heart className={`w-3 h-3 ${likedPosts.has(poster.id) ? 'fill-current text-red-400' : ''}`} />
+                                  <span>{poster.likes + (likedPosts.has(poster.id) ? 1 : 0)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span>{formatDate(poster.createdAt)}</span>
+                                </div>
+                              </div>
                             </div>
                           </div>
                           
                           {/* Poster Info */}
-                          <div className="p-5">
-                            <h3 className="font-bold text-lg md:text-xl text-emerald-900 dark:text-emerald-100 
-                                         mb-2 line-clamp-1 group-hover:text-emerald-700 transition-colors">
-                              {poster.title}
-                            </h3>
-                            <p className="text-sm text-emerald-800/70 dark:text-emerald-300/70 
-                                        line-clamp-2 leading-relaxed mb-4">
-                              {poster.description}
-                            </p>
-                            
-                            <div className="flex flex-wrap gap-1.5 mb-4">
-                              {poster.tags.slice(0, 3).map((tag, tagIndex) => (
-                                <span
-                                  key={tagIndex}
-                                  className="px-2 py-1 text-xs rounded-full bg-emerald-500/10 
-                                           text-emerald-700 dark:text-emerald-300 
-                                           border border-emerald-500/20 hover:bg-emerald-500/20 
-                                           transition-all duration-300 cursor-default hover:scale-105"
-                                >
-                                  {tag}
-                                </span>
-                              ))}
-                              {poster.tags.length > 3 && (
-                                <span className="px-2 py-1 text-xs rounded-full bg-emerald-500/5 
-                                               text-emerald-600/60 dark:text-emerald-400/60">
-                                  +{poster.tags.length - 3}
-                                </span>
-                              )}
+                          <div className="p-4">
+                            <div className="mb-3">
+                              <h3 className="font-semibold text-emerald-900 dark:text-emerald-100 
+                                           line-clamp-1 group-hover:text-emerald-700 transition-colors">
+                                {poster.title}
+                              </h3>
+                              <p className="text-xs text-emerald-700/70 dark:text-emerald-300/70 mt-1 line-clamp-2">
+                                {poster.description}
+                              </p>
                             </div>
                             
-                            <div className="pt-3 border-t border-emerald-500/10">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-2 h-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 
-                                                animate-pulse group-hover:animate-ping"></div>
-                                  <span className="text-sm text-emerald-700/80 dark:text-emerald-300/80">
-                                    {currentLanguage === 'fr' ? "Par" : "By"}{" "}
-                                    <span className="font-semibold text-emerald-800 dark:text-emerald-200 group-hover:text-emerald-600">
-                                      {poster.author}
-                                    </span>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 animate-pulse"></div>
+                                <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                                  {poster.author}
+                                </span>
+                              </div>
+                              <div className="flex gap-1">
+                                {poster.tags.slice(0, 2).map((tag, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="px-1.5 py-0.5 text-[10px] rounded-full bg-emerald-500/10 
+                                             text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
+                                  >
+                                    {tag}
                                   </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  {poster.type === 'embed' ? (
-                                    <Globe className="w-4 h-4 text-purple-500" />
-                                  ) : (
-                                    <ImageIcon className="w-4 h-4 text-emerald-500" />
-                                  )}
-                                </div>
+                                ))}
+                                {poster.tags.length > 2 && (
+                                  <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-emerald-500/5 
+                                                 text-emerald-600/60 dark:text-emerald-400/60">
+                                    +{poster.tags.length - 2}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -1015,109 +836,91 @@ export default function Posters() {
                       </div>
                     ))}
                   </div>
-                </>
-              )}
 
-              {/* Footer Message */}
-              {!searchQuery && filteredPosters.length > 0 && !loadError && (
-                <div className="mt-20 text-center animate-fade-in-up">
-                  <div className="inline-block max-w-xl mx-auto transform hover:-translate-y-1 transition-transform duration-300 group">
-                    <div className="p-8 rounded-2xl bg-gradient-to-br from-white/60 to-emerald-500/10 
-                                  backdrop-blur-sm border border-emerald-500/10 group-hover:border-emerald-500/20
-                                  transition-all duration-300">
-                      <Leaf className="w-10 h-10 text-emerald-500 mb-4 mx-auto animate-float-slow" />
-                      <p className="text-lg text-emerald-800/80 dark:text-emerald-200/80 mb-6 leading-relaxed">
-                        {currentLanguage === 'fr' 
-                          ? "Rejoignez notre communauté d'artistes environnementaux ! Partagez vos créations pour inspirer le changement." 
-                          : "Join our community of environmental artists! Share your creations to inspire change."}
-                      </p>
-                      <button
-                        onClick={() => setActiveSection("share")}
-                        className="px-8 py-3 rounded-full relative overflow-hidden group/btn
-                                 bg-gradient-to-r from-emerald-600 to-teal-500 text-white 
-                                 font-semibold hover:shadow-lg hover:shadow-emerald-500/30
-                                 transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95"
-                      >
-                        <span className="relative z-10 flex items-center gap-2">
-                          <Upload className="w-5 h-5" />
-                          {currentLanguage === 'fr' ? "Partager mon art" : "Share My Art"}
-                        </span>
-                        <span className="absolute inset-0 bg-gradient-to-r from-teal-600 to-emerald-500 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></span>
-                      </button>
+                  {/* Load More / Community CTA */}
+                  {!searchQuery && (
+                    <div className="mt-16 text-center">
+                      <div className="inline-block max-w-lg mx-auto">
+                        <div className="p-6 rounded-2xl bg-gradient-to-br from-white/60 to-emerald-500/10 
+                                      backdrop-blur-sm border border-emerald-500/15">
+                          <Sparkles className="w-8 h-8 text-emerald-500 mx-auto mb-3 animate-pulse" />
+                          <p className="text-emerald-800/80 dark:text-emerald-200/80 mb-4">
+                            {currentLanguage === 'fr' 
+                              ? "Votre création pourrait être la prochaine à inspirer notre communauté !" 
+                              : "Your creation could be next to inspire our community!"}
+                          </p>
+                          <button
+                            onClick={() => setActiveSection("share")}
+                            className="px-6 py-2.5 rounded-full 
+                                     bg-gradient-to-r from-emerald-700 to-teal-600 text-white 
+                                     font-semibold hover:shadow-lg hover:shadow-emerald-500/25
+                                     transition-all duration-300 transform hover:-translate-y-0.5"
+                          >
+                            {currentLanguage === 'fr' ? "Participer" : "Submit Yours"}
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  )}
+                </>
               )}
             </>
           ) : (
-            /* Share Your Art Section */
-            <div className="max-w-4xl mx-auto animate-fade-in">
+            /* Share Section */
+            <div className="max-w-3xl mx-auto">
               <div className="text-center mb-12">
-                <h2 className="text-4xl md:text-5xl font-bold text-emerald-900 dark:text-emerald-100 mb-6 
-                             bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 
-                             dark:from-emerald-400 dark:via-emerald-300 dark:to-teal-400 
-                             bg-clip-text text-transparent animate-title-glow">
-                  {currentLanguage === 'fr' ? "Partagez votre création" : "Share Your Artwork"}
+                <h2 className="text-3xl md:text-4xl font-bold text-emerald-900 dark:text-emerald-100 mb-4">
+                  {currentLanguage === 'fr' ? "Partagez votre vision" : "Share Your Vision"}
                 </h2>
-                <p className="text-xl text-emerald-700/80 dark:text-emerald-300/80 leading-relaxed">
+                <p className="text-lg text-emerald-700/80 dark:text-emerald-300/80">
                   {currentLanguage === 'fr' 
-                    ? "Rejoignez notre communauté et inspirez les autres avec votre art environnemental" 
-                    : "Join our community and inspire others with your environmental artwork"}
+                    ? "Rejoignez notre mouvement et inspirez le changement" 
+                    : "Join our movement and inspire change"}
                 </p>
               </div>
 
               {/* Steps */}
-              <div className="grid md:grid-cols-3 gap-8 mb-16">
+              <div className="grid md:grid-cols-3 gap-6 mb-12">
                 {[
                   {
-                    step: 1,
                     icon: Palette,
                     title: currentLanguage === 'fr' ? "Créez" : "Create",
                     description: currentLanguage === 'fr' 
-                      ? "Créez des affiches inspirantes sur le recyclage, la durabilité ou la protection de l'environnement"
-                      : "Design inspiring posters about recycling, sustainability, or environmental protection"
+                      ? "Concevez des affiches percutantes sur l'environnement"
+                      : "Design impactful posters about the environment"
                   },
                   {
-                    step: 2,
                     icon: Send,
                     title: currentLanguage === 'fr' ? "Partagez" : "Share",
                     description: currentLanguage === 'fr' 
-                      ? "Envoyez votre création par email ou Instagram avec votre nom pour un crédit approprié"
-                      : "Send your creation via email or Instagram with your name for proper credit"
+                      ? "Envoyez-nous vos créations avec vos crédits"
+                      : "Send us your creations with proper credits"
                   },
                   {
-                    step: 3,
-                    icon: User,
-                    title: currentLanguage === 'fr' ? "Brillez" : "Shine",
+                    icon: Film,
+                    title: currentLanguage === 'fr' ? "Inspirez" : "Inspire",
                     description: currentLanguage === 'fr' 
-                      ? "Votre travail sera présenté dans notre galerie communautaire pour inspirer les autres"
-                      : "Your work will be featured in our community gallery to inspire others"
+                      ? "Votre travail sera vu par notre communauté mondiale"
+                      : "Your work will be seen by our global community"
                   }
                 ].map((item, index) => (
                   <div
-                    key={item.step}
+                    key={index}
                     className="relative group"
                   >
-                    <div className="absolute -inset-2 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 
-                                  rounded-2xl blur opacity-0 group-hover:opacity-100 
-                                  transition-all duration-500"></div>
-                    <div className="relative bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-8 
-                                  rounded-2xl border border-emerald-500/10 h-full group-hover:border-emerald-500/30 
-                                  transition-all duration-300 transform hover:-translate-y-2 hover:shadow-xl hover:shadow-emerald-500/10">
-                      <div className="inline-flex items-center justify-center w-16 h-16 
-                                    rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 
-                                    text-white text-2xl font-bold mb-4 relative overflow-hidden
-                                    group-hover:scale-110 transition-transform duration-300">
-                        {item.step}
+                    <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 
+                                  rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm p-6 
+                                  rounded-xl border border-emerald-500/15 transition-all duration-300">
+                      <div className="inline-flex items-center justify-center w-12 h-12 
+                                    rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 
+                                    text-white mb-4 group-hover:scale-110 transition-transform duration-300">
+                        <item.icon className="w-5 h-5" />
                       </div>
-                      <item.icon className="w-12 h-12 text-emerald-600 dark:text-emerald-400 
-                                          mb-4 mx-auto transform group-hover:scale-110 
-                                          transition-transform duration-300" />
-                      <h3 className="text-2xl font-bold text-emerald-900 dark:text-emerald-100 
-                                   mb-3 group-hover:text-emerald-700 transition-colors">
+                      <h3 className="font-semibold text-emerald-900 dark:text-emerald-100 mb-2">
                         {item.title}
                       </h3>
-                      <p className="text-emerald-700/80 dark:text-emerald-300/80 leading-relaxed">
+                      <p className="text-sm text-emerald-700/70 dark:text-emerald-300/70">
                         {item.description}
                       </p>
                     </div>
@@ -1125,156 +928,123 @@ export default function Posters() {
                 ))}
               </div>
 
-              {/* Contact Information */}
-              <div className="bg-gradient-to-br from-white/60 to-emerald-500/10 
-                            backdrop-blur-sm rounded-3xl border border-emerald-500/10 p-8
-                            transform hover:-translate-y-1 transition-all duration-300">
-                <h3 className="text-2xl font-bold text-emerald-900 dark:text-emerald-100 mb-8 text-center">
-                  {currentLanguage === 'fr' ? "Contact" : "Contact"}
+              {/* Contact Section */}
+              <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl border border-emerald-500/15 p-6 md:p-8">
+                <h3 className="text-xl font-semibold text-emerald-900 dark:text-emerald-100 mb-6">
+                  {currentLanguage === 'fr' ? "Contactez-nous" : "Get in Touch"}
                 </h3>
                 
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-6">
                   {/* Email */}
                   <div className="group">
-                    <div className="bg-white/80 dark:bg-gray-800/80 p-6 rounded-xl 
-                                  border border-emerald-500/20 group-hover:border-emerald-500/30 
-                                  transition-all duration-300 transform group-hover:-translate-y-1">
-                      <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 rounded-full bg-gradient-to-br from-emerald-500/10 to-teal-500/10
-                                      group-hover:from-emerald-500/20 group-hover:to-teal-500/20 
-                                      transition-all duration-300 group-hover:scale-110">
-                          <Mail className="w-6 h-6 text-emerald-600 dark:text-emerald-400 
-                                         group-hover:rotate-12 transition-transform" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-emerald-900 dark:text-emerald-100">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10
+                                    group-hover:from-emerald-500/20 group-hover:to-teal-500/20 
+                                    transition-all duration-300">
+                        <Mail className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium text-emerald-900 dark:text-emerald-100">
                             Email
                           </h4>
-                          <p className="text-sm text-emerald-700/70 dark:text-emerald-300/70">
-                            {currentLanguage === 'fr' ? "Envoyez votre création" : "Send your artwork"}
-                          </p>
+                          <button
+                            onClick={() => copyToClipboard("recyclagemaria@gmail.com")}
+                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-300 
+                                     ${copiedEmail 
+                                       ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' 
+                                       : 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white hover:shadow-lg hover:shadow-emerald-500/25'
+                                     }`}
+                          >
+                            {copiedEmail ? (
+                              <>
+                                <Check className="w-3 h-3 inline mr-1" />
+                                {currentLanguage === 'fr' ? "Copié" : "Copied"}
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3 inline mr-1" />
+                                {currentLanguage === 'fr' ? "Copier" : "Copy"}
+                              </>
+                            )}
+                          </button>
                         </div>
-                      </div>
-                      <div className="flex items-center justify-between gap-4">
-                        <code className="text-lg font-mono text-emerald-800 dark:text-emerald-200 break-all 
-                                       bg-emerald-500/5 px-3 py-2 rounded-lg flex-1">
+                        <code className="text-base text-emerald-800 dark:text-emerald-200 break-all block bg-emerald-500/5 px-3 py-2 rounded-lg">
                           recyclagemaria@gmail.com
                         </code>
-                        <button
-                          onClick={() => copyToClipboard("recyclagemaria@gmail.com")}
-                          className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 
-                                   transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-2 min-w-[100px]
-                                   ${copiedEmail 
-                                     ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' 
-                                     : 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white'
-                                   }`}
-                        >
-                          {copiedEmail ? (
-                            <>
-                              <Check className="w-4 h-4" />
-                              {currentLanguage === 'fr' ? "Copié !" : "Copied!"}
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="w-4 h-4" />
-                              {currentLanguage === 'fr' ? "Copier" : "Copy"}
-                            </>
-                          )}
-                        </button>
                       </div>
                     </div>
                   </div>
 
                   {/* Instagram */}
                   <div className="group">
-                    <div className="bg-white/80 dark:bg-gray-800/80 p-6 rounded-xl 
-                                  border border-emerald-500/20 group-hover:border-pink-500/30 
-                                  transition-all duration-300 transform group-hover:-translate-y-1">
-                      <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 rounded-full bg-gradient-to-br from-pink-500/10 to-purple-500/10
-                                      group-hover:from-pink-500/20 group-hover:to-purple-500/20 
-                                      transition-all duration-300 group-hover:scale-110">
-                          <Instagram className="w-6 h-6 text-pink-600 dark:text-pink-400 
-                                              group-hover:rotate-12 transition-transform" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-emerald-900 dark:text-emerald-100">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-pink-500/10 to-purple-500/10
+                                    group-hover:from-pink-500/20 group-hover:to-purple-500/20 
+                                    transition-all duration-300">
+                        <Instagram className="w-5 h-5 text-pink-600 dark:text-pink-400" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium text-emerald-900 dark:text-emerald-100">
                             Instagram
                           </h4>
-                          <p className="text-sm text-emerald-700/70 dark:text-emerald-300/70">
-                            {currentLanguage === 'fr' ? "Message direct" : "Direct message"}
-                          </p>
+                          <button
+                            onClick={() => window.open("https://www.instagram.com/recyclage_projet", "_blank")}
+                            className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-pink-600 to-purple-500 
+                                     text-white text-sm font-medium hover:shadow-lg hover:shadow-pink-500/25
+                                     transition-all duration-300 flex items-center gap-1"
+                          >
+                            <Instagram className="w-3 h-3" />
+                            {currentLanguage === 'fr' ? "Suivre" : "Follow"}
+                          </button>
                         </div>
-                      </div>
-                      <div className="flex items-center justify-between gap-4">
-                        <code className="text-lg font-mono text-emerald-800 dark:text-emerald-200 break-all
-                                       bg-gradient-to-r from-pink-500/5 to-purple-500/5 px-3 py-2 rounded-lg flex-1">
+                        <code className="text-base text-emerald-800 dark:text-emerald-200 break-all block bg-gradient-to-r from-pink-500/5 to-purple-500/5 px-3 py-2 rounded-lg">
                           @recyclage_projet
                         </code>
-                        <button
-                          onClick={() => window.open("https://www.instagram.com/recyclage_projet", "_blank")}
-                          className="px-4 py-2 rounded-lg relative overflow-hidden group/btn
-                                   bg-gradient-to-r from-pink-500 to-purple-500 text-white 
-                                   font-semibold hover:shadow-lg hover:shadow-pink-500/30
-                                   transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95
-                                   flex items-center gap-2 min-w-[100px] justify-center"
-                        >
-                          <span className="relative z-10 flex items-center gap-2">
-                            <Instagram className="w-4 h-4" />
-                            {currentLanguage === 'fr' ? "Suivre" : "Follow"}
-                          </span>
-                        </button>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Requirements */}
-                <div className="mt-8 p-6 rounded-xl 
-                              bg-gradient-to-br from-emerald-500/5 to-teal-500/5 
-                              border border-emerald-500/20 transform hover:-translate-y-1 transition-all duration-300">
-                  <h4 className="font-semibold text-emerald-900 dark:text-emerald-100 mb-4 
-                               flex items-center gap-3">
-                    <Sparkles className="w-5 h-5 text-emerald-600 dark:text-emerald-400 
-                                       animate-pulse-gentle" />
-                    {currentLanguage === 'fr' ? "Directives de soumission" : "Submission Guidelines"}
+                {/* Guidelines */}
+                <div className="mt-8 pt-6 border-t border-emerald-500/15">
+                  <h4 className="font-medium text-emerald-900 dark:text-emerald-100 mb-3 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    {currentLanguage === 'fr' ? "Directives" : "Guidelines"}
                   </h4>
-                  <ul className="space-y-3 text-emerald-700/80 dark:text-emerald-300/80">
-                    <li className="flex items-start gap-3">
-                      <span className="w-2 h-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 mt-2"></span>
+                  <ul className="space-y-2 text-sm text-emerald-700/80 dark:text-emerald-300/80">
+                    <li className="flex items-start gap-2">
+                      <span className="text-emerald-600 dark:text-emerald-400 mt-0.5">•</span>
                       <span>{currentLanguage === 'fr' 
-                        ? "Incluez votre nom complet pour un crédit approprié" 
-                        : "Include your full name for proper credit"}</span>
+                        ? "Incluez votre nom pour les crédits" 
+                        : "Include your name for proper credit"}</span>
                     </li>
-                    <li className="flex items-start gap-3">
-                      <span className="w-2 h-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 mt-2"></span>
+                    <li className="flex items-start gap-2">
+                      <span className="text-emerald-600 dark:text-emerald-400 mt-0.5">•</span>
                       <span>{currentLanguage === 'fr' 
-                        ? "Formats acceptés : JPG, PNG, PDF (haute qualité recommandée)" 
-                        : "Accepted formats: JPG, PNG, PDF (high quality recommended)"}</span>
+                        ? "Formats : JPG, PNG, PDF (haute qualité)" 
+                        : "Formats: JPG, PNG, PDF (high quality)"}</span>
                     </li>
-                    <li className="flex items-start gap-3">
-                      <span className="w-2 h-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 mt-2"></span>
+                    <li className="flex items-start gap-2">
+                      <span className="text-emerald-600 dark:text-emerald-400 mt-0.5">•</span>
                       <span>{currentLanguage === 'fr' 
-                        ? "Gardez le contenu éducatif et inspirant sur les thèmes environnementaux" 
-                        : "Keep content educational and inspiring about environmental topics"}</span>
+                        ? "Contenu éducatif et positif" 
+                        : "Educational and positive content"}</span>
                     </li>
                   </ul>
                 </div>
 
-                {/* Quick Action */}
+                {/* Quick Submit */}
                 <div className="mt-8 text-center">
                   <button
-                    onClick={() => window.open("mailto:recyclagemaria@gmail.com?subject=Poster Submission&body=Hi, I'd like to submit my environmental poster for the community gallery!", "_blank")}
-                    className="px-8 py-4 rounded-full relative overflow-hidden group
-                             bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 
-                             text-white font-semibold text-lg
-                             hover:shadow-2xl hover:shadow-emerald-500/30
-                             transition-all duration-300 transform hover:-translate-y-1 active:scale-95"
+                    onClick={() => window.open("mailto:recyclagemaria@gmail.com", "_blank")}
+                    className="px-8 py-3 rounded-full 
+                             bg-gradient-to-r from-emerald-700 to-teal-600 text-white 
+                             font-semibold hover:shadow-lg hover:shadow-emerald-500/25
+                             transition-all duration-300 transform hover:-translate-y-0.5"
                   >
-                    <span className="relative z-10 flex items-center justify-center gap-3">
-                      <Send className="w-5 h-5" />
-                      {currentLanguage === 'fr' ? "Envoyer mon œuvre" : "Submit My Artwork"}
-                    </span>
+                    {currentLanguage === 'fr' ? "Envoyer une création" : "Submit a Creation"}
                   </button>
                 </div>
               </div>
@@ -1283,53 +1053,31 @@ export default function Posters() {
         </div>
       </div>
 
-      {/* Lightbox Modal - Fixed 9:16 Vertical Aspect Ratio */}
+      {/* Lightbox Modal */}
       {lightbox.isOpen && lightbox.poster && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
           <div 
             ref={lightboxRef}
-            className="relative w-full max-w-md md:max-w-lg lg:max-w-xl h-[90vh] max-h-[160vw] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden flex flex-col"
-            style={{ aspectRatio: '9/16' }}
+            className="relative w-full max-w-4xl h-[90vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden flex flex-col"
           >
-            {/* Lightbox Header */}
-            <div className="flex items-center justify-between p-4 border-b border-emerald-500/20 bg-white/95 dark:bg-gray-900/95 shrink-0">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-emerald-500/20">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${lightbox.poster.language === 'fr' ? 'bg-teal-500' : 'bg-emerald-500'}`} />
-                  <span className="font-semibold text-emerald-900 dark:text-emerald-100 truncate text-sm md:text-base">
+                  <div className={`w-2 h-2 rounded-full ${lightbox.poster.language === 'fr' ? 'bg-teal-500' : 'bg-emerald-500'}`} />
+                  <span className="font-semibold text-emerald-900 dark:text-emerald-100 truncate">
                     {lightbox.poster.title}
                   </span>
                 </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <span className="px-2 py-0.5 text-xs rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
-                    {lightbox.poster.language.toUpperCase()}
-                  </span>
-                  {lightbox.poster.type === 'embed' && (
-                    <span className="px-2 py-0.5 text-xs rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-300">
-                      INTERACTIVE
-                    </span>
-                  )}
-                </div>
+                <span className="px-2 py-1 text-xs rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                  {lightbox.poster.language.toUpperCase()}
+                </span>
               </div>
               
-              <div className="flex items-center gap-1 flex-shrink-0">
-                {lightbox.poster.type === 'embed' && (
-                  <button
-                    onClick={() => handleOpenNewTab(getCanvaDirectLink(lightbox.poster.embedUrl))}
-                    className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-purple-500 
-                             text-white text-xs font-medium hover:shadow-lg hover:shadow-purple-500/30
-                             transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95
-                             flex items-center gap-1"
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                    <span className="hidden sm:inline">{currentLanguage === 'fr' ? "Canva" : "Canva"}</span>
-                  </button>
-                )}
-                
+              <div className="flex items-center gap-2">
                 <button
                   onClick={toggleFullscreen}
-                  className="p-1.5 rounded-lg hover:bg-emerald-500/10 transition-colors"
-                  title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                  className="p-2 rounded-lg hover:bg-emerald-500/10 transition-colors"
                 >
                   {isFullscreen ? (
                     <Minimize2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -1337,126 +1085,106 @@ export default function Posters() {
                     <Maximize2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   )}
                 </button>
-                
                 <button
                   onClick={closeLightbox}
-                  className="p-1.5 rounded-lg hover:bg-emerald-500/10 transition-colors"
-                  title="Close"
+                  className="p-2 rounded-lg hover:bg-emerald-500/10 transition-colors"
                 >
                   <X className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 </button>
               </div>
             </div>
 
-            {/* Lightbox Content - 9:16 Vertical */}
-            <div className="flex-1 overflow-hidden relative p-2">
+            {/* Content */}
+            <div className="flex-1 overflow-hidden p-4">
               {lightbox.poster.type === 'embed' && lightbox.poster.embedUrl ? (
                 <CanvaEmbed 
                   embedUrl={lightbox.poster.embedUrl}
                   title={lightbox.poster.title}
                 />
               ) : (
-                <div className="absolute inset-2 flex items-center justify-center">
+                <div className="h-full flex items-center justify-center">
                   <img
                     src={lightbox.poster.imageUrl}
                     alt={lightbox.poster.title}
-                    className="max-w-full max-h-full object-contain"
-                    onError={(e) => {
-                      const img = e.target as HTMLImageElement;
-                      const currentLanguage = language || 'en';
-                      img.src = currentLanguage === 'fr' 
-                        ? FALLBACK_POSTERS.fr[0].imageUrl
-                        : FALLBACK_POSTERS.en[0].imageUrl;
-                    }}
+                    className="max-w-full max-h-full object-contain rounded-lg"
                   />
                 </div>
               )}
             </div>
 
-            {/* Lightbox Footer */}
-            <div className="p-4 border-t border-emerald-500/20 bg-white/95 dark:bg-gray-900/95 shrink-0">
+            {/* Footer */}
+            <div className="p-4 border-t border-emerald-500/20">
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex items-center gap-1 min-w-0">
-                    <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 animate-pulse flex-shrink-0" />
-                    <span className="text-xs text-emerald-700/80 dark:text-emerald-300/80 truncate">
-                      {currentLanguage === 'fr' ? "Par" : "By"}{" "}
-                      <span className="font-semibold text-emerald-800 dark:text-emerald-200">
-                        {lightbox.poster.author}
-                      </span>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500"></div>
+                    <span className="text-sm text-emerald-700 dark:text-emerald-300">
+                      {lightbox.poster.author}
                     </span>
                   </div>
-                  
-                  <div className="flex items-center gap-2 text-xs flex-shrink-0">
-                    <span className="flex items-center gap-0.5 text-emerald-600/70 dark:text-emerald-400/70">
+                  <div className="flex items-center gap-4 text-sm">
+                    <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
                       <Eye className="w-3 h-3" />
-                      {lightbox.poster.views?.toLocaleString() || '1.2k'}
+                      {lightbox.poster.views.toLocaleString()}
                     </span>
                     <button 
                       onClick={() => handleLikePoster(lightbox.poster!.id)}
-                      className={`flex items-center gap-0.5 ${likedPosts.has(lightbox.poster!.id) ? 'text-red-500' : 'text-emerald-600/70 dark:text-emerald-400/70'}`}
+                      className={`flex items-center gap-1 ${likedPosts.has(lightbox.poster!.id) ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'}`}
                     >
                       <Heart className={`w-3 h-3 ${likedPosts.has(lightbox.poster!.id) ? 'fill-current' : ''}`} />
-                      {((lightbox.poster.likes || 0) + (likedPosts.has(lightbox.poster!.id) ? 1 : 0)).toLocaleString()}
+                      {lightbox.poster.likes + (likedPosts.has(lightbox.poster!.id) ? 1 : 0)}
                     </button>
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <button
-                    onClick={() => {
-                      if (lightbox.poster.type === 'embed') {
-                        handleOpenNewTab(getCanvaDirectLink(lightbox.poster.embedUrl));
-                      } else {
-                        handleOpenNewTab(lightbox.poster.imageUrl);
-                      }
-                    }}
-                    className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-500 
-                             text-white text-xs font-medium hover:shadow-lg hover:shadow-emerald-500/30
-                             transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95
-                             flex items-center gap-1"
-                  >
-                    <Download className="w-3 h-3" />
-                    <span className="hidden sm:inline">
-                      {lightbox.poster.type === 'embed' 
-                        ? (currentLanguage === 'fr' ? "Canva" : "Canva") 
-                        : (currentLanguage === 'fr' ? "Télécharger" : "Download")}
-                    </span>
-                  </button>
-                  
+                <div className="flex items-center gap-2">
+                  {lightbox.poster.type === 'embed' ? (
+                    <button
+                      onClick={() => handleOpenNewTab(getCanvaDirectLink(lightbox.poster.embedUrl))}
+                      className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-purple-500 
+                               text-white text-sm font-medium hover:shadow-lg hover:shadow-purple-500/25
+                               transition-all duration-300 flex items-center gap-1"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      {currentLanguage === 'fr' ? "Ouvrir" : "Open"}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleOpenNewTab(lightbox.poster!.imageUrl)}
+                      className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-500 
+                               text-white text-sm font-medium hover:shadow-lg hover:shadow-emerald-500/25
+                               transition-all duration-300 flex items-center gap-1"
+                    >
+                      <Download className="w-3 h-3" />
+                      {currentLanguage === 'fr' ? "Télécharger" : "Download"}
+                    </button>
+                  )}
                   <button
                     onClick={() => handleSharePoster(lightbox.poster!)}
-                    className="px-3 py-1.5 rounded-lg bg-white/80 dark:bg-gray-800/80 
-                             text-emerald-700 dark:text-emerald-300 text-xs font-medium border border-emerald-500/20
-                             hover:bg-emerald-50 dark:hover:bg-gray-700/80 transition-all duration-300
-                             transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-1"
+                    className="px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 
+                             text-emerald-700 dark:text-emerald-300 text-sm font-medium border border-emerald-500/20
+                             hover:bg-emerald-50 dark:hover:bg-gray-700 transition-all duration-300 flex items-center gap-1"
                   >
                     <Share2 className="w-3 h-3" />
+                    {currentLanguage === 'fr' ? "Partager" : "Share"}
                   </button>
                 </div>
               </div>
               
-              <p className="text-xs text-emerald-700/80 dark:text-emerald-300/80 mb-3 line-clamp-2">
+              <p className="text-sm text-emerald-700/80 dark:text-emerald-300/80 mb-3">
                 {lightbox.poster.description}
               </p>
               
-              <div className="flex flex-wrap gap-1">
-                {lightbox.poster.tags.slice(0, 3).map((tag, index) => (
+              <div className="flex flex-wrap gap-2">
+                {lightbox.poster.tags.map((tag, idx) => (
                   <span
-                    key={index}
-                    className="px-2 py-0.5 text-xs rounded-full bg-emerald-500/10 
-                             text-emerald-700 dark:text-emerald-300 
-                             border border-emerald-500/20"
+                    key={idx}
+                    className="px-2 py-1 text-xs rounded-full bg-emerald-500/10 
+                             text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
                   >
                     {tag}
                   </span>
                 ))}
-                {lightbox.poster.tags.length > 3 && (
-                  <span className="px-2 py-0.5 text-xs rounded-full bg-emerald-500/5 
-                                 text-emerald-600/60 dark:text-emerald-400/60">
-                    +{lightbox.poster.tags.length - 3}
-                  </span>
-                )}
               </div>
             </div>
           </div>
@@ -1467,13 +1195,7 @@ export default function Posters() {
       <style>{`
         @keyframes float-slow {
           0%, 100% { transform: translateY(0) rotate(0deg); }
-          50% { transform: translateY(-15px) rotate(3deg); }
-        }
-
-        @keyframes float-particle {
-          0%, 100% { transform: translateY(0) translateX(0); }
-          33% { transform: translateY(-20px) translateX(10px); }
-          66% { transform: translateY(10px) translateX(-10px); }
+          50% { transform: translateY(-10px) rotate(3deg); }
         }
 
         @keyframes shimmer {
@@ -1482,89 +1204,21 @@ export default function Posters() {
           100% { transform: translateX(100%); opacity: 0; }
         }
 
-        @keyframes card-enter {
-          from {
-            opacity: 0;
-            transform: translateY(30px) scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
-
         @keyframes pulse-gentle {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.8; transform: scale(1.05); }
-        }
-
-        @keyframes title-glow {
-          0%, 100% { filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.2)); }
-          50% { filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.4)); }
-        }
-
-        @keyframes fade-in-up {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-
-        @keyframes heart-beat {
-          0%, 100% { transform: scale(1); }
-          25% { transform: scale(1.1); }
-          50% { transform: scale(0.9); }
-          75% { transform: scale(1.05); }
         }
 
         .animate-float-slow {
           animation: float-slow 6s ease-in-out infinite;
         }
 
-        .animate-float-particle {
-          animation: float-particle 15s ease-in-out infinite;
-        }
-
         .animate-shimmer {
           animation: shimmer 3s ease-in-out infinite;
         }
 
-        .animate-card-enter {
-          animation: card-enter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-          opacity: 0;
-        }
-
         .animate-pulse-gentle {
           animation: pulse-gentle 3s ease-in-out infinite;
-        }
-
-        .animate-title-glow {
-          animation: title-glow 4s ease-in-out infinite;
-        }
-
-        .animate-fade-in-up {
-          animation: fade-in-up 0.6s ease-out forwards;
-        }
-
-        .animate-fade-in {
-          animation: fade-in 0.8s ease-out forwards;
-        }
-
-        .animate-heart-beat {
-          animation: heart-beat 0.6s ease-out;
         }
 
         .line-clamp-1 {
@@ -1581,26 +1235,8 @@ export default function Posters() {
           overflow: hidden;
         }
 
-        .animation-delay-0 { animation-delay: 0ms !important; }
-        .animation-delay-300 { animation-delay: 300ms !important; }
         .animation-delay-1000 { animation-delay: 1000ms !important; }
         .animation-delay-2000 { animation-delay: 2000ms !important; }
-
-        /* Fix for mobile responsiveness */
-        @media (max-width: 640px) {
-          .container {
-            padding-left: 1rem;
-            padding-right: 1rem;
-          }
-          
-          h1 {
-            font-size: 2.5rem !important;
-          }
-          
-          .grid {
-            gap: 1rem !important;
-          }
-        }
       `}</style>
     </div>
   );
