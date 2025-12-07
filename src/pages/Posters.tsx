@@ -2,7 +2,13 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Card } from "@/components/ui/card";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Search, ExternalLink, Sparkles, Leaf, Zap, Mail, Instagram, Upload, User, Palette, Send, Eye, Maximize2, X, Globe } from "lucide-react";
-import { useRouter } from "next/router";
+// Avant Next.js
+const router = useRouter();
+router.push("/some-page");
+
+// Après React Router
+const navigate = useNavigate();
+navigate("/some-page");
 
 interface Poster {
   id: number;
