@@ -203,9 +203,11 @@ export default function Posters() {
                         bg-[size:20px_20px] dark:bg-[linear-gradient(90deg,#059669_1px,transparent_1px),linear-gradient(180deg,#059669_1px,transparent_1px)]"></div>
         
         {/* Animated noise texture for depth */}
-        <div className="absolute inset-0 opacity-[0.015] dark:opacity-[0.01] 
-                        bg-[url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noise"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noise)"/%3E%3C/svg%3E')]"></div>
-      </div>
+<div
+  className="absolute inset-0 opacity-[0.015] dark:opacity-[0.01] 
+  bg-[url('data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%20200%20200%22%20xmlns%3D%22http://www.w3.org/2000/svg%22%3E%3Cfilter%20id%3D%22noise%22%3E%3CfeTurbulence%20type%3D%22fractalNoise%22%20baseFrequency%3D%220.65%22%20numOctaves%3D%223%22%20stitchTiles%3D%22stitch%22/%3E%3C/filter%3E%3Crect%20width%3D%22100%25%22%20height%3D%22100%25%22%20filter%3D%22url(%23noise)%22/%3E%3C/svg%3E')]"
+></div>
+
 
       <div className="container mx-auto px-4 py-12 relative z-10">
         <div className="max-w-7xl mx-auto">
