@@ -1,4 +1,19 @@
-/** @type {import('tailwindcss').Config} */
+@type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        border: '#e5e7eb', // define the color you want for 'border-border'
+      },
+    },
+  },
+  plugins: [],
+};
+
 export default {
   content: [
     "./index.html",
