@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
+import LazyVideoPlayer from "@/components/LazyVideoPlayer"; // Import the new component
 import { 
   Play, 
   ExternalLink, 
@@ -341,18 +342,14 @@ export default function Videos() {
     };
   }, []);
 
-  const getEmbedUrl = useCallback((youtubeId: string, isShort?: boolean) => {
-    const muteParam = isMuted ? '&mute=1' : '';
-    if (isShort) {
-      return `https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1&playsinline=1&controls=0&loop=1&playlist=${youtubeId}${muteParam}`;
-    }
-    return `https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1&playsinline=1&controls=1${muteParam}`;
-  }, [isMuted]);
-
   const handleSectionChange = useCallback((section: 'tutorials' | 'community') => {
     setIsTransitioning(true);
     setActiveSection(section);
     setTimeout(() => setIsTransitioning(false), 300);
+  }, []);
+
+  const getAspectRatio = useCallback((video: Video): '16:9' | '9:16' => {
+    return video.aspect === 'portrait' ? '9:16' : '16:9';
   }, []);
 
   return (
@@ -763,7 +760,7 @@ export default function Videos() {
         </div>
       </div>
 
-      {/* Enhanced Video Modal */}
+      {/* Enhanced Video Modal with LazyVideoPlayer */}
       <Dialog open={isModalOpen} onOpenChange={handleModalClose}>
         <DialogContent 
           ref={modalRef}
@@ -872,31 +869,32 @@ export default function Videos() {
             </div>
           )}
 
-          {/* Video Player */}
+          {/* Video Player with LazyVideoPlayer */}
           <div className="relative w-full h-full flex items-center justify-center bg-black">
             {selectedVideo && (
-              <>
-                {/* YouTube Player */}
-                <div className="w-full h-full flex items-center justify-center animate-scale-in">
-                  <iframe
-                    width="100%"
-                    height="100%"
-                    src={getEmbedUrl(selectedVideo.youtubeId, selectedVideo.isShort)}
-                    title={getLocalizedText(selectedVideo.title)}
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    className={`${selectedVideo.isShort ? 'aspect-[9/16]' : 'aspect-video'} w-full h-full`}
-                    loading="lazy"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                    onLoad={() => setIsLoading(false)}
-                    style={{
-                      maxWidth: selectedVideo.isShort ? '400px' : '100%',
-                      maxHeight: selectedVideo.isShort ? '710px' : '100%'
-                    }}
-                  />
-                </div>
-              </>
+              <div className="w-full h-full flex items-center justify-center animate-scale-in">
+                <LazyVideoPlayer
+                  youtubeId={selectedVideo.youtubeId}
+                  title={getLocalizedText(selectedVideo.title)}
+                  autoplay={true}
+                  muted={isMuted}
+                  loop={selectedVideo.isShort}
+                  showControls={false}
+                  aspectRatio={getAspectRatio(selectedVideo)}
+                  className="w-full h-full"
+                  onLoad={() => setIsLoading(false)}
+                  onError={() => {
+                    setIsLoading(false);
+                    // Show error state in modal
+                  }}
+                  onPlay={() => {
+                    // Video started playing
+                  }}
+                  onPause={() => {
+                    // Video paused
+                  }}
+                />
+              </div>
             )}
             
             {/* Floating Controls for when interface is hidden */}
@@ -1008,7 +1006,7 @@ export default function Videos() {
         />
       )}
 
-      {/* Animations CSS */}
+      {/* Animations CSS - Keep your existing styles */}
       <style>{`
         @keyframes fadeInUp {
           from {
