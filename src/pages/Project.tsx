@@ -3,9 +3,100 @@ import {
   Trash2, FileText, Apple, Package, Target, Users, Leaf, Recycle, 
   CheckCircle2, ArrowRight, Sparkles, Award, BookOpen, Calendar, 
   Home, X, Share2, Rocket, Zap, Heart, Star, Cloud, Sun, Moon, 
-  Droplets, Clock, Infinity, ChevronRight, Pause, Play, LucideIcon 
+  Droplets, Clock, Infinity, ChevronRight, Pause, Play, LucideIcon,
+  Languages
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+// Types pour la traduction
+type Language = 'fr' | 'en';
+type TranslationKey = 
+  | 'title' | 'subtitle' | 'welcome' | 'discover' | 'guide' | 'goals'
+  | 'goals_subtitle' | 'sorting' | 'sorting_subtitle' | 'actions'
+  | 'actions_subtitle' | 'commitment' | 'commitment_text' | 'contact'
+  | 'see_activities' | 'tips' | 'tips_list_1' | 'tips_list_2' | 'tips_list_3'
+  | 'close' | 'mission' | 'community' | 'innovation' | 'impact'
+  | 'events' | 'resources' | 'home_guide' | 'projects' | 'initiative'
+  | 'our_planet' | 'together_future' | 'simple_system' | 'concrete_initiatives'
+  | 'recycling_tips' | 'description';
+
+// Traductions
+const translations: Record<Language, Record<TranslationKey, string>> = {
+  fr: {
+    title: "Écologie",
+    subtitle: "Notre Planète, Notre Avenir",
+    welcome: "Bienvenue dans notre mouvement écologique communautaire. Ensemble, nous créons un avenir durable pour les générations à venir.",
+    discover: "Découvrir",
+    guide: "Guide Pratique",
+    goals: "Nos Objectifs",
+    goals_subtitle: "Construire un avenir durable ensemble",
+    sorting: "Tri Sélectif",
+    sorting_subtitle: "Un système simple pour un impact maximal",
+    actions: "Passez à l'Action",
+    actions_subtitle: "Des initiatives concrètes pour s'engager",
+    commitment: "Votre Engagement Compte",
+    commitment_text: "Chaque geste que vous posez pour l'environnement a un impact réel. Ensemble, nous pouvons créer un changement durable.",
+    contact: "Nous Contacter",
+    see_activities: "Voir les Activités",
+    tips: "CONSEILS DE TRI",
+    tips_list_1: "• Bien nettoyer les contenants",
+    tips_list_2: "• Retirer les couvercles non-recyclables",
+    tips_list_3: "• Compacter pour gagner de l'espace",
+    close: "Fermer",
+    mission: "Mission Éducative",
+    community: "Engagement Communautaire",
+    innovation: "Innovation Technologique",
+    impact: "Impact Mesurable",
+    events: "Événements",
+    resources: "Ressources",
+    home_guide: "Guides",
+    projects: "Projets",
+    initiative: "Initiative Écologique 2025",
+    our_planet: "Notre Planète, Notre Avenir",
+    together_future: "Construire un avenir durable ensemble",
+    simple_system: "Un système simple pour un impact maximal",
+    concrete_initiatives: "Des initiatives concrètes pour s'engager",
+    recycling_tips: "CONSEILS DE TRI",
+    description: "Description"
+  },
+  en: {
+    title: "Ecology",
+    subtitle: "Our Planet, Our Future",
+    welcome: "Welcome to our community ecological movement. Together, we're creating a sustainable future for generations to come.",
+    discover: "Discover",
+    guide: "Practical Guide",
+    goals: "Our Goals",
+    goals_subtitle: "Building a sustainable future together",
+    sorting: "Selective Sorting",
+    sorting_subtitle: "A simple system for maximum impact",
+    actions: "Take Action",
+    actions_subtitle: "Concrete initiatives to get involved",
+    commitment: "Your Commitment Matters",
+    commitment_text: "Every action you take for the environment has a real impact. Together, we can create lasting change.",
+    contact: "Contact Us",
+    see_activities: "See Activities",
+    tips: "RECYCLING TIPS",
+    tips_list_1: "• Clean containers thoroughly",
+    tips_list_2: "• Remove non-recyclable lids",
+    tips_list_3: "• Compact to save space",
+    close: "Close",
+    mission: "Educational Mission",
+    community: "Community Engagement",
+    innovation: "Technological Innovation",
+    impact: "Measurable Impact",
+    events: "Events",
+    resources: "Resources",
+    home_guide: "Guides",
+    projects: "Projects",
+    initiative: "Ecological Initiative 2025",
+    our_planet: "Our Planet, Our Future",
+    together_future: "Building a sustainable future together",
+    simple_system: "A simple system for maximum impact",
+    concrete_initiatives: "Concrete initiatives to get involved",
+    recycling_tips: "RECYCLING TIPS",
+    description: "Description"
+  }
+};
 
 // Hook de navigation SPA
 const useNavigate = () => {
@@ -43,6 +134,35 @@ const useTheme = () => {
   }, []);
   
   return { theme, toggleTheme };
+};
+
+// Hook de gestion de la langue
+const useLanguage = () => {
+  const [language, setLanguage] = useState<Language>('fr');
+  
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem('language') as Language | null;
+    const browserLanguage = navigator.language.split('-')[0] as Language;
+    
+    if (savedLanguage && (savedLanguage === 'fr' || savedLanguage === 'en')) {
+      setLanguage(savedLanguage);
+    } else if (browserLanguage === 'fr' || browserLanguage === 'en') {
+      setLanguage(browserLanguage);
+    }
+  }, []);
+  
+  useEffect(() => {
+    localStorage.setItem('language', language);
+    document.documentElement.lang = language;
+  }, [language]);
+  
+  const toggleLanguage = useCallback(() => {
+    setLanguage(prev => prev === 'fr' ? 'en' : 'fr');
+  }, []);
+  
+  const t = useCallback((key: TranslationKey) => translations[language][key], [language]);
+  
+  return { language, toggleLanguage, t };
 };
 
 // Composants de base
@@ -426,15 +546,19 @@ const WidgetFlottant = memo(({
 
 WidgetFlottant.displayName = 'WidgetFlottant';
 
-// Arrière-plan animé optimisé
+// Arrière-plan animé amélioré avec particules et effets de lumière
 const FondAnime = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
   const particlesRef = useRef<Array<{
     x: number; y: number; size: number; speedX: number; speedY: number;
-    color: string; alpha: number; pulseSpeed: number; type: 'dot' | 'sparkle';
+    color: string; alpha: number; pulseSpeed: number; type: 'dot' | 'sparkle' | 'glow';
   }>>([]);
   const timeRef = useRef(0);
+  const glowParticlesRef = useRef<Array<{
+    x: number; y: number; size: number; alpha: number; color: string;
+    speed: number; direction: number;
+  }>>([]);
   
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -453,36 +577,69 @@ const FondAnime = memo(() => {
     
     const initParticles = () => {
       particlesRef.current = [];
-      const particleCount = Math.min(Math.floor((canvas.width * canvas.height) / 30000), 80);
+      glowParticlesRef.current = [];
+      const particleCount = Math.min(Math.floor((canvas.width * canvas.height) / 25000), 120);
+      const glowCount = 8;
       const isDark = document.documentElement.classList.contains('dark');
       
       const colors = isDark 
-        ? ['#60a5fa', '#34d399', '#22d3ee', '#c084fc'] // Bleu, Vert, Cyan, Violet
-        : ['#3b82f6', '#10b981', '#06b6d4', '#8b5cf6']; // Bleu, Vert, Cyan, Violet
+        ? ['#60a5fa', '#34d399', '#22d3ee', '#c084fc', '#f472b6'] // Bleu, Vert, Cyan, Violet, Rose
+        : ['#3b82f6', '#10b981', '#06b6d4', '#8b5cf6', '#ec4899']; // Bleu, Vert, Cyan, Violet, Rose
       
+      // Particules normales
       for (let i = 0; i < particleCount; i++) {
         particlesRef.current.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          size: Math.random() * 2 + 0.5,
-          speedX: Math.random() * 0.3 - 0.15,
-          speedY: Math.random() * 0.3 - 0.15,
+          size: Math.random() * 3 + 0.5,
+          speedX: Math.random() * 0.5 - 0.25,
+          speedY: Math.random() * 0.5 - 0.25,
           color: colors[Math.floor(Math.random() * colors.length)],
-          alpha: Math.random() * 0.2 + 0.1,
-          pulseSpeed: Math.random() * 0.02 + 0.005,
-          type: Math.random() > 0.8 ? 'sparkle' : 'dot'
+          alpha: Math.random() * 0.3 + 0.1,
+          pulseSpeed: Math.random() * 0.03 + 0.01,
+          type: Math.random() > 0.85 ? 'sparkle' : Math.random() > 0.7 ? 'glow' : 'dot'
+        });
+      }
+      
+      // Particules de glow (effets de lumière)
+      for (let i = 0; i < glowCount; i++) {
+        glowParticlesRef.current.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          size: Math.random() * 100 + 50,
+          alpha: Math.random() * 0.05 + 0.02,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          speed: Math.random() * 0.3 + 0.1,
+          direction: Math.random() * Math.PI * 2
         });
       }
     };
     
+    const drawGlowParticle = (particle: typeof glowParticlesRef.current[0], ctx: CanvasRenderingContext2D) => {
+      const gradient = ctx.createRadialGradient(
+        particle.x, particle.y, 0,
+        particle.x, particle.y, particle.size
+      );
+      
+      gradient.addColorStop(0, `${particle.color}${Math.floor(particle.alpha * 255).toString(16).padStart(2, '0')}`);
+      gradient.addColorStop(1, `${particle.color}00`);
+      
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    };
+    
     const drawParticle = (particle: typeof particlesRef.current[0], ctx: CanvasRenderingContext2D) => {
       ctx.save();
-      ctx.globalAlpha = particle.alpha;
       
       if (particle.type === 'sparkle') {
         // Effet étincelle
+        ctx.globalAlpha = particle.alpha;
         ctx.fillStyle = '#ffffff';
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 15;
         ctx.shadowColor = particle.color;
         
         ctx.beginPath();
@@ -490,28 +647,60 @@ const FondAnime = memo(() => {
         ctx.fill();
         
         // Rayons
-        for (let i = 0; i < 6; i++) {
-          const angle = (i * Math.PI) / 3;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 8; i++) {
+          const angle = (i * Math.PI) / 4;
+          const length = particle.size * 4;
           const x1 = particle.x + Math.cos(angle) * particle.size;
           const y1 = particle.y + Math.sin(angle) * particle.size;
-          const x2 = particle.x + Math.cos(angle) * particle.size * 4;
-          const y2 = particle.y + Math.sin(angle) * particle.size * 4;
+          const x2 = particle.x + Math.cos(angle) * length;
+          const y2 = particle.y + Math.sin(angle) * length;
           
           ctx.beginPath();
           ctx.moveTo(x1, y1);
           ctx.lineTo(x2, y2);
-          ctx.lineWidth = 0.5;
-          ctx.strokeStyle = '#ffffff';
           ctx.stroke();
         }
+      } else if (particle.type === 'glow') {
+        // Effet glow avec halo
+        const gradient = ctx.createRadialGradient(
+          particle.x, particle.y, 0,
+          particle.x, particle.y, particle.size * 3
+        );
+        
+        gradient.addColorStop(0, `${particle.color}ff`);
+        gradient.addColorStop(0.5, `${particle.color}80`);
+        gradient.addColorStop(1, `${particle.color}00`);
+        
+        ctx.globalAlpha = particle.alpha;
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size * 3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Centre brillant
+        ctx.globalAlpha = particle.alpha * 2;
+        ctx.fillStyle = particle.color;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fill();
       } else {
         // Point normal avec halo
+        ctx.globalAlpha = particle.alpha;
         ctx.fillStyle = particle.color;
-        ctx.shadowBlur = 15;
+        ctx.shadowBlur = 20;
         ctx.shadowColor = particle.color;
         
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Centre plus brillant
+        ctx.globalAlpha = particle.alpha * 1.5;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size * 0.5, 0, Math.PI * 2);
         ctx.fill();
       }
       
@@ -519,49 +708,100 @@ const FondAnime = memo(() => {
     };
     
     const animate = () => {
-      timeRef.current += 0.01;
+      timeRef.current += 0.016;
       
       ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       const isDark = document.documentElement.classList.contains('dark');
       
-      // Fond dégradé animé
+      // Fond dégradé animé plus riche
       const gradient = ctx.createLinearGradient(
         0, 0,
-        canvas.width * Math.cos(timeRef.current * 0.1),
-        canvas.height * Math.sin(timeRef.current * 0.1)
+        canvas.width * Math.cos(timeRef.current * 0.05),
+        canvas.height * Math.sin(timeRef.current * 0.05)
       );
       
       if (isDark) {
-        gradient.addColorStop(0, 'rgba(15, 23, 42, 0.2)');
-        gradient.addColorStop(0.5, 'rgba(30, 41, 59, 0.15)');
-        gradient.addColorStop(1, 'rgba(15, 23, 42, 0.2)');
+        gradient.addColorStop(0, 'rgba(15, 23, 42, 0.8)');
+        gradient.addColorStop(0.3, 'rgba(30, 41, 59, 0.6)');
+        gradient.addColorStop(0.7, 'rgba(15, 23, 42, 0.8)');
+        gradient.addColorStop(1, 'rgba(30, 41, 59, 0.6)');
       } else {
-        gradient.addColorStop(0, 'rgba(249, 250, 251, 0.3)');
-        gradient.addColorStop(0.5, 'rgba(243, 244, 246, 0.2)');
-        gradient.addColorStop(1, 'rgba(249, 250, 251, 0.3)');
+        gradient.addColorStop(0, 'rgba(249, 250, 251, 0.9)');
+        gradient.addColorStop(0.3, 'rgba(243, 244, 246, 0.7)');
+        gradient.addColorStop(0.7, 'rgba(249, 250, 251, 0.9)');
+        gradient.addColorStop(1, 'rgba(243, 244, 246, 0.7)');
       }
       
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Effets de lumière flottants
+      glowParticlesRef.current.forEach(particle => {
+        // Mouvement lent et organique
+        particle.x += Math.cos(timeRef.current * 0.5 + particle.direction) * particle.speed;
+        particle.y += Math.sin(timeRef.current * 0.3 + particle.direction) * particle.speed;
+        
+        // Rebond doux sur les bords
+        if (particle.x > canvas.width + particle.size) particle.x = -particle.size;
+        if (particle.x < -particle.size) particle.x = canvas.width + particle.size;
+        if (particle.y > canvas.height + particle.size) particle.y = -particle.size;
+        if (particle.y < -particle.size) particle.y = canvas.height + particle.size;
+        
+        // Animation de pulsation
+        particle.alpha = 0.02 + Math.sin(timeRef.current * 0.2 + particle.direction) * 0.03;
+        
+        drawGlowParticle(particle, ctx);
+      });
       
       // Mettre à jour et dessiner les particules
       particlesRef.current.forEach(particle => {
         particle.x += particle.speedX;
         particle.y += particle.speedY;
         
-        // Rebond sur les bords
-        if (particle.x > canvas.width) particle.x = 0;
-        if (particle.x < 0) particle.x = canvas.width;
-        if (particle.y > canvas.height) particle.y = 0;
-        if (particle.y < 0) particle.y = canvas.height;
+        // Rebond doux sur les bords
+        if (particle.x > canvas.width + 50) particle.x = -50;
+        if (particle.x < -50) particle.x = canvas.width + 50;
+        if (particle.y > canvas.height + 50) particle.y = -50;
+        if (particle.y < -50) particle.y = canvas.height + 50;
         
         // Animation de pulsation
-        particle.alpha = 0.15 + Math.sin(timeRef.current * particle.pulseSpeed) * 0.1;
+        particle.alpha = 0.15 + Math.sin(timeRef.current * particle.pulseSpeed) * 0.15;
+        
+        // Léger mouvement organique supplémentaire
+        if (Math.random() > 0.99) {
+          particle.speedX += (Math.random() - 0.5) * 0.05;
+          particle.speedY += (Math.random() - 0.5) * 0.05;
+          particle.speedX = Math.max(Math.min(particle.speedX, 0.5), -0.5);
+          particle.speedY = Math.max(Math.min(particle.speedY, 0.5), -0.5);
+        }
         
         drawParticle(particle, ctx);
       });
+      
+      // Effets de connexion entre particules proches
+      ctx.strokeStyle = isDark ? 'rgba(96, 165, 250, 0.1)' : 'rgba(59, 130, 246, 0.08)';
+      ctx.lineWidth = 1;
+      
+      for (let i = 0; i < particlesRef.current.length; i++) {
+        for (let j = i + 1; j < particlesRef.current.length; j++) {
+          const p1 = particlesRef.current[i];
+          const p2 = particlesRef.current[j];
+          const dx = p1.x - p2.x;
+          const dy = p1.y - p2.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < 150) {
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.globalAlpha = 0.1 * (1 - distance / 150);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+          }
+        }
+      }
       
       animationRef.current = requestAnimationFrame(animate);
     };
@@ -588,24 +828,59 @@ const FondAnime = memo(() => {
         {/* Gradients animés */}
         <div className={`
           absolute inset-0
-          dark:bg-gradient-to-br dark:from-blue-900/10 dark:via-transparent dark:to-emerald-900/10
-          bg-gradient-to-br from-blue-50/20 via-transparent to-emerald-50/20
+          dark:bg-gradient-to-br 
+          dark:from-blue-900/20 
+          dark:via-purple-900/15 
+          dark:to-emerald-900/20
+          bg-gradient-to-br 
+          from-blue-50/30 
+          via-purple-50/20 
+          to-emerald-50/30
           animate-gradient-flow
         `} />
         
-        {/* Effets de lumière */}
+        {/* Effets de lumière animés */}
         <div className={`
-          absolute top-0 left-0 right-0 h-64
-          dark:bg-gradient-to-b dark:from-blue-500/10 dark:to-transparent
-          bg-gradient-to-b from-blue-400/10 to-transparent
+          absolute top-0 left-0 right-0 h-96
+          dark:bg-gradient-to-b 
+          dark:from-blue-500/20 
+          dark:via-transparent 
+          dark:to-transparent
+          bg-gradient-to-b 
+          from-blue-400/15 
+          via-transparent 
+          to-transparent
           animate-float-gentle
         `} />
         
         <div className={`
-          absolute bottom-0 left-0 right-0 h-64
-          dark:bg-gradient-to-t dark:from-emerald-500/10 dark:to-transparent
-          bg-gradient-to-t from-emerald-400/10 to-transparent
+          absolute bottom-0 left-0 right-0 h-96
+          dark:bg-gradient-to-t 
+          dark:from-emerald-500/20 
+          dark:via-transparent 
+          dark:to-transparent
+          bg-gradient-to-t 
+          from-emerald-400/15 
+          via-transparent 
+          to-transparent
           animate-float-gentle-reverse
+        `} />
+        
+        {/* Particules de lumière supplémentaires */}
+        <div className={`
+          absolute top-1/4 left-1/4 w-96 h-96 rounded-full
+          dark:bg-blue-500/10
+          bg-blue-400/5
+          blur-3xl
+          animate-pulse-slow
+        `} />
+        
+        <div className={`
+          absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full
+          dark:bg-emerald-500/10
+          bg-emerald-400/5
+          blur-3xl
+          animate-pulse-slow-reverse
         `} />
       </div>
     </>
@@ -613,6 +888,67 @@ const FondAnime = memo(() => {
 });
 
 FondAnime.displayName = 'FondAnime';
+
+// Composant Switch pour langue
+const LanguageSwitch = memo(() => {
+  const { language, toggleLanguage } = useLanguage();
+  
+  return (
+    <motion.button
+      onClick={toggleLanguage}
+      className={`
+        relative p-3 rounded-xl transition-colors flex items-center gap-2
+        dark:bg-slate-800/50 dark:hover:bg-slate-700/50
+        bg-gray-100 hover:bg-gray-200
+        border dark:border-white/10 border-gray-300
+      `}
+      aria-label={language === 'fr' ? 'Switch to English' : 'Passer en Français'}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+    >
+      <Languages className="w-5 h-5 dark:text-blue-400 text-blue-600" />
+      <span className="font-medium dark:text-white text-gray-800">
+        {language === 'fr' ? 'EN' : 'FR'}
+      </span>
+    </motion.button>
+  );
+});
+
+LanguageSwitch.displayName = 'LanguageSwitch';
+
+// Composant Switch pour thème
+const ThemeSwitch = memo(() => {
+  const { theme, toggleTheme } = useTheme();
+  
+  return (
+    <motion.button
+      onClick={toggleTheme}
+      className={`
+        relative p-3 rounded-xl transition-colors
+        dark:bg-slate-800/50 dark:hover:bg-slate-700/50
+        bg-gray-100 hover:bg-gray-200
+        border dark:border-white/10 border-gray-300
+      `}
+      aria-label={theme === 'dark' ? 'Passer au mode clair' : 'Passer au mode sombre'}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+    >
+      <motion.div
+        initial={false}
+        animate={{ rotate: theme === 'dark' ? 0 : 180 }}
+        transition={{ type: "spring", stiffness: 200, damping: 10 }}
+      >
+        {theme === 'dark' ? (
+          <Sun className="w-5 h-5 text-yellow-500" />
+        ) : (
+          <Moon className="w-5 h-5 text-blue-600" />
+        )}
+      </motion.div>
+    </motion.button>
+  );
+});
+
+ThemeSwitch.displayName = 'ThemeSwitch';
 
 // Types pour la carte
 interface CarteInteractiveProps {
@@ -739,6 +1075,7 @@ interface BinModalProps {
   details: string;
   color?: string;
   bg?: string;
+  t: (key: TranslationKey) => string;
 }
 
 // Modal optimisé sans barres de défilement
@@ -751,6 +1088,7 @@ const BinModal = memo(({
   details,
   color = "dark:text-blue-600 text-blue-500",
   bg = "dark:bg-gradient-to-br dark:from-blue-500/20 dark:to-blue-500/10 bg-gradient-to-br from-blue-400/20 to-blue-400/10",
+  t
 }: BinModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
   
@@ -876,7 +1214,7 @@ const BinModal = memo(({
                         font-semibold text-lg mb-3
                         dark:text-blue-400 text-blue-600
                       `}>
-                        Description
+                        {t('description')}
                       </h4>
                       <p className={`
                         leading-relaxed
@@ -901,18 +1239,18 @@ const BinModal = memo(({
                         dark:text-blue-400 text-blue-600
                       `}>
                         <Sparkles className="w-4 h-4" />
-                        CONSEILS DE TRI
+                        {t('recycling_tips')}
                       </h4>
                       <ul className="text-sm space-y-1">
                         <li className={`
                           dark:text-gray-300 text-gray-700
-                        `}>• Bien nettoyer les contenants</li>
+                        `}>{t('tips_list_1')}</li>
                         <li className={`
                           dark:text-gray-300 text-gray-700
-                        `}>• Retirer les couvercles non-recyclables</li>
+                        `}>{t('tips_list_2')}</li>
                         <li className={`
                           dark:text-gray-300 text-gray-700
-                        `}>• Compacter pour gagner de l'espace</li>
+                        `}>{t('tips_list_3')}</li>
                       </ul>
                     </motion.div>
                   </div>
@@ -933,7 +1271,7 @@ const BinModal = memo(({
                       onClick={onClose}
                       className="flex-1"
                     >
-                      Fermer
+                      {t('close')}
                     </BoutonAnime>
                     
                     <BoutonAnime
@@ -944,7 +1282,7 @@ const BinModal = memo(({
                       glow={true}
                     >
                       <BookOpen className="w-4 h-4 mr-2" />
-                      Guide
+                      {t('guide')}
                     </BoutonAnime>
                   </motion.div>
                 </CardContent>
@@ -959,43 +1297,10 @@ const BinModal = memo(({
 
 BinModal.displayName = 'BinModal';
 
-// Composant Switch pour thème
-const ThemeSwitch = memo(() => {
-  const { theme, toggleTheme } = useTheme();
-  
-  return (
-    <motion.button
-      onClick={toggleTheme}
-      className={`
-        relative p-3 rounded-xl transition-colors
-        dark:bg-slate-800/50 dark:hover:bg-slate-700/50
-        bg-gray-100 hover:bg-gray-200
-        border dark:border-white/10 border-gray-300
-      `}
-      aria-label={theme === 'dark' ? 'Passer au mode clair' : 'Passer au mode sombre'}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-    >
-      <motion.div
-        initial={false}
-        animate={{ rotate: theme === 'dark' ? 0 : 180 }}
-        transition={{ type: "spring", stiffness: 200, damping: 10 }}
-      >
-        {theme === 'dark' ? (
-          <Sun className="w-5 h-5 text-yellow-500" />
-        ) : (
-          <Moon className="w-5 h-5 text-blue-600" />
-        )}
-      </motion.div>
-    </motion.button>
-  );
-});
-
-ThemeSwitch.displayName = 'ThemeSwitch';
-
 // Composant principal optimisé
 export default function ProjectEco() {
   const { theme } = useTheme();
+  const { t } = useLanguage();
   
   // États optimisés
   const [activeBinIndex, setActiveBinIndex] = useState(0);
@@ -1045,38 +1350,38 @@ export default function ProjectEco() {
   const goals = useMemo(() => [
     {
       icon: Target,
-      title: "Mission Éducative",
+      title: t('mission'),
       description: "Sensibiliser aux enjeux environnementaux",
       color: "dark:text-blue-600 text-blue-500",
       bg: "dark:bg-gradient-to-br dark:from-blue-500/20 dark:to-cyan-600/10 bg-gradient-to-br from-blue-400/20 to-cyan-500/10",
     },
     {
       icon: Users,
-      title: "Engagement Communautaire",
+      title: t('community'),
       description: "Créer une communauté active et engagée",
       color: "dark:text-green-600 text-green-500",
       bg: "dark:bg-gradient-to-br dark:from-green-500/20 dark:to-emerald-600/10 bg-gradient-to-br from-green-400/20 to-emerald-500/10",
     },
     {
       icon: Recycle,
-      title: "Innovation Technologique",
+      title: t('innovation'),
       description: "Développer des solutions innovantes",
       color: "dark:text-purple-600 text-purple-500",
       bg: "dark:bg-gradient-to-br dark:from-purple-500/20 dark:to-pink-600/10 bg-gradient-to-br from-purple-400/20 to-pink-500/10",
     },
     {
       icon: Award,
-      title: "Impact Mesurable",
+      title: t('impact'),
       description: "Atteindre des résultats concrets",
       color: "dark:text-amber-600 text-amber-500",
       bg: "dark:bg-gradient-to-br dark:from-amber-500/20 dark:to-orange-600/10 bg-gradient-to-br from-amber-400/20 to-orange-500/10",
     }
-  ], []);
+  ], [t]);
   
   const actions = useMemo(() => [
     {
       icon: Calendar,
-      title: "Événements",
+      title: t('events'),
       description: "Activités et événements communautaires",
       color: "dark:text-blue-600 text-blue-500",
       bg: "dark:bg-gradient-to-br dark:from-blue-500/20 dark:to-cyan-600/10 bg-gradient-to-br from-blue-400/20 to-cyan-500/10",
@@ -1084,7 +1389,7 @@ export default function ProjectEco() {
     },
     {
       icon: BookOpen,
-      title: "Ressources",
+      title: t('resources'),
       description: "Guides et documents pédagogiques",
       color: "dark:text-green-600 text-green-500",
       bg: "dark:bg-gradient-to-br dark:from-green-500/20 dark:to-emerald-600/10 bg-gradient-to-br from-green-400/20 to-emerald-500/10",
@@ -1092,7 +1397,7 @@ export default function ProjectEco() {
     },
     {
       icon: Home,
-      title: "Guides",
+      title: t('home_guide'),
       description: "Conseils pour un foyer écologique",
       color: "dark:text-purple-600 text-purple-500",
       bg: "dark:bg-gradient-to-br dark:from-purple-500/20 dark:to-pink-600/10 bg-gradient-to-br from-purple-400/20 to-pink-500/10",
@@ -1100,13 +1405,13 @@ export default function ProjectEco() {
     },
     {
       icon: Share2,
-      title: "Projets",
+      title: t('projects'),
       description: "Découvrez nos initiatives en cours",
       color: "dark:text-amber-600 text-amber-500",
       bg: "dark:bg-gradient-to-br dark:from-amber-500/20 dark:to-orange-600/10 bg-gradient-to-br from-amber-400/20 to-orange-500/10",
       href: "/project"
     }
-  ], []);
+  ], [t]);
   
   // Animation de scroll optimisée
   useEffect(() => {
@@ -1197,8 +1502,9 @@ export default function ProjectEco() {
         </div>
       </motion.div>
       
-      {/* Bouton thème */}
-      <div className="fixed top-4 right-4 z-40">
+      {/* Boutons de contrôle */}
+      <div className="fixed top-4 right-4 z-40 flex gap-2">
+        <LanguageSwitch />
         <ThemeSwitch />
       </div>
       
@@ -1224,7 +1530,7 @@ export default function ProjectEco() {
             `}
           >
             <Sparkles className="w-4 h-4" />
-            <span>Initiative Écologique 2025</span>
+            <span>{t('initiative')}</span>
           </motion.div>
           
           <motion.div
@@ -1250,7 +1556,7 @@ export default function ProjectEco() {
                 }}
                 style={{ backgroundSize: '200% auto' }}
               >
-                Écologie
+                {t('title')}
               </motion.span>
             </h1>
             
@@ -1263,7 +1569,7 @@ export default function ProjectEco() {
               <span className={`
                 dark:text-white text-gray-900
               `}>
-                Notre Planète, Notre Avenir
+                {t('our_planet')}
               </span>
             </motion.h2>
           </motion.div>
@@ -1278,8 +1584,7 @@ export default function ProjectEco() {
               text-xl leading-relaxed mb-6
               dark:text-gray-300 text-gray-700
             `}>
-              Bienvenue dans notre mouvement écologique communautaire. 
-              Ensemble, nous créons un avenir durable pour les générations à venir.
+              {t('welcome')}
             </p>
           </motion.div>
           
@@ -1297,7 +1602,7 @@ export default function ProjectEco() {
               glow={true}
               pulse={true}
             >
-              Découvrir
+              {t('discover')}
             </BoutonAnime>
             
             <BoutonAnime
@@ -1306,7 +1611,7 @@ export default function ProjectEco() {
               icon={<BookOpen className="w-5 h-5" />}
               href="/guide"
             >
-              Guide Pratique
+              {t('guide')}
             </BoutonAnime>
           </motion.div>
         </motion.section>
@@ -1338,13 +1643,13 @@ export default function ProjectEco() {
               text-4xl md:text-5xl font-bold mb-4
               dark:text-white text-gray-900
             `}>
-              Nos Objectifs
+              {t('goals')}
             </h2>
             <p className={`
               text-lg
               dark:text-gray-300 text-gray-600
             `}>
-              Construire un avenir durable ensemble
+              {t('together_future')}
             </p>
           </motion.div>
           
@@ -1398,13 +1703,13 @@ export default function ProjectEco() {
               text-4xl md:text-5xl font-bold mb-4
               dark:text-white text-gray-900
             `}>
-              Tri Sélectif
+              {t('sorting')}
             </h2>
             <p className={`
               text-lg
               dark:text-gray-300 text-gray-600
             `}>
-              Un système simple pour un impact maximal
+              {t('simple_system')}
             </p>
           </motion.div>
           
@@ -1512,13 +1817,13 @@ export default function ProjectEco() {
               text-4xl md:text-5xl font-bold mb-4
               dark:text-white text-gray-900
             `}>
-              Passez à l'Action
+              {t('actions')}
             </h2>
             <p className={`
               text-lg
               dark:text-gray-300 text-gray-600
             `}>
-              Des initiatives concrètes pour s'engager
+              {t('concrete_initiatives')}
             </p>
           </motion.div>
           
@@ -1569,14 +1874,13 @@ export default function ProjectEco() {
                     text-3xl font-bold mb-4
                     dark:text-white text-gray-900
                   `}>
-                    Votre Engagement Compte
+                    {t('commitment')}
                   </h3>
                   <p className={`
                     mb-6 max-w-2xl mx-auto
                     dark:text-gray-300 text-gray-700
                   `}>
-                    Chaque geste que vous posez pour l'environnement a un impact réel. 
-                    Ensemble, nous pouvons créer un changement durable.
+                    {t('commitment_text')}
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <BoutonAnime
@@ -1586,7 +1890,7 @@ export default function ProjectEco() {
                       href="/contact"
                       glow={true}
                     >
-                      Nous Contacter
+                      {t('contact')}
                     </BoutonAnime>
                     
                     <BoutonAnime
@@ -1595,7 +1899,7 @@ export default function ProjectEco() {
                       icon={<Calendar className="w-5 h-5" />}
                       href="/activities"
                     >
-                      Voir les Activités
+                      {t('see_activities')}
                     </BoutonAnime>
                   </div>
                 </CardContent>
@@ -1616,6 +1920,7 @@ export default function ProjectEco() {
           details={bins[openModalIndex].details}
           color={bins[openModalIndex].color}
           bg={bins[openModalIndex].bg}
+          t={t}
         />
       )}
       
@@ -1629,6 +1934,16 @@ export default function ProjectEco() {
         @keyframes pulse {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.7; transform: scale(1.05); }
+        }
+        
+        @keyframes pulse-slow {
+          0%, 100% { opacity: 0.3; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(1.1); }
+        }
+        
+        @keyframes pulse-slow-reverse {
+          0%, 100% { opacity: 0.3; transform: scale(1.1); }
+          50% { opacity: 0.5; transform: scale(1); }
         }
         
         @keyframes float-orb {
@@ -1659,6 +1974,14 @@ export default function ProjectEco() {
         
         .animate-pulse {
           animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .animate-pulse-slow {
+          animation: pulse-slow 8s ease-in-out infinite;
+        }
+        
+        .animate-pulse-slow-reverse {
+          animation: pulse-slow-reverse 7s ease-in-out infinite;
         }
         
         .animate-gradient-flow {
@@ -1699,6 +2022,17 @@ export default function ProjectEco() {
         /* Smooth transitions for theme changes */
         * {
           transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+        
+        /* Optimisations de performance */
+        .backdrop-blur-sm {
+          backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
+        }
+        
+        .backdrop-blur-xl {
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
         }
       `}</style>
     </div>
