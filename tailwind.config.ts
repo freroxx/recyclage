@@ -20,7 +20,8 @@ const config: Config = {
     },
     extend: {
       colors: {
-        border: "#e5e7eb", // from your JS config
+        // Keep your theme colors intact
+        border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
