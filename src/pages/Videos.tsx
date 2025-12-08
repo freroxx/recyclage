@@ -21,8 +21,12 @@ import {
   Minimize2,
   Globe,
   Shield,
-  Heart,
-  ThumbsUp
+  Eye,
+  EyeOff,
+  MessageCircle,
+  Share2,
+  Volume2,
+  VolumeX
 } from "lucide-react";
 
 interface Video {
@@ -36,7 +40,6 @@ interface Video {
   type: 'tutorial' | 'community';
   aspect?: 'landscape' | 'portrait';
   creator?: { name: string; role: string };
-  likes?: number;
   isShort?: boolean;
 }
 
@@ -48,6 +51,8 @@ export default function Videos() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
+  const [showInterface, setShowInterface] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout>();
   const [isMobile, setIsMobile] = useState(false);
@@ -64,25 +69,23 @@ export default function Videos() {
   }, []);
 
   const videos: Video[] = useMemo(() => [
-    // New short added to community section
     {
       id: "community-short",
       title: {
-        fr: "Le Chat Recyclage en Action",
-        en: "The Recycling Cat in Action"
+        fr: "Ne jetez pas vos bouteilles - Épisode 2",
+        en: "Don't throw your bottles - Episode 2"
       },
       description: {
-        fr: "Une démonstration amusante de tri sélectif avec notre mascotte",
-        en: "A fun demonstration of selective sorting with our mascot"
+        fr: "Créé par Salsabile",
+        en: "Made by Salsabile"
       },
       youtubeId: "TeS8QfpPHic",
-      duration: "0:38",
+      duration: "0:53",
       publishDate: "2025-12-08",
       category: { fr: "Communauté", en: "Community" },
       type: "community",
       aspect: "portrait",
-      creator: { name: "Éco-Collectif", role: "Ambassadeur" },
-      likes: 245,
+      creator: { name: "Salsabile", role: "Éco-Créatrice" },
       isShort: true
     },
     {
@@ -102,14 +105,13 @@ export default function Videos() {
       type: "community",
       aspect: "portrait",
       creator: { name: "Salsabile", role: "Éco-Artiste" },
-      likes: 189,
       isShort: true
     },
     {
       id: "community2",
       title: {
-        fr: "Crafting and recycling - Episode 1",
-        en: "Artisanat et recyclage - Episode 1"
+        fr: "Artisanat et recyclage - Épisode 1",
+        en: "Crafting and recycling - Episode 1"
       },
       description: {
         fr: "Créé par Salsabile - Astuces simples pour recycler",
@@ -122,7 +124,6 @@ export default function Videos() {
       type: "community",
       aspect: "portrait",
       creator: { name: "Salsabile", role: "Éco-Influenceur" },
-      likes: 167,
       isShort: true
     },
     {
@@ -140,8 +141,7 @@ export default function Videos() {
       publishDate: "2024-01-15",
       category: { fr: "Éducation", en: "Education" },
       type: "tutorial",
-      aspect: "landscape",
-      likes: 842
+      aspect: "landscape"
     },
     {
       id: "2",
@@ -158,8 +158,7 @@ export default function Videos() {
       publishDate: "2024-02-10",
       category: { fr: "Processus", en: "Process" },
       type: "tutorial",
-      aspect: "landscape",
-      likes: 532
+      aspect: "landscape"
     },
     {
       id: "3",
@@ -176,8 +175,7 @@ export default function Videos() {
       publishDate: "2024-03-05",
       category: { fr: "Documentaire", en: "Documentary" },
       type: "tutorial",
-      aspect: "landscape",
-      likes: 721
+      aspect: "landscape"
     }
   ], []);
 
@@ -196,6 +194,7 @@ export default function Videos() {
   useEffect(() => {
     if (selectedVideo) {
       setIsModalOpen(true);
+      setShowInterface(true);
       // Reset controls visibility
       setShowControls(true);
       if (controlsTimeoutRef.current) {
@@ -211,7 +210,13 @@ export default function Videos() {
 
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      const isFullscreen = !!document.fullscreenElement;
+      setIsFullscreen(isFullscreen);
+      // When entering fullscreen, show interface briefly
+      if (isFullscreen) {
+        setShowInterface(true);
+        setShowControls(true);
+      }
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
@@ -238,6 +243,7 @@ export default function Videos() {
   const handleVideoSelect = useCallback((video: Video) => {
     setIsLoading(true);
     setSelectedVideo(video);
+    setShowInterface(true);
     // Close any existing fullscreen when opening new video
     if (document.fullscreenElement) {
       document.exitFullscreen();
@@ -280,9 +286,25 @@ export default function Videos() {
   const handleModalClose = useCallback(() => {
     setSelectedVideo(null);
     setIsFullscreen(false);
+    setShowInterface(true);
     if (document.fullscreenElement) {
       document.exitFullscreen();
     }
+  }, []);
+
+  const toggleInterface = useCallback(() => {
+    setShowInterface(prev => !prev);
+    setShowControls(true);
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+    controlsTimeoutRef.current = setTimeout(() => {
+      setShowControls(false);
+    }, 3000);
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    setIsMuted(prev => !prev);
   }, []);
 
   useEffect(() => {
@@ -294,11 +316,31 @@ export default function Videos() {
   }, []);
 
   const getEmbedUrl = (youtubeId: string, isShort?: boolean) => {
+    const muteParam = isMuted ? '&mute=1' : '';
     if (isShort) {
-      return `https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1&playsinline=1&controls=0&loop=1&playlist=${youtubeId}`;
+      return `https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1&playsinline=1&controls=0&loop=1&playlist=${youtubeId}${muteParam}`;
     }
-    return `https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1&playsinline=1&controls=1`;
+    return `https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1&playsinline=1&controls=1${muteParam}`;
   };
+
+  const shareVideo = useCallback(() => {
+    if (selectedVideo) {
+      const url = `https://www.youtube.com/watch?v=${selectedVideo.youtubeId}`;
+      const title = getLocalizedText(selectedVideo.title);
+      
+      if (navigator.share) {
+        navigator.share({
+          title: title,
+          text: getLocalizedText(selectedVideo.description),
+          url: url,
+        }).catch(console.error);
+      } else {
+        navigator.clipboard.writeText(url).then(() => {
+          alert(language === 'fr' ? 'Lien copié dans le presse-papier!' : 'Link copied to clipboard!');
+        });
+      }
+    }
+  }, [selectedVideo, language, getLocalizedText]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-emerald-50/5 dark:to-emerald-950/5">
@@ -313,8 +355,8 @@ export default function Videos() {
             >
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/30 to-green-500/30 blur-xl rounded-full animate-pulse-slow"></div>
-                <div className="relative bg-gradient-to-br from-emerald-500/20 via-green-500/20 to-teal-500/20 backdrop-blur-sm border border-emerald-500/30 p-4 rounded-2xl shadow-lg shadow-emerald-500/10 hover:shadow-2xl hover:shadow-emerald-500/20 transition-all duration-500 hover:scale-105">
-                  <Play className="w-8 h-8 text-emerald-600 dark:text-emerald-400 transition-transform duration-300 hover:scale-110" />
+                <div className="relative bg-gradient-to-br from-emerald-500/20 via-green-500/20 to-teal-500/20 backdrop-blur-sm border border-emerald-500/30 p-4 rounded-2xl shadow-lg shadow-emerald-500/10 hover:shadow-2xl hover:shadow-emerald-500/20 transition-all duration-500 hover:scale-105 group">
+                  <Play className="w-8 h-8 text-emerald-600 dark:text-emerald-400 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" />
                 </div>
               </div>
             </div>
@@ -329,6 +371,7 @@ export default function Videos() {
             
             <p 
               className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 animate-fade-up"
+              style={{ animationDelay: '0.1s' }}
             >
               {language === 'fr' 
                 ? 'Apprenez et inspirez-vous pour un avenir plus durable' 
@@ -344,17 +387,17 @@ export default function Videos() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setActiveSection('tutorials')}
-                  className={`group relative px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-3 ${
+                  className={`group relative px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-3 transform hover:-translate-y-0.5 active:translate-y-0 ${
                     activeSection === 'tutorials'
-                      ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/25'
+                      ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/25 animate-glow'
                       : 'bg-background/50 border border-border hover:border-emerald-500/30 hover:bg-emerald-500/5 text-muted-foreground hover:text-foreground'
-                  } hover:shadow-md hover:-translate-y-0.5 active:translate-y-0`}
+                  }`}
                 >
-                  <Recycle className={`w-4 h-4 transition-transform duration-300 ${activeSection === 'tutorials' ? 'group-hover:rotate-12' : 'group-hover:rotate-180'}`} />
+                  <Recycle className={`w-4 h-4 transition-transform duration-300 ${activeSection === 'tutorials' ? 'animate-spin-slow' : ''} group-hover:rotate-180`} />
                   {language === 'fr' ? 'Tutoriels' : 'Tutorials'}
                   <span className={`px-2 py-0.5 text-xs rounded-full transition-all duration-300 ${
                     activeSection === 'tutorials' 
-                      ? 'bg-white/30' 
+                      ? 'bg-white/30 animate-pulse-slow' 
                       : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 group-hover:bg-emerald-500/20'
                   }`}>
                     {tutorialVideos.length}
@@ -363,17 +406,17 @@ export default function Videos() {
                 
                 <button
                   onClick={() => setActiveSection('community')}
-                  className={`group relative px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-3 ${
+                  className={`group relative px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-3 transform hover:-translate-y-0.5 active:translate-y-0 ${
                     activeSection === 'community'
-                      ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/25'
+                      ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/25 animate-glow'
                       : 'bg-background/50 border border-border hover:border-emerald-500/30 hover:bg-emerald-500/5 text-muted-foreground hover:text-foreground'
-                  } hover:shadow-md hover:-translate-y-0.5 active:translate-y-0`}
+                  }`}
                 >
-                  <Users className={`w-4 h-4 transition-transform duration-300 ${activeSection === 'community' ? 'group-hover:scale-110' : 'group-hover:scale-125'}`} />
+                  <Users className={`w-4 h-4 transition-transform duration-300 ${activeSection === 'community' ? 'animate-bounce-slow' : ''} group-hover:scale-125`} />
                   {language === 'fr' ? 'Communauté' : 'Community'}
                   <span className={`px-2 py-0.5 text-xs rounded-full transition-all duration-300 ${
                     activeSection === 'community' 
-                      ? 'bg-white/30' 
+                      ? 'bg-white/30 animate-pulse-slow' 
                       : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 group-hover:bg-emerald-500/20'
                   }`}>
                     {communityVideos.length}
@@ -435,13 +478,13 @@ export default function Videos() {
                         </div>
 
                         <div className="absolute top-3 left-3 z-30 flex gap-2">
-                          <Badge className="bg-black/80 backdrop-blur-sm text-white border-0 text-xs px-2.5 py-1 hover:bg-black/90 transition-colors duration-200">
+                          <Badge className="bg-black/80 backdrop-blur-sm text-white border-0 text-xs px-2.5 py-1 hover:bg-black/90 transition-colors duration-200 group-hover:scale-105">
                             {getLocalizedText(video.category || { fr: 'Catégorie', en: 'Category' })}
                           </Badge>
                         </div>
 
                         {video.duration && (
-                          <div className="absolute bottom-3 right-3 z-30 bg-black/80 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-md hover:bg-black/90 transition-colors duration-200">
+                          <div className="absolute bottom-3 right-3 z-30 bg-black/80 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-md hover:bg-black/90 transition-colors duration-200 group-hover:scale-105">
                             {video.duration}
                           </div>
                         )}
@@ -504,16 +547,16 @@ export default function Videos() {
               <div 
                 className="text-center mb-8"
               >
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 rounded-full mb-4 hover:bg-emerald-500/15 transition-all duration-300 hover:scale-105">
-                  <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400 animate-pulse" />
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 rounded-full mb-4 hover:bg-emerald-500/15 transition-all duration-300 hover:scale-105 animate-pulse-slow">
+                  <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
                     {language === 'fr' ? 'Vidéos de la Communauté' : 'Community Videos'}
                   </span>
                 </div>
-                <h2 className="text-2xl md:text-3xl font-bold mb-3">
+                <h2 className="text-2xl md:text-3xl font-bold mb-3 animate-fade-up">
                   {language === 'fr' ? 'Notre Communauté en Action' : 'Our Community in Action'}
                 </h2>
-                <p className="text-muted-foreground max-w-xl mx-auto">
+                <p className="text-muted-foreground max-w-xl mx-auto animate-fade-up" style={{ animationDelay: '0.1s' }}>
                   {language === 'fr' 
                     ? 'Découvrez les moments inspirants partagés par notre communauté' 
                     : 'Discover inspiring moments shared by our community'}
@@ -564,15 +607,8 @@ export default function Videos() {
                               </Badge>
                             </div>
 
-                            {video.likes && (
-                              <div className="absolute top-4 right-4 z-30 bg-black/80 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-md hover:bg-black/90 transition-colors duration-200 flex items-center gap-1">
-                                <Heart className="w-3 h-3 fill-current" />
-                                <span>{video.likes}</span>
-                              </div>
-                            )}
-
                             {video.duration && (
-                              <div className="absolute bottom-4 right-4 z-30 bg-black/80 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-md hover:bg-black/90 transition-colors duration-200">
+                              <div className="absolute bottom-4 right-4 z-30 bg-black/80 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-md hover:bg-black/90 transition-colors duration-200 group-hover:scale-105">
                                 {video.duration}
                               </div>
                             )}
@@ -712,12 +748,12 @@ export default function Videos() {
         </div>
       </div>
 
-      {/* Enhanced Video Modal with Mobile Improvements */}
+      {/* Enhanced Video Modal with Advanced Controls */}
       <Dialog open={isModalOpen} onOpenChange={handleModalClose}>
         <DialogContent 
           ref={modalRef}
           className={`fixed inset-0 m-auto border-none bg-black shadow-2xl overflow-hidden p-0 transition-all duration-300 z-50 ${
-            isMobile ? 'w-full h-full' : 'sm:w-[95vw] sm:h-[85vh]'
+            isMobile ? 'w-full h-full rounded-none' : 'sm:w-[95vw] sm:h-[85vh] rounded-lg'
           } ${selectedVideo?.isShort ? 'max-w-[400px] max-h-[710px]' : ''}`}
           style={{
             maxWidth: selectedVideo?.aspect === 'portrait' ? '400px' : 
@@ -726,8 +762,7 @@ export default function Videos() {
                       isMobile ? '100%' : 'min(562px, 85vh)',
             aspectRatio: selectedVideo?.isShort ? '9/16' : 
                         selectedVideo?.aspect === 'portrait' ? '9/16' : '16/9',
-            borderRadius: isMobile ? '0' : '0.5rem',
-            transform: isMobile && !isFullscreen ? 'translateY(0)' : undefined,
+            borderRadius: isMobile && !isFullscreen ? '0' : undefined,
           }}
           onMouseMove={handleMouseMove}
           onTouchMove={handleMouseMove}
@@ -741,7 +776,7 @@ export default function Videos() {
           
           {/* Loading Overlay */}
           {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-50">
+            <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-50">
               <div className="relative">
                 <div className="w-20 h-20 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -751,71 +786,84 @@ export default function Videos() {
             </div>
           )}
           
-          {/* Top Controls Bar */}
-          <div 
-            className={`absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/95 via-black/85 to-transparent p-4 transition-all duration-300 ${
-              showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="ghost"
-                  size={isMobile ? "icon" : "sm"}
-                  className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 transition-all duration-200 hover:border-emerald-500/50 active:scale-95`}
-                  onClick={handleModalClose}
-                >
-                  <X className="w-5 h-5" />
-                </Button>
-                
-                {selectedVideo && (
-                  <div className="ml-2 max-w-[calc(100%-120px)]">
-                    <h3 className="text-sm font-semibold text-white/95 truncate">
-                      {getLocalizedText(selectedVideo.title)}
-                    </h3>
-                    {selectedVideo.creator && (
-                      <p className="text-xs text-white/70 truncate">
-                        {language === 'fr' ? 'Par' : 'By'} {selectedVideo.creator.name}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size={isMobile ? "icon" : "sm"}
-                  className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 transition-all duration-200 hover:border-emerald-500/50 active:scale-95`}
-                  onClick={() => selectedVideo && openInYouTube(selectedVideo.youtubeId)}
-                  title={language === 'fr' ? 'Ouvrir sur YouTube' : 'Open on YouTube'}
-                >
-                  <ExternalLink className="w-5 h-5" />
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size={isMobile ? "icon" : "sm"}
-                  className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 transition-all duration-200 hover:border-emerald-500/50 active:scale-95`}
-                  onClick={toggleFullscreen}
-                  title={language === 'fr' ? 'Plein écran' : 'Fullscreen'}
-                >
-                  {isFullscreen ? (
-                    <Minimize2 className="w-5 h-5" />
-                  ) : (
-                    <Maximize2 className="w-5 h-5" />
+          {/* Top Controls Bar - Show only when interface is visible */}
+          {showInterface && (
+            <div 
+              className={`absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/95 via-black/85 to-transparent p-4 transition-all duration-300 ${
+                showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="ghost"
+                    size={isMobile ? "icon" : "sm"}
+                    className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 transition-all duration-200 hover:border-emerald-500/50 active:scale-95`}
+                    onClick={handleModalClose}
+                  >
+                    <X className="w-5 h-5" />
+                  </Button>
+                  
+                  {selectedVideo && (
+                    <div className="ml-2 max-w-[calc(100%-140px)]">
+                      <h3 className="text-sm font-semibold text-white/95 truncate">
+                        {getLocalizedText(selectedVideo.title)}
+                      </h3>
+                      {selectedVideo.creator && (
+                        <p className="text-xs text-white/70 truncate">
+                          {language === 'fr' ? 'Par' : 'By'} {selectedVideo.creator.name}
+                        </p>
+                      )}
+                    </div>
                   )}
-                </Button>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  {/* Hide Interface Button */}
+                  <Button
+                    variant="ghost"
+                    size={isMobile ? "icon" : "sm"}
+                    className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 transition-all duration-200 hover:border-emerald-500/50 active:scale-95`}
+                    onClick={toggleInterface}
+                    title={language === 'fr' ? 'Masquer l\'interface' : 'Hide interface'}
+                  >
+                    <EyeOff className="w-5 h-5" />
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size={isMobile ? "icon" : "sm"}
+                    className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 transition-all duration-200 hover:border-emerald-500/50 active:scale-95`}
+                    onClick={() => selectedVideo && openInYouTube(selectedVideo.youtubeId)}
+                    title={language === 'fr' ? 'Ouvrir sur YouTube' : 'Open on YouTube'}
+                  >
+                    <ExternalLink className="w-5 h-5" />
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size={isMobile ? "icon" : "sm"}
+                    className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 transition-all duration-200 hover:border-emerald-500/50 active:scale-95`}
+                    onClick={toggleFullscreen}
+                    title={language === 'fr' ? 'Plein écran' : 'Fullscreen'}
+                  >
+                    {isFullscreen ? (
+                      <Minimize2 className="w-5 h-5" />
+                    ) : (
+                      <Maximize2 className="w-5 h-5" />
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-          
+          )}
+
           {/* Video Player */}
-          <div className="relative w-full h-full flex items-center justify-center">
+          <div className="relative w-full h-full flex items-center justify-center bg-black">
             {selectedVideo && (
               <>
                 {/* YouTube Player - 100% viewable embed */}
-                <div className="w-full h-full flex items-center justify-center bg-black">
+                <div className="w-full h-full flex items-center justify-center">
                   <iframe
                     width="100%"
                     height="100%"
@@ -836,61 +884,145 @@ export default function Videos() {
                 </div>
               </>
             )}
-          </div>
-
-          {/* Bottom Controls Bar */}
-          <div 
-            className={`absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/95 via-black/85 to-transparent p-4 transition-all duration-300 ${
-              showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full pointer-events-none'
-            }`}
-          >
-            {selectedVideo && (
-              <div className="space-y-3">
-                <div>
-                  <h3 className="text-base font-semibold text-white line-clamp-1">
-                    {getLocalizedText(selectedVideo.title)}
-                  </h3>
-                  <p className="text-sm text-white/80 line-clamp-2 mt-1">
-                    {getLocalizedText(selectedVideo.description)}
-                  </p>
-                </div>
+            
+            {/* Floating Controls for when interface is hidden */}
+            {!showInterface && showControls && (
+              <div className="absolute top-4 right-4 z-50 flex flex-col gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-12 w-12 bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 transition-all duration-200 hover:border-emerald-500/50"
+                  onClick={toggleInterface}
+                  title={language === 'fr' ? 'Afficher l\'interface' : 'Show interface'}
+                >
+                  <Eye className="w-5 h-5" />
+                </Button>
                 
-                <div className="flex items-center justify-between pt-3 border-t border-white/20">
-                  <div className="flex items-center gap-4 text-sm text-white/70">
-                    {selectedVideo.publishDate && (
-                      <span className="flex items-center gap-1.5">
-                        <Calendar className="w-4 h-4" />
-                        <span className="hidden sm:inline">{formatDate(selectedVideo.publishDate)}</span>
-                        <span className="sm:hidden text-xs">{formatDate(selectedVideo.publishDate)}</span>
-                      </span>
-                    )}
-                    {selectedVideo.duration && (
-                      <span className="flex items-center gap-1.5">
-                        <Clock className="w-4 h-4" />
-                        <span>{selectedVideo.duration}</span>
-                      </span>
-                    )}
-                    {selectedVideo.likes && (
-                      <span className="flex items-center gap-1.5">
-                        <ThumbsUp className="w-4 h-4" />
-                        <span>{selectedVideo.likes}</span>
-                      </span>
-                    )}
-                  </div>
-                  
-                  <Button
-                    size={isMobile ? "sm" : "default"}
-                    className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-105 transition-all duration-200 active:scale-95"
-                    onClick={() => selectedVideo && openInYouTube(selectedVideo.youtubeId)}
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    <span className="hidden sm:inline">YouTube</span>
-                    <span className="sm:hidden">YT</span>
-                  </Button>
-                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-12 w-12 bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 transition-all duration-200 hover:border-emerald-500/50"
+                  onClick={toggleMute}
+                  title={isMuted ? (language === 'fr' ? 'Activer le son' : 'Unmute') : (language === 'fr' ? 'Désactiver le son' : 'Mute')}
+                >
+                  {isMuted ? (
+                    <VolumeX className="w-5 h-5" />
+                  ) : (
+                    <Volume2 className="w-5 h-5" />
+                  )}
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-12 w-12 bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 transition-all duration-200 hover:border-emerald-500/50"
+                  onClick={shareVideo}
+                  title={language === 'fr' ? 'Partager' : 'Share'}
+                >
+                  <Share2 className="w-5 h-5" />
+                </Button>
+              </div>
+            )}
+            
+            {/* Floating Share/Mute Controls for mobile when interface is visible */}
+            {showInterface && isMobile && selectedVideo?.isShort && (
+              <div className="absolute bottom-20 right-4 z-50 flex flex-col gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-12 w-12 bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 transition-all duration-200 hover:border-emerald-500/50"
+                  onClick={shareVideo}
+                  title={language === 'fr' ? 'Partager' : 'Share'}
+                >
+                  <Share2 className="w-5 h-5" />
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-12 w-12 bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 transition-all duration-200 hover:border-emerald-500/50"
+                  onClick={toggleMute}
+                  title={isMuted ? (language === 'fr' ? 'Activer le son' : 'Unmute') : (language === 'fr' ? 'Désactiver le son' : 'Mute')}
+                >
+                  {isMuted ? (
+                    <VolumeX className="w-5 h-5" />
+                  ) : (
+                    <Volume2 className="w-5 h-5" />
+                  )}
+                </Button>
               </div>
             )}
           </div>
+
+          {/* Bottom Controls Bar - Show only when interface is visible */}
+          {showInterface && (
+            <div 
+              className={`absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/95 via-black/85 to-transparent p-4 transition-all duration-300 ${
+                showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full pointer-events-none'
+              }`}
+            >
+              {selectedVideo && (
+                <div className="space-y-3">
+                  <div>
+                    <h3 className="text-base font-semibold text-white line-clamp-1">
+                      {getLocalizedText(selectedVideo.title)}
+                    </h3>
+                    <p className="text-sm text-white/80 line-clamp-2 mt-1">
+                      {getLocalizedText(selectedVideo.description)}
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-center justify-between pt-3 border-t border-white/20">
+                    <div className="flex items-center gap-4 text-sm text-white/70">
+                      {selectedVideo.publishDate && (
+                        <span className="flex items-center gap-1.5">
+                          <Calendar className="w-4 h-4" />
+                          <span className="hidden sm:inline">{formatDate(selectedVideo.publishDate)}</span>
+                          <span className="sm:hidden text-xs">{formatDate(selectedVideo.publishDate)}</span>
+                        </span>
+                      )}
+                      {selectedVideo.duration && (
+                        <span className="flex items-center gap-1.5">
+                          <Clock className="w-4 h-4" />
+                          <span>{selectedVideo.duration}</span>
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size={isMobile ? "icon" : "default"}
+                        className={`${isMobile ? 'h-10 w-10' : ''} gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-105 transition-all duration-200 active:scale-95`}
+                        onClick={shareVideo}
+                        title={language === 'fr' ? 'Partager' : 'Share'}
+                      >
+                        {isMobile ? (
+                          <Share2 className="w-5 h-5" />
+                        ) : (
+                          <>
+                            <Share2 className="w-4 h-4" />
+                            <span className="hidden sm:inline">
+                              {language === 'fr' ? 'Partager' : 'Share'}
+                            </span>
+                          </>
+                        )}
+                      </Button>
+                      
+                      <Button
+                        size={isMobile ? "sm" : "default"}
+                        className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-105 transition-all duration-200 active:scale-95"
+                        onClick={() => selectedVideo && openInYouTube(selectedVideo.youtubeId)}
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        <span className="hidden sm:inline">YouTube</span>
+                        <span className="sm:hidden">YT</span>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -985,6 +1117,33 @@ export default function Videos() {
           }
         }
         
+        @keyframes glow {
+          0%, 100% {
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+          }
+          50% {
+            box-shadow: 0 0 40px rgba(16, 185, 129, 0.8);
+          }
+        }
+        
+        @keyframes spin-slow {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+        
+        @keyframes bounce-slow {
+          0%, 100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-6px);
+          }
+        }
+        
         .animate-fade-up {
           animation: fade-up 0.6s ease-out forwards;
         }
@@ -1020,6 +1179,18 @@ export default function Videos() {
           animation: shimmer 3s infinite;
         }
         
+        .animate-glow {
+          animation: glow 2s ease-in-out infinite;
+        }
+        
+        .animate-spin-slow {
+          animation: spin-slow 3s linear infinite;
+        }
+        
+        .animate-bounce-slow {
+          animation: bounce-slow 3s ease-in-out infinite;
+        }
+        
         .card-hover {
           transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), 
                      box-shadow 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), 
@@ -1027,8 +1198,8 @@ export default function Videos() {
         }
         
         .card-hover:hover {
-          transform: translateY(-6px) scale(1.02);
-          box-shadow: 0 25px 50px rgba(16, 185, 129, 0.15);
+          transform: translateY(-8px) scale(1.02);
+          box-shadow: 0 25px 50px rgba(16, 185, 129, 0.2);
         }
         
         /* Reduced motion */
@@ -1040,6 +1211,9 @@ export default function Videos() {
           .animate-bounce,
           .animate-shimmer,
           .animate-fade-up,
+          .animate-glow,
+          .animate-spin-slow,
+          .animate-bounce-slow,
           .card-hover,
           .transition-all,
           .transition-transform,
