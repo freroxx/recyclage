@@ -2,8 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Mobile-specific optimizations */
+/* Apply box-sizing globally */
 @layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
   * {
     -webkit-tap-highlight-color: transparent;
   }
@@ -18,6 +24,11 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     touch-action: manipulation;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100vh;
+    overflow-x: hidden;
   }
 
   /* Better touch targets for mobile */
@@ -135,10 +146,6 @@ All colors MUST be HSL.
 }
 
 @layer base {
-  * {
-    border-color: hsl(var(--border));
-  }
-
   body {
     @apply bg-background text-foreground antialiased;
     min-height: 100vh;
@@ -562,6 +569,7 @@ All colors MUST be HSL.
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  flex: 1;
 }
 
 @media (min-width: 640px) {
