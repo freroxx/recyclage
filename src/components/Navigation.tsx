@@ -8,7 +8,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useThemeToggleStyles } from "@/components/ThemeToggle"; // Import des styles globaux
 import { AIChat } from "@/components/AIChat";
-import logo from "@/assets/logo-optimized.webp";
+import logo from "@/assets/logo.png";
 import { motion, AnimatePresence } from "framer-motion";
 import { Leaf } from "lucide-react"; // Import de l'icône Leaf
 
