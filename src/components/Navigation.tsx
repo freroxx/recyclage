@@ -11,6 +11,7 @@ import { AIChat } from "@/components/AIChat";
 import logo from "@/assets/logo.png";
 import { motion, AnimatePresence } from "framer-motion";
 import { Leaf } from "lucide-react"; // Import de l'icône Leaf
+import { useThemeToggleStyles } from "@/components/ThemeToggle";
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
