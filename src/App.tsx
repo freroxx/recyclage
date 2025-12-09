@@ -39,7 +39,12 @@ const PageLoader = () => (
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+    <ThemeProvider 
+      attribute="class" 
+      defaultTheme="light" 
+      enableSystem 
+      disableTransitionOnChange={false}  // CHANGEMENT ICI
+    >
       <LanguageProvider>
         <TooltipProvider>
 
@@ -50,7 +55,7 @@ const App = () => (
           <Sonner position="top-right" />
 
           <BrowserRouter>
-            <div className="min-h-screen flex flex-col bg-background">
+            <div className="min-h-screen flex flex-col bg-background theme-transition">
               <Navigation />
 
               <main className="flex-1 pt-16 sm:pt-20">
