@@ -3,9 +3,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
-import LazyVideoPlayer from "@/components/LazyVideoPlayer"; // Import the new component
+import LazyVideoPlayer from "@/components/LazyVideoPlayer";
 import { 
   Play, 
   ExternalLink, 
@@ -25,7 +26,11 @@ import {
   Eye,
   EyeOff,
   Volume2,
-  VolumeX
+  VolumeX,
+  Search,
+  Video,
+  Youtube,
+  User
 } from "lucide-react";
 
 interface Video {
@@ -36,7 +41,7 @@ interface Video {
   duration?: string;
   publishDate?: string;
   category?: { fr: string; en: string };
-  type: 'tutorial' | 'community';
+  type: 'tutorial' | 'community' | 'channel';
   aspect?: 'landscape' | 'portrait';
   creator?: { name: string; role: string };
   isShort?: boolean;
@@ -46,14 +51,16 @@ export default function Videos() {
   const { language } = useLanguage();
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<'tutorials' | 'community'>('tutorials');
+  const [activeSection, setActiveSection] = useState<'tutorials' | 'community' | 'channel'>('tutorials');
   const [isLoading, setIsLoading] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [showInterface, setShowInterface] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const modalRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout>();
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   useScrollReveal();
@@ -69,6 +76,24 @@ export default function Videos() {
   }, []);
 
   const videos: Video[] = useMemo(() => [
+    {
+      id: "channel-showcase",
+      title: {
+        fr: "Website Showcase",
+        en: "Website Showcase"
+      },
+      description: {
+        fr: "Présentation complète de notre site web et de ses fonctionnalités",
+        en: "Complete overview of our website and its features"
+      },
+      youtubeId: "v_EyngbVFb8",
+      duration: "1:28",
+      publishDate: "2025-12-09",
+      category: { fr: "Chaîne", en: "Channel" },
+      type: "channel",
+      aspect: "landscape",
+      creator: { name: "Yahia", role: "Développeur" }
+    },
     {
       id: "community-short",
       title: {
@@ -181,6 +206,33 @@ export default function Videos() {
 
   const tutorialVideos = useMemo(() => videos.filter(v => v.type === "tutorial"), [videos]);
   const communityVideos = useMemo(() => videos.filter(v => v.type === "community"), [videos]);
+  const channelVideos = useMemo(() => videos.filter(v => v.type === "channel"), [videos]);
+
+  const filteredTutorialVideos = useMemo(() => {
+    if (!searchQuery) return tutorialVideos;
+    return tutorialVideos.filter(video => 
+      video.title[language].toLowerCase().includes(searchQuery.toLowerCase()) ||
+      video.description[language].toLowerCase().includes(searchQuery.toLowerCase()) ||
+      video.category?.[language].toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [tutorialVideos, searchQuery, language]);
+
+  const filteredCommunityVideos = useMemo(() => {
+    if (!searchQuery) return communityVideos;
+    return communityVideos.filter(video => 
+      video.title[language].toLowerCase().includes(searchQuery.toLowerCase()) ||
+      video.description[language].toLowerCase().includes(searchQuery.toLowerCase()) ||
+      video.creator?.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [communityVideos, searchQuery, language]);
+
+  const filteredChannelVideos = useMemo(() => {
+    if (!searchQuery) return channelVideos;
+    return channelVideos.filter(video => 
+      video.title[language].toLowerCase().includes(searchQuery.toLowerCase()) ||
+      video.description[language].toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [channelVideos, searchQuery, language]);
 
   const getLocalizedText = useCallback((text: { fr: string; en: string } | string) => {
     if (typeof text === 'string') return text;
@@ -327,6 +379,12 @@ export default function Videos() {
           e.preventDefault();
           toggleInterface();
           break;
+        case '/':
+          if (!e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            searchInputRef.current?.focus();
+          }
+          break;
       }
     };
 
@@ -342,7 +400,7 @@ export default function Videos() {
     };
   }, []);
 
-  const handleSectionChange = useCallback((section: 'tutorials' | 'community') => {
+  const handleSectionChange = useCallback((section: 'tutorials' | 'community' | 'channel') => {
     setIsTransitioning(true);
     setActiveSection(section);
     setTimeout(() => setIsTransitioning(false), 300);
@@ -352,49 +410,69 @@ export default function Videos() {
     return video.aspect === 'portrait' ? '9:16' : '16:9';
   }, []);
 
+  const clearSearch = useCallback(() => {
+    setSearchQuery("");
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-emerald-50/5 dark:to-emerald-950/5 transition-colors duration-500 ease-in-out">
       <div className="container mx-auto px-4 py-12 md:py-16 lg:py-20">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div 
-            className="text-center mb-12 md:mb-16 lg:mb-20"
-          >
-            <div 
-              className="inline-flex items-center justify-center p-3 mb-6 animate-float"
-            >
+          <div className="text-center mb-12 md:mb-16 lg:mb-20">
+            <div className="inline-flex items-center justify-center p-3 mb-6 animate-float">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/30 to-green-500/30 blur-xl rounded-full animate-pulse-slow"></div>
                 <div className="relative bg-gradient-to-br from-emerald-500/20 via-green-500/20 to-teal-500/20 backdrop-blur-sm border border-emerald-500/30 p-4 rounded-2xl shadow-lg shadow-emerald-500/10 hover:shadow-2xl hover:shadow-emerald-500/20 transition-all duration-500 hover:scale-105 group">
-                  <Play className="w-8 h-8 text-emerald-600 dark:text-emerald-400 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12 ease-out" />
+                  <Video className="w-8 h-8 text-emerald-600 dark:text-emerald-400 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12 ease-out" />
                 </div>
               </div>
             </div>
             
-            <h1 
-              className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 animate-fade-up"
-            >
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 animate-fade-up">
               <span className="bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 bg-clip-text text-transparent transition-all duration-500">
                 {language === 'fr' ? 'Vidéos Éducatives' : 'Educational Videos'}
               </span>
             </h1>
             
-            <p 
-              className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 animate-fade-up"
-              style={{ animationDelay: '0.1s' }}
-            >
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 animate-fade-up" style={{ animationDelay: '0.1s' }}>
               {language === 'fr' 
                 ? 'Apprenez et inspirez-vous pour un avenir plus durable' 
                 : 'Learn and get inspired for a more sustainable future'}
             </p>
           </div>
 
+          {/* Search Bar */}
+          <div className="mb-10">
+            <div className="relative max-w-2xl mx-auto group">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5 transition-all duration-300 group-hover:text-emerald-500 group-focus-within:text-emerald-500 group-focus-within:scale-110" />
+              <Input
+                ref={searchInputRef}
+                type="search"
+                placeholder={language === 'fr' ? 'Rechercher des vidéos...' : 'Search videos...'}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 pr-12 py-6 rounded-xl border-border/50 bg-background/50 backdrop-blur-sm text-base shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-black/10 focus:shadow-2xl focus:shadow-emerald-500/10 transition-all duration-300 hover:border-emerald-500/30 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+              />
+              {searchQuery && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors duration-200"
+                  aria-label={language === 'fr' ? 'Effacer la recherche' : 'Clear search'}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+              <div className="absolute -bottom-8 left-0 right-0 text-xs text-muted-foreground text-center opacity-0 group-focus-within:opacity-100 transition-opacity duration-300">
+                {language === 'fr' ? 'Appuyez sur / pour rechercher' : 'Press / to search'}
+              </div>
+            </div>
+          </div>
+
           {/* Navigation */}
-          <div 
-            className="mb-10"
-          >
+          <div className="mb-10">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mb-8">
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2 justify-center">
                 <button
                   onClick={() => handleSectionChange('tutorials')}
                   className={`group relative px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-3 transform hover:-translate-y-0.5 active:translate-y-0 ${
@@ -410,7 +488,7 @@ export default function Videos() {
                       ? 'bg-white/30 animate-pulse-slow' 
                       : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 group-hover:bg-emerald-500/20'
                   }`}>
-                    {tutorialVideos.length}
+                    {filteredTutorialVideos.length}
                   </span>
                 </button>
                 
@@ -429,12 +507,31 @@ export default function Videos() {
                       ? 'bg-white/30 animate-pulse-slow' 
                       : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 group-hover:bg-emerald-500/20'
                   }`}>
-                    {communityVideos.length}
+                    {filteredCommunityVideos.length}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => handleSectionChange('channel')}
+                  className={`group relative px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-3 transform hover:-translate-y-0.5 active:translate-y-0 ${
+                    activeSection === 'channel'
+                      ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/25 animate-glow'
+                      : 'bg-background/50 border border-border hover:border-emerald-500/30 hover:bg-emerald-500/5 text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Youtube className={`w-4 h-4 transition-transform duration-300 ${activeSection === 'channel' ? 'animate-pulse-slow' : ''} group-hover:scale-125`} />
+                  {language === 'fr' ? 'Notre Chaîne' : 'Our Channel'}
+                  <span className={`px-2 py-0.5 text-xs rounded-full transition-all duration-300 ${
+                    activeSection === 'channel' 
+                      ? 'bg-white/30 animate-pulse-slow' 
+                      : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 group-hover:bg-emerald-500/20'
+                  }`}>
+                    {filteredChannelVideos.length}
                   </span>
                 </button>
               </div>
               
-              <div className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-300">
+              <div className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-300 hidden sm:block">
                 <span className="inline-flex items-center gap-2 group">
                   <TrendingUp className="w-4 h-4 group-hover:animate-bounce transition-transform duration-300" />
                   {language === 'fr' ? 'Contenu régulièrement mis à jour' : 'Regularly updated content'}
@@ -443,121 +540,139 @@ export default function Videos() {
             </div>
           </div>
 
-          {/* Tutorials Grid */}
+          {/* Content Sections */}
           <div className={`transition-opacity duration-300 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
+            
+            {/* Tutorials Section */}
             {activeSection === 'tutorials' && (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                {tutorialVideos.map((video, index) => (
-                  <div
-                    key={video.id}
-                    className="scroll-reveal"
-                    style={{ 
-                      animationDelay: `${index * 0.1}s`,
-                    }}
-                  >
-                    <Card
-                      className="group relative h-full border-border/40 hover:border-emerald-500/50 overflow-hidden bg-gradient-to-b from-card to-card/50 backdrop-blur-sm cursor-pointer transition-all duration-500 hover:shadow-2xl hover:shadow-emerald-500/10 card-hover"
-                      onClick={() => handleVideoSelect(video)}
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 group-hover:animate-shimmer" />
-                      
-                      <CardContent className="p-0">
-                        <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-emerald-500/5 via-green-500/5 to-teal-500/5">
-                          <img
-                            src={getThumbnailUrl(video.youtubeId)}
-                            alt={getLocalizedText(video.title)}
-                            className="absolute inset-0 w-full h-full object-cover z-10 transition-all duration-700 group-hover:scale-105 group-hover:brightness-110"
-                            loading="lazy"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = getThumbnailUrl(video.youtubeId, 'hqdefault');
-                            }}
-                          />
+              <>
+                {filteredTutorialVideos.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-emerald-500/10 rounded-full flex items-center justify-center">
+                      <Search className="w-8 h-8 text-emerald-500" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-2">
+                      {language === 'fr' ? 'Aucun tutoriel trouvé' : 'No tutorials found'}
+                    </h3>
+                    <p className="text-muted-foreground">
+                      {language === 'fr' 
+                        ? 'Essayez avec d\'autres termes de recherche' 
+                        : 'Try different search terms'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                    {filteredTutorialVideos.map((video, index) => (
+                      <div
+                        key={video.id}
+                        className="scroll-reveal"
+                        style={{ animationDelay: `${index * 0.1}s` }}
+                      >
+                        <Card
+                          className="group relative h-full border-border/40 hover:border-emerald-500/50 overflow-hidden bg-gradient-to-b from-card to-card/50 backdrop-blur-sm cursor-pointer transition-all duration-500 hover:shadow-2xl hover:shadow-emerald-500/10 card-hover"
+                          onClick={() => handleVideoSelect(video)}
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 group-hover:animate-shimmer" />
                           
-                          <div 
-                            className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer"
-                            onClick={(e) => handleThumbnailClick(e, video)}
-                          >
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="relative">
-                                <div className="absolute inset-0 w-20 h-20 bg-emerald-500/40 rounded-full animate-ping-slow" />
-                                <div className="relative w-16 h-16 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-xl shadow-emerald-500/40 transition-all duration-500 group-hover:scale-110 group-hover:shadow-2xl group-hover:shadow-emerald-500/60">
-                                  <Play className="w-8 h-8 text-white ml-0.5" fill="white" />
+                          <CardContent className="p-0">
+                            <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-emerald-500/5 via-green-500/5 to-teal-500/5">
+                              <img
+                                src={getThumbnailUrl(video.youtubeId)}
+                                alt={getLocalizedText(video.title)}
+                                className="absolute inset-0 w-full h-full object-cover z-10 transition-all duration-700 group-hover:scale-110 group-hover:brightness-110"
+                                loading="lazy"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = getThumbnailUrl(video.youtubeId, 'hqdefault');
+                                }}
+                              />
+                              
+                              <div 
+                                className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer"
+                                onClick={(e) => handleThumbnailClick(e, video)}
+                              >
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <div className="relative">
+                                    <div className="absolute inset-0 w-24 h-24 bg-gradient-to-r from-emerald-500/40 via-green-500/40 to-teal-500/40 rounded-full animate-ping-slow blur-md" />
+                                    <div className="relative w-20 h-20 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-xl shadow-emerald-500/40 transition-all duration-500 group-hover:scale-110 group-hover:shadow-2xl group-hover:shadow-emerald-500/60 transform group-hover:rotate-12">
+                                      <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-inner shadow-black/20">
+                                        <Play className="w-6 h-6 text-emerald-600 ml-0.5" fill="currentColor" />
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="absolute top-3 left-3 z-30 flex gap-2">
+                                <Badge className="bg-black/80 backdrop-blur-sm text-white border-0 text-xs px-2.5 py-1 hover:bg-black/90 transition-all duration-200 group-hover:scale-105 group-hover:-translate-y-0.5">
+                                  {getLocalizedText(video.category || { fr: 'Catégorie', en: 'Category' })}
+                                </Badge>
+                              </div>
+
+                              {video.duration && (
+                                <div className="absolute bottom-3 right-3 z-30 bg-black/80 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-md hover:bg-black/90 transition-all duration-200 group-hover:scale-105 group-hover:-translate-y-0.5">
+                                  {video.duration}
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="p-5 relative z-20">
+                              <div className="space-y-4">
+                                <div className="flex items-start justify-between gap-3">
+                                  <h3 className="font-bold text-lg line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300 group-hover:translate-x-1">
+                                    {getLocalizedText(video.title)}
+                                  </h3>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 hover:bg-emerald-500/10 hover:rotate-12"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openInYouTube(video.youtubeId);
+                                    }}
+                                  >
+                                    <ExternalLink className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                                
+                                <p className="text-sm text-muted-foreground line-clamp-2 group-hover:text-foreground/80 transition-colors duration-300">
+                                  {getLocalizedText(video.description)}
+                                </p>
+                                
+                                <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                                  <div className="flex items-center gap-2 text-xs text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300">
+                                    <Calendar className="w-3 h-3 group-hover:scale-110 transition-transform duration-300" />
+                                    <span>{formatDate(video.publishDate || '')}</span>
+                                    <span className="mx-2">•</span>
+                                    <Clock className="w-3 h-3 group-hover:scale-110 transition-transform duration-300" />
+                                    <span>{video.duration}</span>
+                                  </div>
+                                  
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 px-2.5 text-xs hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-300 hover:scale-105 group"
+                                    onClick={() => handleVideoSelect(video)}
+                                  >
+                                    <Play className="w-3 h-3 mr-1.5 group-hover:scale-125 transition-transform duration-300" />
+                                    {language === 'fr' ? 'Regarder' : 'Watch'}
+                                  </Button>
                                 </div>
                               </div>
                             </div>
-                          </div>
-
-                          <div className="absolute top-3 left-3 z-30 flex gap-2">
-                            <Badge className="bg-black/80 backdrop-blur-sm text-white border-0 text-xs px-2.5 py-1 hover:bg-black/90 transition-all duration-200 group-hover:scale-105">
-                              {getLocalizedText(video.category || { fr: 'Catégorie', en: 'Category' })}
-                            </Badge>
-                          </div>
-
-                          {video.duration && (
-                            <div className="absolute bottom-3 right-3 z-30 bg-black/80 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-md hover:bg-black/90 transition-all duration-200 group-hover:scale-105">
-                              {video.duration}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="p-5 relative z-20">
-                          <div className="space-y-4">
-                            <div className="flex items-start justify-between gap-3">
-                              <h3 className="font-bold text-lg line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300 group-hover:translate-x-1">
-                                {getLocalizedText(video.title)}
-                              </h3>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 hover:bg-emerald-500/10 hover:rotate-12"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openInYouTube(video.youtubeId);
-                                }}
-                              >
-                                <ExternalLink className="w-4 h-4" />
-                              </Button>
-                            </div>
-                            
-                            <p className="text-sm text-muted-foreground line-clamp-2 group-hover:text-foreground/80 transition-colors duration-300">
-                              {getLocalizedText(video.description)}
-                            </p>
-                            
-                            <div className="flex items-center justify-between pt-4 border-t border-border/50">
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300">
-                                <Calendar className="w-3 h-3 group-hover:scale-110 transition-transform duration-300" />
-                                <span>{formatDate(video.publishDate || '')}</span>
-                                <span className="mx-2">•</span>
-                                <Clock className="w-3 h-3 group-hover:scale-110 transition-transform duration-300" />
-                                <span>{video.duration}</span>
-                              </div>
-                              
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 px-2.5 text-xs hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-300 hover:scale-105 group"
-                                onClick={() => handleVideoSelect(video)}
-                              >
-                                <Play className="w-3 h-3 mr-1.5 group-hover:scale-125 transition-transform duration-300" />
-                                {language === 'fr' ? 'Regarder' : 'Watch'}
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
 
             {/* Community Section */}
             {activeSection === 'community' && (
               <div className="space-y-8">
-                <div 
-                  className="text-center mb-8"
-                >
+                <div className="text-center mb-8">
                   <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 rounded-full mb-4 hover:bg-emerald-500/15 transition-all duration-300 hover:scale-105 animate-pulse-slow">
                     <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
@@ -575,164 +690,328 @@ export default function Videos() {
                 </div>
                 
                 {/* Community Videos Grid */}
-                <div className="grid sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
-                  {communityVideos.map((video, index) => (
-                    <div 
-                      key={video.id}
-                      className="scroll-reveal"
-                      style={{ animationDelay: `${index * 0.1}s` }}
-                    >
-                      <Card className="group relative overflow-hidden bg-gradient-to-br from-emerald-50/10 to-green-50/5 dark:from-emerald-950/10 dark:to-green-950/5 backdrop-blur-sm border border-emerald-500/20 hover:border-emerald-500/40 transition-all duration-500 card-hover hover:shadow-xl hover:shadow-emerald-500/10">
-                        <CardContent className="p-0">
-                          <div className="relative aspect-[9/16] overflow-hidden">
-                            <div 
-                              className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-green-500/10 to-teal-500/10 cursor-pointer group-hover:from-emerald-500/15 group-hover:via-green-500/15 group-hover:to-teal-500/15 transition-all duration-500"
-                              onClick={(e) => handleThumbnailClick(e, video)}
-                            >
-                              <img
-                                src={getThumbnailUrl(video.youtubeId, 'hqdefault')}
-                                alt={getLocalizedText(video.title)}
-                                className="absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-105 group-hover:brightness-110"
-                                loading="lazy"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.src = getThumbnailUrl(video.youtubeId, 'default');
-                                }}
-                              />
-                              
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300">
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                  <div className="relative">
-                                    <div className="absolute inset-0 w-24 h-24 bg-emerald-500/40 rounded-full animate-ping-slow" />
-                                    <div className="relative w-20 h-20 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-xl shadow-emerald-500/40 transition-all duration-500 group-hover:scale-110 group-hover:shadow-2xl group-hover:shadow-emerald-500/60">
-                                      <Play className="w-10 h-10 text-white ml-1" fill="white" />
+                {filteredCommunityVideos.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-emerald-500/10 rounded-full flex items-center justify-center">
+                      <Users className="w-8 h-8 text-emerald-500" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-2">
+                      {language === 'fr' ? 'Aucune vidéo communautaire trouvée' : 'No community videos found'}
+                    </h3>
+                    <p className="text-muted-foreground">
+                      {language === 'fr' 
+                        ? 'Essayez avec d\'autres termes de recherche' 
+                        : 'Try different search terms'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                    {filteredCommunityVideos.map((video, index) => (
+                      <div 
+                        key={video.id}
+                        className="scroll-reveal"
+                        style={{ animationDelay: `${index * 0.1}s` }}
+                      >
+                        <Card className="group relative overflow-hidden bg-gradient-to-br from-emerald-50/10 to-green-50/5 dark:from-emerald-950/10 dark:to-green-950/5 backdrop-blur-sm border border-emerald-500/20 hover:border-emerald-500/40 transition-all duration-500 card-hover hover:shadow-xl hover:shadow-emerald-500/10">
+                          <CardContent className="p-0">
+                            <div className="relative aspect-video overflow-hidden">
+                              <div 
+                                className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-green-500/10 to-teal-500/10 cursor-pointer group-hover:from-emerald-500/15 group-hover:via-green-500/15 group-hover:to-teal-500/15 transition-all duration-500"
+                                onClick={(e) => handleThumbnailClick(e, video)}
+                              >
+                                <img
+                                  src={getThumbnailUrl(video.youtubeId, 'hqdefault')}
+                                  alt={getLocalizedText(video.title)}
+                                  className="absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-110"
+                                  loading="lazy"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = getThumbnailUrl(video.youtubeId, 'default');
+                                  }}
+                                />
+                                
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="relative">
+                                      <div className="absolute inset-0 w-24 h-24 bg-gradient-to-r from-emerald-500/40 via-green-500/40 to-teal-500/40 rounded-full animate-ping-slow blur-md" />
+                                      <div className="relative w-20 h-20 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-xl shadow-emerald-500/40 transition-all duration-500 group-hover:scale-110 group-hover:shadow-2xl group-hover:shadow-emerald-500/60 transform group-hover:rotate-12">
+                                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-inner shadow-black/20">
+                                          <Play className="w-6 h-6 text-emerald-600 ml-0.5" fill="currentColor" />
+                                        </div>
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
-                              </div>
 
-                              <div className="absolute top-4 left-4 z-30">
-                                <Badge className="bg-gradient-to-r from-emerald-600 to-green-500 text-white border-0 shadow-lg text-xs px-3 py-1.5 hover:from-emerald-500 hover:to-green-400 transition-all duration-300 hover:scale-105">
-                                  <Zap className="w-3 h-3 mr-1.5 animate-pulse" />
-                                  SHORT
-                                </Badge>
-                              </div>
-
-                              {video.duration && (
-                                <div className="absolute bottom-4 right-4 z-30 bg-black/80 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-md hover:bg-black/90 transition-all duration-200 group-hover:scale-105">
-                                  {video.duration}
+                                <div className="absolute top-4 left-4 z-30">
+                                  <Badge className="bg-gradient-to-r from-emerald-600 to-green-500 text-white border-0 shadow-lg text-xs px-3 py-1.5 hover:from-emerald-500 hover:to-green-400 transition-all duration-300 hover:scale-105 hover:-translate-y-0.5">
+                                    <Zap className="w-3 h-3 mr-1.5 animate-pulse" />
+                                    SHORT
+                                  </Badge>
                                 </div>
-                              )}
+
+                                {video.duration && (
+                                  <div className="absolute bottom-4 right-4 z-30 bg-black/80 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-md hover:bg-black/90 transition-all duration-200 group-hover:scale-105 group-hover:-translate-y-0.5">
+                                    {video.duration}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                          
-                          <div className="p-5">
-                            <div className="space-y-4">
-                              <div>
-                                <h3 className="font-bold text-lg mb-2 line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300 group-hover:translate-x-1">
-                                  {getLocalizedText(video.title)}
-                                </h3>
-                                
-                                <div className="flex items-center gap-3 mb-3">
-                                  {video.creator && (
-                                    <div className="flex items-center gap-2 group">
-                                      <div className="w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center group-hover:bg-emerald-500/30 transition-all duration-300 group-hover:scale-110">
-                                        <span className="text-sm font-medium text-emerald-600 group-hover:text-emerald-500 transition-colors duration-300">S</span>
+                            
+                            <div className="p-5">
+                              <div className="space-y-4">
+                                <div>
+                                  <h3 className="font-bold text-lg mb-2 line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300 group-hover:translate-x-1">
+                                    {getLocalizedText(video.title)}
+                                  </h3>
+                                  
+                                  <div className="flex items-center gap-3 mb-3">
+                                    {video.creator && (
+                                      <div className="flex items-center gap-2 group">
+                                        <div className="w-8 h-8 bg-gradient-to-br from-emerald-500/20 to-green-500/20 rounded-full flex items-center justify-center group-hover:from-emerald-500/30 group-hover:to-green-500/30 transition-all duration-300 group-hover:scale-110 group-hover:rotate-12">
+                                          <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                        </div>
+                                        <span className="text-sm font-medium group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                                          {video.creator.name}
+                                        </span>
                                       </div>
-                                      <span className="text-sm font-medium group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
-                                        {video.creator.name}
-                                      </span>
-                                    </div>
-                                  )}
+                                    )}
+                                  </div>
+                                  
+                                  <p className="text-sm text-muted-foreground mb-3 group-hover:text-foreground/80 transition-colors duration-300 line-clamp-2">
+                                    {getLocalizedText(video.description)}
+                                  </p>
                                 </div>
                                 
-                                <p className="text-sm text-muted-foreground mb-3 group-hover:text-foreground/80 transition-colors duration-300">
-                                  {getLocalizedText(video.description)}
-                                </p>
-                              </div>
-                              
-                              <div className="flex items-center justify-between pt-4 border-t border-border/50">
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300">
-                                  <Calendar className="w-3 h-3 group-hover:scale-110 transition-transform duration-300" />
-                                  <span>{formatDate(video.publishDate || '')}</span>
-                                  <span className="mx-2">•</span>
-                                  <Clock className="w-3 h-3 group-hover:scale-110 transition-transform duration-300" />
-                                  <span>{video.duration}</span>
-                                </div>
-                                
-                                <div className="flex gap-2">
-                                  <Button
-                                    size="sm"
-                                    className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 transition-all duration-300 hover:scale-105 group"
-                                    onClick={() => handleVideoSelect(video)}
-                                  >
-                                    <Play className="w-4 h-4 group-hover:scale-125 transition-transform duration-300" />
-                                    {language === 'fr' ? 'Regarder' : 'Watch'}
-                                  </Button>
+                                <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                                  <div className="flex items-center gap-2 text-xs text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300">
+                                    <Calendar className="w-3 h-3 group-hover:scale-110 transition-transform duration-300" />
+                                    <span>{formatDate(video.publishDate || '')}</span>
+                                    <span className="mx-2">•</span>
+                                    <Clock className="w-3 h-3 group-hover:scale-110 transition-transform duration-300" />
+                                    <span>{video.duration}</span>
+                                  </div>
+                                  
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 transition-all duration-300 hover:scale-105 group"
+                                      onClick={() => handleVideoSelect(video)}
+                                    >
+                                      <Play className="w-4 h-4 group-hover:scale-125 transition-transform duration-300" />
+                                      {language === 'fr' ? 'Regarder' : 'Watch'}
+                                    </Button>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  ))}
-                </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 
                 {/* Community Stats */}
-                <div 
-                  className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto"
-                >
-                  <div className="p-5 bg-gradient-to-br from-emerald-50/5 to-green-50/5 rounded-xl border border-emerald-500/10 hover:border-emerald-500/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-emerald-500/10 group">
-                    <div className="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center mb-3 group-hover:bg-emerald-500/20 group-hover:scale-110 transition-all duration-300">
-                      <Globe className="w-5 h-5 text-emerald-600 dark:text-emerald-400 group-hover:rotate-12 transition-transform duration-500 ease-out" />
+                {filteredCommunityVideos.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
+                    <div className="p-5 bg-gradient-to-br from-emerald-50/5 to-green-50/5 rounded-xl border border-emerald-500/10 hover:border-emerald-500/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-emerald-500/10 group">
+                      <div className="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center mb-3 group-hover:bg-emerald-500/20 group-hover:scale-110 transition-all duration-300">
+                        <Globe className="w-5 h-5 text-emerald-600 dark:text-emerald-400 group-hover:rotate-12 transition-transform duration-500 ease-out" />
+                      </div>
+                      <h4 className="font-semibold mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                        {language === 'fr' ? 'Communauté Globale' : 'Global Community'}
+                      </h4>
+                      <p className="text-sm text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300">
+                        {language === 'fr' 
+                          ? 'Membres engagés partout dans le monde' 
+                          : 'Engaged members all over the world'}
+                      </p>
                     </div>
-                    <h4 className="font-semibold mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
-                      {language === 'fr' ? 'Communauté Globale' : 'Global Community'}
-                    </h4>
-                    <p className="text-sm text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300">
-                      {language === 'fr' 
-                        ? 'Membres engagés partout dans le monde' 
-                        : 'Engaged members all over the world'}
-                    </p>
-                  </div>
-                  
-                  <div className="p-5 bg-gradient-to-br from-emerald-50/5 to-green-50/5 rounded-xl border border-emerald-500/10 hover:border-emerald-500/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-emerald-500/10 group">
-                    <div className="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center mb-3 group-hover:bg-emerald-500/20 group-hover:scale-110 transition-all duration-300">
-                      <Leaf className="w-5 h-5 text-emerald-600 dark:text-emerald-400 group-hover:rotate-12 transition-transform duration-500 ease-out" />
+                    
+                    <div className="p-5 bg-gradient-to-br from-emerald-50/5 to-green-50/5 rounded-xl border border-emerald-500/10 hover:border-emerald-500/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-emerald-500/10 group">
+                      <div className="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center mb-3 group-hover:bg-emerald-500/20 group-hover:scale-110 transition-all duration-300">
+                        <Leaf className="w-5 h-5 text-emerald-600 dark:text-emerald-400 group-hover:rotate-12 transition-transform duration-500 ease-out" />
+                      </div>
+                      <h4 className="font-semibold mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                        {language === 'fr' ? 'Impact Collectif' : 'Collective Impact'}
+                      </h4>
+                      <p className="text-sm text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300">
+                        {language === 'fr' 
+                          ? 'Chaque action contribue à un futur meilleur' 
+                          : 'Every action contributes to a better future'}
+                      </p>
                     </div>
-                    <h4 className="font-semibold mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
-                      {language === 'fr' ? 'Impact Collectif' : 'Collective Impact'}
-                    </h4>
-                    <p className="text-sm text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300">
-                      {language === 'fr' 
-                        ? 'Chaque action contribue à un futur meilleur' 
-                        : 'Every action contributes to a better future'}
-                    </p>
-                  </div>
-                  
-                  <div className="p-5 bg-gradient-to-br from-emerald-50/5 to-green-50/5 rounded-xl border border-emerald-500/10 hover:border-emerald-500/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-emerald-500/10 group">
-                    <div className="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center mb-3 group-hover:bg-emerald-500/20 group-hover:scale-110 transition-all duration-300">
-                      <Shield className="w-5 h-5 text-emerald-600 dark:text-emerald-400 group-hover:rotate-12 transition-transform duration-500 ease-out" />
+                    
+                    <div className="p-5 bg-gradient-to-br from-emerald-50/5 to-green-50/5 rounded-xl border border-emerald-500/10 hover:border-emerald-500/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-emerald-500/10 group">
+                      <div className="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center mb-3 group-hover:bg-emerald-500/20 group-hover:scale-110 transition-all duration-300">
+                        <Shield className="w-5 h-5 text-emerald-600 dark:text-emerald-400 group-hover:rotate-12 transition-transform duration-500 ease-out" />
+                      </div>
+                      <h4 className="font-semibold mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                        {language === 'fr' ? 'Inspiration Mutuelle' : 'Mutual Inspiration'}
+                      </h4>
+                      <p className="text-sm text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300">
+                        {language === 'fr' 
+                          ? 'Partagez vos initiatives et inspirez les autres' 
+                          : 'Share your initiatives and inspire others'}
+                      </p>
                     </div>
-                    <h4 className="font-semibold mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
-                      {language === 'fr' ? 'Inspiration Mutuelle' : 'Mutual Inspiration'}
-                    </h4>
-                    <p className="text-sm text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300">
-                      {language === 'fr' 
-                        ? 'Partagez vos initiatives et inspirez les autres' 
-                        : 'Share your initiatives and inspire others'}
-                    </p>
                   </div>
+                )}
+              </div>
+            )}
+
+            {/* Channel Section */}
+            {activeSection === 'channel' && (
+              <div className="space-y-8">
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 rounded-full mb-4 hover:bg-emerald-500/15 transition-all duration-300 hover:scale-105 animate-pulse-slow">
+                    <Youtube className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                      {language === 'fr' ? 'Vidéos de Notre Chaîne' : 'Our Channel Videos'}
+                    </span>
+                  </div>
+                  <h2 className="text-2xl md:text-3xl font-bold mb-3 animate-fade-up">
+                    {language === 'fr' ? 'Contenu Officiel de la Chaîne' : 'Official Channel Content'}
+                  </h2>
+                  <p className="text-muted-foreground max-w-xl mx-auto animate-fade-up" style={{ animationDelay: '0.1s' }}>
+                    {language === 'fr' 
+                      ? 'Découvrez le contenu officiel et les présentations de notre chaîne' 
+                      : 'Discover official content and showcases from our channel'}
+                  </p>
                 </div>
+                
+                {/* Channel Videos Grid */}
+                {filteredChannelVideos.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-emerald-500/10 rounded-full flex items-center justify-center">
+                      <Youtube className="w-8 h-8 text-emerald-500" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-2">
+                      {language === 'fr' ? 'Aucune vidéo de chaîne trouvée' : 'No channel videos found'}
+                    </h3>
+                    <p className="text-muted-foreground">
+                      {language === 'fr' 
+                        ? 'Essayez avec d\'autres termes de recherche' 
+                        : 'Try different search terms'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto">
+                    {filteredChannelVideos.map((video, index) => (
+                      <div 
+                        key={video.id}
+                        className="scroll-reveal"
+                        style={{ animationDelay: `${index * 0.1}s` }}
+                      >
+                        <Card className="group relative overflow-hidden bg-gradient-to-br from-emerald-50/10 to-green-50/5 dark:from-emerald-950/10 dark:to-green-950/5 backdrop-blur-sm border border-emerald-500/20 hover:border-emerald-500/40 transition-all duration-500 card-hover hover:shadow-xl hover:shadow-emerald-500/10">
+                          <CardContent className="p-0">
+                            <div className="relative aspect-video overflow-hidden">
+                              <div 
+                                className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-green-500/10 to-teal-500/10 cursor-pointer group-hover:from-emerald-500/15 group-hover:via-green-500/15 group-hover:to-teal-500/15 transition-all duration-500"
+                                onClick={(e) => handleThumbnailClick(e, video)}
+                              >
+                                <img
+                                  src={getThumbnailUrl(video.youtubeId)}
+                                  alt={getLocalizedText(video.title)}
+                                  className="absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-110"
+                                  loading="lazy"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = getThumbnailUrl(video.youtubeId, 'hqdefault');
+                                  }}
+                                />
+                                
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="relative">
+                                      <div className="absolute inset-0 w-24 h-24 bg-gradient-to-r from-emerald-500/40 via-green-500/40 to-teal-500/40 rounded-full animate-ping-slow blur-md" />
+                                      <div className="relative w-20 h-20 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-xl shadow-emerald-500/40 transition-all duration-500 group-hover:scale-110 group-hover:shadow-2xl group-hover:shadow-emerald-500/60 transform group-hover:rotate-12">
+                                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-inner shadow-black/20">
+                                          <Play className="w-6 h-6 text-emerald-600 ml-0.5" fill="currentColor" />
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="absolute top-4 left-4 z-30">
+                                  <Badge className="bg-gradient-to-r from-emerald-600 to-green-500 text-white border-0 shadow-lg text-xs px-3 py-1.5 hover:from-emerald-500 hover:to-green-400 transition-all duration-300 hover:scale-105 hover:-translate-y-0.5">
+                                    <Video className="w-3 h-3 mr-1.5" />
+                                    CHANNEL
+                                  </Badge>
+                                </div>
+
+                                {video.duration && (
+                                  <div className="absolute bottom-4 right-4 z-30 bg-black/80 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-md hover:bg-black/90 transition-all duration-200 group-hover:scale-105 group-hover:-translate-y-0.5">
+                                    {video.duration}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="p-5">
+                              <div className="space-y-4">
+                                <div>
+                                  <h3 className="font-bold text-lg mb-2 line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300 group-hover:translate-x-1">
+                                    {getLocalizedText(video.title)}
+                                  </h3>
+                                  
+                                  <div className="flex items-center gap-3 mb-3">
+                                    {video.creator && (
+                                      <div className="flex items-center gap-2 group">
+                                        <div className="w-8 h-8 bg-gradient-to-br from-emerald-500/20 to-green-500/20 rounded-full flex items-center justify-center group-hover:from-emerald-500/30 group-hover:to-green-500/30 transition-all duration-300 group-hover:scale-110 group-hover:rotate-12">
+                                          <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                        </div>
+                                        <div>
+                                          <span className="text-sm font-medium group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                                            {video.creator.name}
+                                          </span>
+                                          <p className="text-xs text-muted-foreground">{video.creator.role}</p>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                  
+                                  <p className="text-sm text-muted-foreground mb-3 group-hover:text-foreground/80 transition-colors duration-300 line-clamp-2">
+                                    {getLocalizedText(video.description)}
+                                  </p>
+                                </div>
+                                
+                                <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                                  <div className="flex items-center gap-2 text-xs text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300">
+                                    <Calendar className="w-3 h-3 group-hover:scale-110 transition-transform duration-300" />
+                                    <span>{formatDate(video.publishDate || '')}</span>
+                                    <span className="mx-2">•</span>
+                                    <Clock className="w-3 h-3 group-hover:scale-110 transition-transform duration-300" />
+                                    <span>{video.duration}</span>
+                                  </div>
+                                  
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 transition-all duration-300 hover:scale-105 group"
+                                      onClick={() => handleVideoSelect(video)}
+                                    >
+                                      <Play className="w-4 h-4 group-hover:scale-125 transition-transform duration-300" />
+                                      {language === 'fr' ? 'Regarder' : 'Watch'}
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
 
-          {/* YouTube Channel */}
-          <div 
-            className="mt-12 md:mt-16 transition-opacity duration-500"
-          >
+          {/* YouTube Channel Link */}
+          <div className="mt-12 md:mt-16 transition-opacity duration-500">
             <div className="bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-teal-500/5 rounded-2xl border border-emerald-500/20 p-6 md:p-8 hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-500 group">
               <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                 <div className="text-center md:text-left">
@@ -789,9 +1068,15 @@ export default function Videos() {
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-50 animate-fade-in">
               <div className="relative">
-                <div className="w-20 h-20 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
+                <div className="w-24 h-24 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Play className="w-10 h-10 text-emerald-500 animate-pulse" />
+                  <div className="relative">
+                    <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-xl shadow-emerald-500/40">
+                      <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-inner shadow-black/20">
+                        <Play className="w-6 h-6 text-emerald-600 ml-0.5" fill="currentColor" />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -809,7 +1094,7 @@ export default function Videos() {
                   <Button
                     variant="ghost"
                     size={isMobile ? "icon" : "sm"}
-                    className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 transition-all duration-300 hover:border-emerald-500/50 active:scale-95`}
+                    className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 hover:-translate-y-0.5`}
                     onClick={handleModalClose}
                   >
                     <X className="w-5 h-5" />
@@ -834,7 +1119,7 @@ export default function Videos() {
                   <Button
                     variant="ghost"
                     size={isMobile ? "icon" : "sm"}
-                    className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 transition-all duration-300 hover:border-emerald-500/50 active:scale-95`}
+                    className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 hover:-translate-y-0.5`}
                     onClick={toggleInterface}
                     title={language === 'fr' ? 'Masquer l\'interface' : 'Hide interface'}
                   >
@@ -844,7 +1129,7 @@ export default function Videos() {
                   <Button
                     variant="ghost"
                     size={isMobile ? "icon" : "sm"}
-                    className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 transition-all duration-300 hover:border-emerald-500/50 active:scale-95`}
+                    className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 hover:-translate-y-0.5`}
                     onClick={() => selectedVideo && openInYouTube(selectedVideo.youtubeId)}
                     title={language === 'fr' ? 'Ouvrir sur YouTube' : 'Open on YouTube'}
                   >
@@ -854,7 +1139,7 @@ export default function Videos() {
                   <Button
                     variant="ghost"
                     size={isMobile ? "icon" : "sm"}
-                    className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 transition-all duration-300 hover:border-emerald-500/50 active:scale-95`}
+                    className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 hover:-translate-y-0.5`}
                     onClick={toggleFullscreen}
                     title={language === 'fr' ? 'Plein écran' : 'Fullscreen'}
                   >
@@ -903,7 +1188,7 @@ export default function Videos() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-12 w-12 bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 transition-all duration-300 hover:border-emerald-500/50 animate-float-slow"
+                  className="h-12 w-12 bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 animate-float-slow hover:-translate-y-0.5"
                   onClick={toggleInterface}
                   title={language === 'fr' ? 'Afficher l\'interface' : 'Show interface'}
                 >
@@ -913,7 +1198,7 @@ export default function Videos() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-12 w-12 bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 transition-all duration-300 hover:border-emerald-500/50 animate-float-slow"
+                  className="h-12 w-12 bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 animate-float-slow hover:-translate-y-0.5"
                   onClick={toggleMute}
                   title={isMuted ? (language === 'fr' ? 'Activer le son' : 'Unmute') : (language === 'fr' ? 'Désactiver le son' : 'Mute')}
                 >
@@ -932,7 +1217,7 @@ export default function Videos() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-12 w-12 bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 transition-all duration-300 hover:border-emerald-500/50"
+                  className="h-12 w-12 bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 hover:-translate-y-0.5"
                   onClick={toggleMute}
                   title={isMuted ? (language === 'fr' ? 'Activer le son' : 'Unmute') : (language === 'fr' ? 'Désactiver le son' : 'Mute')}
                 >
@@ -967,23 +1252,29 @@ export default function Videos() {
                   <div className="flex items-center justify-between pt-3 border-t border-white/20">
                     <div className="flex items-center gap-4 text-sm text-white/70">
                       {selectedVideo.publishDate && (
-                        <span className="flex items-center gap-1.5 animate-fade-in">
+                        <span className="flex items-center gap-1.5 animate-fade-in hover:text-white transition-colors duration-200">
                           <Calendar className="w-4 h-4" />
                           <span className="hidden sm:inline">{formatDate(selectedVideo.publishDate)}</span>
                           <span className="sm:hidden text-xs">{formatDate(selectedVideo.publishDate)}</span>
                         </span>
                       )}
                       {selectedVideo.duration && (
-                        <span className="flex items-center gap-1.5 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+                        <span className="flex items-center gap-1.5 animate-fade-in hover:text-white transition-colors duration-200" style={{ animationDelay: '0.1s' }}>
                           <Clock className="w-4 h-4" />
                           <span>{selectedVideo.duration}</span>
+                        </span>
+                      )}
+                      {selectedVideo.creator && (
+                        <span className="flex items-center gap-1.5 animate-fade-in hover:text-white transition-colors duration-200" style={{ animationDelay: '0.2s' }}>
+                          <User className="w-4 h-4" />
+                          <span>{selectedVideo.creator.name}</span>
                         </span>
                       )}
                     </div>
                     
                     <Button
                       size={isMobile ? "sm" : "default"}
-                      className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-105 transition-all duration-300 active:scale-95"
+                      className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-105 active:scale-95 transition-all duration-300 hover:-translate-y-0.5"
                       onClick={() => selectedVideo && openInYouTube(selectedVideo.youtubeId)}
                     >
                       <ExternalLink className="w-4 h-4" />
@@ -1006,7 +1297,7 @@ export default function Videos() {
         />
       )}
 
-      {/* Animations CSS - Keep your existing styles */}
+      {/* Animations CSS */}
       <style>{`
         @keyframes fadeInUp {
           from {
@@ -1028,7 +1319,7 @@ export default function Videos() {
             opacity: 0;
           }
           100% {
-            transform: scale(1.3);
+            transform: scale(1.5);
             opacity: 0;
           }
         }
@@ -1047,7 +1338,7 @@ export default function Videos() {
             transform: translateY(0);
           }
           50% {
-            transform: translateY(-8px);
+            transform: translateY(-10px);
           }
         }
         
@@ -1065,7 +1356,7 @@ export default function Videos() {
             transform: translateY(0);
           }
           50% {
-            transform: translateY(-4px);
+            transform: translateY(-6px);
           }
         }
         
@@ -1112,7 +1403,7 @@ export default function Videos() {
             transform: translateY(0);
           }
           50% {
-            transform: translateY(-6px);
+            transform: translateY(-8px);
           }
         }
         
@@ -1141,7 +1432,7 @@ export default function Videos() {
             transform: translateY(0);
           }
           50% {
-            transform: translateY(-4px);
+            transform: translateY(-6px);
           }
         }
         
@@ -1213,6 +1504,26 @@ export default function Videos() {
         .card-hover:hover {
           transform: translateY(-8px) scale(1.02);
           box-shadow: 0 25px 50px rgba(16, 185, 129, 0.2);
+        }
+        
+        /* Enhanced hover animations */
+        .group:hover .group-hover\:-translate-y-0\.5 {
+          transform: translateY(-2px);
+        }
+        
+        .group:hover .group-hover\:rotate-12 {
+          transform: rotate(12deg);
+        }
+        
+        .group:hover .group-hover\:scale-125 {
+          transform: scale(1.25);
+        }
+        
+        /* Smooth transitions */
+        .transition-all {
+          transition-property: all;
+          transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+          transition-duration: 300ms;
         }
         
         /* Reduced motion */
