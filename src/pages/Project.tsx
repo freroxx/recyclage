@@ -3,9 +3,298 @@ import {
   Trash2, FileText, Apple, Package, Target, Users, Leaf, Recycle, 
   CheckCircle2, ArrowRight, Sparkles, Award, BookOpen, Calendar, 
   Home, X, Share2, Rocket, Zap, Heart, Star, Cloud, Sun, Moon, 
-  Droplets, Clock, Infinity, ChevronRight, Pause, Play, LucideIcon 
+  Droplets, Clock, Infinity, ChevronRight, Pause, Play, LucideIcon,
+  Globe
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+// Système de traduction
+type Locale = 'fr' | 'en';
+
+interface TranslationKeys {
+  [key: string]: {
+    fr: string;
+    en: string;
+  };
+}
+
+const translations: TranslationKeys = {
+  // Navigation et interface
+  'app.title': {
+    fr: 'Écologie - Notre Planète, Notre Avenir',
+    en: 'Ecology - Our Planet, Our Future'
+  },
+  'app.subtitle': {
+    fr: 'Bienvenue dans notre mouvement écologique communautaire. Ensemble, nous créons un avenir durable pour les générations à venir.',
+    en: 'Welcome to our community ecological movement. Together, we create a sustainable future for generations to come.'
+  },
+  'initiative.badge': {
+    fr: 'Initiative Écologique 2025',
+    en: 'Ecological Initiative 2025'
+  },
+  'button.discover': {
+    fr: 'Découvrir',
+    en: 'Discover'
+  },
+  'button.guide': {
+    fr: 'Guide Pratique',
+    en: 'Practical Guide'
+  },
+  'button.close': {
+    fr: 'Fermer',
+    en: 'Close'
+  },
+  'button.contact': {
+    fr: 'Nous Contacter',
+    en: 'Contact Us'
+  },
+  'button.activities': {
+    fr: 'Voir les Activités',
+    en: 'View Activities'
+  },
+  'button.pause': {
+    fr: 'Pause',
+    en: 'Pause'
+  },
+  'button.resume': {
+    fr: 'Reprendre',
+    en: 'Resume'
+  },
+
+  // Sections principales
+  'section.goals.title': {
+    fr: 'Nos Objectifs',
+    en: 'Our Goals'
+  },
+  'section.goals.subtitle': {
+    fr: 'Construire un avenir durable ensemble',
+    en: 'Building a sustainable future together'
+  },
+  'section.recycling.title': {
+    fr: 'Tri Sélectif',
+    en: 'Selective Sorting'
+  },
+  'section.recycling.subtitle': {
+    fr: 'Un système simple pour un impact maximal',
+    en: 'A simple system for maximum impact'
+  },
+  'section.actions.title': {
+    fr: 'Passez à l\'Action',
+    en: 'Take Action'
+  },
+  'section.actions.subtitle': {
+    fr: 'Des initiatives concrètes pour s\'engager',
+    en: 'Concrete initiatives to get involved'
+  },
+
+  // Objectifs
+  'goal.education.title': {
+    fr: 'Mission Éducative',
+    en: 'Educational Mission'
+  },
+  'goal.education.desc': {
+    fr: 'Sensibiliser aux enjeux environnementaux',
+    en: 'Raise awareness about environmental issues'
+  },
+  'goal.community.title': {
+    fr: 'Engagement Communautaire',
+    en: 'Community Engagement'
+  },
+  'goal.community.desc': {
+    fr: 'Créer une communauté active et engagée',
+    en: 'Create an active and engaged community'
+  },
+  'goal.innovation.title': {
+    fr: 'Innovation Technologique',
+    en: 'Technological Innovation'
+  },
+  'goal.innovation.desc': {
+    fr: 'Développer des solutions innovantes',
+    en: 'Develop innovative solutions'
+  },
+  'goal.impact.title': {
+    fr: 'Impact Mesurable',
+    en: 'Measurable Impact'
+  },
+  'goal.impact.desc': {
+    fr: 'Atteindre des résultats concrets',
+    en: 'Achieve concrete results'
+  },
+
+  // Bacs de recyclage
+  'bin.paper.title': {
+    fr: 'Papier & Carton',
+    en: 'Paper & Cardboard'
+  },
+  'bin.paper.desc': {
+    fr: 'Journaux, magazines, cartons',
+    en: 'Newspapers, magazines, cardboard'
+  },
+  'bin.paper.details': {
+    fr: 'Le papier et le carton représentent environ 25% de nos déchets ménagers. Leur recyclage permet de sauver des arbres et réduire la consommation d\'eau et d\'énergie.',
+    en: 'Paper and cardboard represent about 25% of our household waste. Recycling them helps save trees and reduce water and energy consumption.'
+  },
+  'bin.plastic.title': {
+    fr: 'Plastique',
+    en: 'Plastic'
+  },
+  'bin.plastic.desc': {
+    fr: 'Bouteilles, emballages plastiques',
+    en: 'Bottles, plastic packaging'
+  },
+  'bin.plastic.details': {
+    fr: 'Les plastiques peuvent mettre jusqu\'à 500 ans à se décomposer. Notre programme de recyclage les transforme en nouvelles ressources.',
+    en: 'Plastics can take up to 500 years to decompose. Our recycling program transforms them into new resources.'
+  },
+  'bin.metal.title': {
+    fr: 'Métal',
+    en: 'Metal'
+  },
+  'bin.metal.desc': {
+    fr: 'Cannettes, boîtes de conserve',
+    en: 'Cans, food containers'
+  },
+  'bin.metal.details': {
+    fr: 'Le recyclage des métaux permet d\'économiser jusqu\'à 95% de l\'énergie nécessaire à leur production primaire.',
+    en: 'Metal recycling saves up to 95% of the energy needed for primary production.'
+  },
+  'bin.organic.title': {
+    fr: 'Organique',
+    en: 'Organic'
+  },
+  'bin.organic.desc': {
+    fr: 'Déchets alimentaires, compostables',
+    en: 'Food waste, compostable materials'
+  },
+  'bin.organic.details': {
+    fr: 'Transformés en compost pour enrichir les sols des jardins communautaires et espaces verts publics.',
+    en: 'Transformed into compost to enrich community garden soils and public green spaces.'
+  },
+
+  // Actions
+  'action.events.title': {
+    fr: 'Événements',
+    en: 'Events'
+  },
+  'action.events.desc': {
+    fr: 'Activités et événements communautaires',
+    en: 'Community activities and events'
+  },
+  'action.resources.title': {
+    fr: 'Ressources',
+    en: 'Resources'
+  },
+  'action.resources.desc': {
+    fr: 'Guides et documents pédagogiques',
+    en: 'Guides and educational materials'
+  },
+  'action.guides.title': {
+    fr: 'Guides',
+    en: 'Guides'
+  },
+  'action.guides.desc': {
+    fr: 'Conseils pour un foyer écologique',
+    en: 'Tips for an eco-friendly household'
+  },
+  'action.projects.title': {
+    fr: 'Projets',
+    en: 'Projects'
+  },
+  'action.projects.desc': {
+    fr: 'Découvrez nos initiatives en cours',
+    en: 'Discover our ongoing initiatives'
+  },
+
+  // Conseil de tri
+  'tips.title': {
+    fr: 'CONSEILS DE TRI',
+    en: 'SORTING TIPS'
+  },
+  'tips.clean': {
+    fr: 'Bien nettoyer les contenants',
+    en: 'Clean containers thoroughly'
+  },
+  'tips.lids': {
+    fr: 'Retirer les couvercles non-recyclables',
+    en: 'Remove non-recyclable lids'
+  },
+  'tips.compact': {
+    fr: 'Compacter pour gagner de l\'espace',
+    en: 'Compact to save space'
+  },
+
+  // CTA final
+  'cta.title': {
+    fr: 'Votre Engagement Compte',
+    en: 'Your Commitment Matters'
+  },
+  'cta.description': {
+    fr: 'Chaque geste que vous posez pour l\'environnement a un impact réel. Ensemble, nous pouvons créer un changement durable.',
+    en: 'Every action you take for the environment has a real impact. Together, we can create lasting change.'
+  },
+
+  // Accessibilité
+  'aria.theme': {
+    fr: 'Changer le thème',
+    en: 'Toggle theme'
+  },
+  'aria.language': {
+    fr: 'Changer la langue',
+    en: 'Change language'
+  },
+  'aria.close': {
+    fr: 'Fermer',
+    en: 'Close'
+  }
+};
+
+// Contexte de traduction
+const TranslationContext = React.createContext<{
+  locale: Locale;
+  t: (key: string) => string;
+  setLocale: (locale: Locale) => void;
+}>({
+  locale: 'fr',
+  t: (key) => translations[key]?.fr || key,
+  setLocale: () => {},
+});
+
+const useTranslation = () => {
+  const context = React.useContext(TranslationContext);
+  if (!context) {
+    throw new Error('useTranslation must be used within TranslationProvider');
+  }
+  return context;
+};
+
+const TranslationProvider = ({ children }: { children: ReactNode }) => {
+  const [locale, setLocale] = useState<Locale>(() => {
+    const saved = localStorage.getItem('locale') as Locale;
+    const browserLang = navigator.language.split('-')[0];
+    return saved || (browserLang === 'en' ? 'en' : 'fr');
+  });
+
+  const t = useCallback((key: string) => {
+    return translations[key]?.[locale] || translations[key]?.fr || key;
+  }, [locale]);
+
+  useEffect(() => {
+    localStorage.setItem('locale', locale);
+    document.documentElement.lang = locale;
+  }, [locale]);
+
+  const value = useMemo(() => ({
+    locale,
+    t,
+    setLocale,
+  }), [locale, t]);
+
+  return (
+    <TranslationContext.Provider value={value}>
+      {children}
+    </TranslationContext.Provider>
+  );
+};
 
 // Hook de navigation SPA
 const useNavigate = () => {
@@ -408,7 +697,7 @@ const WidgetFlottant = memo(({
         border dark:border-white/10 border-gray-200
       `} />
       
-      <div className={`absolute inset-0 rounded-3xl overflow-hidden`}>
+      <div className="absolute inset-0 rounded-3xl overflow-hidden">
         <div className={`
           absolute -inset-full transition-transform duration-1200
           ${isHovered ? 'translate-x-full' : '-translate-x-full'}
@@ -739,6 +1028,7 @@ interface BinModalProps {
   details: string;
   color?: string;
   bg?: string;
+  tips?: string[];
 }
 
 // Modal optimisé sans barres de défilement
@@ -751,8 +1041,10 @@ const BinModal = memo(({
   details,
   color = "dark:text-blue-600 text-blue-500",
   bg = "dark:bg-gradient-to-br dark:from-blue-500/20 dark:to-blue-500/10 bg-gradient-to-br from-blue-400/20 to-blue-400/10",
+  tips = []
 }: BinModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
   
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -851,7 +1143,7 @@ const BinModal = memo(({
                         p-2 rounded-xl transition-colors flex-shrink-0
                         dark:hover:bg-white/10 hover:bg-gray-100
                       `}
-                      aria-label="Fermer"
+                      aria-label={t('aria.close')}
                       whileHover={{ scale: 1.1, rotate: 90 }}
                       whileTap={{ scale: 0.9 }}
                       initial={{ opacity: 0 }}
@@ -876,7 +1168,7 @@ const BinModal = memo(({
                         font-semibold text-lg mb-3
                         dark:text-blue-400 text-blue-600
                       `}>
-                        Description
+                        {t('section.goals.title')}
                       </h4>
                       <p className={`
                         leading-relaxed
@@ -901,18 +1193,14 @@ const BinModal = memo(({
                         dark:text-blue-400 text-blue-600
                       `}>
                         <Sparkles className="w-4 h-4" />
-                        CONSEILS DE TRI
+                        {t('tips.title')}
                       </h4>
                       <ul className="text-sm space-y-1">
-                        <li className={`
-                          dark:text-gray-300 text-gray-700
-                        `}>• Bien nettoyer les contenants</li>
-                        <li className={`
-                          dark:text-gray-300 text-gray-700
-                        `}>• Retirer les couvercles non-recyclables</li>
-                        <li className={`
-                          dark:text-gray-300 text-gray-700
-                        `}>• Compacter pour gagner de l'espace</li>
+                        {tips.map((tip, index) => (
+                          <li key={index} className={`
+                            dark:text-gray-300 text-gray-700
+                          `}>• {tip}</li>
+                        ))}
                       </ul>
                     </motion.div>
                   </div>
@@ -933,7 +1221,7 @@ const BinModal = memo(({
                       onClick={onClose}
                       className="flex-1"
                     >
-                      Fermer
+                      {t('button.close')}
                     </BoutonAnime>
                     
                     <BoutonAnime
@@ -944,7 +1232,7 @@ const BinModal = memo(({
                       glow={true}
                     >
                       <BookOpen className="w-4 h-4 mr-2" />
-                      Guide
+                      {t('action.guides.title')}
                     </BoutonAnime>
                   </motion.div>
                 </CardContent>
@@ -962,6 +1250,7 @@ BinModal.displayName = 'BinModal';
 // Composant Switch pour thème
 const ThemeSwitch = memo(() => {
   const { theme, toggleTheme } = useTheme();
+  const { t } = useTranslation();
   
   return (
     <motion.button
@@ -972,7 +1261,7 @@ const ThemeSwitch = memo(() => {
         bg-gray-100 hover:bg-gray-200
         border dark:border-white/10 border-gray-300
       `}
-      aria-label={theme === 'dark' ? 'Passer au mode clair' : 'Passer au mode sombre'}
+      aria-label={t('aria.theme')}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
     >
@@ -993,9 +1282,44 @@ const ThemeSwitch = memo(() => {
 
 ThemeSwitch.displayName = 'ThemeSwitch';
 
+// Composant Switch pour langue
+const LanguageSwitch = memo(() => {
+  const { locale, setLocale } = useTranslation();
+  
+  return (
+    <motion.button
+      onClick={() => setLocale(locale === 'fr' ? 'en' : 'fr')}
+      className={`
+        relative p-3 rounded-xl transition-colors
+        dark:bg-slate-800/50 dark:hover:bg-slate-700/50
+        bg-gray-100 hover:bg-gray-200
+        border dark:border-white/10 border-gray-300
+      `}
+      aria-label="Changer la langue"
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+    >
+      <motion.div
+        key={locale}
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 200, damping: 10 }}
+      >
+        <Globe className="w-5 h-5" />
+        <span className="text-xs absolute -bottom-1 -right-1 font-bold bg-blue-500 text-white rounded-full w-4 h-4 flex items-center justify-center">
+          {locale.toUpperCase()}
+        </span>
+      </motion.div>
+    </motion.button>
+  );
+});
+
+LanguageSwitch.displayName = 'LanguageSwitch';
+
 // Composant principal optimisé
-export default function ProjectEco() {
+function ProjectEcoContent() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   
   // États optimisés
   const [activeBinIndex, setActiveBinIndex] = useState(0);
@@ -1006,107 +1330,111 @@ export default function ProjectEco() {
   const autoRotationInterval = useRef<NodeJS.Timeout>();
   const mountedRef = useRef(true);
   
-  // Données optimisées
+  // Données optimisées avec traduction
   const bins = useMemo(() => [
     { 
       icon: FileText, 
       color: "dark:text-amber-600 text-amber-500", 
       bg: "dark:bg-gradient-to-br dark:from-amber-500/20 dark:to-amber-600/10 bg-gradient-to-br from-amber-400/20 to-amber-500/10", 
-      label: "Papier & Carton",
-      description: "Journaux, magazines, cartons",
-      details: "Le papier et le carton représentent environ 25% de nos déchets ménagers. Leur recyclage permet de sauver des arbres et réduire la consommation d'eau et d'énergie."
+      label: t('bin.paper.title'),
+      description: t('bin.paper.desc'),
+      details: t('bin.paper.details'),
+      tips: [t('tips.clean'), t('tips.lids'), t('tips.compact')]
     },
     { 
       icon: Package, 
       color: "dark:text-blue-600 text-blue-500", 
       bg: "dark:bg-gradient-to-br dark:from-blue-500/20 dark:to-cyan-600/10 bg-gradient-to-br from-blue-400/20 to-cyan-500/10", 
-      label: "Plastique",
-      description: "Bouteilles, emballages plastiques",
-      details: "Les plastiques peuvent mettre jusqu'à 500 ans à se décomposer. Notre programme de recyclage les transforme en nouvelles ressources."
+      label: t('bin.plastic.title'),
+      description: t('bin.plastic.desc'),
+      details: t('bin.plastic.details'),
+      tips: [t('tips.clean'), t('tips.lids'), t('tips.compact')]
     },
     { 
       icon: Trash2, 
       color: "dark:text-gray-600 text-gray-500", 
       bg: "dark:bg-gradient-to-br dark:from-gray-500/20 dark:to-gray-600/10 bg-gradient-to-br from-gray-400/20 to-gray-500/10", 
-      label: "Métal",
-      description: "Cannettes, boîtes de conserve",
-      details: "Le recyclage des métaux permet d'économiser jusqu'à 95% de l'énergie nécessaire à leur production primaire."
+      label: t('bin.metal.title'),
+      description: t('bin.metal.desc'),
+      details: t('bin.metal.details'),
+      tips: [t('tips.clean'), t('tips.lids'), t('tips.compact')]
     },
     { 
       icon: Apple, 
       color: "dark:text-green-600 text-green-500", 
       bg: "dark:bg-gradient-to-br dark:from-green-500/20 dark:to-emerald-600/10 bg-gradient-to-br from-green-400/20 to-emerald-500/10", 
-      label: "Organique",
-      description: "Déchets alimentaires, compostables",
-      details: "Transformés en compost pour enrichir les sols des jardins communautaires et espaces verts publics."
+      label: t('bin.organic.title'),
+      description: t('bin.organic.desc'),
+      details: t('bin.organic.details'),
+      tips: [t('tips.clean'), 'Séparer les déchets verts', 'Éviter les plastiques compostables']
     },
-  ], []);
+  ], [t]);
   
   const goals = useMemo(() => [
     {
       icon: Target,
-      title: "Mission Éducative",
-      description: "Sensibiliser aux enjeux environnementaux",
+      title: t('goal.education.title'),
+      description: t('goal.education.desc'),
       color: "dark:text-blue-600 text-blue-500",
       bg: "dark:bg-gradient-to-br dark:from-blue-500/20 dark:to-cyan-600/10 bg-gradient-to-br from-blue-400/20 to-cyan-500/10",
     },
     {
       icon: Users,
-      title: "Engagement Communautaire",
-      description: "Créer une communauté active et engagée",
+      title: t('goal.community.title'),
+      description: t('goal.community.desc'),
       color: "dark:text-green-600 text-green-500",
       bg: "dark:bg-gradient-to-br dark:from-green-500/20 dark:to-emerald-600/10 bg-gradient-to-br from-green-400/20 to-emerald-500/10",
     },
     {
       icon: Recycle,
-      title: "Innovation Technologique",
-      description: "Développer des solutions innovantes",
+      title: t('goal.innovation.title'),
+      description: t('goal.innovation.desc'),
       color: "dark:text-purple-600 text-purple-500",
       bg: "dark:bg-gradient-to-br dark:from-purple-500/20 dark:to-pink-600/10 bg-gradient-to-br from-purple-400/20 to-pink-500/10",
     },
     {
       icon: Award,
-      title: "Impact Mesurable",
-      description: "Atteindre des résultats concrets",
+      title: t('goal.impact.title'),
+      description: t('goal.impact.desc'),
       color: "dark:text-amber-600 text-amber-500",
       bg: "dark:bg-gradient-to-br dark:from-amber-500/20 dark:to-orange-600/10 bg-gradient-to-br from-amber-400/20 to-orange-500/10",
     }
-  ], []);
+  ], [t]);
   
   const actions = useMemo(() => [
     {
       icon: Calendar,
-      title: "Événements",
-      description: "Activités et événements communautaires",
+      title: t('action.events.title'),
+      description: t('action.events.desc'),
       color: "dark:text-blue-600 text-blue-500",
       bg: "dark:bg-gradient-to-br dark:from-blue-500/20 dark:to-cyan-600/10 bg-gradient-to-br from-blue-400/20 to-cyan-500/10",
       href: "/activities"
     },
     {
       icon: BookOpen,
-      title: "Ressources",
-      description: "Guides et documents pédagogiques",
+      title: t('action.resources.title'),
+      description: t('action.resources.desc'),
       color: "dark:text-green-600 text-green-500",
       bg: "dark:bg-gradient-to-br dark:from-green-500/20 dark:to-emerald-600/10 bg-gradient-to-br from-green-400/20 to-emerald-500/10",
       href: "/resources"
     },
     {
       icon: Home,
-      title: "Guides",
-      description: "Conseils pour un foyer écologique",
+      title: t('action.guides.title'),
+      description: t('action.guides.desc'),
       color: "dark:text-purple-600 text-purple-500",
       bg: "dark:bg-gradient-to-br dark:from-purple-500/20 dark:to-pink-600/10 bg-gradient-to-br from-purple-400/20 to-pink-500/10",
       href: "/guide"
     },
     {
       icon: Share2,
-      title: "Projets",
-      description: "Découvrez nos initiatives en cours",
+      title: t('action.projects.title'),
+      description: t('action.projects.desc'),
       color: "dark:text-amber-600 text-amber-500",
       bg: "dark:bg-gradient-to-br dark:from-amber-500/20 dark:to-orange-600/10 bg-gradient-to-br from-amber-400/20 to-orange-500/10",
       href: "/project"
     }
-  ], []);
+  ], [t]);
   
   // Animation de scroll optimisée
   useEffect(() => {
@@ -1197,8 +1525,9 @@ export default function ProjectEco() {
         </div>
       </motion.div>
       
-      {/* Bouton thème */}
-      <div className="fixed top-4 right-4 z-40">
+      {/* Contrôles */}
+      <div className="fixed top-4 right-4 z-40 flex gap-2">
+        <LanguageSwitch />
         <ThemeSwitch />
       </div>
       
@@ -1224,7 +1553,7 @@ export default function ProjectEco() {
             `}
           >
             <Sparkles className="w-4 h-4" />
-            <span>Initiative Écologique 2025</span>
+            <span>{t('initiative.badge')}</span>
           </motion.div>
           
           <motion.div
@@ -1250,7 +1579,7 @@ export default function ProjectEco() {
                 }}
                 style={{ backgroundSize: '200% auto' }}
               >
-                Écologie
+                {t('app.title')}
               </motion.span>
             </h1>
             
@@ -1263,7 +1592,7 @@ export default function ProjectEco() {
               <span className={`
                 dark:text-white text-gray-900
               `}>
-                Notre Planète, Notre Avenir
+                {t('app.subtitle')}
               </span>
             </motion.h2>
           </motion.div>
@@ -1278,8 +1607,7 @@ export default function ProjectEco() {
               text-xl leading-relaxed mb-6
               dark:text-gray-300 text-gray-700
             `}>
-              Bienvenue dans notre mouvement écologique communautaire. 
-              Ensemble, nous créons un avenir durable pour les générations à venir.
+              {t('app.subtitle')}
             </p>
           </motion.div>
           
@@ -1297,7 +1625,7 @@ export default function ProjectEco() {
               glow={true}
               pulse={true}
             >
-              Découvrir
+              {t('button.discover')}
             </BoutonAnime>
             
             <BoutonAnime
@@ -1306,7 +1634,7 @@ export default function ProjectEco() {
               icon={<BookOpen className="w-5 h-5" />}
               href="/guide"
             >
-              Guide Pratique
+              {t('button.guide')}
             </BoutonAnime>
           </motion.div>
         </motion.section>
@@ -1338,13 +1666,13 @@ export default function ProjectEco() {
               text-4xl md:text-5xl font-bold mb-4
               dark:text-white text-gray-900
             `}>
-              Nos Objectifs
+              {t('section.goals.title')}
             </h2>
             <p className={`
               text-lg
               dark:text-gray-300 text-gray-600
             `}>
-              Construire un avenir durable ensemble
+              {t('section.goals.subtitle')}
             </p>
           </motion.div>
           
@@ -1398,13 +1726,13 @@ export default function ProjectEco() {
               text-4xl md:text-5xl font-bold mb-4
               dark:text-white text-gray-900
             `}>
-              Tri Sélectif
+              {t('section.recycling.title')}
             </h2>
             <p className={`
               text-lg
               dark:text-gray-300 text-gray-600
             `}>
-              Un système simple pour un impact maximal
+              {t('section.recycling.subtitle')}
             </p>
           </motion.div>
           
@@ -1479,7 +1807,7 @@ export default function ProjectEco() {
                 icon={isAutoRotating ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
                 onClick={() => setIsAutoRotating(!isAutoRotating)}
               >
-                {isAutoRotating ? 'Pause' : 'Reprendre'}
+                {isAutoRotating ? t('button.pause') : t('button.resume')}
               </BoutonAnime>
             </motion.div>
           </motion.div>
@@ -1512,13 +1840,13 @@ export default function ProjectEco() {
               text-4xl md:text-5xl font-bold mb-4
               dark:text-white text-gray-900
             `}>
-              Passez à l'Action
+              {t('section.actions.title')}
             </h2>
             <p className={`
               text-lg
               dark:text-gray-300 text-gray-600
             `}>
-              Des initiatives concrètes pour s'engager
+              {t('section.actions.subtitle')}
             </p>
           </motion.div>
           
@@ -1569,14 +1897,13 @@ export default function ProjectEco() {
                     text-3xl font-bold mb-4
                     dark:text-white text-gray-900
                   `}>
-                    Votre Engagement Compte
+                    {t('cta.title')}
                   </h3>
                   <p className={`
                     mb-6 max-w-2xl mx-auto
                     dark:text-gray-300 text-gray-700
                   `}>
-                    Chaque geste que vous posez pour l'environnement a un impact réel. 
-                    Ensemble, nous pouvons créer un changement durable.
+                    {t('cta.description')}
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <BoutonAnime
@@ -1586,7 +1913,7 @@ export default function ProjectEco() {
                       href="/contact"
                       glow={true}
                     >
-                      Nous Contacter
+                      {t('button.contact')}
                     </BoutonAnime>
                     
                     <BoutonAnime
@@ -1595,7 +1922,7 @@ export default function ProjectEco() {
                       icon={<Calendar className="w-5 h-5" />}
                       href="/activities"
                     >
-                      Voir les Activités
+                      {t('button.activities')}
                     </BoutonAnime>
                   </div>
                 </CardContent>
@@ -1616,6 +1943,7 @@ export default function ProjectEco() {
           details={bins[openModalIndex].details}
           color={bins[openModalIndex].color}
           bg={bins[openModalIndex].bg}
+          tips={bins[openModalIndex].tips}
         />
       )}
       
@@ -1702,5 +2030,14 @@ export default function ProjectEco() {
         }
       `}</style>
     </div>
+  );
+}
+
+// Composant principal wrapper avec provider de traduction
+export default function ProjectEco() {
+  return (
+    <TranslationProvider>
+      <ProjectEcoContent />
+    </TranslationProvider>
   );
 }
