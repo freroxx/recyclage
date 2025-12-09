@@ -30,7 +30,8 @@ import {
   Search,
   Video,
   Youtube,
-  User
+  User,
+  Loader2
 } from "lucide-react";
 
 interface Video {
@@ -58,6 +59,8 @@ export default function Videos() {
   const [showInterface, setShowInterface] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeSearchQuery, setActiveSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout>();
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -208,31 +211,35 @@ export default function Videos() {
   const communityVideos = useMemo(() => videos.filter(v => v.type === "community"), [videos]);
   const channelVideos = useMemo(() => videos.filter(v => v.type === "channel"), [videos]);
 
-  const filteredTutorialVideos = useMemo(() => {
-    if (!searchQuery) return tutorialVideos;
-    return tutorialVideos.filter(video => 
-      video.title[language].toLowerCase().includes(searchQuery.toLowerCase()) ||
-      video.description[language].toLowerCase().includes(searchQuery.toLowerCase()) ||
-      video.category?.[language].toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [tutorialVideos, searchQuery, language]);
+  const searchVideos = useCallback((videos: Video[], query: string): Video[] => {
+    if (!query.trim()) return videos;
+    
+    const searchTerms = query.toLowerCase().trim().split(/\s+/);
+    
+    return videos.filter(video => {
+      const searchableText = [
+        video.title[language].toLowerCase(),
+        video.description[language].toLowerCase(),
+        video.category?.[language].toLowerCase() || '',
+        video.creator?.name.toLowerCase() || '',
+        video.creator?.role.toLowerCase() || ''
+      ].join(' ');
+      
+      return searchTerms.every(term => searchableText.includes(term));
+    });
+  }, [language]);
 
-  const filteredCommunityVideos = useMemo(() => {
-    if (!searchQuery) return communityVideos;
-    return communityVideos.filter(video => 
-      video.title[language].toLowerCase().includes(searchQuery.toLowerCase()) ||
-      video.description[language].toLowerCase().includes(searchQuery.toLowerCase()) ||
-      video.creator?.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [communityVideos, searchQuery, language]);
+  const filteredTutorialVideos = useMemo(() => 
+    searchVideos(tutorialVideos, activeSearchQuery),
+  [tutorialVideos, activeSearchQuery, searchVideos]);
 
-  const filteredChannelVideos = useMemo(() => {
-    if (!searchQuery) return channelVideos;
-    return channelVideos.filter(video => 
-      video.title[language].toLowerCase().includes(searchQuery.toLowerCase()) ||
-      video.description[language].toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [channelVideos, searchQuery, language]);
+  const filteredCommunityVideos = useMemo(() => 
+    searchVideos(communityVideos, activeSearchQuery),
+  [communityVideos, activeSearchQuery, searchVideos]);
+
+  const filteredChannelVideos = useMemo(() => 
+    searchVideos(channelVideos, activeSearchQuery),
+  [channelVideos, activeSearchQuery, searchVideos]);
 
   const getLocalizedText = useCallback((text: { fr: string; en: string } | string) => {
     if (typeof text === 'string') return text;
@@ -297,7 +304,7 @@ export default function Videos() {
       document.exitFullscreen();
     }
     
-    setTimeout(() => setIsLoading(false), 300);
+    // Remove timeout, rely only on onLoad callback
   }, []);
 
   const handleThumbnailClick = useCallback((e: React.MouseEvent, video: Video) => {
@@ -339,6 +346,7 @@ export default function Videos() {
     if (document.fullscreenElement) {
       document.exitFullscreen();
     }
+    setIsLoading(false);
   }, []);
 
   const toggleInterface = useCallback(() => {
@@ -356,8 +364,29 @@ export default function Videos() {
     setIsMuted(prev => !prev);
   }, []);
 
+  const handleSearch = useCallback(() => {
+    setIsSearching(true);
+    setActiveSearchQuery(searchQuery);
+    setTimeout(() => setIsSearching(false), 300);
+  }, [searchQuery]);
+
+  const handleClearSearch = useCallback(() => {
+    setSearchQuery("");
+    setActiveSearchQuery("");
+    searchInputRef.current?.focus();
+  }, []);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+    if (e.key === 'Escape') {
+      handleClearSearch();
+    }
+  }, [handleSearch, handleClearSearch]);
+
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if (!isModalOpen) return;
       
       switch(e.key) {
@@ -379,17 +408,11 @@ export default function Videos() {
           e.preventDefault();
           toggleInterface();
           break;
-        case '/':
-          if (!e.ctrlKey && !e.metaKey) {
-            e.preventDefault();
-            searchInputRef.current?.focus();
-          }
-          break;
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [isModalOpen, handleModalClose, toggleFullscreen, toggleMute, toggleInterface]);
 
   useEffect(() => {
@@ -410,8 +433,8 @@ export default function Videos() {
     return video.aspect === 'portrait' ? '9:16' : '16:9';
   }, []);
 
-  const clearSearch = useCallback(() => {
-    setSearchQuery("");
+  const handleVideoLoad = useCallback(() => {
+    setIsLoading(false);
   }, []);
 
   return (
@@ -442,29 +465,71 @@ export default function Videos() {
             </p>
           </div>
 
-          {/* Search Bar */}
+          {/* Enhanced Search Bar */}
           <div className="mb-10">
-            <div className="relative max-w-2xl mx-auto group">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5 transition-all duration-300 group-hover:text-emerald-500 group-focus-within:text-emerald-500 group-focus-within:scale-110" />
-              <Input
-                ref={searchInputRef}
-                type="search"
-                placeholder={language === 'fr' ? 'Rechercher des vidéos...' : 'Search videos...'}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 pr-12 py-6 rounded-xl border-border/50 bg-background/50 backdrop-blur-sm text-base shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-black/10 focus:shadow-2xl focus:shadow-emerald-500/10 transition-all duration-300 hover:border-emerald-500/30 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-              />
-              {searchQuery && (
-                <button
-                  onClick={clearSearch}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors duration-200"
-                  aria-label={language === 'fr' ? 'Effacer la recherche' : 'Clear search'}
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              )}
-              <div className="absolute -bottom-8 left-0 right-0 text-xs text-muted-foreground text-center opacity-0 group-focus-within:opacity-100 transition-opacity duration-300">
-                {language === 'fr' ? 'Appuyez sur / pour rechercher' : 'Press / to search'}
+            <div className="relative max-w-2xl mx-auto">
+              <div className="relative flex items-center group">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5 transition-all duration-300 group-focus-within:text-emerald-500 group-focus-within:scale-110" />
+                <Input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder={language === 'fr' ? 'Rechercher des vidéos, titres, descriptions, auteurs...' : 'Search videos, titles, descriptions, authors...'}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="pl-12 pr-24 py-6 rounded-xl border-border/50 bg-background/80 backdrop-blur-sm text-base shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-black/10 focus:shadow-2xl focus:shadow-emerald-500/10 transition-all duration-300 hover:border-emerald-500/30 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                />
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
+                  {searchQuery && (
+                    <button
+                      onClick={handleClearSearch}
+                      className="p-2 text-muted-foreground hover:text-foreground transition-colors duration-200 hover:scale-110 hover:rotate-90"
+                      aria-label={language === 'fr' ? 'Effacer la recherche' : 'Clear search'}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                  <Button
+                    onClick={handleSearch}
+                    disabled={!searchQuery.trim() || isSearching}
+                    className="ml-1 gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 transition-all duration-300 hover:scale-105 active:scale-95"
+                    size="sm"
+                  >
+                    {isSearching ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Search className="w-4 h-4" />
+                        <span className="hidden sm:inline">
+                          {language === 'fr' ? 'Rechercher' : 'Search'}
+                        </span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <span className="px-1.5 py-0.5 bg-emerald-500/10 rounded text-emerald-600 dark:text-emerald-400">
+                    ↵
+                  </span>
+                  {language === 'fr' ? 'Entrée pour rechercher' : 'Enter to search'}
+                </span>
+                <span className="hidden sm:inline">•</span>
+                <span className="flex items-center gap-1">
+                  <span className="px-1.5 py-0.5 bg-emerald-500/10 rounded text-emerald-600 dark:text-emerald-400">
+                    Esc
+                  </span>
+                  {language === 'fr' ? 'Effacer la recherche' : 'Clear search'}
+                </span>
+                {activeSearchQuery && (
+                  <>
+                    <span className="hidden sm:inline">•</span>
+                    <span className="text-emerald-600 dark:text-emerald-400">
+                      {language === 'fr' ? `${getTotalResults()} résultats` : `${getTotalResults()} results`}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -555,9 +620,14 @@ export default function Videos() {
                       {language === 'fr' ? 'Aucun tutoriel trouvé' : 'No tutorials found'}
                     </h3>
                     <p className="text-muted-foreground">
-                      {language === 'fr' 
-                        ? 'Essayez avec d\'autres termes de recherche' 
-                        : 'Try different search terms'}
+                      {activeSearchQuery 
+                        ? (language === 'fr' 
+                            ? 'Essayez avec d\'autres termes de recherche' 
+                            : 'Try different search terms')
+                        : (language === 'fr'
+                            ? 'Aucun tutoriel disponible pour le moment'
+                            : 'No tutorials available at the moment')
+                      }
                     </p>
                   </div>
                 ) : (
@@ -699,9 +769,14 @@ export default function Videos() {
                       {language === 'fr' ? 'Aucune vidéo communautaire trouvée' : 'No community videos found'}
                     </h3>
                     <p className="text-muted-foreground">
-                      {language === 'fr' 
-                        ? 'Essayez avec d\'autres termes de recherche' 
-                        : 'Try different search terms'}
+                      {activeSearchQuery 
+                        ? (language === 'fr' 
+                            ? 'Essayez avec d\'autres termes de recherche' 
+                            : 'Try different search terms')
+                        : (language === 'fr'
+                            ? 'Aucune vidéo communautaire disponible pour le moment'
+                            : 'No community videos available at the moment')
+                      }
                     </p>
                   </div>
                 ) : (
@@ -771,9 +846,12 @@ export default function Videos() {
                                         <div className="w-8 h-8 bg-gradient-to-br from-emerald-500/20 to-green-500/20 rounded-full flex items-center justify-center group-hover:from-emerald-500/30 group-hover:to-green-500/30 transition-all duration-300 group-hover:scale-110 group-hover:rotate-12">
                                           <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                                         </div>
-                                        <span className="text-sm font-medium group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
-                                          {video.creator.name}
-                                        </span>
+                                        <div>
+                                          <span className="text-sm font-medium group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                                            {video.creator.name}
+                                          </span>
+                                          <p className="text-xs text-muted-foreground">{video.creator.role}</p>
+                                        </div>
                                       </div>
                                     )}
                                   </div>
@@ -891,9 +969,14 @@ export default function Videos() {
                       {language === 'fr' ? 'Aucune vidéo de chaîne trouvée' : 'No channel videos found'}
                     </h3>
                     <p className="text-muted-foreground">
-                      {language === 'fr' 
-                        ? 'Essayez avec d\'autres termes de recherche' 
-                        : 'Try different search terms'}
+                      {activeSearchQuery 
+                        ? (language === 'fr' 
+                            ? 'Essayez avec d\'autres termes de recherche' 
+                            : 'Try different search terms')
+                        : (language === 'fr'
+                            ? 'Aucune vidéo de chaîne disponible pour le moment'
+                            : 'No channel videos available at the moment')
+                      }
                     </p>
                   </div>
                 ) : (
@@ -1064,19 +1147,13 @@ export default function Videos() {
           }}
         >
           
-          {/* Loading Overlay */}
+          {/* Enhanced Loading Overlay - Faster and Better */}
           {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-50 animate-fade-in">
+            <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm z-50 animate-fade-in">
               <div className="relative">
-                <div className="w-24 h-24 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
+                <div className="w-16 h-16 border-3 border-transparent border-t-emerald-500 rounded-full animate-spin-fast"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="relative">
-                    <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-xl shadow-emerald-500/40">
-                      <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-inner shadow-black/20">
-                        <Play className="w-6 h-6 text-emerald-600 ml-0.5" fill="currentColor" />
-                      </div>
-                    </div>
-                  </div>
+                  <Play className="w-8 h-8 text-emerald-500 animate-pulse-fast" />
                 </div>
               </div>
             </div>
@@ -1167,13 +1244,13 @@ export default function Videos() {
                   showControls={false}
                   aspectRatio={getAspectRatio(selectedVideo)}
                   className="w-full h-full"
-                  onLoad={() => setIsLoading(false)}
+                  onLoad={handleVideoLoad}
                   onError={() => {
                     setIsLoading(false);
                     // Show error state in modal
                   }}
                   onPlay={() => {
-                    // Video started playing
+                    setIsLoading(false);
                   }}
                   onPause={() => {
                     // Video paused
@@ -1333,6 +1410,17 @@ export default function Videos() {
           }
         }
         
+        @keyframes pulseFast {
+          0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.8;
+            transform: scale(1.1);
+          }
+        }
+        
         @keyframes float {
           0%, 100% {
             transform: translateY(0);
@@ -1343,6 +1431,15 @@ export default function Videos() {
         }
         
         @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+        
+        @keyframes spin-fast {
           from {
             transform: rotate(0deg);
           }
@@ -1448,6 +1545,14 @@ export default function Videos() {
           animation: pulseSlow 2s ease-in-out infinite;
         }
         
+        .animate-pulse-fast {
+          animation: pulseFast 0.5s ease-in-out infinite;
+        }
+        
+        .animate-spin-fast {
+          animation: spin-fast 0.5s linear infinite;
+        }
+        
         .animate-float {
           animation: float 4s ease-in-out infinite;
         }
@@ -1484,11 +1589,11 @@ export default function Videos() {
         }
         
         .animate-fade-in {
-          animation: fade-in 0.3s ease-out forwards;
+          animation: fade-in 0.2s ease-out forwards;
         }
         
         .animate-scale-in {
-          animation: scale-in 0.3s ease-out forwards;
+          animation: scale-in 0.2s ease-out forwards;
         }
         
         .animate-float-slow {
@@ -1530,8 +1635,10 @@ export default function Videos() {
         @media (prefers-reduced-motion: reduce) {
           .animate-ping-slow,
           .animate-pulse-slow,
+          .animate-pulse-fast,
           .animate-float,
           .animate-spin,
+          .animate-spin-fast,
           .animate-bounce,
           .animate-shimmer,
           .animate-fade-up,
