@@ -15,7 +15,6 @@ const translations = {
     "nav.project": "Le Projet",
     "nav.resources": "Ressources",
     "nav.contact": "Contact",
-    "nav.community": "Communauté",
     "nav.events": "Événements",
     
     // Hero
