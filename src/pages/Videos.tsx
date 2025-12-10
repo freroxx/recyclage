@@ -156,6 +156,25 @@ export default function Videos() {
       creator: { name: "Yahia", role: "Développeur" }
     },
     {
+      id: "laundry-cat",
+      title: {
+        fr: "Laundry cat",
+        en: "Laundry cat"
+      },
+      description: {
+        fr: "Créé par Salsabile",
+        en: "Made by Salsabile"
+      },
+      youtubeId: "c7akmKesIq4",
+      duration: "0:45",
+      publishDate: "2025-12-10",
+      category: { fr: "Communauté", en: "Community" },
+      type: "community",
+      aspect: "portrait",
+      creator: { name: "Salsabile", role: "Artist" },
+      isShort: true
+    },
+    {
       id: "community-short",
       title: {
         fr: "Ne jetez pas vos bouteilles - Épisode 2",
@@ -171,7 +190,7 @@ export default function Videos() {
       category: { fr: "Communauté", en: "Community" },
       type: "community",
       aspect: "portrait",
-      creator: { name: "Salsabile", role: "Éco-Créatrice" },
+      creator: { name: "Salsabile", role: "Artist" },
       isShort: true
     },
     {
@@ -190,7 +209,7 @@ export default function Videos() {
       category: { fr: "Communauté", en: "Community" },
       type: "community",
       aspect: "portrait",
-      creator: { name: "Salsabile", role: "Éco-Artiste" },
+      creator: { name: "Salsabile", role: "Artist" },
       isShort: true
     },
     {
@@ -209,7 +228,7 @@ export default function Videos() {
       category: { fr: "Communauté", en: "Community" },
       type: "community",
       aspect: "portrait",
-      creator: { name: "Salsabile", role: "Éco-Influenceur" },
+      creator: { name: "Salsabile", role: "Artist" },
       isShort: true
     },
     {
@@ -1052,7 +1071,7 @@ export default function Videos() {
         <DialogContent 
           ref={modalRef}
           className={`fixed inset-0 m-auto border-none bg-black shadow-2xl overflow-hidden p-0 transition-all duration-500 ease-out z-50 ${
-            isMobile ? 'w-full h-full rounded-none' : 'sm:w-[95vw] sm:h-[85vh] rounded-lg'
+            isMobile ? 'w-full h-full rounded-none' : 'sm:w-[95vw] sm:h-[85vh] rounded-xl'
           } ${selectedVideo?.isShort ? 'max-w-[400px] max-h-[710px]' : ''}`}
           style={{
             maxWidth: selectedVideo?.aspect === 'portrait' ? '400px' : 
@@ -1120,23 +1139,23 @@ export default function Videos() {
           {/* Top Controls Bar */}
           {showInterface && !videoError && (
             <div 
-              className={`absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/95 via-black/85 to-transparent p-4 transition-all duration-300 ease-out ${
+              className={`absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/95 via-black/85 to-transparent p-3 md:p-4 transition-all duration-300 ease-out ${
                 showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'
               }`}
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 md:gap-3">
                   <Button
                     variant="ghost"
                     size={isMobile ? "icon" : "sm"}
-                    className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 hover:-translate-y-0.5`}
+                    className={`${isMobile ? 'h-10 w-10' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 hover:-translate-y-0.5`}
                     onClick={handleModalClose}
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-4 h-4 md:w-5 md:h-5" />
                   </Button>
                   
                   {selectedVideo && (
-                    <div className="ml-2 max-w-[calc(100%-140px)]">
+                    <div className="ml-1 max-w-[calc(100%-120px)]">
                       <h3 className="text-sm font-semibold text-white/95 truncate animate-fade-in">
                         {getLocalizedText(selectedVideo.title)}
                       </h3>
@@ -1149,39 +1168,39 @@ export default function Videos() {
                   )}
                 </div>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 md:gap-2">
                   {/* Hide Interface Button */}
                   <Button
                     variant="ghost"
                     size={isMobile ? "icon" : "sm"}
-                    className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 hover:-translate-y-0.5`}
+                    className={`${isMobile ? 'h-10 w-10' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 hover:-translate-y-0.5`}
                     onClick={toggleInterface}
                     title={language === 'fr' ? 'Masquer l\'interface' : 'Hide interface'}
                   >
-                    <EyeOff className="w-5 h-5" />
+                    <EyeOff className="w-4 h-4 md:w-5 md:h-5" />
                   </Button>
                   
                   <Button
                     variant="ghost"
                     size={isMobile ? "icon" : "sm"}
-                    className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 hover:-translate-y-0.5`}
+                    className={`${isMobile ? 'h-10 w-10' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 hover:-translate-y-0.5`}
                     onClick={() => selectedVideo && openInYouTube(selectedVideo.youtubeId)}
                     title={language === 'fr' ? 'Ouvrir sur YouTube' : 'Open on YouTube'}
                   >
-                    <ExternalLink className="w-5 h-5" />
+                    <ExternalLink className="w-4 h-4 md:w-5 md:h-5" />
                   </Button>
                   
                   <Button
                     variant="ghost"
                     size={isMobile ? "icon" : "sm"}
-                    className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 hover:-translate-y-0.5`}
+                    className={`${isMobile ? 'h-10 w-10' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 hover:-translate-y-0.5`}
                     onClick={toggleFullscreen}
                     title={language === 'fr' ? 'Plein écran' : 'Fullscreen'}
                   >
                     {isFullscreen ? (
-                      <Minimize2 className="w-5 h-5" />
+                      <Minimize2 className="w-4 h-4 md:w-5 md:h-5" />
                     ) : (
-                      <Maximize2 className="w-5 h-5" />
+                      <Maximize2 className="w-4 h-4 md:w-5 md:h-5" />
                     )}
                   </Button>
                 </div>
@@ -1215,24 +1234,24 @@ export default function Videos() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-12 w-12 bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 animate-float-slow hover:-translate-y-0.5"
+                  className="h-10 w-10 md:h-12 md:w-12 bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 animate-float-slow hover:-translate-y-0.5"
                   onClick={toggleInterface}
                   title={language === 'fr' ? 'Afficher l\'interface' : 'Show interface'}
                 >
-                  <Eye className="w-5 h-5" />
+                  <Eye className="w-4 h-4 md:w-5 md:h-5" />
                 </Button>
                 
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-12 w-12 bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 animate-float-slow hover:-translate-y-0.5"
+                  className="h-10 w-10 md:h-12 md:w-12 bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 animate-float-slow hover:-translate-y-0.5"
                   onClick={toggleMute}
                   title={isMuted ? (language === 'fr' ? 'Activer le son' : 'Unmute') : (language === 'fr' ? 'Désactiver le son' : 'Mute')}
                 >
                   {isMuted ? (
-                    <VolumeX className="w-5 h-5" />
+                    <VolumeX className="w-4 h-4 md:w-5 md:h-5" />
                   ) : (
-                    <Volume2 className="w-5 h-5" />
+                    <Volume2 className="w-4 h-4 md:w-5 md:h-5" />
                   )}
                 </Button>
               </div>
@@ -1244,14 +1263,14 @@ export default function Videos() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-12 w-12 bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 hover:-translate-y-0.5"
+                  className="h-10 w-10 bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 hover:-translate-y-0.5"
                   onClick={toggleMute}
                   title={isMuted ? (language === 'fr' ? 'Activer le son' : 'Unmute') : (language === 'fr' ? 'Désactiver le son' : 'Mute')}
                 >
                   {isMuted ? (
-                    <VolumeX className="w-5 h-5" />
+                    <VolumeX className="w-4 h-4" />
                   ) : (
-                    <Volume2 className="w-5 h-5" />
+                    <Volume2 className="w-4 h-4" />
                   )}
                 </Button>
               </div>
@@ -1261,39 +1280,38 @@ export default function Videos() {
           {/* Bottom Controls Bar */}
           {showInterface && !videoError && (
             <div 
-              className={`absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/95 via-black/85 to-transparent p-4 transition-all duration-300 ease-out ${
+              className={`absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/95 via-black/85 to-transparent p-3 md:p-4 transition-all duration-300 ease-out ${
                 showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full pointer-events-none'
               }`}
             >
               {selectedVideo && (
-                <div className="space-y-3 animate-fade-in">
+                <div className="space-y-2 md:space-y-3 animate-fade-in">
                   <div>
-                    <h3 className="text-base font-semibold text-white line-clamp-1">
+                    <h3 className="text-sm md:text-base font-semibold text-white line-clamp-1">
                       {getLocalizedText(selectedVideo.title)}
                     </h3>
-                    <p className="text-sm text-white/80 line-clamp-2 mt-1">
+                    <p className="text-xs md:text-sm text-white/80 line-clamp-2 mt-1">
                       {getLocalizedText(selectedVideo.description)}
                     </p>
                   </div>
                   
-                  <div className="flex items-center justify-between pt-3 border-t border-white/20">
-                    <div className="flex items-center gap-4 text-sm text-white/70">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between pt-2 md:pt-3 border-t border-white/20">
+                    <div className="flex items-center flex-wrap gap-2 md:gap-4 text-xs md:text-sm text-white/70 mb-2 md:mb-0">
                       {selectedVideo.publishDate && (
                         <span className="flex items-center gap-1.5 animate-fade-in hover:text-white transition-colors duration-200">
-                          <Calendar className="w-4 h-4" />
-                          <span className="hidden sm:inline">{formatDate(selectedVideo.publishDate)}</span>
-                          <span className="sm:hidden text-xs">{formatDate(selectedVideo.publishDate)}</span>
+                          <Calendar className="w-3 h-3 md:w-4 md:h-4" />
+                          <span>{formatDate(selectedVideo.publishDate)}</span>
                         </span>
                       )}
                       {selectedVideo.duration && (
                         <span className="flex items-center gap-1.5 animate-fade-in hover:text-white transition-colors duration-200" style={{ animationDelay: '0.1s' }}>
-                          <Clock className="w-4 h-4" />
+                          <Clock className="w-3 h-3 md:w-4 md:h-4" />
                           <span>{selectedVideo.duration}</span>
                         </span>
                       )}
                       {selectedVideo.creator && (
                         <span className="flex items-center gap-1.5 animate-fade-in hover:text-white transition-colors duration-200" style={{ animationDelay: '0.2s' }}>
-                          <User className="w-4 h-4" />
+                          <User className="w-3 h-3 md:w-4 md:h-4" />
                           <span>{selectedVideo.creator.name}</span>
                         </span>
                       )}
@@ -1304,9 +1322,8 @@ export default function Videos() {
                       className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-105 active:scale-95 transition-all duration-300 hover:-translate-y-0.5"
                       onClick={() => selectedVideo && openInYouTube(selectedVideo.youtubeId)}
                     >
-                      <ExternalLink className="w-4 h-4" />
-                      <span className="hidden sm:inline">YouTube</span>
-                      <span className="sm:hidden">YT</span>
+                      <ExternalLink className="w-3 h-3 md:w-4 md:h-4" />
+                      <span>YouTube</span>
                     </Button>
                   </div>
                 </div>
@@ -1423,13 +1440,6 @@ export default function Videos() {
                   </div>
                   
                   <div className="mt-6 flex gap-3">
-                    <Button
-                      variant="outline"
-                      className="flex-1 border-emerald-500/30 hover:bg-emerald-500/10"
-                      onClick={handleCharacterDetailClose}
-                    >
-                      {language === 'fr' ? 'Fermer' : 'Close'}
-                    </Button>
                     <Button
                       className="flex-1 gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600"
                       onClick={() => {
