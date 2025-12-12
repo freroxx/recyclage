@@ -56,8 +56,6 @@ interface Video {
   aspect?: 'landscape' | 'portrait';
   creator?: { name: string; role: string };
   isShort?: boolean;
-  views?: number;
-  likes?: number;
 }
 
 interface Character {
@@ -166,9 +164,7 @@ export default function Videos() {
       category: { fr: "Chaîne", en: "Channel" },
       type: "channel",
       aspect: "landscape",
-      creator: { name: "Yahia", role: "Développeur" },
-      views: 150,
-      likes: 25
+      creator: { name: "Yahia", role: "Développeur" }
     },
     {
       id: "reuse-cat-4",
@@ -187,9 +183,7 @@ export default function Videos() {
       type: "community",
       aspect: "portrait",
       creator: { name: "Salsabile", role: "Artiste" },
-      isShort: true,
-      views: 320,
-      likes: 45
+      isShort: true
     },
     {
       id: "laundry-cat",
@@ -208,9 +202,7 @@ export default function Videos() {
       type: "community",
       aspect: "portrait",
       creator: { name: "Salsabile", role: "Artiste" },
-      isShort: true,
-      views: 280,
-      likes: 38
+      isShort: true
     },
     {
       id: "community-short",
@@ -229,9 +221,7 @@ export default function Videos() {
       type: "community",
       aspect: "portrait",
       creator: { name: "Salsabile", role: "Artiste" },
-      isShort: true,
-      views: 410,
-      likes: 52
+      isShort: true
     },
     {
       id: "community1",
@@ -250,9 +240,7 @@ export default function Videos() {
       type: "community",
       aspect: "portrait",
       creator: { name: "Salsabile", role: "Artiste" },
-      isShort: true,
-      views: 560,
-      likes: 67
+      isShort: true
     },
     {
       id: "community2",
@@ -271,9 +259,7 @@ export default function Videos() {
       type: "community",
       aspect: "portrait",
       creator: { name: "Salsabile", role: "Artiste" },
-      isShort: true,
-      views: 380,
-      likes: 49
+      isShort: true
     },
     {
       id: "1",
@@ -291,8 +277,6 @@ export default function Videos() {
       category: { fr: "Éducation", en: "Education" },
       type: "tutorial",
       aspect: "landscape",
-      views: 1250,
-      likes: 120
     },
     {
       id: "2",
@@ -309,9 +293,7 @@ export default function Videos() {
       publishDate: "2024-02-10",
       category: { fr: "Processus", en: "Process" },
       type: "tutorial",
-      aspect: "landscape",
-      views: 890,
-      likes: 85
+      aspect: "landscape"
     },
     {
       id: "3",
@@ -328,9 +310,7 @@ export default function Videos() {
       publishDate: "2024-03-05",
       category: { fr: "Documentaire", en: "Documentary" },
       type: "tutorial",
-      aspect: "landscape",
-      views: 1120,
-      likes: 98
+      aspect: "landscape"
     }
   ], []);
 
