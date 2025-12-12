@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import type React from "react";
-import { X, Maximize2, Minimize2, GripVertical, Moon, Sun, Loader2 } from "lucide-react";
+import { X, Maximize2, Minimize2, GripVertical, Moon, Sun, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
@@ -30,14 +30,15 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [isLoading, setIsLoading] = useState(true);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const { resolvedTheme, theme, setTheme } = useTheme();
   const windowRef = useRef<HTMLDivElement>(null);
   const embedContainerRef = useRef<HTMLDivElement>(null);
   const scriptRef = useRef<HTMLScriptElement | null>(null);
   const currentDeploymentIdRef = useRef<string>('');
   const toastShownRef = useRef(false);
-  const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const embedInitializedRef = useRef(false);
+  const loadTimeoutRef = useRef<NodeJS.Timeout>();
 
   const currentTheme = resolvedTheme || theme || 'light';
   const isDark = currentTheme === 'dark';
@@ -93,15 +94,14 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
       setIsLoading(true);
       embedInitializedRef.current = false;
       
+      // Clear any pending timeouts
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+      }
+      
       // Clean up the embed container
       if (embedContainerRef.current) {
         embedContainerRef.current.innerHTML = '';
-      }
-      
-      // Clean up resize observer
-      if (resizeObserverRef.current) {
-        resizeObserverRef.current.disconnect();
-        resizeObserverRef.current = null;
       }
       
       currentDeploymentIdRef.current = '';
@@ -115,37 +115,19 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
     }
   }, [open]);
 
-  // Handle embed initialization with optimized loading
-  useEffect(() => {
-    if (!open || !embedContainerRef.current) {
-      return;
-    }
-
-    // If we're already showing the correct deployment and it's initialized, do nothing
-    if (currentDeploymentIdRef.current === deploymentId && embedInitializedRef.current) {
-      setIsLoading(false);
-      return;
-    }
-
-    // Show loading toast only once per session
-    if (!toastShownRef.current) {
-      toast.info("Chargement de l'assistant IA...", {
-        duration: 1500,
-      });
-      toastShownRef.current = true;
-    }
-
-    // Clean up previous embed
-    if (embedContainerRef.current) {
-      embedContainerRef.current.innerHTML = '';
-    }
-
-    // Create container for the embed with proper styling
+  // Function to create embed container
+  const createEmbedContainer = useCallback(() => {
+    if (!embedContainerRef.current) return null;
+    
+    // Clear existing content
+    embedContainerRef.current.innerHTML = '';
+    
+    // Create container
     const container = document.createElement('div');
+    container.id = `pickaxe-container-${deploymentId}`;
     container.style.width = '100%';
     container.style.height = '100%';
     container.style.position = 'relative';
-    container.style.overflow = 'hidden';
     container.style.display = 'flex';
     container.style.flexDirection = 'column';
     
@@ -157,14 +139,58 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
     embedDiv.style.flex = '1';
     embedDiv.style.minHeight = '400px';
     embedDiv.style.background = 'transparent';
+    embedDiv.style.position = 'relative';
     
     container.appendChild(embedDiv);
     embedContainerRef.current.appendChild(container);
     
+    return { container, embedDiv };
+  }, [deploymentId]);
+
+  // Function to initialize Pickaxe embed
+  const initializePickaxeEmbed = useCallback(() => {
+    if (!embedContainerRef.current) return;
+    
+    // If already showing correct deployment and initialized, skip
+    if (currentDeploymentIdRef.current === deploymentId && embedInitializedRef.current) {
+      setIsLoading(false);
+      return;
+    }
+    
     // Update current deployment ID
     currentDeploymentIdRef.current = deploymentId;
     
-    // Optimized script loading with preconnection hints
+    // Create embed container
+    const embedElements = createEmbedContainer();
+    if (!embedElements) return;
+    
+    const { embedDiv } = embedElements;
+    
+    // Show loading toast only once per session
+    if (!toastShownRef.current) {
+      toast.info("Chargement de l'assistant IA...", {
+        duration: 1500,
+      });
+      toastShownRef.current = true;
+    }
+    
+    // Check if Pickaxe script is already loaded
+    if (window.PickaxeEmbed) {
+      console.log('Pickaxe already loaded, waiting for initialization...');
+      
+      // Wait for DOM to be ready
+      loadTimeoutRef.current = setTimeout(() => {
+        if (embedDiv && embedDiv.id === deploymentId) {
+          setIsLoading(false);
+          embedInitializedRef.current = true;
+          toast.success("L'assistant IA est prêt !", { duration: 2000 });
+        }
+      }, 500);
+      
+      return;
+    }
+    
+    // Load Pickaxe script
     const loadPickaxeScript = () => {
       // Remove existing script if present
       const existingScript = document.querySelector('script[src*="pickaxe"]');
@@ -180,40 +206,42 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
       
       // Create new script
       const script = document.createElement('script');
+      script.id = 'pickaxe-embed-script';
       script.src = 'https://studio.pickaxe.co/api/embed/bundle.js';
       script.async = true;
       script.defer = true;
       
       script.onload = () => {
-        console.log('Pickaxe script loaded for:', deploymentId);
+        console.log('Pickaxe script loaded successfully');
         
         // Give time for embed to initialize
-        setTimeout(() => {
+        loadTimeoutRef.current = setTimeout(() => {
           setIsLoading(false);
           embedInitializedRef.current = true;
           
-          // Initialize resize observer for embed container
-          if (embedContainerRef.current && !resizeObserverRef.current) {
-            resizeObserverRef.current = new ResizeObserver(() => {
-              // Force embed to resize on container change
-              if (window.PickaxeEmbed && window.PickaxeEmbed.refresh) {
-                try {
-                  window.PickaxeEmbed.refresh();
-                } catch (error) {
-                  console.log('Embed refresh not available');
-                }
-              }
-            });
-            
-            resizeObserverRef.current.observe(embedContainerRef.current);
-          }
-        }, 800);
+          // Check if embed div is visible and has content
+          setTimeout(() => {
+            const embedElement = document.getElementById(deploymentId);
+            if (embedElement && embedElement.children.length === 0) {
+              console.warn('Embed div is empty after initialization');
+              // Try to reload
+              setLoadAttempt(prev => prev + 1);
+            } else {
+              toast.success("L'assistant IA est prêt !", { duration: 2000 });
+            }
+          }, 1000);
+        }, 1000);
       };
       
       script.onerror = () => {
         console.error('Failed to load Pickaxe script');
         setIsLoading(false);
-        toast.error("Erreur lors du chargement de l'assistant");
+        toast.error("Erreur lors du chargement de l'assistant. Veuillez réessayer.");
+        
+        // Retry after 2 seconds
+        setTimeout(() => {
+          setLoadAttempt(prev => prev + 1);
+        }, 2000);
       };
       
       document.body.appendChild(script);
@@ -221,16 +249,33 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
     };
 
     // Load with a small delay to ensure DOM is ready
-    const loadTimer = setTimeout(loadPickaxeScript, 100);
+    loadTimeoutRef.current = setTimeout(loadPickaxeScript, 100);
+  }, [deploymentId, createEmbedContainer]);
+
+  // Handle embed initialization with retry logic
+  useEffect(() => {
+    if (!open || !embedContainerRef.current) {
+      return;
+    }
+    
+    initializePickaxeEmbed();
     
     return () => {
-      clearTimeout(loadTimer);
-      if (resizeObserverRef.current) {
-        resizeObserverRef.current.disconnect();
-        resizeObserverRef.current = null;
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
       }
     };
-  }, [open, deploymentId]);
+  }, [open, deploymentId, loadAttempt, initializePickaxeEmbed]);
+
+  // Retry loading if embed doesn't initialize
+  useEffect(() => {
+    if (loadAttempt > 0 && loadAttempt <= 3) {
+      console.log(`Retrying embed load (attempt ${loadAttempt})`);
+      initializePickaxeEmbed();
+    } else if (loadAttempt > 3) {
+      toast.error("Impossible de charger l'assistant. Veuillez actualiser la page.");
+    }
+  }, [loadAttempt, initializePickaxeEmbed]);
 
   // Handle dragging
   useEffect(() => {
@@ -367,6 +412,7 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
     setIsLoading(true);
     embedInitializedRef.current = false;
     toastShownRef.current = false;
+    setLoadAttempt(0);
     const newTheme = isDark ? 'light' : 'dark';
     setTheme(newTheme);
   }, [isDark, setTheme]);
@@ -384,6 +430,13 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
         }
       }, 300);
     }
+  }, []);
+
+  const handleRetryLoad = useCallback(() => {
+    setIsLoading(true);
+    embedInitializedRef.current = false;
+    setLoadAttempt(prev => prev + 1);
+    toast.info("Rechargement de l'assistant...");
   }, []);
 
   // Handle window resize for responsiveness
@@ -476,6 +529,20 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
           </div>
 
           <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+            {/* Retry Button - only show when loading fails */}
+            {loadAttempt > 0 && loadAttempt <= 3 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRetryLoad}
+                className="h-8 w-8 p-0 hover:bg-primary/10 transition-colors rounded-md"
+                title="Réessayer le chargement"
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+            )}
+
             {/* Theme Toggle Button */}
             <Button
               variant="ghost"
@@ -548,11 +615,63 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
           {/* Loading overlay */}
           {isLoading && (
             <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10">
-              <div className="flex flex-col items-center gap-3">
-                <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                <p className="text-sm text-muted-foreground">
-                  Chargement de l'assistant...
+              <div className="flex flex-col items-center gap-4 p-6 rounded-xl bg-background/90 border border-border shadow-lg">
+                <div className="flex flex-col items-center gap-3">
+                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-foreground">
+                      Chargement de l'assistant IA...
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {loadAttempt > 0 ? `Tentative ${loadAttempt}/3` : 'Initialisation'}
+                    </p>
+                  </div>
+                </div>
+                {loadAttempt > 1 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRetryLoad}
+                    className="gap-2"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    Réessayer
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Error state */}
+          {!isLoading && !embedInitializedRef.current && loadAttempt > 3 && (
+            <div className="absolute inset-0 bg-background flex items-center justify-center">
+              <div className="text-center p-6 max-w-sm">
+                <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+                  <X className="w-6 h-6 text-destructive" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  Échec du chargement
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Impossible de charger l'assistant IA. Veuillez réessayer ou actualiser la page.
                 </p>
+                <div className="flex gap-2 justify-center">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleRetryLoad}
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Réessayer
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleClose}
+                  >
+                    Fermer
+                  </Button>
+                </div>
               </div>
             </div>
           )}
