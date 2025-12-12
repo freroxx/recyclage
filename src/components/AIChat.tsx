@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import type React from "react";
-import { X, Maximize2, Minimize2, GripVertical, Moon, Sun, Loader2, RefreshCw } from "lucide-react";
+import { X, Maximize2, Minimize2, GripVertical, Moon, Sun, Loader2, RefreshCw, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ interface AIChatProps {
 
 declare global {
   interface Window {
+    Pickaxe?: any;
     PickaxeEmbed?: any;
   }
 }
@@ -31,14 +32,14 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  const [embedError, setEmbedError] = useState(false);
   const { resolvedTheme, theme, setTheme } = useTheme();
   const windowRef = useRef<HTMLDivElement>(null);
   const embedContainerRef = useRef<HTMLDivElement>(null);
-  const scriptRef = useRef<HTMLScriptElement | null>(null);
-  const currentDeploymentIdRef = useRef<string>('');
-  const toastShownRef = useRef(false);
+  const scriptLoadAttemptRef = useRef(0);
   const embedInitializedRef = useRef(false);
-  const loadTimeoutRef = useRef<NodeJS.Timeout>();
+  const checkEmbedIntervalRef = useRef<NodeJS.Timeout>();
+  const lastDeploymentIdRef = useRef<string>('');
 
   const currentTheme = resolvedTheme || theme || 'light';
   const isDark = currentTheme === 'dark';
@@ -78,9 +79,11 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
   useEffect(() => {
     if (!open) return;
     
-    // Reset loading state
+    // Reset states
     setIsLoading(true);
+    setEmbedError(false);
     embedInitializedRef.current = false;
+    scriptLoadAttemptRef.current = 0;
     
     // Small delay to ensure DOM is ready
     const timer = setTimeout(calculateInitialPosition, 50);
@@ -92,11 +95,15 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
   useEffect(() => {
     if (!open) {
       setIsLoading(true);
+      setEmbedError(false);
       embedInitializedRef.current = false;
+      scriptLoadAttemptRef.current = 0;
+      lastDeploymentIdRef.current = '';
       
-      // Clear any pending timeouts
-      if (loadTimeoutRef.current) {
-        clearTimeout(loadTimeoutRef.current);
+      // Clear intervals
+      if (checkEmbedIntervalRef.current) {
+        clearInterval(checkEmbedIntervalRef.current);
+        checkEmbedIntervalRef.current = undefined;
       }
       
       // Clean up the embed container
@@ -104,178 +111,222 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
         embedContainerRef.current.innerHTML = '';
       }
       
-      currentDeploymentIdRef.current = '';
-      toastShownRef.current = false;
-      
-      // Clean up script
-      if (scriptRef.current && scriptRef.current.parentNode) {
-        scriptRef.current.parentNode.removeChild(scriptRef.current);
-        scriptRef.current = null;
-      }
+      // Remove any Pickaxe iframes
+      document.querySelectorAll('iframe[src*="pickaxe"]').forEach(iframe => {
+        iframe.remove();
+      });
     }
   }, [open]);
 
-  // Function to create embed container
-  const createEmbedContainer = useCallback(() => {
-    if (!embedContainerRef.current) return null;
+  // Function to check if embed has loaded properly
+  const checkEmbedLoaded = useCallback(() => {
+    if (!embedContainerRef.current) return false;
     
-    // Clear existing content
+    const embedDiv = document.getElementById(deploymentId);
+    if (!embedDiv) return false;
+    
+    // Check for iframes or any content inside the embed div
+    const hasIframes = embedDiv.querySelector('iframe');
+    const hasChildren = embedDiv.children.length > 0;
+    const hasStyle = embedDiv.style.cssText.length > 0;
+    
+    return hasIframes || hasChildren || hasStyle;
+  }, [deploymentId]);
+
+  // Function to initialize Pickaxe embed
+  const initializePickaxeEmbed = useCallback(() => {
+    if (!open || !embedContainerRef.current) {
+      return;
+    }
+
+    // If we already initialized this deployment, skip
+    if (lastDeploymentIdRef.current === deploymentId && embedInitializedRef.current) {
+      setIsLoading(false);
+      return;
+    }
+
+    // Clear previous content
     embedContainerRef.current.innerHTML = '';
-    
-    // Create container
+    lastDeploymentIdRef.current = deploymentId;
+    setIsLoading(true);
+    setEmbedError(false);
+    scriptLoadAttemptRef.current++;
+
+    // Show loading toast only on first attempt
+    if (scriptLoadAttemptRef.current === 1) {
+      toast.info("Chargement de l'assistant IA...", {
+        duration: 2000,
+      });
+    }
+
+    // Create container for Pickaxe embed
     const container = document.createElement('div');
     container.id = `pickaxe-container-${deploymentId}`;
     container.style.width = '100%';
     container.style.height = '100%';
     container.style.position = 'relative';
-    container.style.display = 'flex';
-    container.style.flexDirection = 'column';
-    
-    // Create the embed div with the correct ID
+    container.style.overflow = 'hidden';
+    container.style.minHeight = '400px';
+    container.style.background = isDark ? '#0f172a' : '#f8fafc';
+
+    // Create the embed div with the exact deployment ID
     const embedDiv = document.createElement('div');
     embedDiv.id = deploymentId;
+    embedDiv.setAttribute('data-pickaxe', 'embed');
     embedDiv.style.width = '100%';
     embedDiv.style.height = '100%';
-    embedDiv.style.flex = '1';
     embedDiv.style.minHeight = '400px';
     embedDiv.style.background = 'transparent';
-    embedDiv.style.position = 'relative';
-    
+    embedDiv.style.border = 'none';
+    embedDiv.style.overflow = 'hidden';
+
     container.appendChild(embedDiv);
     embedContainerRef.current.appendChild(container);
-    
-    return { container, embedDiv };
-  }, [deploymentId]);
 
-  // Function to initialize Pickaxe embed
-  const initializePickaxeEmbed = useCallback(() => {
-    if (!embedContainerRef.current) return;
-    
-    // If already showing correct deployment and initialized, skip
-    if (currentDeploymentIdRef.current === deploymentId && embedInitializedRef.current) {
-      setIsLoading(false);
-      return;
-    }
-    
-    // Update current deployment ID
-    currentDeploymentIdRef.current = deploymentId;
-    
-    // Create embed container
-    const embedElements = createEmbedContainer();
-    if (!embedElements) return;
-    
-    const { embedDiv } = embedElements;
-    
-    // Show loading toast only once per session
-    if (!toastShownRef.current) {
-      toast.info("Chargement de l'assistant IA...", {
-        duration: 1500,
-      });
-      toastShownRef.current = true;
-    }
-    
-    // Check if Pickaxe script is already loaded
-    if (window.PickaxeEmbed) {
-      console.log('Pickaxe already loaded, waiting for initialization...');
+    // Check if Pickaxe script is already loaded in the global scope
+    if (window.Pickaxe || window.PickaxeEmbed) {
+      console.log('Pickaxe already loaded in window, waiting for auto-init...');
       
-      // Wait for DOM to be ready
-      loadTimeoutRef.current = setTimeout(() => {
-        if (embedDiv && embedDiv.id === deploymentId) {
+      // Pickaxe should auto-initialize when it sees the div with deployment ID
+      // Start checking for embed content
+      const checkInterval = setInterval(() => {
+        if (checkEmbedLoaded()) {
+          clearInterval(checkInterval);
           setIsLoading(false);
           embedInitializedRef.current = true;
-          toast.success("L'assistant IA est prêt !", { duration: 2000 });
+          toast.success("Assistant IA chargé !", { duration: 2000 });
+        }
+      }, 300);
+      
+      // Timeout after 8 seconds
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        if (!embedInitializedRef.current) {
+          console.log('Pickaxe did not auto-initialize, loading script...');
+          loadPickaxeScript();
+        }
+      }, 8000);
+      
+      return;
+    }
+
+    // Load the Pickaxe script
+    loadPickaxeScript();
+  }, [open, deploymentId, isDark, checkEmbedLoaded]);
+
+  // Function to load Pickaxe script
+  const loadPickaxeScript = useCallback(() => {
+    // Remove existing Pickaxe scripts
+    document.querySelectorAll('script[src*="pickaxe"]').forEach(script => {
+      script.remove();
+    });
+
+    // Create script element
+    const script = document.createElement('script');
+    script.src = 'https://studio.pickaxe.co/api/embed/bundle.js';
+    script.async = true;
+    script.defer = true;
+    script.crossOrigin = 'anonymous';
+    
+    script.onload = () => {
+      console.log('Pickaxe script loaded successfully');
+      
+      // Pickaxe should automatically initialize when it sees the div with the deployment ID
+      // Start checking for embed content
+      if (checkEmbedIntervalRef.current) {
+        clearInterval(checkEmbedIntervalRef.current);
+      }
+      
+      checkEmbedIntervalRef.current = setInterval(() => {
+        if (checkEmbedLoaded()) {
+          if (checkEmbedIntervalRef.current) {
+            clearInterval(checkEmbedIntervalRef.current);
+            checkEmbedIntervalRef.current = undefined;
+          }
+          setIsLoading(false);
+          embedInitializedRef.current = true;
+          toast.success("Assistant IA chargé !", { duration: 2000 });
         }
       }, 500);
       
-      return;
-    }
-    
-    // Load Pickaxe script
-    const loadPickaxeScript = () => {
-      // Remove existing script if present
-      const existingScript = document.querySelector('script[src*="pickaxe"]');
-      if (existingScript && existingScript.parentNode) {
-        existingScript.parentNode.removeChild(existingScript);
-      }
-      
-      // Preconnect to improve loading speed
-      const preconnect = document.createElement('link');
-      preconnect.rel = 'preconnect';
-      preconnect.href = 'https://studio.pickaxe.co';
-      document.head.appendChild(preconnect);
-      
-      // Create new script
-      const script = document.createElement('script');
-      script.id = 'pickaxe-embed-script';
-      script.src = 'https://studio.pickaxe.co/api/embed/bundle.js';
-      script.async = true;
-      script.defer = true;
-      
-      script.onload = () => {
-        console.log('Pickaxe script loaded successfully');
+      // Timeout after 10 seconds
+      setTimeout(() => {
+        if (checkEmbedIntervalRef.current) {
+          clearInterval(checkEmbedIntervalRef.current);
+          checkEmbedIntervalRef.current = undefined;
+        }
         
-        // Give time for embed to initialize
-        loadTimeoutRef.current = setTimeout(() => {
+        if (!embedInitializedRef.current) {
+          console.error('Pickaxe embed failed to load within timeout');
+          setEmbedError(true);
           setIsLoading(false);
-          embedInitializedRef.current = true;
           
-          // Check if embed div is visible and has content
-          setTimeout(() => {
-            const embedElement = document.getElementById(deploymentId);
-            if (embedElement && embedElement.children.length === 0) {
-              console.warn('Embed div is empty after initialization');
-              // Try to reload
-              setLoadAttempt(prev => prev + 1);
-            } else {
-              toast.success("L'assistant IA est prêt !", { duration: 2000 });
-            }
-          }, 1000);
-        }, 1000);
-      };
-      
-      script.onerror = () => {
-        console.error('Failed to load Pickaxe script');
-        setIsLoading(false);
-        toast.error("Erreur lors du chargement de l'assistant. Veuillez réessayer.");
-        
-        // Retry after 2 seconds
-        setTimeout(() => {
-          setLoadAttempt(prev => prev + 1);
-        }, 2000);
-      };
-      
-      document.body.appendChild(script);
-      scriptRef.current = script;
+          // Try direct iframe approach as fallback
+          loadDirectIframeFallback();
+        }
+      }, 10000);
     };
-
-    // Load with a small delay to ensure DOM is ready
-    loadTimeoutRef.current = setTimeout(loadPickaxeScript, 100);
-  }, [deploymentId, createEmbedContainer]);
-
-  // Handle embed initialization with retry logic
-  useEffect(() => {
-    if (!open || !embedContainerRef.current) {
-      return;
-    }
     
-    initializePickaxeEmbed();
+    script.onerror = (error) => {
+      console.error('Failed to load Pickaxe script:', error);
+      setIsLoading(false);
+      setEmbedError(true);
+      toast.error("Erreur de chargement. Veuillez réessayer.");
+    };
+    
+    document.head.appendChild(script);
+  }, [checkEmbedLoaded]);
+
+  // Direct iframe fallback method
+  const loadDirectIframeFallback = useCallback(() => {
+    if (!embedContainerRef.current) return;
+    
+    // Clear existing content
+    embedContainerRef.current.innerHTML = '';
+    
+    // Create direct iframe
+    const iframe = document.createElement('iframe');
+    iframe.src = `https://studio.pickaxe.co/embed/${deploymentId}`;
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    iframe.style.overflow = 'hidden';
+    iframe.style.minHeight = '400px';
+    iframe.title = "Assistant IA Recyclage Maria";
+    iframe.allow = "clipboard-write";
+    
+    embedContainerRef.current.appendChild(iframe);
+    
+    // Check if iframe loads
+    iframe.onload = () => {
+      setIsLoading(false);
+      embedInitializedRef.current = true;
+      toast.success("Assistant IA chargé (mode de secours) !");
+    };
+    
+    iframe.onerror = () => {
+      setEmbedError(true);
+      setIsLoading(false);
+    };
+  }, [deploymentId]);
+
+  // Initialize embed when open changes or deploymentId changes
+  useEffect(() => {
+    if (!open) return;
+    
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      initializePickaxeEmbed();
+    }, 100);
     
     return () => {
-      if (loadTimeoutRef.current) {
-        clearTimeout(loadTimeoutRef.current);
+      clearTimeout(timer);
+      if (checkEmbedIntervalRef.current) {
+        clearInterval(checkEmbedIntervalRef.current);
+        checkEmbedIntervalRef.current = undefined;
       }
     };
-  }, [open, deploymentId, loadAttempt, initializePickaxeEmbed]);
-
-  // Retry loading if embed doesn't initialize
-  useEffect(() => {
-    if (loadAttempt > 0 && loadAttempt <= 3) {
-      console.log(`Retrying embed load (attempt ${loadAttempt})`);
-      initializePickaxeEmbed();
-    } else if (loadAttempt > 3) {
-      toast.error("Impossible de charger l'assistant. Veuillez actualiser la page.");
-    }
-  }, [loadAttempt, initializePickaxeEmbed]);
+  }, [open, deploymentId, initializePickaxeEmbed]);
 
   // Handle dragging
   useEffect(() => {
@@ -360,17 +411,6 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
       setIsResizing(false);
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
-      
-      // Refresh embed on resize complete
-      if (embedInitializedRef.current && window.PickaxeEmbed && window.PickaxeEmbed.refresh) {
-        setTimeout(() => {
-          try {
-            window.PickaxeEmbed.refresh();
-          } catch (error) {
-            console.log('Embed refresh error:', error);
-          }
-        }, 100);
-      }
     };
 
     document.body.style.userSelect = 'none';
@@ -408,36 +448,40 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
   }, [onOpenChange]);
 
   const toggleTheme = useCallback(() => {
-    // Reset loading state when theme changes
+    // Reset states when theme changes
     setIsLoading(true);
+    setEmbedError(false);
     embedInitializedRef.current = false;
-    toastShownRef.current = false;
-    setLoadAttempt(0);
+    scriptLoadAttemptRef.current = 0;
+    lastDeploymentIdRef.current = '';
+    
     const newTheme = isDark ? 'light' : 'dark';
     setTheme(newTheme);
+    
+    toast.info(`Passage en mode ${newTheme === 'dark' ? 'sombre' : 'clair'}...`);
   }, [isDark, setTheme]);
 
   const toggleMaximize = useCallback(() => {
     setIsMaximized(prev => !prev);
-    
-    // Refresh embed on maximize toggle
-    if (embedInitializedRef.current && window.PickaxeEmbed && window.PickaxeEmbed.refresh) {
-      setTimeout(() => {
-        try {
-          window.PickaxeEmbed.refresh();
-        } catch (error) {
-          console.log('Embed refresh error on maximize:', error);
-        }
-      }, 300);
-    }
   }, []);
 
   const handleRetryLoad = useCallback(() => {
     setIsLoading(true);
+    setEmbedError(false);
+    scriptLoadAttemptRef.current = 0;
     embedInitializedRef.current = false;
-    setLoadAttempt(prev => prev + 1);
+    lastDeploymentIdRef.current = '';
+    
     toast.info("Rechargement de l'assistant...");
-  }, []);
+    
+    // Clear existing content
+    if (embedContainerRef.current) {
+      embedContainerRef.current.innerHTML = '';
+    }
+    
+    // Reinitialize
+    initializePickaxeEmbed();
+  }, [initializePickaxeEmbed]);
 
   // Handle window resize for responsiveness
   useEffect(() => {
@@ -454,17 +498,6 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
         const newWidth = Math.min(dimensions.width, window.innerWidth - 32);
         const newHeight = Math.min(dimensions.height, window.innerHeight - 100);
         setDimensions({ width: newWidth, height: newHeight });
-      }
-      
-      // Refresh embed on window resize
-      if (embedInitializedRef.current && window.PickaxeEmbed && window.PickaxeEmbed.refresh) {
-        setTimeout(() => {
-          try {
-            window.PickaxeEmbed.refresh();
-          } catch (error) {
-            console.log('Embed refresh error on window resize:', error);
-          }
-        }, 200);
       }
     };
 
@@ -514,6 +547,8 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
             <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
               {isLoading ? (
                 <Loader2 className="w-5 h-5 text-primary animate-spin" />
+              ) : embedError ? (
+                <MessageSquare className="w-5 h-5 text-destructive" />
               ) : (
                 <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -522,15 +557,17 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
             </div>
             <div className="min-w-0">
               <h2 className="text-sm font-semibold text-foreground truncate">
-                Assistant IA {isLoading && "(Chargement...)"}
+                Assistant IA Gemini
+                {isLoading && " (Chargement...)"}
+                {embedError && " (Erreur)"}
               </h2>
-              <p className="text-xs text-muted-foreground truncate">Recyclage Maria</p>
+              <p className="text-xs text-muted-foreground truncate">Recyclage Maria • Pickaxe</p>
             </div>
           </div>
 
           <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-            {/* Retry Button - only show when loading fails */}
-            {loadAttempt > 0 && loadAttempt <= 3 && (
+            {/* Retry Button - show when error or loading takes too long */}
+            {(embedError || scriptLoadAttemptRef.current > 1) && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -593,10 +630,10 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
           </div>
         </div>
 
-        {/* Embed Container with scrollbar */}
+        {/* Embed Container */}
         <div 
           ref={embedContainerRef}
-          className={`flex-1 w-full h-full bg-background overflow-auto relative
+          className={`flex-1 w-full h-full overflow-auto relative
             /* Custom scrollbar styling */
             scrollbar-thin scrollbar-thumb-rounded-full
             ${isDark 
@@ -614,20 +651,24 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
         >
           {/* Loading overlay */}
           {isLoading && (
-            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10">
-              <div className="flex flex-col items-center gap-4 p-6 rounded-xl bg-background/90 border border-border shadow-lg">
+            <div className="absolute inset-0 bg-background/90 backdrop-blur-sm flex items-center justify-center z-10">
+              <div className="flex flex-col items-center gap-4 p-6 rounded-xl bg-background/95 border border-border shadow-lg">
                 <div className="flex flex-col items-center gap-3">
                   <Loader2 className="w-8 h-8 text-primary animate-spin" />
                   <div className="text-center">
                     <p className="text-sm font-medium text-foreground">
-                      Chargement de l'assistant IA...
+                      {scriptLoadAttemptRef.current === 0 
+                        ? "Initialisation de l'assistant Gemini..."
+                        : scriptLoadAttemptRef.current === 1
+                        ? "Chargement de l'embed Pickaxe..."
+                        : "Rechargement en cours..."}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {loadAttempt > 0 ? `Tentative ${loadAttempt}/3` : 'Initialisation'}
+                      Cette opération peut prendre quelques secondes
                     </p>
                   </div>
                 </div>
-                {loadAttempt > 1 && (
+                <div className="flex gap-2">
                   <Button
                     variant="outline"
                     size="sm"
@@ -637,31 +678,39 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
                     <RefreshCw className="w-3 h-3" />
                     Réessayer
                   </Button>
-                )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClose}
+                  >
+                    Annuler
+                  </Button>
+                </div>
               </div>
             </div>
           )}
 
           {/* Error state */}
-          {!isLoading && !embedInitializedRef.current && loadAttempt > 3 && (
-            <div className="absolute inset-0 bg-background flex items-center justify-center">
-              <div className="text-center p-6 max-w-sm">
+          {embedError && !isLoading && (
+            <div className="absolute inset-0 bg-background flex items-center justify-center p-4">
+              <div className="text-center p-6 max-w-sm border border-destructive/20 rounded-xl bg-destructive/5">
                 <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
-                  <X className="w-6 h-6 text-destructive" />
+                  <MessageSquare className="w-6 h-6 text-destructive" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground mb-2">
-                  Échec du chargement
+                  Assistant non disponible
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Impossible de charger l'assistant IA. Veuillez réessayer ou actualiser la page.
+                  L'assistant Gemini n'a pas pu être chargé. Cela peut être dû à une connexion lente ou à un problème temporaire.
                 </p>
                 <div className="flex gap-2 justify-center">
                   <Button
                     variant="default"
                     size="sm"
                     onClick={handleRetryLoad}
+                    className="gap-2"
                   >
-                    <RefreshCw className="w-4 h-4 mr-2" />
+                    <RefreshCw className="w-4 h-4" />
                     Réessayer
                   </Button>
                   <Button
@@ -672,9 +721,21 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
                     Fermer
                   </Button>
                 </div>
+                <p className="text-xs text-muted-foreground mt-4">
+                  ID: {deploymentId} • Pickaxe/Gemini
+                </p>
               </div>
             </div>
           )}
+        </div>
+
+        {/* Footer info */}
+        <div className="px-3 py-2 border-t border-border/50 bg-background/50 text-xs text-muted-foreground flex justify-between items-center">
+          <span>Assistant IA alimenté par Gemini via Pickaxe</span>
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            {embedInitializedRef.current ? 'Connecté' : 'Connexion...'}
+          </span>
         </div>
 
         {/* Resize Handle - hide when maximized or on mobile */}
