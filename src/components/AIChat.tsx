@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { X, Maximize2, Minimize2, Moon, Sun, Loader2 } from "lucide-react";
+import { X, Maximize2, Minimize2, Moon, Sun, Loader2, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
@@ -223,20 +223,11 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
       setDimensions(prev => {
         const minWidth = isMobile ? 300 : 400;
         const minHeight = isMobile ? 400 : 500;
-        const maxWidth = window.innerWidth - 32;
-        const maxHeight = window.innerHeight - 32;
+        const maxWidth = window.innerWidth - positionRef.current.x;
+        const maxHeight = window.innerHeight - positionRef.current.y;
         
         const newWidth = Math.max(minWidth, Math.min(prev.width + deltaX, maxWidth));
         const newHeight = Math.max(minHeight, Math.min(prev.height + deltaY, maxHeight));
-        
-        // Adjust position if needed
-        const maxX = window.innerWidth - newWidth;
-        const maxY = window.innerHeight - newHeight;
-        
-        setPosition(currentPos => ({
-          x: Math.min(currentPos.x, maxX),
-          y: Math.min(currentPos.y, maxY)
-        }));
         
         return { width: newWidth, height: newHeight };
       });
@@ -266,6 +257,7 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
   const handleDragStart = useCallback((e: React.MouseEvent) => {
     if (isMaximized || isMobile) return;
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(true);
     dragStartRef.current = { x: e.clientX, y: e.clientY };
   }, [isMaximized, isMobile]);
@@ -273,6 +265,7 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
   const handleResizeStart = useCallback((e: React.MouseEvent) => {
     if (isMaximized || isMobile) return;
     e.preventDefault();
+    e.stopPropagation();
     setIsResizing(true);
     resizeStartRef.current = { x: e.clientX, y: e.clientY };
   }, [isMaximized, isMobile]);
@@ -401,14 +394,21 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
           }}
         />
 
-        {/* Resize Handle */}
+        {/* Resize Handle - Only show when not maximized and not on mobile */}
         {!isMaximized && !isMobile && (
           <div
-            className="absolute bottom-0 right-0 w-6 h-6 cursor-nwse-resize"
+            className="absolute bottom-0 right-0 w-6 h-6 cursor-nwse-resize z-10"
             onMouseDown={handleResizeStart}
             title="Redimensionner"
           >
             <div className="absolute bottom-1 right-1 w-2 h-2 border-r-2 border-b-2 border-primary/50" />
+          </div>
+        )}
+
+        {/* Visual resize indicator in bottom-right corner */}
+        {!isMaximized && !isMobile && (
+          <div className="absolute bottom-0 right-0 w-20 h-6 cursor-nwse-resize flex items-center justify-center">
+            <GripVertical className="w-3 h-3 text-primary/40" />
           </div>
         )}
       </div>
