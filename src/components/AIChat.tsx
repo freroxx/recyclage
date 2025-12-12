@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import type React from "react";
-import { X, Maximize2, Minimize2, GripVertical, Moon, Sun } from "lucide-react";
+import { X, Maximize2, Minimize2, GripVertical, Moon, Sun, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
@@ -20,100 +20,120 @@ declare global {
 export function AIChat({ open, onOpenChange }: AIChatProps) {
   const isMobile = useIsMobile();
   const [isMaximized, setIsMaximized] = useState(false);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 700 }); // Increased default width
+  const [dimensions, setDimensions] = useState({ 
+    width: isMobile ? window.innerWidth - 32 : 800, 
+    height: isMobile ? window.innerHeight - 100 : 700 
+  });
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isResizing, setIsResizing] = useState<false | 'both' | 'height'>(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+  const [isLoading, setIsLoading] = useState(true);
   const { resolvedTheme, theme, setTheme } = useTheme();
   const windowRef = useRef<HTMLDivElement>(null);
   const embedContainerRef = useRef<HTMLDivElement>(null);
   const scriptRef = useRef<HTMLScriptElement | null>(null);
   const currentDeploymentIdRef = useRef<string>('');
   const toastShownRef = useRef(false);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const embedInitializedRef = useRef(false);
 
   const currentTheme = resolvedTheme || theme || 'light';
   const isDark = currentTheme === 'dark';
-  const deploymentId = isDark 
-    ? 'deployment-afcd3047-9cd1-4849-bea0-4a67ad07f5ec'
-    : 'deployment-856e4e42-a135-4ce5-aeda-7a915c379947';
+  const deploymentId = useMemo(() => 
+    isDark 
+      ? 'deployment-afcd3047-9cd1-4849-bea0-4a67ad07f5ec'
+      : 'deployment-856e4e42-a135-4ce5-aeda-7a915c379947',
+    [isDark]
+  );
 
-  // Show toast notifications
-  const showLoadingToast = useCallback(() => {
-    const message = isDark 
-      ? "Chargement du mode sombre..." 
-      : "Chargement du mode clair...";
-    toast.info(message, {
-      duration: 2000,
-    });
-  }, [isDark]);
-
-  const showSuccessToast = useCallback(() => {
-    if (!toastShownRef.current) {
-      toast.success("L'assistant IA a été chargé avec succès", {
-        duration: 3000,
+  // Calculate initial position and dimensions
+  const calculateInitialPosition = useCallback(() => {
+    if (isMobile) {
+      setIsMaximized(true);
+      setDimensions({ 
+        width: window.innerWidth, 
+        height: window.innerHeight 
       });
-      toastShownRef.current = true;
+      setPosition({ x: 0, y: 0 });
+      return;
     }
-  }, []);
+
+    const padding = 32;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const targetWidth = Math.min(800, vw - padding);
+    const targetHeight = Math.min(700, vh - padding);
+    const centerX = (vw - targetWidth) / 2;
+    const centerY = (vh - targetHeight) / 2;
+
+    setDimensions({ width: targetWidth, height: targetHeight });
+    setPosition({ x: centerX, y: centerY });
+    setIsMaximized(false);
+  }, [isMobile]);
 
   // Initialize position on open
   useEffect(() => {
     if (!open) return;
-
-    // On mobile, always start maximized (fullscreen)
-    if (isMobile) {
-      setIsMaximized(true);
-      return;
-    }
-
-    const calculateInitialPosition = () => {
-      const padding = 32;
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-
-      // Use larger width for better embed display
-      const targetWidth = Math.min(800, vw - padding);
-      const targetHeight = Math.min(700, vh - padding);
-
-      const centerX = (vw - targetWidth) / 2;
-      const centerY = (vh - targetHeight) / 2;
-
-      setDimensions({ width: targetWidth, height: targetHeight });
-      setPosition({ x: centerX, y: centerY });
-      setIsMaximized(false);
-    };
-
-    setTimeout(calculateInitialPosition, 10);
-  }, [open, isMobile]);
+    
+    // Reset loading state
+    setIsLoading(true);
+    embedInitializedRef.current = false;
+    
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(calculateInitialPosition, 50);
+    
+    return () => clearTimeout(timer);
+  }, [open, calculateInitialPosition]);
 
   // Cleanup when closing
   useEffect(() => {
     if (!open) {
+      setIsLoading(true);
+      embedInitializedRef.current = false;
+      
       // Clean up the embed container
       if (embedContainerRef.current) {
         embedContainerRef.current.innerHTML = '';
       }
+      
+      // Clean up resize observer
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+        resizeObserverRef.current = null;
+      }
+      
       currentDeploymentIdRef.current = '';
       toastShownRef.current = false;
+      
+      // Clean up script
+      if (scriptRef.current && scriptRef.current.parentNode) {
+        scriptRef.current.parentNode.removeChild(scriptRef.current);
+        scriptRef.current = null;
+      }
     }
   }, [open]);
 
-  // Handle embed initialization
+  // Handle embed initialization with optimized loading
   useEffect(() => {
     if (!open || !embedContainerRef.current) {
       return;
     }
 
-    // If we're already showing the correct deployment, do nothing
-    if (currentDeploymentIdRef.current === deploymentId) {
-      showSuccessToast();
+    // If we're already showing the correct deployment and it's initialized, do nothing
+    if (currentDeploymentIdRef.current === deploymentId && embedInitializedRef.current) {
+      setIsLoading(false);
       return;
     }
 
-    // Show loading toast
-    showLoadingToast();
+    // Show loading toast only once per session
+    if (!toastShownRef.current) {
+      toast.info("Chargement de l'assistant IA...", {
+        duration: 1500,
+      });
+      toastShownRef.current = true;
+    }
 
     // Clean up previous embed
     if (embedContainerRef.current) {
@@ -125,20 +145,18 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
     container.style.width = '100%';
     container.style.height = '100%';
     container.style.position = 'relative';
-    container.style.overflow = isMobile ? 'auto' : 'hidden';
-    if (!isMobile) {
-      container.style.minWidth = '600px';
-    }
+    container.style.overflow = 'hidden';
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
     
     // Create the embed div with the correct ID
     const embedDiv = document.createElement('div');
     embedDiv.id = deploymentId;
     embedDiv.style.width = '100%';
     embedDiv.style.height = '100%';
-    embedDiv.style.minHeight = isMobile ? '300px' : '400px';
-    if (!isMobile) {
-      embedDiv.style.minWidth = '600px';
-    }
+    embedDiv.style.flex = '1';
+    embedDiv.style.minHeight = '400px';
+    embedDiv.style.background = 'transparent';
     
     container.appendChild(embedDiv);
     embedContainerRef.current.appendChild(container);
@@ -146,7 +164,7 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
     // Update current deployment ID
     currentDeploymentIdRef.current = deploymentId;
     
-    // Load or reload the Pickaxe script
+    // Optimized script loading with preconnection hints
     const loadPickaxeScript = () => {
       // Remove existing script if present
       const existingScript = document.querySelector('script[src*="pickaxe"]');
@@ -154,22 +172,47 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
         existingScript.parentNode.removeChild(existingScript);
       }
       
+      // Preconnect to improve loading speed
+      const preconnect = document.createElement('link');
+      preconnect.rel = 'preconnect';
+      preconnect.href = 'https://studio.pickaxe.co';
+      document.head.appendChild(preconnect);
+      
       // Create new script
       const script = document.createElement('script');
       script.src = 'https://studio.pickaxe.co/api/embed/bundle.js';
+      script.async = true;
       script.defer = true;
       
       script.onload = () => {
         console.log('Pickaxe script loaded for:', deploymentId);
         
-        // Wait a bit for the script to initialize the embed
+        // Give time for embed to initialize
         setTimeout(() => {
-          showSuccessToast();
-        }, 1500);
+          setIsLoading(false);
+          embedInitializedRef.current = true;
+          
+          // Initialize resize observer for embed container
+          if (embedContainerRef.current && !resizeObserverRef.current) {
+            resizeObserverRef.current = new ResizeObserver(() => {
+              // Force embed to resize on container change
+              if (window.PickaxeEmbed && window.PickaxeEmbed.refresh) {
+                try {
+                  window.PickaxeEmbed.refresh();
+                } catch (error) {
+                  console.log('Embed refresh not available');
+                }
+              }
+            });
+            
+            resizeObserverRef.current.observe(embedContainerRef.current);
+          }
+        }, 800);
       };
       
       script.onerror = () => {
         console.error('Failed to load Pickaxe script');
+        setIsLoading(false);
         toast.error("Erreur lors du chargement de l'assistant");
       };
       
@@ -177,17 +220,21 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
       scriptRef.current = script;
     };
 
-    // Load the script
-    loadPickaxeScript();
-
+    // Load with a small delay to ensure DOM is ready
+    const loadTimer = setTimeout(loadPickaxeScript, 100);
+    
     return () => {
-      // Cleanup if component unmounts before script loads
+      clearTimeout(loadTimer);
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+        resizeObserverRef.current = null;
+      }
     };
-  }, [open, deploymentId, showLoadingToast, showSuccessToast, isMobile]);
+  }, [open, deploymentId]);
 
   // Handle dragging
   useEffect(() => {
-    if (!isDragging) return;
+    if (!isDragging || isMaximized || isMobile) return;
 
     const handleMouseMove = (e: MouseEvent) => {
       e.preventDefault();
@@ -213,22 +260,25 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
     const handleMouseUp = () => {
       setIsDragging(false);
       document.body.style.userSelect = '';
+      document.body.style.cursor = '';
     };
 
     document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'grabbing';
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
 
     return () => {
       document.body.style.userSelect = '';
+      document.body.style.cursor = '';
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, dragStart]);
+  }, [isDragging, dragStart, isMaximized, isMobile]);
 
   // Handle resizing
   useEffect(() => {
-    if (!isResizing) return;
+    if (!isResizing || isMaximized || isMobile) return;
 
     const handleMouseMove = (e: MouseEvent) => {
       e.preventDefault();
@@ -236,15 +286,16 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
       const deltaY = e.clientY - startPos.y;
 
       setDimensions(prev => {
-        const minWidth = 600; // Increased minimum width for better embed display
-        const minHeight = 500;
+        const minWidth = isMobile ? 300 : 600;
+        const minHeight = isMobile ? 400 : 500;
         const maxWidth = window.innerWidth - 32;
         const maxHeight = window.innerHeight - 32;
 
         const newWidth = Math.max(minWidth, Math.min(prev.width + deltaX, maxWidth));
         const newHeight = Math.max(minHeight, Math.min(prev.height + deltaY, maxHeight));
 
-        if (windowRef.current && position) {
+        // Adjust position if window would go off-screen
+        if (windowRef.current) {
           const maxX = window.innerWidth - newWidth;
           const maxY = window.innerHeight - newHeight;
           
@@ -263,44 +314,110 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
     const handleMouseUp = () => {
       setIsResizing(false);
       document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+      
+      // Refresh embed on resize complete
+      if (embedInitializedRef.current && window.PickaxeEmbed && window.PickaxeEmbed.refresh) {
+        setTimeout(() => {
+          try {
+            window.PickaxeEmbed.refresh();
+          } catch (error) {
+            console.log('Embed refresh error:', error);
+          }
+        }, 100);
+      }
     };
 
     document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'nwse-resize';
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
 
     return () => {
       document.body.style.userSelect = '';
+      document.body.style.cursor = '';
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isResizing, startPos, position]);
+  }, [isResizing, startPos, isMaximized, isMobile]);
 
-  const handleDragStart = (e: React.MouseEvent) => {
+  const handleDragStart = useCallback((e: React.MouseEvent) => {
+    if (isMobile || isMaximized) return;
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
     setDragStart({ x: e.clientX, y: e.clientY });
-  };
+  }, [isMobile, isMaximized]);
 
-  const handleResizeStart = (e: React.MouseEvent) => {
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    if (isMobile || isMaximized) return;
     e.preventDefault();
     e.stopPropagation();
     setIsResizing('both');
     setStartPos({ x: e.clientX, y: e.clientY });
-  };
+  }, [isMobile, isMaximized]);
 
-  const handleClose = (e: React.MouseEvent) => {
+  const handleClose = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     onOpenChange(false);
-  };
+  }, [onOpenChange]);
 
   const toggleTheme = useCallback(() => {
-    // Reset toast shown flag when theme changes
+    // Reset loading state when theme changes
+    setIsLoading(true);
+    embedInitializedRef.current = false;
     toastShownRef.current = false;
     const newTheme = isDark ? 'light' : 'dark';
     setTheme(newTheme);
   }, [isDark, setTheme]);
+
+  const toggleMaximize = useCallback(() => {
+    setIsMaximized(prev => !prev);
+    
+    // Refresh embed on maximize toggle
+    if (embedInitializedRef.current && window.PickaxeEmbed && window.PickaxeEmbed.refresh) {
+      setTimeout(() => {
+        try {
+          window.PickaxeEmbed.refresh();
+        } catch (error) {
+          console.log('Embed refresh error on maximize:', error);
+        }
+      }, 300);
+    }
+  }, []);
+
+  // Handle window resize for responsiveness
+  useEffect(() => {
+    if (!open) return;
+
+    const handleWindowResize = () => {
+      if (isMaximized) {
+        setDimensions({
+          width: window.innerWidth - (isMobile ? 0 : 32),
+          height: window.innerHeight - (isMobile ? 0 : 32)
+        });
+      } else if (isMobile) {
+        // On mobile, adjust dimensions to fit screen
+        const newWidth = Math.min(dimensions.width, window.innerWidth - 32);
+        const newHeight = Math.min(dimensions.height, window.innerHeight - 100);
+        setDimensions({ width: newWidth, height: newHeight });
+      }
+      
+      // Refresh embed on window resize
+      if (embedInitializedRef.current && window.PickaxeEmbed && window.PickaxeEmbed.refresh) {
+        setTimeout(() => {
+          try {
+            window.PickaxeEmbed.refresh();
+          } catch (error) {
+            console.log('Embed refresh error on window resize:', error);
+          }
+        }, 200);
+      }
+    };
+
+    window.addEventListener('resize', handleWindowResize);
+    return () => window.removeEventListener('resize', handleWindowResize);
+  }, [open, isMaximized, isMobile, dimensions]);
 
   if (!open) return null;
 
@@ -308,38 +425,52 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/30 z-50 pointer-events-auto"
+        className="fixed inset-0 bg-black/50 z-50 pointer-events-auto backdrop-blur-sm transition-opacity"
         onClick={handleClose}
       />
       
       {/* Chat Window */}
       <div
         ref={windowRef}
-        className={`fixed z-50 bg-background shadow-2xl border border-border overflow-hidden flex flex-col pointer-events-auto ${isMobile ? 'rounded-none' : 'rounded-lg'}`}
+        className={`fixed z-50 bg-background shadow-2xl border border-border/50 overflow-hidden flex flex-col pointer-events-auto transition-all duration-200 ${
+          isMobile ? 'rounded-lg' : 'rounded-xl'
+        } ${isMaximized ? (isMobile ? 'inset-4' : 'ins-2') : ''}`}
         style={{
-          left: isMaximized ? (isMobile ? '0' : '1rem') : `${position.x}px`,
-          top: isMaximized ? (isMobile ? '0' : '1rem') : `${position.y}px`,
-          width: isMaximized ? (isMobile ? '100vw' : 'calc(100vw - 2rem)') : `${dimensions.width}px`,
-          height: isMaximized ? (isMobile ? '100vh' : 'calc(100vh - 2rem)') : `${dimensions.height}px`,
-          minWidth: isMaximized || isMobile ? 'auto' : '600px',
-          minHeight: isMaximized || isMobile ? 'auto' : '500px',
-          maxWidth: isMobile ? '100vw' : 'calc(100vw - 2rem)',
-          maxHeight: isMobile ? '100vh' : 'calc(100vh - 2rem)',
+          left: isMaximized ? (isMobile ? '1rem' : '0.5rem') : `${position.x}px`,
+          top: isMaximized ? (isMobile ? '1rem' : '0.5rem') : `${position.y}px`,
+          width: isMaximized ? 
+            (isMobile ? 'calc(100vw - 2rem)' : 'calc(100vw - 1rem)') : 
+            `${dimensions.width}px`,
+          height: isMaximized ? 
+            (isMobile ? 'calc(100vh - 2rem)' : 'calc(100vh - 1rem)') : 
+            `${dimensions.height}px`,
+          minWidth: isMaximized ? 'auto' : (isMobile ? '300px' : '600px'),
+          minHeight: isMaximized ? 'auto' : (isMobile ? '400px' : '500px'),
+          maxWidth: isMaximized ? 'none' : (isMobile ? 'calc(100vw - 2rem)' : 'calc(100vw - 32px)'),
+          maxHeight: isMaximized ? 'none' : (isMobile ? 'calc(100vh - 2rem)' : 'calc(100vh - 32px)'),
         }}
       >
         {/* Header */}
         <div 
-          className={`flex items-center justify-between gap-3 px-4 py-3 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b border-border/50 shrink-0 select-none ${isMobile ? '' : 'cursor-move'}`}
-          onMouseDown={isMobile ? undefined : handleDragStart}
+          className={`flex items-center justify-between gap-3 px-4 py-3 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b border-border/50 shrink-0 select-none ${
+            isMobile || isMaximized ? '' : 'cursor-move'
+          }`}
+          onMouseDown={isMobile || isMaximized ? undefined : handleDragStart}
         >
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-              <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 text-primary animate-spin" />
+              ) : (
+                <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              )}
             </div>
             <div className="min-w-0">
-              <h2 className="text-sm font-semibold text-foreground truncate">Assistant IA</h2>
+              <h2 className="text-sm font-semibold text-foreground truncate">
+                Assistant IA {isLoading && "(Chargement...)"}
+              </h2>
               <p className="text-xs text-muted-foreground truncate">Recyclage Maria</p>
             </div>
           </div>
@@ -350,6 +481,7 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
               variant="ghost"
               size="sm"
               onClick={toggleTheme}
+              disabled={isLoading}
               className="h-8 w-8 p-0 hover:bg-primary/10 transition-colors rounded-md"
               title={isDark ? "Passer en mode clair" : "Passer en mode sombre"}
               onMouseDown={(e) => e.stopPropagation()}
@@ -366,7 +498,8 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setIsMaximized(!isMaximized)}
+                onClick={toggleMaximize}
+                disabled={isLoading}
                 className="h-8 w-8 p-0 hover:bg-primary/10 transition-colors rounded-md"
                 title={isMaximized ? "Réduire" : "Agrandir"}
                 onMouseDown={(e) => e.stopPropagation()}
@@ -393,24 +526,46 @@ export function AIChat({ open, onOpenChange }: AIChatProps) {
           </div>
         </div>
 
-        {/* Embed Container - Always visible */}
+        {/* Embed Container with scrollbar */}
         <div 
           ref={embedContainerRef}
-          className="flex-1 w-full h-full bg-background overflow-auto"
+          className={`flex-1 w-full h-full bg-background overflow-auto relative
+            /* Custom scrollbar styling */
+            scrollbar-thin scrollbar-thumb-rounded-full
+            ${isDark 
+              ? 'scrollbar-thumb-gray-600 scrollbar-track-gray-900' 
+              : 'scrollbar-thumb-gray-400 scrollbar-track-gray-100'
+            }
+            hover:scrollbar-thumb-gray-500
+          `}
           style={{ 
-            minHeight: isMobile ? '200px' : '400px',
-            minWidth: isMobile ? 'auto' : '600px'
+            minHeight: isMobile ? '300px' : '400px',
+            minWidth: isMobile ? 'auto' : '600px',
+            scrollbarWidth: 'thin',
+            scrollbarGutter: 'stable'
           }}
-        />
+        >
+          {/* Loading overlay */}
+          {isLoading && (
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10">
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                <p className="text-sm text-muted-foreground">
+                  Chargement de l'assistant...
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
 
-        {/* Resize Handle - hide on mobile */}
+        {/* Resize Handle - hide when maximized or on mobile */}
         {!isMaximized && !isMobile && (
           <div
             onMouseDown={handleResizeStart}
-            className="h-4 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-t border-border/50 cursor-nwse-resize hover:bg-gradient-to-r hover:from-primary/10 hover:via-primary/20 hover:to-primary/10 transition-colors flex items-center justify-center gap-1 shrink-0"
+            className="absolute bottom-0 right-0 w-6 h-6 cursor-nwse-resize flex items-center justify-center z-20"
             title="Redimensionner"
           >
-            <GripVertical className="w-3 h-3 text-primary/40" />
+            <div className="w-3 h-3 border-r-2 border-b-2 border-primary/40 rounded-br" />
           </div>
         )}
       </div>
