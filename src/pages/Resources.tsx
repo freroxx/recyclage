@@ -36,7 +36,7 @@ export default function Resources() {
       borderColor: "border-blue-500/20",
       gradient: "from-blue-500/10 to-cyan-500/10",
       description: language === "fr" ? "Apprenez les bases du tri sélectif" : "Learn the basics of sorting",
-      stats: language === "fr" ? "12 guides disponibles" : "12 guides available",
+      stats: language === "fr" ? "3 guides disponibles" : "3 guides available",
       actionIcon: Download,
       path: "/guide"
     },
@@ -48,7 +48,7 @@ export default function Resources() {
       borderColor: "border-purple-500/20",
       gradient: "from-purple-500/10 to-pink-500/10",
       description: language === "fr" ? "Jeux et activités interactifs" : "Interactive games and activities",
-      stats: language === "fr" ? "8 activités interactives" : "8 interactive activities",
+      stats: language === "fr" ? "4 activités interactives" : "4 interactive activities",
       actionIcon: Gamepad2,
       path: "/activities"
     },
@@ -60,7 +60,7 @@ export default function Resources() {
       borderColor: "border-red-500/20",
       gradient: "from-red-500/10 to-orange-500/10",
       description: language === "fr" ? "Vidéos éducatives sur le recyclage" : "Educational videos on recycling",
-      stats: language === "fr" ? "24 vidéos tutoriels" : "24 tutorial videos",
+      stats: language === "fr" ? "9 vidéos" : "9 videos",
       actionIcon: PlayCircle,
       path: "/videos"
     },
@@ -72,16 +72,16 @@ export default function Resources() {
       borderColor: "border-green-500/20",
       gradient: "from-green-500/10 to-emerald-500/10",
       description: language === "fr" ? "Affiches à imprimer et partager" : "Posters to print and share",
-      stats: language === "fr" ? "15 modèles gratuits" : "15 free templates",
+      stats: language === "fr" ? "7 modèles gratuits" : "7 free templates",
       actionIcon: Download,
       path: "/posters"
     },
   ];
 
   const featuredStats = [
-    { icon: Users, label: language === "fr" ? "Utilisateurs actifs" : "Active users", value: "2.5k+" },
-    { icon: Star, label: language === "fr" ? "Évaluations" : "Ratings", value: "4.8/5" },
-    { icon: TrendingUp, label: language === "fr" ? "Engagement" : "Engagement", value: "94%" },
+    { icon: Users, label: language === "fr" ? "Utilisateurs" : "Users", value: "114" },
+    { icon: Star, label: language === "fr" ? "Évaluations" : "Ratings", value: "4/5" },
+    { icon: TrendingUp, label: language === "fr" ? "Engagement" : "Engagement", value: "100%" },
   ];
 
   const containerVariants = {
