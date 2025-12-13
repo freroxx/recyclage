@@ -33,7 +33,8 @@ import {
   AlertCircle,
   RefreshCw,
   Heart,
-  Star
+  Star,
+  ChevronRight
 } from "lucide-react";
 
 interface Video {
@@ -53,7 +54,6 @@ interface Video {
 interface Character {
   id: string;
   name: string;
-  description: { fr: string; en: string };
   imageUrl: string;
   role: string;
   color: string;
@@ -78,10 +78,13 @@ export default function Videos() {
   const [videoError, setVideoError] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const modalRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout>();
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const lastScrollY = useRef(0);
+  const [showParticles, setShowParticles] = useState(false);
   
   useScrollReveal();
 
@@ -90,42 +93,32 @@ export default function Videos() {
     {
       id: "meow",
       name: "Meow",
-      description: {
-        fr: "Un chat mignon et curieux qui adore explorer et découvrir de nouvelles choses. Toujours prêt pour une aventure!",
-        en: "A cute and curious cat who loves exploring and discovering new things. Always ready for an adventure!"
-      },
       imageUrl: "https://i.ibb.co/d06DQqBR/Meow-png.jpg",
-      role: "Mascotte",
+      role: language === 'fr' ? "Mascotte" : "Mascot",
       color: "from-blue-500 to-cyan-500"
     },
     {
       id: "basma",
       name: "Basma",
-      description: {
-        fr: "Une créative passionnée qui transforme les déchets en œuvres d'art. Son énergie positive est contagieuse!",
-        en: "A passionate creative who transforms waste into works of art. Her positive energy is contagious!"
-      },
       imageUrl: "https://i.ibb.co/4npFCFPd/Basma-png.jpg",
-      role: "Artiste Écologique",
+      role: language === 'fr' ? "Artiste Écologique" : "Ecological Artist",
       color: "from-emerald-500 to-green-500"
     },
     {
       id: "cat",
       name: "Cat",
-      description: {
-        fr: "Un super-héros félin qui protège l'environnement. Rapide, agile et toujours prêt à sauver la planète!",
-        en: "A feline superhero who protects the environment. Fast, agile, and always ready to save the planet!"
-      },
       imageUrl: "https://i.ibb.co/Kzp4Rg9s/CAT-png.jpg",
-      role: "Super-héros Écologique",
+      role: language === 'fr' ? "Super-héros Écologique" : "Ecological Superhero",
       color: "from-purple-500 to-pink-500"
     }
-  ], []);
+  ], [language]);
 
   // Check mobile device
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      setShowParticles(!mobile);
     };
     
     checkMobile();
@@ -138,7 +131,19 @@ export default function Videos() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Memoized videos data - FIXED: All videos should appear on PC
+  // Mouse position for particle effects
+  useEffect(() => {
+    if (!showParticles) return;
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [showParticles]);
+
+  // Memoized videos data
   const videos: Video[] = useMemo(() => [
     {
       id: "channel-showcase",
@@ -156,7 +161,7 @@ export default function Videos() {
       category: { fr: "Chaîne", en: "Channel" },
       type: "channel",
       aspect: "landscape",
-      creator: { name: "Yahia", role: "Développeur" }
+      creator: { name: "Yahia", role: language === 'fr' ? "Développeur" : "Developer" }
     },
     {
       id: "reuse-cat-4",
@@ -174,7 +179,7 @@ export default function Videos() {
       category: { fr: "Communauté", en: "Community" },
       type: "community",
       aspect: "portrait",
-      creator: { name: "Salsabile", role: "Artiste" },
+      creator: { name: "Salsabile", role: language === 'fr' ? "Artiste" : "Artist" },
       isShort: true
     },
     {
@@ -193,7 +198,7 @@ export default function Videos() {
       category: { fr: "Communauté", en: "Community" },
       type: "community",
       aspect: "portrait",
-      creator: { name: "Salsabile", role: "Artiste" },
+      creator: { name: "Salsabile", role: language === 'fr' ? "Artiste" : "Artist" },
       isShort: true
     },
     {
@@ -212,7 +217,7 @@ export default function Videos() {
       category: { fr: "Communauté", en: "Community" },
       type: "community",
       aspect: "portrait",
-      creator: { name: "Salsabile", role: "Artiste" },
+      creator: { name: "Salsabile", role: language === 'fr' ? "Artiste" : "Artist" },
       isShort: true
     },
     {
@@ -231,7 +236,7 @@ export default function Videos() {
       category: { fr: "Communauté", en: "Community" },
       type: "community",
       aspect: "portrait",
-      creator: { name: "Salsabile", role: "Artiste" },
+      creator: { name: "Salsabile", role: language === 'fr' ? "Artiste" : "Artist" },
       isShort: true
     },
     {
@@ -250,7 +255,7 @@ export default function Videos() {
       category: { fr: "Communauté", en: "Community" },
       type: "community",
       aspect: "portrait",
-      creator: { name: "Salsabile", role: "Artiste" },
+      creator: { name: "Salsabile", role: language === 'fr' ? "Artiste" : "Artist" },
       isShort: true
     },
     {
@@ -304,7 +309,7 @@ export default function Videos() {
       type: "tutorial",
       aspect: "landscape"
     }
-  ], []);
+  ], [language]);
 
   // Filter videos by type
   const tutorialVideos = useMemo(() => videos.filter(v => v.type === "tutorial"), [videos]);
@@ -413,8 +418,9 @@ export default function Videos() {
   }, []);
 
   // Thumbnail URL helper
-  const getThumbnailUrl = useCallback((youtubeId: string) => {
-    return `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
+  const getThumbnailUrl = useCallback((youtubeId: string, isShort?: boolean) => {
+    const quality = isShort ? 'hqdefault' : 'maxresdefault';
+    return `https://img.youtube.com/vi/${youtubeId}/${quality}.jpg`;
   }, []);
 
   // Open in YouTube
@@ -563,11 +569,27 @@ export default function Videos() {
     };
   }, []);
 
-  // Section change with transition
+  // Section change with transition - FIXED for mobile
   const handleSectionChange = useCallback((section: 'tutorials' | 'community' | 'channel') => {
     setIsTransitioning(true);
     setActiveSection(section);
-    setTimeout(() => setIsTransitioning(false), 200);
+    
+    // Force re-render of videos by scrolling slightly
+    if (isMobile) {
+      window.scrollTo({ top: lastScrollY.current, behavior: 'smooth' });
+    }
+    
+    setTimeout(() => setIsTransitioning(false), 300);
+  }, [isMobile]);
+
+  // Track scroll position
+  useEffect(() => {
+    const handleScroll = () => {
+      lastScrollY.current = window.scrollY;
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   // Aspect ratio helper
@@ -590,7 +612,7 @@ export default function Videos() {
     setImageError(true);
   }, []);
 
-  // Character handlers
+  // Character handlers with smooth transitions
   const handleCharacterSelectionOpen = useCallback(() => {
     setShowCharacterSelection(true);
     setSelectedCharacter(null);
@@ -599,19 +621,19 @@ export default function Videos() {
 
   const handleCharacterSelectionClose = useCallback(() => {
     setShowCharacterSelection(false);
-    setSelectedCharacter(null);
+    setTimeout(() => setSelectedCharacter(null), 300);
   }, []);
 
   const handleCharacterSelect = useCallback((character: Character) => {
     setSelectedCharacter(character);
     setShowCharacterSelection(false);
-    setShowCharacterDetail(true);
+    setTimeout(() => setShowCharacterDetail(true), 150);
     setImageError(false);
   }, []);
 
   const handleCharacterDetailClose = useCallback(() => {
     setShowCharacterDetail(false);
-    setSelectedCharacter(null);
+    setTimeout(() => setSelectedCharacter(null), 300);
   }, []);
 
   // Retry video loading
@@ -657,6 +679,7 @@ export default function Videos() {
                   handleVideoSelect={handleVideoSelect}
                   handleThumbnailClick={handleThumbnailClick}
                   language={language}
+                  isMobile={isMobile}
                 />
               </div>
             ))}
@@ -687,6 +710,7 @@ export default function Videos() {
                   handleVideoSelect={handleVideoSelect}
                   handleThumbnailClick={handleThumbnailClick}
                   language={language}
+                  isMobile={isMobile}
                   showCharacterInfo={video.creator?.name === "Salsabile"}
                   onCharacterInfoClick={handleCharacterSelectionOpen}
                 />
@@ -719,6 +743,7 @@ export default function Videos() {
                   handleVideoSelect={handleVideoSelect}
                   handleThumbnailClick={handleThumbnailClick}
                   language={language}
+                  isMobile={isMobile}
                 />
               </div>
             ))}
@@ -744,7 +769,29 @@ export default function Videos() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-emerald-50/5 dark:to-emerald-950/5">
-      <div className="container mx-auto px-4 py-12 md:py-16 lg:py-20">
+      {/* Floating particles for PC */}
+      {showParticles && (
+        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-radial from-emerald-500/5 via-transparent to-transparent"
+               style={{
+                 transform: `translate(${mousePosition.x * 0.02}px, ${mousePosition.y * 0.02}px)`
+               }} />
+          {[...Array(15)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-1 bg-emerald-500/30 rounded-full animate-float"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${i * 0.2}s`,
+                animationDuration: `${3 + Math.random() * 4}s`
+              }}
+            />
+          ))}
+        </div>
+      )}
+      
+      <div className="container mx-auto px-4 py-12 md:py-16 lg:py-20 relative z-10">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12 md:mb-16 lg:mb-20">
@@ -784,13 +831,15 @@ export default function Videos() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className={`pl-12 ${isMobile ? 'pr-12 py-4 text-sm' : 'pr-12 py-6 text-base'} rounded-xl border-border/50 bg-background/80 backdrop-blur-sm shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-black/10 focus:shadow-2xl focus:shadow-emerald-500/10 transition-all duration-300 hover:border-emerald-500/30 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20`}
+                  className={`pl-12 ${isMobile ? 'pr-10 py-4 text-sm' : 'pr-10 py-6 text-base'} rounded-xl border-border/50 bg-background/80 backdrop-blur-sm shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-black/10 focus:shadow-2xl focus:shadow-emerald-500/10 transition-all duration-300 hover:border-emerald-500/30 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20`}
                   aria-label={language === 'fr' ? 'Rechercher des vidéos' : 'Search videos'}
                 />
                 {searchQuery && (
                   <button
                     onClick={handleClearSearch}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 h-6 w-6 text-muted-foreground hover:text-foreground hover:bg-emerald-500/10 rounded-full transition-all duration-200 hover:scale-110 active:scale-95 flex items-center justify-center"
+                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${
+                      isMobile ? 'h-8 w-8' : 'h-9 w-9'
+                    } text-muted-foreground hover:text-foreground hover:bg-emerald-500/10 rounded-full transition-all duration-200 hover:scale-110 active:scale-95 flex items-center justify-center`}
                     aria-label={language === 'fr' ? 'Effacer la recherche' : 'Clear search'}
                   >
                     <X className="w-4 h-4" />
@@ -814,7 +863,7 @@ export default function Videos() {
                 <button
                   key={section}
                   onClick={() => handleSectionChange(section)}
-                  className={`group relative px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-3 transform hover:-translate-y-0.5 active:translate-y-0 ${
+                  className={`group relative px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-3 transform hover:-translate-y-1 active:translate-y-0 ${
                     activeSection === section
                       ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/25 animate-glow'
                       : 'bg-background/50 border border-border hover:border-emerald-500/30 hover:bg-emerald-500/5 text-muted-foreground hover:text-foreground'
@@ -894,8 +943,8 @@ export default function Videos() {
           ref={modalRef}
           className={`fixed inset-0 m-auto border-none bg-black shadow-2xl overflow-hidden p-0 transition-all duration-300 ease-out z-50 transform ${
             isMobile 
-              ? 'w-full h-full rounded-none scale-100' 
-              : 'rounded-2xl scale-100 shadow-2xl'
+              ? 'w-full h-full rounded-none' 
+              : 'rounded-2xl'
           } ${selectedVideo?.isShort ? 'max-w-[400px] max-h-[710px]' : ''}`}
           style={{
             maxWidth: selectedVideo?.aspect === 'portrait' ? '400px' : 
@@ -1134,10 +1183,17 @@ export default function Videos() {
         </DialogContent>
       </Dialog>
 
-      {/* Character Selection Dialog */}
+      {/* Enhanced Character Selection Dialog */}
       <Dialog open={showCharacterSelection} onOpenChange={handleCharacterSelectionClose}>
-        <DialogContent className="max-w-[95vw] sm:max-w-md p-0 border-0 overflow-hidden bg-transparent">
-          <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-950 rounded-2xl overflow-hidden border border-emerald-500/20 shadow-2xl">
+        <DialogContent 
+          className="max-w-[95vw] sm:max-w-md p-0 border-0 overflow-hidden bg-transparent transform transition-all duration-300 ease-out"
+          style={{
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-950 rounded-2xl overflow-hidden border border-emerald-500/20 shadow-2xl animate-scale-in">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <div>
@@ -1145,7 +1201,7 @@ export default function Videos() {
                     {language === 'fr' ? 'Personnages' : 'Characters'}
                   </h3>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {language === 'fr' ? 'Choisissez un personnage' : 'Choose a character'}
+                    {language === 'fr' ? 'Sélectionnez un personnage' : 'Select a character'}
                   </p>
                 </div>
                 <Button
@@ -1160,11 +1216,11 @@ export default function Videos() {
               </div>
               
               <div className="grid grid-cols-3 gap-4">
-                {characters.map((character, index) => (
+                {characters.map((character) => (
                   <button
                     key={character.id}
                     onClick={() => handleCharacterSelect(character)}
-                    className="group relative flex flex-col items-center p-4 rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-2xl active:scale-95"
+                    className="group relative flex flex-col items-center p-4 rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-2xl active:scale-95 bg-gradient-to-b from-white/50 to-transparent dark:from-gray-800/50 border border-emerald-500/10 hover:border-emerald-500/30"
                   >
                     <div className="relative mb-3">
                       <div className={`absolute inset-0 bg-gradient-to-r ${character.color} rounded-full blur-lg opacity-60 group-hover:opacity-80 transition-opacity duration-300`} />
@@ -1172,16 +1228,19 @@ export default function Videos() {
                         <img
                           src={character.imageUrl}
                           alt={character.name}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                           onError={handleImageError}
                           loading="lazy"
                         />
                       </div>
                     </div>
-                    <h4 className="font-bold text-lg text-gray-800 dark:text-gray-200 mb-1 group-hover:text-emerald-600 transition-colors duration-300">
+                    <h4 className="font-bold text-lg text-gray-800 dark:text-gray-200 mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
                       {character.name}
                     </h4>
-                    <p className="text-xs text-muted-foreground">{character.role}</p>
+                    <p className="text-xs text-muted-foreground group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                      {character.role}
+                    </p>
+                    <ChevronRight className="absolute top-2 right-2 w-4 h-4 text-emerald-500 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-0.5" />
                   </button>
                 ))}
               </div>
@@ -1190,12 +1249,19 @@ export default function Videos() {
         </DialogContent>
       </Dialog>
 
-      {/* Character Detail Dialog */}
+      {/* Enhanced Character Detail Dialog - Single close button */}
       <Dialog open={showCharacterDetail} onOpenChange={handleCharacterDetailClose}>
-        <DialogContent className="max-w-[95vw] sm:max-w-md p-0 border-0 overflow-hidden bg-transparent">
-          <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-950 rounded-2xl overflow-hidden border border-emerald-500/20 shadow-2xl">
-            {selectedCharacter && (
-              <div className="p-6 animate-fade-in">
+        <DialogContent 
+          className="max-w-[95vw] sm:max-w-md p-0 border-0 overflow-hidden bg-transparent transform transition-all duration-300 ease-out"
+          style={{
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          {selectedCharacter && (
+            <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-950 rounded-2xl overflow-hidden border border-emerald-500/20 shadow-2xl animate-scale-in">
+              <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
                     <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${selectedCharacter.color} flex items-center justify-center text-white font-bold text-lg shadow-lg`}>
@@ -1221,7 +1287,7 @@ export default function Videos() {
                   </Button>
                 </div>
                 
-                <div className="relative aspect-square rounded-xl overflow-hidden mb-6 border border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-green-500/5">
+                <div className="relative aspect-square rounded-xl overflow-hidden mb-6 border border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-green-500/5 group">
                   {imageError ? (
                     <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
                       <AlertCircle className="w-16 h-16 text-emerald-500/50 mb-2" />
@@ -1233,30 +1299,22 @@ export default function Videos() {
                     <img
                       src={selectedCharacter.imageUrl}
                       alt={selectedCharacter.name}
-                      className="w-full h-full object-contain p-4"
+                      className="w-full h-full object-contain p-4 transition-transform duration-700 group-hover:scale-110"
                       onError={handleImageError}
                       loading="lazy"
                     />
                   )}
                 </div>
                 
-                <div className="space-y-4">
-                  <div className="p-4 bg-gradient-to-r from-emerald-500/5 to-green-500/5 rounded-lg border border-emerald-500/10">
-                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                      {getLocalizedText(selectedCharacter.description)}
-                    </p>
-                  </div>
-                  
-                  <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <Heart className="w-4 h-4 text-pink-500" />
-                      <span>{language === 'fr' ? 'Créé par Salsabile' : 'Created by Salsabile'}</span>
-                    </div>
+                <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Heart className="w-4 h-4 text-pink-500" />
+                    <span>{language === 'fr' ? 'Créé par Salsabile' : 'Created by Salsabile'}</span>
                   </div>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -1292,10 +1350,13 @@ export default function Videos() {
         
         @keyframes float {
           0%, 100% {
-            transform: translateY(0);
+            transform: translateY(0) translateX(0);
           }
-          50% {
-            transform: translateY(-10px);
+          33% {
+            transform: translateY(-10px) translateX(5px);
+          }
+          66% {
+            transform: translateY(5px) translateX(-5px);
           }
         }
         
@@ -1355,6 +1416,17 @@ export default function Videos() {
           }
         }
         
+        @keyframes slide-up {
+          from {
+            transform: translateY(20px);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+        
         .animate-fade-up {
           animation: fade-up 0.6s ease-out forwards;
         }
@@ -1364,7 +1436,7 @@ export default function Videos() {
         }
         
         .animate-float {
-          animation: float 4s ease-in-out infinite;
+          animation: float 6s ease-in-out infinite;
         }
         
         .animate-spin-slow {
@@ -1395,7 +1467,16 @@ export default function Videos() {
         }
         
         .animate-scale-in {
-          animation: scale-in 0.3s ease-out forwards;
+          animation: scale-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        
+        .animate-slide-up {
+          animation: slide-up 0.4s ease-out forwards;
+        }
+        
+        /* Smooth scroll behavior */
+        html {
+          scroll-behavior: smooth;
         }
         
         /* Reduced motion */
@@ -1409,14 +1490,20 @@ export default function Videos() {
           .animate-glow,
           .animate-fade-in,
           .animate-scale-in,
+          .animate-slide-up,
           .scroll-reveal,
           .transition-all,
           .transition-transform,
-          .transition-colors {
+          .transition-colors,
+          .scroll-reveal {
             animation: none !important;
             opacity: 1 !important;
             transform: none !important;
             transition: none !important;
+          }
+          
+          html {
+            scroll-behavior: auto;
           }
         }
         
@@ -1433,6 +1520,25 @@ export default function Videos() {
           transform: translateY(0);
         }
         
+        /* Enhanced PC hover effects */
+        @media (min-width: 768px) {
+          .hover-lift {
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+          }
+          
+          .hover-lift:hover {
+            transform: translateY(-4px);
+          }
+          
+          .hover-glow {
+            transition: box-shadow 0.3s ease;
+          }
+          
+          .hover-glow:hover {
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.15);
+          }
+        }
+        
         /* Mobile optimizations */
         @media (max-width: 768px) {
           /* Better touch targets */
@@ -1445,6 +1551,12 @@ export default function Videos() {
           /* Modal touch improvements */
           [data-radix-dialog-content] {
             touch-action: pan-y;
+          }
+          
+          /* Disable complex animations on mobile */
+          .animate-float,
+          .animate-shimmer {
+            animation: none;
           }
         }
       `}</style>
@@ -1487,25 +1599,27 @@ const EnhancedVideoCard = memo(({
   handleVideoSelect,
   handleThumbnailClick,
   language,
+  isMobile,
   showCharacterInfo = false,
   onCharacterInfoClick
 }: {
   video: Video;
   getLocalizedText: (text: { fr: string; en: string } | string) => string;
-  getThumbnailUrl: (youtubeId: string) => string;
+  getThumbnailUrl: (youtubeId: string, isShort?: boolean) => string;
   formatDate: (dateString: string) => string;
   openInYouTube: (youtubeId: string) => void;
   handleVideoSelect: (video: Video) => void;
   handleThumbnailClick: (e: React.MouseEvent, video: Video) => void;
   language: string;
+  isMobile: boolean;
   showCharacterInfo?: boolean;
   onCharacterInfoClick?: () => void;
 }) => (
-  <Card className="group relative h-full border-border/40 hover:border-emerald-500/50 overflow-hidden bg-gradient-to-b from-card to-card/50 backdrop-blur-sm cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-1 active:scale-98">
+  <Card className="group relative h-full border-border/40 hover:border-emerald-500/50 overflow-hidden bg-gradient-to-b from-card to-card/50 backdrop-blur-sm cursor-pointer transition-all duration-300 hover-lift hover-glow active:scale-98">
     <CardContent className="p-0">
       <div className={`relative ${video.aspect === 'portrait' ? 'aspect-[9/16]' : 'aspect-video'} overflow-hidden bg-gradient-to-br from-emerald-500/5 via-green-500/5 to-teal-500/5`}>
         <img
-          src={getThumbnailUrl(video.youtubeId)}
+          src={getThumbnailUrl(video.youtubeId, video.isShort)}
           alt={getLocalizedText(video.title)}
           className="absolute inset-0 w-full h-full object-cover z-10 transition-all duration-500 group-hover:scale-105 group-hover:brightness-110"
           loading="lazy"
@@ -1519,7 +1633,7 @@ const EnhancedVideoCard = memo(({
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="relative">
               <div className="relative w-20 h-20 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-xl shadow-emerald-500/40 transition-all duration-500 group-hover:scale-110">
-                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-inner shadow-black/20">
+                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-inner shadow-black/20 group-hover:scale-110 transition-transform duration-300">
                   <Play className="w-6 h-6 text-emerald-600 ml-0.5" fill="currentColor" />
                 </div>
               </div>
@@ -1561,7 +1675,7 @@ const EnhancedVideoCard = memo(({
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 group">
                 <div className="relative">
-                  <div className="w-8 h-8 bg-gradient-to-br from-emerald-500/20 to-green-500/20 rounded-full flex items-center justify-center">
+                  <div className="w-8 h-8 bg-gradient-to-br from-emerald-500/20 to-green-500/20 rounded-full flex items-center justify-center group-hover:from-emerald-500/30 group-hover:to-green-500/30 transition-all duration-300 group-hover:scale-110">
                     <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   {showCharacterInfo && onCharacterInfoClick && (
@@ -1570,8 +1684,9 @@ const EnhancedVideoCard = memo(({
                         e.stopPropagation();
                         onCharacterInfoClick();
                       }}
-                      className="absolute -right-1 -top-1 h-5 w-5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white p-0.5 rounded-full border-2 border-background transition-all duration-300 hover:scale-125 active:scale-95 shadow-lg"
+                      className="absolute -right-1 -top-1 h-5 w-5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white p-0.5 rounded-full border-2 border-background transition-all duration-300 hover:scale-125 active:scale-95 shadow-lg flex items-center justify-center"
                       aria-label={language === 'fr' ? 'Voir les personnages' : 'View characters'}
+                      title={language === 'fr' ? 'Voir les personnages' : 'View characters'}
                     >
                       <Info className="w-3 h-3" />
                     </button>
