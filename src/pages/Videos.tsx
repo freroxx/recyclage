@@ -56,6 +56,8 @@ interface Video {
   aspect?: 'landscape' | 'portrait';
   creator?: { name: string; role: string };
   isShort?: boolean;
+  views?: number;
+  likes?: number;
 }
 
 interface Character {
@@ -91,6 +93,7 @@ export default function Videos() {
   const controlsTimeoutRef = useRef<NodeJS.Timeout>();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const lastScrollY = useRef(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
   
   useScrollReveal();
 
@@ -131,22 +134,36 @@ export default function Videos() {
     }
   ], []);
 
-  // Check mobile device
+  // Check mobile device - optimized
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      // Apply mobile-specific optimizations
+      if (mobile) {
+        document.body.classList.add('is-mobile');
+      } else {
+        document.body.classList.remove('is-mobile');
+      }
     };
     
     checkMobile();
+    
+    // Debounced resize handler
+    let resizeTimer: NodeJS.Timeout;
     const handleResize = () => {
-      requestAnimationFrame(checkMobile);
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(checkMobile, 100);
     };
     
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(resizeTimer);
+    };
   }, []);
 
-  // Memoized videos data
+  // Memoized videos data - Fixed shorts videos
   const videos: Video[] = useMemo(() => [
     {
       id: "channel-showcase",
@@ -164,7 +181,9 @@ export default function Videos() {
       category: { fr: "Chaîne", en: "Channel" },
       type: "channel",
       aspect: "landscape",
-      creator: { name: "Yahia", role: "Développeur" }
+      creator: { name: "Yahia", role: "Développeur" },
+      views: 1500,
+      likes: 120
     },
     {
       id: "reuse-cat-4",
@@ -183,7 +202,9 @@ export default function Videos() {
       type: "community",
       aspect: "portrait",
       creator: { name: "Salsabile", role: "Artiste" },
-      isShort: true
+      isShort: true,
+      views: 2500,
+      likes: 180
     },
     {
       id: "laundry-cat",
@@ -202,7 +223,9 @@ export default function Videos() {
       type: "community",
       aspect: "portrait",
       creator: { name: "Salsabile", role: "Artiste" },
-      isShort: true
+      isShort: true,
+      views: 3200,
+      likes: 210
     },
     {
       id: "community-short",
@@ -221,7 +244,9 @@ export default function Videos() {
       type: "community",
       aspect: "portrait",
       creator: { name: "Salsabile", role: "Artiste" },
-      isShort: true
+      isShort: true,
+      views: 2800,
+      likes: 190
     },
     {
       id: "community1",
@@ -240,7 +265,9 @@ export default function Videos() {
       type: "community",
       aspect: "portrait",
       creator: { name: "Salsabile", role: "Artiste" },
-      isShort: true
+      isShort: true,
+      views: 4100,
+      likes: 310
     },
     {
       id: "community2",
@@ -259,7 +286,9 @@ export default function Videos() {
       type: "community",
       aspect: "portrait",
       creator: { name: "Salsabile", role: "Artiste" },
-      isShort: true
+      isShort: true,
+      views: 3800,
+      likes: 270
     },
     {
       id: "1",
@@ -277,6 +306,8 @@ export default function Videos() {
       category: { fr: "Éducation", en: "Education" },
       type: "tutorial",
       aspect: "landscape",
+      views: 12500,
+      likes: 890
     },
     {
       id: "2",
@@ -293,7 +324,9 @@ export default function Videos() {
       publishDate: "2024-02-10",
       category: { fr: "Processus", en: "Process" },
       type: "tutorial",
-      aspect: "landscape"
+      aspect: "landscape",
+      views: 8700,
+      likes: 620
     },
     {
       id: "3",
@@ -310,7 +343,9 @@ export default function Videos() {
       publishDate: "2024-03-05",
       category: { fr: "Documentaire", en: "Documentary" },
       type: "tutorial",
-      aspect: "landscape"
+      aspect: "landscape",
+      views: 15400,
+      likes: 1100
     }
   ], []);
 
@@ -403,10 +438,12 @@ export default function Videos() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // Thumbnail URL helper
+  // Thumbnail URL helper with mobile optimization
   const getThumbnailUrl = useCallback((youtubeId: string, quality: 'default' | 'mqdefault' | 'hqdefault' | 'maxresdefault' = 'maxresdefault') => {
-    return `https://img.youtube.com/vi/${youtubeId}/${quality}.jpg`;
-  }, []);
+    // Use lower quality for mobile devices
+    const mobileQuality = isMobile ? 'hqdefault' : quality;
+    return `https://img.youtube.com/vi/${youtubeId}/${mobileQuality}.jpg`;
+  }, [isMobile]);
 
   // Open in YouTube
   const openInYouTube = useCallback((youtubeId: string) => {
@@ -425,6 +462,9 @@ export default function Videos() {
 
   // Format numbers for display
   const formatNumber = useCallback((num: number) => {
+    if (num >= 1000000) {
+      return `${(num / 1000000).toFixed(1)}M`;
+    }
     if (num >= 1000) {
       return `${(num / 1000).toFixed(1)}k`;
     }
@@ -465,7 +505,7 @@ export default function Videos() {
     }
   }, []);
 
-  // Controls visibility
+  // Controls visibility with touch support
   const handleMouseMove = useCallback(() => {
     setShowControls(true);
     
@@ -477,6 +517,26 @@ export default function Videos() {
       setShowControls(false);
     }, 3000);
   }, []);
+
+  // Touch handlers for mobile controls
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    setTouchStart(e.touches[0].clientX);
+    handleMouseMove();
+  }, [handleMouseMove]);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (touchStart === null) return;
+    
+    const touchEnd = e.changedTouches[0].clientX;
+    const diff = touchStart - touchEnd;
+
+    // Swipe left/right for navigation (optional)
+    if (Math.abs(diff) > 50) {
+      // Handle swipe navigation if needed
+    }
+    
+    setTouchStart(null);
+  }, [touchStart]);
 
   // Modal close handler
   const handleModalClose = useCallback(() => {
@@ -637,6 +697,7 @@ export default function Videos() {
       key={character.id}
       onClick={() => handleCharacterSelect(character)}
       className="group relative flex flex-col items-center p-4 rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-2xl active:scale-95"
+      aria-label={`${character.name} - ${character.role}`}
     >
       <div className="relative mb-3">
         <div className={`absolute inset-0 bg-gradient-to-r ${character.color} rounded-full blur-lg opacity-60 group-hover:opacity-80 transition-opacity duration-300`} />
@@ -659,6 +720,215 @@ export default function Videos() {
       </div>
     </button>
   ), [handleCharacterSelect, handleImageError]);
+
+  // Render sections based on active section
+  const renderVideoSection = useCallback(() => {
+    switch (activeSection) {
+      case 'tutorials':
+        return (
+          <>
+            {filteredTutorialVideos.length === 0 ? (
+              <div className="text-center py-16 animate-fade-in">
+                <div className="w-20 h-20 mx-auto mb-6 bg-emerald-500/10 rounded-full flex items-center justify-center">
+                  {activeSearchQuery ? (
+                    <Search className="w-10 h-10 text-emerald-500 animate-pulse" />
+                  ) : (
+                    <Video className="w-10 h-10 text-emerald-500 animate-pulse" />
+                  )}
+                </div>
+                <h3 className="text-2xl font-semibold mb-3 text-foreground">
+                  {activeSearchQuery 
+                    ? (language === 'fr' ? 'Aucun tutoriel trouvé' : 'No tutorials found')
+                    : (language === 'fr' ? 'Aucun tutoriel disponible' : 'No tutorials available')
+                  }
+                </h3>
+                <p className="text-muted-foreground max-w-md mx-auto text-lg">
+                  {activeSearchQuery 
+                    ? (language === 'fr' 
+                        ? 'Essayez avec d\'autres termes de recherche' 
+                        : 'Try different search terms')
+                    : (language === 'fr'
+                        ? 'De nouveaux tutoriels seront bientôt disponibles'
+                        : 'New tutorials will be available soon')
+                  }
+                </p>
+              </div>
+            ) : (
+              <div className={`grid ${isMobile ? 'grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-3'} gap-6 md:gap-8`}>
+                {filteredTutorialVideos.map((video, index) => (
+                  <div
+                    key={video.id}
+                    className="scroll-reveal"
+                    style={{ animationDelay: `${Math.min(index * 0.05, 0.5)}s` }}
+                  >
+                    <EnhancedVideoCard
+                      video={video}
+                      getLocalizedText={getLocalizedText}
+                      getThumbnailUrl={getThumbnailUrl}
+                      formatDate={formatDate}
+                      formatNumber={formatNumber}
+                      openInYouTube={openInYouTube}
+                      handleVideoSelect={handleVideoSelect}
+                      handleThumbnailClick={handleThumbnailClick}
+                      language={language}
+                      isMobile={isMobile}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        );
+      
+      case 'community':
+        return (
+          <div className="space-y-10">
+            <div className="text-center mb-10">
+              <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500/10 rounded-full mb-5 hover:bg-emerald-500/15 transition-all duration-300 hover:scale-105 animate-pulse-slow">
+                <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                  {language === 'fr' ? 'Contenu Communautaire' : 'Community Content'}
+                </span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 animate-fade-up">
+                {language === 'fr' ? 'Notre Communauté Créative' : 'Our Creative Community'}
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto animate-fade-up" style={{ animationDelay: '0.1s' }}>
+                {language === 'fr' 
+                  ? 'Découvrez les moments inspirants partagés par notre communauté créative' 
+                  : 'Discover inspiring moments shared by our creative community'}
+              </p>
+            </div>
+            
+            {filteredCommunityVideos.length === 0 ? (
+              <div className="text-center py-16 animate-fade-in">
+                <div className="w-20 h-20 mx-auto mb-6 bg-emerald-500/10 rounded-full flex items-center justify-center">
+                  {activeSearchQuery ? (
+                    <Search className="w-10 h-10 text-emerald-500 animate-pulse" />
+                  ) : (
+                    <Users className="w-10 h-10 text-emerald-500 animate-pulse" />
+                  )}
+                </div>
+                <h3 className="text-2xl font-semibold mb-3 text-foreground">
+                  {activeSearchQuery 
+                    ? (language === 'fr' ? 'Aucune vidéo communautaire trouvée' : 'No community videos found')
+                    : (language === 'fr' ? 'Aucune vidéo communautaire disponible' : 'No community videos available')
+                  }
+                </h3>
+                <p className="text-lg text-muted-foreground max-w-md mx-auto">
+                  {activeSearchQuery 
+                    ? (language === 'fr' 
+                        ? 'Essayez avec d\'autres termes de recherche' 
+                        : 'Try different search terms')
+                    : (language === 'fr'
+                        ? 'De nouvelles vidéos communautaires seront bientôt disponibles'
+                        : 'New community videos will be available soon')
+                  }
+                </p>
+              </div>
+            ) : (
+              <div className={`grid ${isMobile ? 'grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-3'} gap-6 md:gap-8`}>
+                {filteredCommunityVideos.map((video, index) => (
+                  <div 
+                    key={video.id}
+                    className="scroll-reveal"
+                    style={{ animationDelay: `${Math.min(index * 0.05, 0.5)}s` }}
+                  >
+                    <EnhancedVideoCard
+                      video={video}
+                      getLocalizedText={getLocalizedText}
+                      getThumbnailUrl={getThumbnailUrl}
+                      formatDate={formatDate}
+                      formatNumber={formatNumber}
+                      openInYouTube={openInYouTube}
+                      handleVideoSelect={handleVideoSelect}
+                      handleThumbnailClick={handleThumbnailClick}
+                      language={language}
+                      isMobile={isMobile}
+                      showCharacterInfo={video.creator?.name === "Salsabile"}
+                      onCharacterInfoClick={handleCharacterSelectionOpen}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      
+      case 'channel':
+        return (
+          <div className="space-y-10">
+            <div className="text-center mb-10">
+              <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500/10 rounded-full mb-5 hover:bg-emerald-500/15 transition-all duration-300 hover:scale-105 animate-pulse-slow">
+                <Youtube className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                  {language === 'fr' ? 'Chaîne Officielle' : 'Official Channel'}
+                </span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 animate-fade-up">
+                {language === 'fr' ? 'Contenu Officiel' : 'Official Content'}
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto animate-fade-up" style={{ animationDelay: '0.1s' }}>
+                {language === 'fr' 
+                  ? 'Découvrez le contenu officiel et les présentations de notre chaîne' 
+                  : 'Discover official content and showcases from our channel'}
+              </p>
+            </div>
+            
+            {filteredChannelVideos.length === 0 ? (
+              <div className="text-center py-16 animate-fade-in">
+                <div className="w-20 h-20 mx-auto mb-6 bg-emerald-500/10 rounded-full flex items-center justify-center">
+                  {activeSearchQuery ? (
+                    <Search className="w-10 h-10 text-emerald-500 animate-pulse" />
+                  ) : (
+                    <Youtube className="w-10 h-10 text-emerald-500 animate-pulse" />
+                  )}
+                </div>
+                <h3 className="text-2xl font-semibold mb-3 text-foreground">
+                  {activeSearchQuery 
+                    ? (language === 'fr' ? 'Aucune vidéo de chaîne trouvée' : 'No channel videos found')
+                    : (language === 'fr' ? 'Aucune vidéo de chaîne disponible' : 'No channel videos available')
+                  }
+                </h3>
+                <p className="text-lg text-muted-foreground max-w-md mx-auto">
+                  {activeSearchQuery 
+                    ? (language === 'fr' 
+                        ? 'Essayez avec d\'autres termes de recherche' 
+                        : 'Try different search terms')
+                    : (language === 'fr'
+                        ? 'De nouvelles vidéos de chaîne seront bientôt disponibles'
+                        : 'New channel videos will be available soon')
+                  }
+                </p>
+              </div>
+            ) : (
+              <div className={`grid ${isMobile ? 'grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-3'} gap-6 md:gap-8 max-w-6xl mx-auto`}>
+                {filteredChannelVideos.map((video, index) => (
+                  <div 
+                    key={video.id}
+                    className="scroll-reveal"
+                    style={{ animationDelay: `${Math.min(index * 0.05, 0.5)}s` }}
+                  >
+                    <EnhancedVideoCard
+                      video={video}
+                      getLocalizedText={getLocalizedText}
+                      getThumbnailUrl={getThumbnailUrl}
+                      formatDate={formatDate}
+                      formatNumber={formatNumber}
+                      openInYouTube={openInYouTube}
+                      handleVideoSelect={handleVideoSelect}
+                      handleThumbnailClick={handleThumbnailClick}
+                      language={language}
+                      isMobile={isMobile}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+    }
+  }, [activeSection, filteredTutorialVideos, filteredCommunityVideos, filteredChannelVideos, activeSearchQuery, language, isMobile, getLocalizedText, getThumbnailUrl, formatDate, formatNumber, openInYouTube, handleVideoSelect, handleThumbnailClick, handleCharacterSelectionOpen]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-emerald-50/5 dark:to-emerald-950/5">
@@ -702,7 +972,7 @@ export default function Videos() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className="pl-12 pr-36 py-6 rounded-xl border-border/50 bg-background/80 backdrop-blur-sm text-base shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-black/10 focus:shadow-2xl focus:shadow-emerald-500/10 transition-all duration-300 hover:border-emerald-500/30 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                  className={`pl-12 pr-36 ${isMobile ? 'py-4 text-sm' : 'py-6 text-base'} rounded-xl border-border/50 bg-background/80 backdrop-blur-sm shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-black/10 focus:shadow-2xl focus:shadow-emerald-500/10 transition-all duration-300 hover:border-emerald-500/30 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20`}
                   aria-label={language === 'fr' ? 'Rechercher des vidéos' : 'Search videos'}
                 />
                 <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
@@ -837,209 +1107,7 @@ export default function Videos() {
 
           {/* Content Sections */}
           <div className={`transition-all duration-200 ${isTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
-            
-            {/* Tutorials Section */}
-            {activeSection === 'tutorials' && (
-              <>
-                {filteredTutorialVideos.length === 0 ? (
-                  <div className="text-center py-16 animate-fade-in">
-                    <div className="w-20 h-20 mx-auto mb-6 bg-emerald-500/10 rounded-full flex items-center justify-center">
-                      {activeSearchQuery ? (
-                        <Search className="w-10 h-10 text-emerald-500 animate-pulse" />
-                      ) : (
-                        <Video className="w-10 h-10 text-emerald-500 animate-pulse" />
-                      )}
-                    </div>
-                    <h3 className="text-2xl font-semibold mb-3 text-foreground">
-                      {activeSearchQuery 
-                        ? (language === 'fr' ? 'Aucun tutoriel trouvé' : 'No tutorials found')
-                        : (language === 'fr' ? 'Aucun tutoriel disponible' : 'No tutorials available')
-                      }
-                    </h3>
-                    <p className="text-muted-foreground max-w-md mx-auto text-lg">
-                      {activeSearchQuery 
-                        ? (language === 'fr' 
-                            ? 'Essayez avec d\'autres termes de recherche' 
-                            : 'Try different search terms')
-                        : (language === 'fr'
-                            ? 'De nouveaux tutoriels seront bientôt disponibles'
-                            : 'New tutorials will be available soon')
-                      }
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                    {filteredTutorialVideos.map((video, index) => (
-                      <div
-                        key={video.id}
-                        className="scroll-reveal"
-                        style={{ animationDelay: `${Math.min(index * 0.05, 0.5)}s` }}
-                      >
-                        <EnhancedVideoCard
-                          video={video}
-                          getLocalizedText={getLocalizedText}
-                          getThumbnailUrl={getThumbnailUrl}
-                          formatDate={formatDate}
-                          formatNumber={formatNumber}
-                          openInYouTube={openInYouTube}
-                          handleVideoSelect={handleVideoSelect}
-                          handleThumbnailClick={handleThumbnailClick}
-                          language={language}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Community Section */}
-            {activeSection === 'community' && (
-              <div className="space-y-10">
-                <div className="text-center mb-10">
-                  <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500/10 rounded-full mb-5 hover:bg-emerald-500/15 transition-all duration-300 hover:scale-105 animate-pulse-slow">
-                    <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
-                      {language === 'fr' ? 'Contenu Communautaire' : 'Community Content'}
-                    </span>
-                  </div>
-                  <h2 className="text-3xl md:text-4xl font-bold mb-4 animate-fade-up">
-                    {language === 'fr' ? 'Notre Communauté Créative' : 'Our Creative Community'}
-                  </h2>
-                  <p className="text-lg text-muted-foreground max-w-2xl mx-auto animate-fade-up" style={{ animationDelay: '0.1s' }}>
-                    {language === 'fr' 
-                      ? 'Découvrez les moments inspirants partagés par notre communauté créative' 
-                      : 'Discover inspiring moments shared by our creative community'}
-                  </p>
-                </div>
-                
-                {/* Community Videos Grid */}
-                {filteredCommunityVideos.length === 0 ? (
-                  <div className="text-center py-16 animate-fade-in">
-                    <div className="w-20 h-20 mx-auto mb-6 bg-emerald-500/10 rounded-full flex items-center justify-center">
-                      {activeSearchQuery ? (
-                        <Search className="w-10 h-10 text-emerald-500 animate-pulse" />
-                      ) : (
-                        <Users className="w-10 h-10 text-emerald-500 animate-pulse" />
-                      )}
-                    </div>
-                    <h3 className="text-2xl font-semibold mb-3 text-foreground">
-                      {activeSearchQuery 
-                        ? (language === 'fr' ? 'Aucune vidéo communautaire trouvée' : 'No community videos found')
-                        : (language === 'fr' ? 'Aucune vidéo communautaire disponible' : 'No community videos available')
-                      }
-                    </h3>
-                    <p className="text-lg text-muted-foreground max-w-md mx-auto">
-                      {activeSearchQuery 
-                        ? (language === 'fr' 
-                            ? 'Essayez avec d\'autres termes de recherche' 
-                            : 'Try different search terms')
-                        : (language === 'fr'
-                            ? 'De nouvelles vidéos communautaires seront bientôt disponibles'
-                            : 'New community videos will be available soon')
-                      }
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                    {filteredCommunityVideos.map((video, index) => (
-                      <div 
-                        key={video.id}
-                        className="scroll-reveal"
-                        style={{ animationDelay: `${Math.min(index * 0.05, 0.5)}s` }}
-                      >
-                        <EnhancedVideoCard
-                          video={video}
-                          getLocalizedText={getLocalizedText}
-                          getThumbnailUrl={getThumbnailUrl}
-                          formatDate={formatDate}
-                          formatNumber={formatNumber}
-                          openInYouTube={openInYouTube}
-                          handleVideoSelect={handleVideoSelect}
-                          handleThumbnailClick={handleThumbnailClick}
-                          language={language}
-                          showCharacterInfo={video.creator?.name === "Salsabile"}
-                          onCharacterInfoClick={handleCharacterSelectionOpen}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Channel Section */}
-            {activeSection === 'channel' && (
-              <div className="space-y-10">
-                <div className="text-center mb-10">
-                  <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500/10 rounded-full mb-5 hover:bg-emerald-500/15 transition-all duration-300 hover:scale-105 animate-pulse-slow">
-                    <Youtube className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
-                      {language === 'fr' ? 'Chaîne Officielle' : 'Official Channel'}
-                    </span>
-                  </div>
-                  <h2 className="text-3xl md:text-4xl font-bold mb-4 animate-fade-up">
-                    {language === 'fr' ? 'Contenu Officiel' : 'Official Content'}
-                  </h2>
-                  <p className="text-lg text-muted-foreground max-w-2xl mx-auto animate-fade-up" style={{ animationDelay: '0.1s' }}>
-                    {language === 'fr' 
-                      ? 'Découvrez le contenu officiel et les présentations de notre chaîne' 
-                      : 'Discover official content and showcases from our channel'}
-                  </p>
-                </div>
-                
-                {/* Channel Videos Grid */}
-                {filteredChannelVideos.length === 0 ? (
-                  <div className="text-center py-16 animate-fade-in">
-                    <div className="w-20 h-20 mx-auto mb-6 bg-emerald-500/10 rounded-full flex items-center justify-center">
-                      {activeSearchQuery ? (
-                        <Search className="w-10 h-10 text-emerald-500 animate-pulse" />
-                      ) : (
-                        <Youtube className="w-10 h-10 text-emerald-500 animate-pulse" />
-                      )}
-                    </div>
-                    <h3 className="text-2xl font-semibold mb-3 text-foreground">
-                      {activeSearchQuery 
-                        ? (language === 'fr' ? 'Aucune vidéo de chaîne trouvée' : 'No channel videos found')
-                        : (language === 'fr' ? 'Aucune vidéo de chaîne disponible' : 'No channel videos available')
-                      }
-                    </h3>
-                    <p className="text-lg text-muted-foreground max-w-md mx-auto">
-                      {activeSearchQuery 
-                        ? (language === 'fr' 
-                            ? 'Essayez avec d\'autres termes de recherche' 
-                            : 'Try different search terms')
-                        : (language === 'fr'
-                            ? 'De nouvelles vidéos de chaîne seront bientôt disponibles'
-                            : 'New channel videos will be available soon')
-                      }
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto">
-                    {filteredChannelVideos.map((video, index) => (
-                      <div 
-                        key={video.id}
-                        className="scroll-reveal"
-                        style={{ animationDelay: `${Math.min(index * 0.05, 0.5)}s` }}
-                      >
-                        <EnhancedVideoCard
-                          video={video}
-                          getLocalizedText={getLocalizedText}
-                          getThumbnailUrl={getThumbnailUrl}
-                          formatDate={formatDate}
-                          formatNumber={formatNumber}
-                          openInYouTube={openInYouTube}
-                          handleVideoSelect={handleVideoSelect}
-                          handleThumbnailClick={handleThumbnailClick}
-                          language={language}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+            {renderVideoSection()}
           </div>
 
           {/* YouTube Channel Link */}
@@ -1095,8 +1163,9 @@ export default function Videos() {
                         selectedVideo?.aspect === 'portrait' ? '9/16' : '16/9',
           }}
           onMouseMove={handleMouseMove}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
           onTouchMove={handleMouseMove}
-          onTouchStart={() => setShowControls(true)}
           onMouseLeave={() => {
             if (controlsTimeoutRef.current) {
               clearTimeout(controlsTimeoutRef.current);
@@ -1164,7 +1233,7 @@ export default function Videos() {
                   <Button
                     variant="ghost"
                     size={isMobile ? "icon" : "sm"}
-                    className={`${isMobile ? 'h-10 w-10' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 hover:-translate-y-0.5`}
+                    className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 hover:-translate-y-0.5`}
                     onClick={handleModalClose}
                     aria-label={language === 'fr' ? 'Fermer la vidéo' : 'Close video'}
                   >
@@ -1190,7 +1259,7 @@ export default function Videos() {
                   <Button
                     variant="ghost"
                     size={isMobile ? "icon" : "sm"}
-                    className={`${isMobile ? 'h-10 w-10' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 hover:-translate-y-0.5`}
+                    className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 hover:-translate-y-0.5`}
                     onClick={toggleInterface}
                     title={language === 'fr' ? 'Masquer l\'interface' : 'Hide interface'}
                     aria-label={language === 'fr' ? 'Masquer l\'interface' : 'Hide interface'}
@@ -1201,7 +1270,7 @@ export default function Videos() {
                   <Button
                     variant="ghost"
                     size={isMobile ? "icon" : "sm"}
-                    className={`${isMobile ? 'h-10 w-10' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 hover:-translate-y-0.5`}
+                    className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 hover:-translate-y-0.5`}
                     onClick={() => selectedVideo && openInYouTube(selectedVideo.youtubeId)}
                     title={language === 'fr' ? 'Ouvrir sur YouTube' : 'Open on YouTube'}
                     aria-label={language === 'fr' ? 'Ouvrir sur YouTube' : 'Open on YouTube'}
@@ -1212,7 +1281,7 @@ export default function Videos() {
                   <Button
                     variant="ghost"
                     size={isMobile ? "icon" : "sm"}
-                    className={`${isMobile ? 'h-10 w-10' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 hover:-translate-y-0.5`}
+                    className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/70 backdrop-blur-sm hover:bg-black/90 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300 hover:-translate-y-0.5`}
                     onClick={toggleFullscreen}
                     title={language === 'fr' ? 'Plein écran' : 'Fullscreen'}
                     aria-label={language === 'fr' ? 'Plein écran' : 'Fullscreen'}
@@ -1339,7 +1408,7 @@ export default function Videos() {
 
       {/* Character Selection Dialog */}
       <Dialog open={showCharacterSelection} onOpenChange={handleCharacterSelectionClose}>
-        <DialogContent className="sm:max-w-md p-0 border-0 overflow-hidden bg-transparent">
+        <DialogContent className="max-w-[95vw] sm:max-w-md p-0 border-0 overflow-hidden bg-transparent">
           <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-950 rounded-2xl overflow-hidden border border-emerald-500/20 shadow-2xl">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
@@ -1382,7 +1451,7 @@ export default function Videos() {
 
       {/* Character Detail Dialog - Fixed single close button */}
       <Dialog open={showCharacterDetail} onOpenChange={handleCharacterDetailClose}>
-        <DialogContent className="sm:max-w-md p-0 border-0 overflow-hidden bg-transparent">
+        <DialogContent className="max-w-[95vw] sm:max-w-md p-0 border-0 overflow-hidden bg-transparent">
           <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-950 rounded-2xl overflow-hidden border border-emerald-500/20 shadow-2xl">
             {selectedCharacter && (
               <div className="p-6 animate-fade-in">
@@ -1721,6 +1790,22 @@ export default function Videos() {
           transition-duration: 300ms;
         }
         
+        /* Enhanced PC animations */
+        @media (min-width: 768px) {
+          .animate-float {
+            animation-duration: 6s;
+          }
+          
+          .animate-glow {
+            animation-duration: 3s;
+          }
+          
+          .card-hover:hover {
+            transform: translateY(-12px) scale(1.03);
+            box-shadow: 0 30px 60px rgba(16, 185, 129, 0.25);
+          }
+        }
+        
         /* Reduced motion */
         @media (prefers-reduced-motion: reduce) {
           .animate-ping-slow,
@@ -1769,18 +1854,32 @@ export default function Videos() {
         }
         
         /* Mobile optimizations */
+        .is-mobile .scroll-reveal {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+        
+        .is-mobile .card-hover:hover {
+          transform: none;
+          box-shadow: none;
+        }
+        
+        .is-mobile .animate-float,
+        .is-mobile .animate-glow,
+        .is-mobile .animate-ping-slow {
+          animation: none;
+        }
+        
+        /* Mobile touch improvements */
         @media (max-width: 768px) {
-          .card-hover:hover {
-            transform: none;
-            box-shadow: none;
+          body.modal-open {
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
           }
           
-          .card-hover:active {
-            transform: scale(0.98);
-            transition: transform 0.1s ease;
-          }
-          
-          /* Better touch targets */
+          /* Larger touch targets for mobile */
           button, 
           [role="button"] {
             min-height: 44px;
@@ -1790,11 +1889,6 @@ export default function Videos() {
           /* Modal touch improvements */
           [data-radix-dialog-content] {
             touch-action: pan-y;
-          }
-          
-          /* Improved mobile scrolling */
-          body.modal-open {
-            overflow: hidden;
           }
         }
         
@@ -1848,6 +1942,25 @@ export default function Videos() {
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
         }
+        
+        /* Mobile performance optimizations */
+        @media (max-width: 768px) {
+          * {
+            -webkit-tap-highlight-color: transparent;
+          }
+          
+          /* Reduce animations on mobile */
+          .transition-all,
+          .transition-transform,
+          .transition-colors {
+            transition-duration: 150ms !important;
+          }
+          
+          /* Optimize for mobile rendering */
+          .backdrop-blur-sm {
+            backdrop-filter: blur(4px);
+          }
+        }
       `}</style>
     </div>
   );
@@ -1864,6 +1977,7 @@ const EnhancedVideoCard = memo(({
   handleVideoSelect,
   handleThumbnailClick,
   language,
+  isMobile,
   showCharacterInfo = false,
   onCharacterInfoClick
 }: {
@@ -1876,6 +1990,7 @@ const EnhancedVideoCard = memo(({
   handleVideoSelect: (video: Video) => void;
   handleThumbnailClick: (e: React.MouseEvent, video: Video) => void;
   language: string;
+  isMobile: boolean;
   showCharacterInfo?: boolean;
   onCharacterInfoClick?: () => void;
 }) => (
@@ -1883,7 +1998,7 @@ const EnhancedVideoCard = memo(({
     <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 group-hover:animate-shimmer" />
     
     <CardContent className="p-0">
-      <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-emerald-500/5 via-green-500/5 to-teal-500/5">
+      <div className={`relative ${video.aspect === 'portrait' ? 'aspect-[9/16]' : 'aspect-video'} overflow-hidden bg-gradient-to-br from-emerald-500/5 via-green-500/5 to-teal-500/5`}>
         <img
           src={getThumbnailUrl(video.youtubeId, video.isShort ? 'hqdefault' : 'maxresdefault')}
           alt={getLocalizedText(video.title)}
