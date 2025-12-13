@@ -34,14 +34,7 @@ import {
   RefreshCw,
   Heart,
   RotateCw,
-  ChevronRight,
-  ChevronLeft,
-  ChevronDown,
-  ChevronUp,
-  Check,
-  ArrowUpRight,
-  Lock,
-  Unlock
+  ChevronRight
 } from "lucide-react";
 
 interface Video {
@@ -91,7 +84,7 @@ export default function Videos() {
   const controlsTimeoutRef = useRef<NodeJS.Timeout>();
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const animationRef = useRef<number>(0);
+  const lastScrollY = useRef(0);
   
   useScrollReveal();
 
@@ -123,26 +116,17 @@ export default function Videos() {
   // Check mobile device
   useEffect(() => {
     const checkMobile = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
+      setIsMobile(window.innerWidth < 768);
     };
     
     checkMobile();
     
     const handleResize = () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-      animationRef.current = requestAnimationFrame(checkMobile);
+      requestAnimationFrame(checkMobile);
     };
     
     window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // Memoized videos data
@@ -584,6 +568,16 @@ export default function Videos() {
     setTimeout(() => setIsTransitioning(false), 300);
   }, []);
 
+  // Track scroll position
+  useEffect(() => {
+    const handleScroll = () => {
+      lastScrollY.current = window.scrollY;
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // Aspect ratio helper
   const getAspectRatio = useCallback((video: Video): '16:9' | '9:16' => {
     return video.aspect === 'portrait' ? '9:16' : '16:9';
@@ -647,7 +641,7 @@ export default function Videos() {
     setIsRotated(prev => !prev);
   }, []);
 
-  // Get modal style based on device and video type
+  // Get modal style based on device and video type - FIXED CENTERING
   const getModalStyle = useCallback(() => {
     if (!selectedVideo) return {};
     
@@ -659,28 +653,32 @@ export default function Videos() {
       if (isShort || isPortrait) {
         // Shorts/Vertical on mobile: Full screen vertical
         return {
-          maxWidth: '100vw',
-          maxHeight: '100vh',
           width: '100vw',
           height: '100vh',
+          maxWidth: '100vw',
+          maxHeight: '100vh',
           aspectRatio: '9/16',
+          borderRadius: 0,
+          margin: 0,
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          borderRadius: 0,
+          position: 'fixed',
         };
       } else {
         // Regular videos on mobile: Full screen horizontal
         return {
-          maxWidth: '100vw',
-          maxHeight: '100vh',
           width: '100vw',
           height: '100vh',
+          maxWidth: '100vw',
+          maxHeight: '100vh',
           aspectRatio: '16/9',
+          borderRadius: 0,
+          margin: 0,
           top: '50%',
           left: '50%',
-          transform: 'translate(-50%, -50%)',
-          borderRadius: 0,
+          transform: `translate(-50%, -50%) ${isRotated ? 'rotate(90deg)' : ''}`,
+          position: 'fixed',
         };
       }
     } else {
@@ -688,32 +686,36 @@ export default function Videos() {
       if (isShort || isPortrait) {
         // Shorts/Vertical on PC: Floating vertical modal
         return {
-          maxWidth: '400px',
-          maxHeight: '710px',
           width: '400px',
           height: '710px',
+          maxWidth: '400px',
+          maxHeight: '710px',
           aspectRatio: '9/16',
+          borderRadius: '24px',
+          margin: 0,
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          borderRadius: '24px',
+          position: 'fixed',
         };
       } else {
         // Regular videos on PC: Floating horizontal modal
         return {
-          maxWidth: 'min(1200px, 90vw)',
-          maxHeight: 'min(675px, 90vh)',
           width: 'min(1200px, 90vw)',
           height: 'min(675px, 90vh)',
+          maxWidth: 'min(1200px, 90vw)',
+          maxHeight: 'min(675px, 90vh)',
           aspectRatio: '16/9',
+          borderRadius: '24px',
+          margin: 0,
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          borderRadius: '24px',
+          position: 'fixed',
         };
       }
     }
-  }, [selectedVideo, isMobile]);
+  }, [selectedVideo, isMobile, isRotated]);
 
   // Render sections based on active section
   const renderVideoSection = useCallback(() => {
@@ -984,11 +986,11 @@ export default function Videos() {
         </div>
       </div>
 
-      {/* Enhanced Video Modal */}
+      {/* Enhanced Video Modal - FIXED CENTERING */}
       <Dialog open={isModalOpen} onOpenChange={handleModalClose}>
         <DialogContent 
           ref={modalRef}
-          className="fixed inset-0 m-auto border-none bg-black shadow-2xl overflow-hidden p-0 transition-all duration-500 ease-out z-50 transform"
+          className="fixed border-none bg-black shadow-2xl overflow-hidden p-0 transition-all duration-300 ease-out z-50"
           style={getModalStyle()}
           onMouseMove={handleMouseMove}
           onTouchMove={handleMouseMove}
@@ -1138,7 +1140,7 @@ export default function Videos() {
           )}
 
           {/* Video Player */}
-          <div className={`relative w-full h-full flex items-center justify-center bg-black ${isRotated ? 'rotate-90' : ''}`}>
+          <div className={`relative w-full h-full flex items-center justify-center bg-black`}>
             {selectedVideo && !videoError && (
               <div className="w-full h-full flex items-center justify-center animate-scale-in">
                 <LazyVideoPlayer
@@ -1252,9 +1254,11 @@ export default function Videos() {
         <DialogContent 
           className="max-w-[95vw] sm:max-w-md p-0 border-0 overflow-hidden bg-transparent"
           style={{
+            position: 'fixed',
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
+            margin: 0,
           }}
         >
           <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-950 rounded-2xl overflow-hidden border border-emerald-500/20 shadow-2xl animate-scale-in">
@@ -1318,9 +1322,11 @@ export default function Videos() {
         <DialogContent 
           className="max-w-[95vw] sm:max-w-md p-0 border-0 overflow-hidden bg-transparent"
           style={{
+            position: 'fixed',
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
+            margin: 0,
           }}
         >
           {selectedCharacter && (
@@ -1479,15 +1485,6 @@ export default function Videos() {
           }
         }
         
-        @keyframes shimmer {
-          0% {
-            background-position: -200% center;
-          }
-          100% {
-            background-position: 200% center;
-          }
-        }
-        
         .animate-fade-up {
           animation: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
@@ -1524,17 +1521,6 @@ export default function Videos() {
           animation: slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         
-        .animate-shimmer {
-          background: linear-gradient(
-            90deg,
-            transparent 0%,
-            rgba(16, 185, 129, 0.1) 50%,
-            transparent 100%
-          );
-          background-size: 200% 100%;
-          animation: shimmer 4s infinite;
-        }
-        
         /* Smooth scroll behavior */
         html {
           scroll-behavior: smooth;
@@ -1568,7 +1554,6 @@ export default function Videos() {
           .animate-fade-in,
           .animate-scale-in,
           .animate-slide-up,
-          .animate-shimmer,
           .scroll-reveal,
           .transition-all,
           .transition-transform,
