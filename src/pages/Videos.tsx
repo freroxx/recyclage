@@ -95,6 +95,7 @@ export default function Videos() {
   const modalRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout>();
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const transitionTimeoutRef = useRef<NodeJS.Timeout>();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
   const videoSectionRef = useRef<HTMLDivElement>(null);
@@ -359,7 +360,7 @@ export default function Videos() {
     }
   }, [videos]);
 
-  // Enhanced search function with better reliability
+  // FIXED: Enhanced search function that searches ALL videos, not just current section
   const searchVideos = useCallback((
     videos: Video[], 
     query: string
@@ -369,15 +370,7 @@ export default function Videos() {
     const searchTerms = query.toLowerCase().trim().split(/\s+/).filter(term => term.length > 1);
     if (searchTerms.length === 0) return videos;
     
-    // Create a cache for search results
-    const searchCache = new Map<string, number>();
-    
     return videos.filter(video => {
-      const cacheKey = `${video.id}-${query}`;
-      if (searchCache.has(cacheKey)) {
-        return searchCache.get(cacheKey)! > 0;
-      }
-      
       const searchableText = [
         video.title[language].toLowerCase(),
         video.description[language].toLowerCase(),
@@ -389,7 +382,7 @@ export default function Videos() {
       ].join(' ');
       
       // Check if all search terms are found
-      const hasAllTerms = searchTerms.every(term => {
+      return searchTerms.every(term => {
         if (searchableText.includes(term)) return true;
         
         // Try partial matches
@@ -397,13 +390,10 @@ export default function Videos() {
           word.startsWith(term) || word.includes(term)
         );
       });
-      
-      searchCache.set(cacheKey, hasAllTerms ? 1 : 0);
-      return hasAllTerms;
     });
   }, [language]);
 
-  // Enhanced search with better debounce and state management
+  // FIXED: Enhanced search with global search across all videos
   useEffect(() => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
@@ -412,11 +402,17 @@ export default function Videos() {
     if (searchQuery.trim()) {
       setIsSearching(true);
       setSearchLoading(true);
+    } else {
+      setSearchResults([]);
+      setDebouncedSearchQuery("");
+      setIsSearching(false);
+      setSearchLoading(false);
+      return;
     }
     
     searchTimeoutRef.current = setTimeout(() => {
-      const currentVideos = getSectionVideos(activeSection);
-      const results = searchVideos(currentVideos, searchQuery);
+      // Search in ALL videos, not just current section
+      const results = searchVideos(videos, searchQuery);
       setSearchResults(results);
       setDebouncedSearchQuery(searchQuery);
       
@@ -425,34 +421,31 @@ export default function Videos() {
       
       // Scroll to section when searching
       if (searchQuery.trim() && videoSectionRef.current) {
-        videoSectionRef.current.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start' 
-        });
+        setTimeout(() => {
+          videoSectionRef.current?.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          });
+        }, 100);
       }
-    }, 250);
+    }, 300);
     
     return () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [searchQuery, activeSection, getSectionVideos, searchVideos]);
+  }, [searchQuery, videos, searchVideos]);
 
-  // FIXED: Get current videos - RELIABLE DATA SOURCE
+  // FIXED: Get current videos - HANDLES BOTH SEARCH AND SECTION FILTERING PROPERLY
   const getCurrentVideos = useMemo(() => {
-    const baseVideos = getSectionVideos(activeSection);
-    
-    if (!debouncedSearchQuery.trim()) {
-      return baseVideos;
+    // If we have search results, filter them by active section
+    if (searchResults.length > 0 && debouncedSearchQuery.trim()) {
+      return searchResults.filter(video => video.type === activeSection);
     }
     
-    // If search results are empty but we have search query, show empty state
-    if (searchResults.length === 0 && debouncedSearchQuery.trim()) {
-      return [];
-    }
-    
-    return searchResults;
+    // Otherwise return videos for current section
+    return getSectionVideos(activeSection);
   }, [activeSection, getSectionVideos, debouncedSearchQuery, searchResults]);
 
   // Memoized text translation
@@ -469,9 +462,10 @@ export default function Videos() {
     setErrorMessage("");
     setIsRotated(false);
     
-    requestAnimationFrame(() => {
+    // Small delay to ensure state updates
+    setTimeout(() => {
       setIsModalOpen(true);
-    });
+    }, 10);
   }, []);
 
   // Handle video modal state
@@ -503,16 +497,15 @@ export default function Videos() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // Enhanced thumbnail URL helper with mobile optimization
+  // FIXED: Enhanced thumbnail URL helper with better quality images
   const getThumbnailUrl = useCallback((youtubeId: string, isShort?: boolean) => {
-    // Use lower quality for mobile to improve performance
-    if (isMobile && isShort) {
-      return `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`;
-    } else if (isMobile) {
-      return `https://img.youtube.com/vi/${youtubeId}/sddefault.jpg`;
+    // Always use higher quality thumbnails
+    if (isShort) {
+      return `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
     }
-    return `https://img.youtube.com/vi/${youtubeId}/${isShort ? 'hqdefault' : 'maxresdefault'}.jpg`;
-  }, [isMobile]);
+    // Try maxresdefault first, fallback to hqdefault
+    return `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
+  }, []);
 
   // Open in YouTube
   const openInYouTube = useCallback((youtubeId: string) => {
@@ -584,12 +577,14 @@ export default function Videos() {
 
   // Modal close handler
   const handleModalClose = useCallback(() => {
-    setSelectedVideo(null);
     setIsModalOpen(false);
+    setSelectedVideo(null);
     setIsLoading(false);
     setVideoError(false);
     setErrorMessage("");
     setIsRotated(false);
+    setShowInterface(true);
+    setShowControls(true);
     
     if (controlsTimeoutRef.current) {
       clearTimeout(controlsTimeoutRef.current);
@@ -626,6 +621,7 @@ export default function Videos() {
     setSearchQuery("");
     setDebouncedSearchQuery("");
     setSearchResults([]);
+    setIsSearching(false);
     searchInputRef.current?.focus();
   }, []);
 
@@ -679,36 +675,41 @@ export default function Videos() {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
       }
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+      }
     };
   }, []);
 
-  // FIXED: Section change with proper video loading
+  // FIXED: Section change without disappearing content
   const handleSectionChange = useCallback((section: typeof activeSection) => {
     if (section === activeSection) return;
     
     setIsTransitioning(true);
     
-    // Clear search when changing sections
-    handleClearSearch();
+    // Change section immediately but keep content visible
+    setActiveSection(section);
     
-    // Change section with small delay
-    setTimeout(() => {
-      setActiveSection(section);
-      
-      // Scroll to section
-      if (sectionRef.current) {
-        sectionRef.current.scrollIntoView({ 
+    // Clear any existing transition timeout
+    if (transitionTimeoutRef.current) {
+      clearTimeout(transitionTimeoutRef.current);
+    }
+    
+    // Reset transition state after animation
+    transitionTimeoutRef.current = setTimeout(() => {
+      setIsTransitioning(false);
+    }, 150);
+    
+    // Scroll to section
+    if (sectionRef.current) {
+      setTimeout(() => {
+        sectionRef.current?.scrollIntoView({ 
           behavior: 'smooth', 
           block: 'start' 
         });
-      }
-      
-      // Reset transition
-      setTimeout(() => {
-        setIsTransitioning(false);
-      }, 200);
-    }, 150);
-  }, [activeSection, handleClearSearch]);
+      }, 50);
+    }
+  }, [activeSection]);
 
   // Aspect ratio helper
   const getAspectRatio = useCallback((video: Video): '16:9' | '9:16' => {
@@ -736,7 +737,7 @@ export default function Videos() {
     setImageError(true);
   }, []);
 
-  // FIXED: Character handlers - SINGLE CLOSE BUTTON
+  // FIXED: Character handlers
   const handleCharacterSelectionOpen = useCallback(() => {
     setShowCharacterSelection(true);
     setSelectedCharacter(null);
@@ -781,13 +782,28 @@ export default function Videos() {
     }
   }, [isMobile, selectedVideo]);
 
-  // Get modal style - FIXED: Proper positioning
+  // FIXED: Better modal style for mobile compatibility
   const getModalStyle = useCallback((): React.CSSProperties => {
     if (!selectedVideo) return {};
     
     const isPortrait = selectedVideo.aspect === 'portrait' || selectedVideo.isShort;
     
     if (isMobile) {
+      if (isRotated && selectedVideo?.aspect === 'landscape') {
+        return {
+          width: '100vh',
+          height: '100vw',
+          margin: 0,
+          padding: 0,
+          borderRadius: 0,
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%) rotate(90deg)',
+          zIndex: 9999
+        };
+      }
+      
       return {
         width: '100vw',
         height: '100vh',
@@ -796,12 +812,8 @@ export default function Videos() {
         borderRadius: 0,
         top: 0,
         left: 0,
-        right: 0,
-        bottom: 0,
         position: 'fixed',
-        transform: isRotated ? 'rotate(90deg)' : 'none',
-        transformOrigin: 'center center',
-        zIndex: 50
+        zIndex: 9999
       };
     } else {
       if (isPortrait) {
@@ -838,7 +850,7 @@ export default function Videos() {
     }
   }, [selectedVideo, isMobile, isRotated]);
 
-  // FIXED: Render video section - RELIABLE VIDEO DISPLAY
+  // FIXED: Render video section - NO DISAPPEARING CONTENT
   const renderVideoSection = useCallback(() => {
     const currentVideos = getCurrentVideos;
     const hasSearchQuery = debouncedSearchQuery.trim().length > 0;
@@ -921,9 +933,9 @@ export default function Videos() {
     hasLoaded
   ]);
 
-  // Get section icon with adjusted sizes
+  // FIXED: Get section icon with better quality (larger default sizes)
   const getSectionIcon = useCallback((section: typeof activeSection) => {
-    const size = isMobile ? "w-3.5 h-3.5" : "w-4 h-4";
+    const size = isMobile ? "w-5 h-5" : "w-6 h-6"; // Increased sizes for better quality
     switch(section) {
       case 'tutorials': return <Recycle className={size} />;
       case 'community': return <Users className={size} />;
@@ -951,7 +963,7 @@ export default function Videos() {
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/30 to-green-500/30 blur-xl rounded-full animate-pulse-slow"></div>
                 <div className="relative bg-gradient-to-br from-emerald-500/20 via-green-500/20 to-teal-500/20 backdrop-blur-sm border border-emerald-500/30 p-3 md:p-4 rounded-2xl shadow-lg shadow-emerald-500/10 hover:shadow-xl hover:shadow-emerald-500/20 transition-all duration-500 hover:scale-105 group">
-                  <Video className="w-6 h-6 md:w-8 md:h-8 text-emerald-600 dark:text-emerald-400 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12" />
+                  <Video className="w-8 h-8 md:w-10 md:h-10 text-emerald-600 dark:text-emerald-400 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12" />
                 </div>
               </div>
             </div>
@@ -970,12 +982,12 @@ export default function Videos() {
             </p>
           </div>
 
-          {/* Enhanced Search Bar */}
+          {/* Enhanced Search Bar - FIXED: Works across all sections */}
           <div className="mb-8 md:mb-10">
             <div className="relative max-w-2xl mx-auto">
               <div className="relative flex items-center group">
                 <div className="absolute left-3 md:left-4 top-1/2 transform -translate-y-1/2 z-10">
-                  <Search className={`w-4 h-4 md:w-5 md:h-5 transition-all duration-300 ${
+                  <Search className={`w-5 h-5 md:w-6 md:h-6 transition-all duration-300 ${
                     searchQuery ? 'text-emerald-500 scale-110' : 'text-muted-foreground'
                   }`} />
                 </div>
@@ -986,26 +998,26 @@ export default function Videos() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className={`pl-10 md:pl-12 ${
-                    isMobile ? 'pr-10 py-3 text-sm' : 'pr-12 py-4 text-base'
+                  className={`pl-12 md:pl-14 ${
+                    isMobile ? 'pr-12 py-3 text-base' : 'pr-14 py-5 text-lg'
                   } rounded-xl md:rounded-2xl border border-border/50 bg-background/90 backdrop-blur-sm shadow-lg hover:shadow-xl focus:shadow-2xl transition-all duration-300 hover:border-emerald-500/30 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20`}
                   aria-label={getLocalizedText({ fr: 'Rechercher des vidéos', en: 'Search videos' })}
                 />
-                <div className="absolute right-2 md:right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+                <div className="absolute right-3 md:right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
                   {searchLoading && (
                     <div className="relative">
-                      <Loader2 className="w-4 h-4 md:w-5 md:h-5 text-emerald-500 animate-spin" />
+                      <Loader2 className="w-5 h-5 md:w-6 md:h-6 text-emerald-500 animate-spin" />
                     </div>
                   )}
                   {searchQuery && !searchLoading && (
                     <button
                       onClick={handleClearSearch}
                       className={`${
-                        isMobile ? 'h-7 w-7' : 'h-8 w-8'
+                        isMobile ? 'h-9 w-9' : 'h-10 w-10'
                       } text-muted-foreground hover:text-foreground hover:bg-emerald-500/10 rounded-full transition-all duration-300 hover:scale-110 active:scale-95 flex items-center justify-center`}
                       aria-label={getLocalizedText({ fr: 'Effacer la recherche', en: 'Clear search' })}
                     >
-                      <X className="w-3 h-3 md:w-4 md:h-4" />
+                      <X className="w-5 h-5 md:w-6 md:h-6" />
                     </button>
                   )}
                 </div>
@@ -1014,9 +1026,14 @@ export default function Videos() {
               {/* Search Stats */}
               {(searchQuery || debouncedSearchQuery) && (
                 <div className="mt-3 flex items-center justify-center gap-2 text-sm animate-fade-in">
-                  <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 px-3 py-1 rounded-full">
-                    <Filter className="w-3 h-3" />
+                  <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 px-3 py-1.5 rounded-full">
+                    <Filter className="w-4 h-4" />
                     <span>{getCurrentVideos.length} {getLocalizedText({ fr: 'résultats', en: 'results' })}</span>
+                    {searchResults.length > getCurrentVideos.length && (
+                      <span className="text-xs opacity-70">
+                        ({searchResults.length} total)
+                      </span>
+                    )}
                   </div>
                 </div>
               )}
@@ -1031,7 +1048,7 @@ export default function Videos() {
                   <button
                     key={section}
                     onClick={() => handleSectionChange(section)}
-                    className={`group relative px-4 md:px-6 py-2.5 md:py-3 rounded-lg md:rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2 md:gap-3 ${
+                    className={`group relative px-5 md:px-7 py-3 md:py-4 rounded-lg md:rounded-xl text-base font-medium transition-all duration-300 flex items-center gap-3 md:gap-4 ${
                       activeSection === section
                         ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/25'
                         : 'bg-background/50 border border-border hover:border-emerald-500/30 hover:bg-emerald-500/5 text-muted-foreground hover:text-foreground'
@@ -1050,7 +1067,7 @@ export default function Videos() {
                        section === 'community' ? getLocalizedText({ fr: 'Communauté', en: 'Community' }) :
                        getLocalizedText({ fr: 'Chaîne', en: 'Channel' })}
                     </span>
-                    <span className={`px-1.5 md:px-2 py-0.5 text-xs rounded-full transition-all duration-300 ${
+                    <span className={`px-2 md:px-3 py-1 text-sm rounded-full transition-all duration-300 ${
                       activeSection === section 
                         ? 'bg-white/30' 
                         : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 group-hover:bg-emerald-500/20'
@@ -1063,39 +1080,39 @@ export default function Videos() {
               
               {/* View Mode Toggle - Desktop only */}
               {!isMobile && (
-                <div className="flex items-center gap-2 bg-background/50 border border-border rounded-xl p-1">
+                <div className="flex items-center gap-2 bg-background/50 border border-border rounded-xl p-1.5">
                   <button
                     onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded-lg transition-all duration-300 ${
+                    className={`p-2.5 rounded-lg transition-all duration-300 ${
                       viewMode === 'grid' 
                         ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' 
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
                     aria-label={getLocalizedText({ fr: 'Vue grille', en: 'Grid view' })}
                   >
-                    <Grid className="w-4 h-4" />
+                    <Grid className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => setViewMode('list')}
-                    className={`p-2 rounded-lg transition-all duration-300 ${
+                    className={`p-2.5 rounded-lg transition-all duration-300 ${
                       viewMode === 'list' 
                         ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' 
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
                     aria-label={getLocalizedText({ fr: 'Vue liste', en: 'List view' })}
                   >
-                    <List className="w-4 h-4" />
+                    <List className="w-5 h-5" />
                   </button>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Content Sections - FIXED: No blurry sections */}
+          {/* Content Sections - FIXED: No disappearing content */}
           <div 
             ref={sectionRef}
-            className={`transition-all duration-300 ease-out ${
-              isTransitioning ? 'opacity-0' : 'opacity-100'
+            className={`transition-opacity duration-200 ease-out ${
+              isTransitioning ? 'opacity-80' : 'opacity-100'
             }`}
             style={{
               willChange: 'opacity',
@@ -1108,14 +1125,14 @@ export default function Videos() {
 
           {/* YouTube Channel Link */}
           <div className="mt-12 md:mt-16 animate-fade-up" style={{ animationDelay: '0.2s' }}>
-            <div className="relative bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-teal-500/5 rounded-xl md:rounded-2xl border border-emerald-500/20 p-4 md:p-6 hover:border-emerald-500/30 hover:shadow-lg transition-all duration-300 group">
-              <div className="relative flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
+            <div className="relative bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-teal-500/5 rounded-xl md:rounded-2xl border border-emerald-500/20 p-5 md:p-7 hover:border-emerald-500/30 hover:shadow-lg transition-all duration-300 group">
+              <div className="relative flex flex-col md:flex-row items-center justify-between gap-5 md:gap-7">
                 <div className="text-center md:text-left">
-                  <div className="inline-flex items-center gap-3 mb-2 md:mb-3">
-                    <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-r from-emerald-500 to-green-500 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/25">
-                      <Youtube className="w-5 h-5 md:w-6 md:h-6 text-white" />
+                  <div className="inline-flex items-center gap-4 mb-3 md:mb-4">
+                    <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-r from-emerald-500 to-green-500 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/25">
+                      <Youtube className="w-6 h-6 md:w-7 md:h-7 text-white" />
                     </div>
-                    <h3 className="text-lg md:text-xl font-bold group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                    <h3 className="text-xl md:text-2xl font-bold group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
                       {getLocalizedText({ fr: 'Chaîne YouTube', en: 'YouTube Channel' })}
                     </h3>
                   </div>
@@ -1129,11 +1146,11 @@ export default function Videos() {
                 
                 <Button
                   size={getButtonSize()}
-                  className="gap-2 md:gap-3 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 shadow-lg shadow-emerald-500/25 px-4 md:px-8 hover:scale-105 active:scale-95 transition-all duration-300 group"
+                  className="gap-3 md:gap-4 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 shadow-lg shadow-emerald-500/25 px-6 md:px-10 py-5 hover:scale-105 active:scale-95 transition-all duration-300 group"
                   onClick={() => window.open("https://www.youtube.com/channel/UC1H5HYDNTWHw7fGOYBJp0RQ", '_blank')}
                   aria-label={getLocalizedText({ fr: 'Visiter notre chaîne YouTube', en: 'Visit our YouTube channel' })}
                 >
-                  <ExternalLink className="w-4 h-4 md:w-5 md:h-5 group-hover:rotate-12 transition-transform duration-300" />
+                  <ExternalLink className="w-5 h-5 md:w-6 md:h-6 group-hover:rotate-12 transition-transform duration-300" />
                   {getLocalizedText({ fr: 'Visiter', en: 'Visit' })}
                 </Button>
               </div>
@@ -1142,11 +1159,11 @@ export default function Videos() {
         </div>
       </div>
 
-      {/* Enhanced Video Modal */}
+      {/* Enhanced Video Modal - FIXED: Better mobile compatibility */}
       <Dialog open={isModalOpen} onOpenChange={(open) => !open && handleModalClose()}>
         <DialogContent 
           ref={modalRef}
-          className="fixed border-none bg-black shadow-2xl overflow-hidden p-0 transition-all duration-300 ease-out z-50"
+          className="fixed border-none bg-black shadow-2xl overflow-hidden p-0 transition-all duration-300 ease-out z-[9999]"
           style={getModalStyle()}
           onMouseMove={handleMouseMove}
           onTouchMove={handleMouseMove}
@@ -1156,9 +1173,9 @@ export default function Videos() {
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm z-50 animate-fade-in">
               <div className="relative">
-                <div className="w-16 h-16 border-3 border-transparent border-t-emerald-500 rounded-full animate-spin-slow"></div>
+                <div className="w-20 h-20 border-4 border-transparent border-t-emerald-500 rounded-full animate-spin-slow"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Play className="w-8 h-8 text-emerald-500 animate-pulse-slow" />
+                  <Play className="w-10 h-10 text-emerald-500 animate-pulse-slow" />
                 </div>
               </div>
             </div>
@@ -1168,29 +1185,29 @@ export default function Videos() {
           {videoError && !isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm z-50 animate-fade-in">
               <div className="text-center p-6 max-w-sm">
-                <AlertCircle className="w-12 h-12 md:w-16 md:h-16 text-red-500 mx-auto mb-4 animate-bounce" />
-                <h3 className="text-lg md:text-xl font-semibold text-white mb-2">
+                <AlertCircle className="w-16 h-16 md:w-20 md:h-20 text-red-500 mx-auto mb-4 animate-bounce" />
+                <h3 className="text-xl md:text-2xl font-semibold text-white mb-3">
                   {getLocalizedText({ fr: 'Erreur', en: 'Error' })}
                 </h3>
-                <p className="text-white/80 mb-6 text-sm md:text-base">
+                <p className="text-white/80 mb-6 text-base md:text-lg">
                   {errorMessage || getLocalizedText({ 
                     fr: 'Impossible de charger la vidéo', 
                     en: 'Unable to load video' 
                   })}
                 </p>
-                <div className="flex gap-3 md:gap-4 justify-center">
+                <div className="flex gap-4 md:gap-5 justify-center">
                   <Button
                     onClick={handleRetryVideo}
-                    className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-sm"
+                    className="gap-3 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-base"
                     aria-label={getLocalizedText({ fr: 'Réessayer', en: 'Retry' })}
                   >
-                    <RefreshCw className="w-4 h-4" />
+                    <RefreshCw className="w-5 h-5" />
                     {getLocalizedText({ fr: 'Réessayer', en: 'Retry' })}
                   </Button>
                   <Button
                     variant="outline"
                     onClick={handleModalClose}
-                    className="border-white/30 text-white hover:bg-white/10 text-sm"
+                    className="border-white/30 text-white hover:bg-white/10 text-base px-6"
                     aria-label={getLocalizedText({ fr: 'Fermer', en: 'Close' })}
                   >
                     {getLocalizedText({ fr: 'Fermer', en: 'Close' })}
@@ -1203,45 +1220,45 @@ export default function Videos() {
           {/* Top Controls Bar */}
           {showInterface && !videoError && (
             <div 
-              className={`absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/95 via-black/85 to-transparent p-3 md:p-4 transition-all duration-300 ease-out ${
+              className={`absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/95 via-black/85 to-transparent p-4 md:p-5 transition-all duration-300 ease-out ${
                 showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'
               }`}
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 md:gap-3">
+                <div className="flex items-center gap-3 md:gap-4">
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`${isMobile ? 'h-8 w-8' : 'h-9 w-9'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
+                    className={`${isMobile ? 'h-10 w-10' : 'h-11 w-11'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
                     onClick={handleModalClose}
                     aria-label={getLocalizedText({ fr: 'Fermer', en: 'Close' })}
                   >
-                    <X className="w-3 h-3 md:w-4 md:h-4" />
+                    <X className="w-5 h-5 md:w-6 md:h-6" />
                   </Button>
                   
                   {selectedVideo && (
-                    <div className="ml-1 max-w-[calc(100%-140px)] md:max-w-[calc(100%-180px)]">
-                      <h3 className="text-xs md:text-sm font-semibold text-white/95 truncate animate-fade-in">
+                    <div className="ml-2 max-w-[calc(100%-160px)] md:max-w-[calc(100%-200px)]">
+                      <h3 className="text-sm md:text-base font-semibold text-white/95 truncate animate-fade-in">
                         {getLocalizedText(selectedVideo.title)}
                       </h3>
                     </div>
                   )}
                 </div>
                 
-                <div className="flex items-center gap-1 md:gap-2">
+                <div className="flex items-center gap-2 md:gap-3">
                   {/* Hide UI Button */}
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`${isMobile ? 'h-8 w-8' : 'h-9 w-9'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
+                    className={`${isMobile ? 'h-10 w-10' : 'h-11 w-11'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
                     onClick={toggleInterface}
                     title={getLocalizedText({ fr: 'Masquer l\'interface', en: 'Hide interface' })}
                     aria-label={getLocalizedText({ fr: 'Masquer l\'interface', en: 'Hide interface' })}
                   >
                     {showInterface ? (
-                      <EyeOff className="w-3 h-3 md:w-4 md:h-4" />
+                      <EyeOff className="w-5 h-5 md:w-6 md:h-6" />
                     ) : (
-                      <Eye className="w-3 h-3 md:w-4 md:h-4" />
+                      <Eye className="w-5 h-5 md:w-6 md:h-6" />
                     )}
                   </Button>
                   
@@ -1250,38 +1267,38 @@ export default function Videos() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300"
+                      className="h-10 w-10 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300"
                       onClick={toggleRotation}
                       title={getLocalizedText({ fr: 'Tourner', en: 'Rotate' })}
                       aria-label={getLocalizedText({ fr: 'Tourner', en: 'Rotate' })}
                     >
-                      <RotateCw className={`w-3 h-3 md:w-4 md:h-4 transition-transform duration-300 ${isRotated ? 'rotate-180' : ''}`} />
+                      <RotateCw className={`w-5 h-5 md:w-6 md:h-6 transition-transform duration-300 ${isRotated ? 'rotate-180' : ''}`} />
                     </Button>
                   )}
                   
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`${isMobile ? 'h-8 w-8' : 'h-9 w-9'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
+                    className={`${isMobile ? 'h-10 w-10' : 'h-11 w-11'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
                     onClick={() => selectedVideo && openInYouTube(selectedVideo.youtubeId)}
                     title={getLocalizedText({ fr: 'YouTube', en: 'YouTube' })}
                     aria-label={getLocalizedText({ fr: 'YouTube', en: 'YouTube' })}
                   >
-                    <ExternalLink className="w-3 h-3 md:w-4 md:h-4" />
+                    <ExternalLink className="w-5 h-5 md:w-6 md:h-6" />
                   </Button>
                   
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`${isMobile ? 'h-8 w-8' : 'h-9 w-9'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
+                    className={`${isMobile ? 'h-10 w-10' : 'h-11 w-11'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
                     onClick={toggleFullscreen}
                     title={getLocalizedText({ fr: 'Plein écran', en: 'Fullscreen' })}
                     aria-label={getLocalizedText({ fr: 'Plein écran', en: 'Fullscreen' })}
                   >
                     {isFullscreen ? (
-                      <Minimize2 className="w-3 h-3 md:w-4 md:h-4" />
+                      <Minimize2 className="w-5 h-5 md:w-6 md:h-6" />
                     ) : (
-                      <Maximize2 className="w-3 h-3 md:w-4 md:h-4" />
+                      <Maximize2 className="w-5 h-5 md:w-6 md:h-6" />
                     )}
                   </Button>
                 </div>
@@ -1289,7 +1306,7 @@ export default function Videos() {
             </div>
           )}
 
-          {/* Video Player */}
+          {/* Video Player - FIXED: Better mobile compatibility */}
           <div className="relative w-full h-full flex items-center justify-center bg-black">
             {selectedVideo && !videoError && (
               <div className="w-full h-full flex items-center justify-center animate-scale-in">
@@ -1299,28 +1316,40 @@ export default function Videos() {
                   autoplay={true}
                   muted={isMuted}
                   loop={selectedVideo.isShort}
-                  showControls={false}
+                  showControls={true}
                   aspectRatio={getAspectRatio(selectedVideo)}
                   className="w-full h-full"
                   onLoad={handleVideoLoad}
                   onError={() => handleVideoError()}
                   onPlay={handleVideoLoad}
+                  playsInline={true}
+                  modestbranding={1}
+                  rel={0}
+                  // Mobile specific optimizations
+                  config={{
+                    playerVars: {
+                      playsinline: 1,
+                      modestbranding: 1,
+                      rel: 0,
+                      origin: window.location.origin
+                    }
+                  }}
                 />
               </div>
             )}
             
             {/* Floating Controls */}
             {!showInterface && showControls && !videoError && (
-              <div className="absolute top-3 md:top-4 right-3 md:right-4 z-50 flex flex-col gap-1 md:gap-2 animate-fade-in">
+              <div className="absolute top-4 md:top-5 right-4 md:right-5 z-50 flex flex-col gap-2 md:gap-3 animate-fade-in">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className={`${isMobile ? 'h-10 w-10' : 'h-9 w-9'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
+                  className={`${isMobile ? 'h-12 w-12' : 'h-11 w-11'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
                   onClick={toggleInterface}
                   title={getLocalizedText({ fr: 'Afficher', en: 'Show' })}
                   aria-label={getLocalizedText({ fr: 'Afficher', en: 'Show' })}
                 >
-                  <Eye className="w-3 h-3 md:w-4 md:h-4" />
+                  <Eye className="w-5 h-5 md:w-6 md:h-6" />
                 </Button>
                 
                 {/* Floating Rotate Button for mobile */}
@@ -1328,19 +1357,19 @@ export default function Videos() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-10 w-10 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300"
+                    className="h-12 w-12 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300"
                     onClick={toggleRotation}
                     title={getLocalizedText({ fr: 'Tourner', en: 'Rotate' })}
                     aria-label={getLocalizedText({ fr: 'Tourner', en: 'Rotate' })}
                   >
-                    <RotateCw className="w-3 h-3 md:w-4 md:h-4" />
+                    <RotateCw className="w-5 h-5 md:w-6 md:h-6" />
                   </Button>
                 )}
                 
                 <Button
                   variant="ghost"
                   size="icon"
-                  className={`${isMobile ? 'h-10 w-10' : 'h-9 w-9'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
+                  className={`${isMobile ? 'h-12 w-12' : 'h-11 w-11'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
                   onClick={toggleMute}
                   title={
                     isMuted 
@@ -1354,9 +1383,9 @@ export default function Videos() {
                   }
                 >
                   {isMuted ? (
-                    <VolumeX className="w-3 h-3 md:w-4 md:h-4" />
+                    <VolumeX className="w-5 h-5 md:w-6 md:h-6" />
                   ) : (
-                    <Volume2 className="w-3 h-3 md:w-4 md:h-4" />
+                    <Volume2 className="w-5 h-5 md:w-6 md:h-6" />
                   )}
                 </Button>
               </div>
@@ -1366,42 +1395,42 @@ export default function Videos() {
           {/* Bottom Controls Bar */}
           {showInterface && !videoError && (
             <div 
-              className={`absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/95 via-black/85 to-transparent p-3 md:p-4 transition-all duration-300 ease-out ${
+              className={`absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/95 via-black/85 to-transparent p-4 md:p-5 transition-all duration-300 ease-out ${
                 showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full pointer-events-none'
               }`}
             >
               {selectedVideo && (
-                <div className="space-y-2 md:space-y-3 animate-fade-in">
+                <div className="space-y-3 md:space-y-4 animate-fade-in">
                   <div>
-                    <h3 className="text-sm md:text-base font-semibold text-white line-clamp-1">
+                    <h3 className="text-base md:text-lg font-semibold text-white line-clamp-1">
                       {getLocalizedText(selectedVideo.title)}
                     </h3>
-                    <p className="text-xs md:text-sm text-white/80 line-clamp-2 mt-1">
+                    <p className="text-sm md:text-base text-white/80 line-clamp-2 mt-2">
                       {getLocalizedText(selectedVideo.description)}
                     </p>
                   </div>
                   
-                  <div className="flex items-center justify-between pt-2 border-t border-white/20">
-                    <div className="flex items-center gap-3 md:gap-4 text-xs md:text-sm text-white/70">
+                  <div className="flex items-center justify-between pt-3 border-t border-white/20">
+                    <div className="flex items-center gap-4 md:gap-5 text-sm md:text-base text-white/70">
                       {selectedVideo.publishDate && (
-                        <span className="flex items-center gap-1 md:gap-1.5">
-                          <Calendar className="w-3 h-3 md:w-4 md:h-4" />
+                        <span className="flex items-center gap-2 md:gap-2.5">
+                          <Calendar className="w-4 h-4 md:w-5 md:h-5" />
                           <span>{formatDate(selectedVideo.publishDate)}</span>
                         </span>
                       )}
                       {selectedVideo.duration && (
-                        <span className="flex items-center gap-1 md:gap-1.5">
-                          <Clock className="w-3 h-3 md:w-4 md:h-4" />
+                        <span className="flex items-center gap-2 md:gap-2.5">
+                          <Clock className="w-4 h-4 md:w-5 md:h-5" />
                           <span>{selectedVideo.duration}</span>
                         </span>
                       )}
                     </div>
                     
-                    <div className="flex items-center gap-1 md:gap-2">
+                    <div className="flex items-center gap-2 md:gap-3">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 md:h-8 md:w-8 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300"
+                        className="h-9 w-9 md:h-10 md:w-10 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300"
                         onClick={toggleMute}
                         title={
                           isMuted 
@@ -1415,9 +1444,9 @@ export default function Videos() {
                         }
                       >
                         {isMuted ? (
-                          <VolumeX className="w-3 h-3 md:w-4 md:h-4" />
+                          <VolumeX className="w-4 h-4 md:w-5 md:h-5" />
                         ) : (
-                          <Volume2 className="w-3 h-3 md:w-4 md:h-4" />
+                          <Volume2 className="w-4 h-4 md:w-5 md:h-5" />
                         )}
                       </Button>
                     </div>
@@ -1429,9 +1458,9 @@ export default function Videos() {
         </DialogContent>
       </Dialog>
 
-      {/* FIXED: Character Selection Dialog - SINGLE CLOSE BUTTON */}
+      {/* Character Selection Dialog */}
       {showCharacterSelection && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div 
             className="fixed inset-0 bg-black/80 backdrop-blur-sm animate-fade-in"
             onClick={handleCharacterSelectionClose}
@@ -1447,15 +1476,14 @@ export default function Videos() {
                     {getLocalizedText({ fr: 'Choisissez un personnage', en: 'Choose a character' })}
                   </p>
                 </div>
-                {/* SINGLE CLOSE BUTTON */}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 active:scale-95 transition-all duration-300"
+                  className="h-9 w-9 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 active:scale-95 transition-all duration-300"
                   onClick={handleCharacterSelectionClose}
                   aria-label={getLocalizedText({ fr: 'Fermer', en: 'Close' })}
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-5 h-5" />
                 </Button>
               </div>
               
@@ -1468,7 +1496,7 @@ export default function Videos() {
                   >
                     <div className="relative mb-2 md:mb-3">
                       <div className={`absolute inset-0 bg-gradient-to-r ${character.color} rounded-full blur-lg opacity-60 group-hover:opacity-80 transition-opacity duration-300`} />
-                      <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full border-3 md:border-4 border-white/20 overflow-hidden group-hover:border-emerald-500/30 transition-all duration-300">
+                      <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-white/20 overflow-hidden group-hover:border-emerald-500/30 transition-all duration-300">
                         <img
                           src={character.imageUrl}
                           alt={character.name}
@@ -1478,13 +1506,13 @@ export default function Videos() {
                         />
                       </div>
                     </div>
-                    <h4 className="font-bold text-base md:text-lg text-gray-800 dark:text-gray-200 mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                    <h4 className="font-bold text-lg md:text-xl text-gray-800 dark:text-gray-200 mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
                       {character.name}
                     </h4>
-                    <p className="text-xs text-muted-foreground group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                    <p className="text-sm text-muted-foreground group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors duration-300">
                       {character.role}
                     </p>
-                    <ChevronRight className="absolute top-1.5 right-1.5 md:top-2 md:right-2 w-3 h-3 md:w-4 md:h-4 text-emerald-500 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-0.5" />
+                    <ChevronRight className="absolute top-2 right-2 md:top-3 md:right-3 w-4 h-4 md:w-5 md:h-5 text-emerald-500 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-0.5" />
                   </button>
                 ))}
               </div>
@@ -1493,9 +1521,9 @@ export default function Videos() {
         </div>
       )}
 
-      {/* FIXED: Character Detail Dialog - SINGLE CLOSE BUTTON */}
+      {/* Character Detail Dialog */}
       {showCharacterDetail && selectedCharacter && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div 
             className="fixed inset-0 bg-black/80 backdrop-blur-sm animate-fade-in"
             onClick={handleCharacterDetailClose}
@@ -1503,36 +1531,35 @@ export default function Videos() {
           <div className="relative bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-950 rounded-2xl overflow-hidden border border-emerald-500/20 shadow-2xl animate-scale-in max-w-[95vw] sm:max-w-md w-full">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-r ${selectedCharacter.color} flex items-center justify-center text-white font-bold text-lg shadow-lg`}>
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-r ${selectedCharacter.color} flex items-center justify-center text-white font-bold text-xl shadow-lg`}>
                     {selectedCharacter.name.charAt(0)}
                   </div>
                   <div>
-                    <h3 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-gray-200">
+                    <h3 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-200">
                       {selectedCharacter.name}
                     </h3>
-                    <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
+                    <p className="text-base text-emerald-600 dark:text-emerald-400 font-medium">
                       {selectedCharacter.role}
                     </p>
                   </div>
                 </div>
-                {/* SINGLE CLOSE BUTTON */}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 active:scale-95 transition-all duration-300"
+                  className="h-9 w-9 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 active:scale-95 transition-all duration-300"
                   onClick={handleCharacterDetailClose}
                   aria-label={getLocalizedText({ fr: 'Fermer', en: 'Close' })}
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-5 h-5" />
                 </Button>
               </div>
               
               <div className="relative aspect-square rounded-xl overflow-hidden mb-6 border border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-green-500/5">
                 {imageError ? (
                   <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
-                    <AlertCircle className="w-12 h-12 md:w-16 md:h-16 text-emerald-500/50 mb-2" />
-                    <p className="text-center text-sm text-emerald-500/70">
+                    <AlertCircle className="w-16 h-16 md:w-20 md:h-20 text-emerald-500/50 mb-2" />
+                    <p className="text-center text-base text-emerald-500/70">
                       {getLocalizedText({ fr: 'Image non disponible', en: 'Image not available' })}
                     </p>
                   </div>
@@ -1548,12 +1575,12 @@ export default function Videos() {
               </div>
               
               <div className="space-y-4">
-                <p className="text-sm text-muted-foreground text-center">
+                <p className="text-base text-muted-foreground text-center">
                   {getLocalizedText(selectedCharacter.description)}
                 </p>
-                <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center justify-center gap-4 text-base text-muted-foreground">
                   <div className="flex items-center gap-2">
-                    <Heart className="w-4 h-4 text-pink-500" />
+                    <Heart className="w-5 h-5 text-pink-500" />
                     <span>{getLocalizedText({ fr: 'Créé par Salsabile', en: 'Created by Salsabile' })}</span>
                   </div>
                 </div>
@@ -1677,11 +1704,18 @@ export default function Videos() {
           transform: translateY(0);
         }
         
-        /* Image optimization */
+        /* Image optimization for better quality */
         img {
-          image-rendering: -webkit-optimize-contrast;
+          image-rendering: auto;
           image-rendering: crisp-edges;
           -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* Icon optimization - prevent pixelization */
+        svg {
+          shape-rendering: geometricPrecision;
+          text-rendering: geometricPrecision;
         }
         
         /* Mobile performance */
@@ -1691,10 +1725,16 @@ export default function Videos() {
             transition-duration: 0.4s;
           }
           
-          /* Reduce animations on mobile */
-          .animate-float-slow,
-          .animate-pulse-slow {
-            animation: none;
+          /* Better touch targets */
+          button {
+            min-height: 44px;
+            min-width: 44px;
+          }
+          
+          /* Improve video embeds on mobile */
+          .video-player {
+            width: 100% !important;
+            height: auto !important;
           }
         }
         
@@ -1730,9 +1770,9 @@ export default function Videos() {
           touch-action: manipulation;
         }
         
-        /* Improved icon clarity */
-        svg {
-          shape-rendering: crispEdges;
+        /* Improved modal z-index */
+        [data-state="open"] {
+          z-index: 9999 !important;
         }
       `}</style>
     </div>
@@ -1751,21 +1791,21 @@ const NoResults = memo(({
   description: string;
   searchQuery?: string;
 }) => (
-  <div className="text-center py-12 md:py-16 animate-fade-in">
-    <div className="w-20 h-20 md:w-24 md:h-24 mx-auto mb-6 bg-gradient-to-br from-emerald-500/10 to-green-500/10 rounded-full flex items-center justify-center">
+  <div className="text-center py-16 md:py-20 animate-fade-in">
+    <div className="w-24 h-24 md:w-28 md:h-28 mx-auto mb-6 bg-gradient-to-br from-emerald-500/10 to-green-500/10 rounded-full flex items-center justify-center">
       <div className="text-emerald-600 dark:text-emerald-400">
         {icon}
       </div>
     </div>
-    <h3 className="text-xl md:text-2xl font-bold mb-3 text-foreground">
+    <h3 className="text-2xl md:text-3xl font-bold mb-3 text-foreground">
       {title}
     </h3>
-    <p className="text-muted-foreground max-w-md mx-auto text-base md:text-lg mb-4">
+    <p className="text-muted-foreground max-w-md mx-auto text-lg md:text-xl mb-4">
       {description}
     </p>
     {searchQuery && (
-      <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 rounded-full text-sm">
-        <Search className="w-3 h-3" />
+      <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 rounded-full text-base">
+        <Search className="w-4 h-4" />
         <span>{searchQuery}</span>
       </div>
     )}
@@ -1774,7 +1814,7 @@ const NoResults = memo(({
 
 NoResults.displayName = 'NoResults';
 
-// Enhanced Video Card Component
+// Enhanced Video Card Component with better icon quality
 const EnhancedVideoCard = memo(({
   video,
   getLocalizedText,
@@ -1829,9 +1869,9 @@ const EnhancedVideoCard = memo(({
               >
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="relative">
-                    <div className="relative w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                      <div className="w-8 h-8 md:w-10 md:h-10 bg-white rounded-full flex items-center justify-center">
-                        <Play className="w-4 h-4 md:w-5 md:h-5 text-emerald-600 ml-0.5" fill="currentColor" />
+                    <div className="relative w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                      <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center">
+                        <Play className="w-6 h-6 md:w-7 md:h-7 text-emerald-600 ml-0.5" fill="currentColor" />
                       </div>
                     </div>
                   </div>
@@ -1856,13 +1896,13 @@ const EnhancedVideoCard = memo(({
               {/* Badges */}
               <div className="absolute top-2 left-2 z-30">
                 {video.isShort ? (
-                  <Badge className="bg-gradient-to-r from-emerald-600 to-green-500 text-white border-0 text-xs px-2 py-0.5">
-                    <Zap className="w-3 h-3 mr-1" />
+                  <Badge className="bg-gradient-to-r from-emerald-600 to-green-500 text-white border-0 text-sm px-3 py-1">
+                    <Zap className="w-4 h-4 mr-1" />
                     SHORT
                   </Badge>
                 ) : (
                   video.category && (
-                    <Badge className="bg-black/80 backdrop-blur-sm text-white border-0 text-xs px-2 py-0.5">
+                    <Badge className="bg-black/80 backdrop-blur-sm text-white border-0 text-sm px-3 py-1">
                       {getLocalizedText(video.category)}
                     </Badge>
                   )
@@ -1875,21 +1915,21 @@ const EnhancedVideoCard = memo(({
               <div className="space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
-                    <h3 className="font-bold text-lg md:text-xl mb-1 md:mb-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                    <h3 className="font-bold text-xl md:text-2xl mb-2 md:mb-3 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
                       {getLocalizedText(video.title)}
                     </h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2 group-hover:text-foreground/80 transition-colors duration-300">
+                    <p className="text-base text-muted-foreground line-clamp-2 group-hover:text-foreground/80 transition-colors duration-300">
                       {getLocalizedText(video.description)}
                     </p>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 px-3 text-xs hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-300 hover:scale-105 active:scale-95"
+                    className="h-10 px-4 text-base hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-300 hover:scale-105 active:scale-95"
                     onClick={() => handleVideoSelect(video)}
                     aria-label={language === 'fr' ? 'Regarder' : 'Watch'}
                   >
-                    <Play className="w-3 h-3 mr-1.5" />
+                    <Play className="w-5 h-5 mr-2" />
                     {language === 'fr' ? 'Regarder' : 'Watch'}
                   </Button>
                 </div>
@@ -1898,8 +1938,8 @@ const EnhancedVideoCard = memo(({
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-2 group">
                       <div className="relative">
-                        <div className="w-8 h-8 bg-gradient-to-br from-emerald-500/20 to-green-500/20 rounded-full flex items-center justify-center">
-                          <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                        <div className="w-10 h-10 bg-gradient-to-br from-emerald-500/20 to-green-500/20 rounded-full flex items-center justify-center">
+                          <User className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                         </div>
                         {showCharacterInfo && onCharacterInfoClick && (
                           <button
@@ -1908,35 +1948,35 @@ const EnhancedVideoCard = memo(({
                               e.preventDefault();
                               onCharacterInfoClick();
                             }}
-                            className="absolute -right-1 -top-1 h-5 w-5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white p-0.5 rounded-full border-2 border-background transition-all duration-300 hover:scale-110 active:scale-95 shadow-md flex items-center justify-center"
+                            className="absolute -right-1 -top-1 h-6 w-6 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white p-1 rounded-full border-2 border-background transition-all duration-300 hover:scale-110 active:scale-95 shadow-md flex items-center justify-center"
                             aria-label={language === 'fr' ? 'Personnages' : 'Characters'}
                             title={language === 'fr' ? 'Personnages' : 'Characters'}
                           >
-                            <Info className="w-2.5 h-2.5" />
+                            <Info className="w-3 h-3" />
                           </button>
                         )}
                       </div>
                       <div>
-                        <span className="text-sm font-medium">
+                        <span className="text-base font-medium">
                           {video.creator.name}
                         </span>
-                        <p className="text-xs text-muted-foreground">{video.creator.role}</p>
+                        <p className="text-sm text-muted-foreground">{video.creator.role}</p>
                       </div>
                     </div>
                   </div>
                 )}
                 
                 <div className="flex items-center justify-between pt-3 border-t border-border/50">
-                  <div className="flex items-center gap-3 md:gap-4 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-3 md:gap-4 text-sm text-muted-foreground">
                     {video.publishDate && (
-                      <span className="flex items-center gap-1.5">
-                        <Calendar className="w-3 h-3" />
+                      <span className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
                         <span>{formatDate(video.publishDate)}</span>
                       </span>
                     )}
                     {video.duration && (
-                      <span className="flex items-center gap-1.5">
-                        <Clock className="w-3 h-3" />
+                      <span className="flex items-center gap-2">
+                        <Clock className="w-4 h-4" />
                         <span>{video.duration}</span>
                       </span>
                     )}
@@ -1978,9 +2018,9 @@ const EnhancedVideoCard = memo(({
           >
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="relative">
-                <div className="relative w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                  <div className="w-9 h-9 md:w-10 md:h-10 bg-white rounded-full flex items-center justify-center">
-                    <Play className="w-5 h-5 md:w-6 md:h-6 text-emerald-600 ml-0.5" fill="currentColor" />
+                <div className="relative w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center">
+                    <Play className="w-6 h-6 md:w-7 md:h-7 text-emerald-600 ml-0.5" fill="currentColor" />
                   </div>
                 </div>
               </div>
@@ -1989,13 +2029,13 @@ const EnhancedVideoCard = memo(({
 
           <div className="absolute top-2 left-2 z-30">
             {video.isShort ? (
-              <Badge className="bg-gradient-to-r from-emerald-600 to-green-500 text-white border-0 text-xs px-2 py-0.5">
-                <Zap className="w-3 h-3 mr-1" />
+              <Badge className="bg-gradient-to-r from-emerald-600 to-green-500 text-white border-0 text-sm px-3 py-1">
+                <Zap className="w-4 h-4 mr-1" />
                 SHORT
               </Badge>
             ) : (
               video.category && (
-                <Badge className="bg-black/80 backdrop-blur-sm text-white border-0 text-xs px-2 py-0.5">
+                <Badge className="bg-black/80 backdrop-blur-sm text-white border-0 text-sm px-3 py-1">
                   {getLocalizedText(video.category)}
                 </Badge>
               )
@@ -2003,7 +2043,7 @@ const EnhancedVideoCard = memo(({
           </div>
 
           {video.duration && (
-            <div className="absolute bottom-2 right-2 z-30 bg-black/80 backdrop-blur-sm text-white text-xs px-2 py-1 rounded">
+            <div className="absolute bottom-2 right-2 z-30 bg-black/80 backdrop-blur-sm text-white text-sm px-2 py-1 rounded">
               {video.duration}
             </div>
           )}
@@ -2012,7 +2052,7 @@ const EnhancedVideoCard = memo(({
         <div className="p-4 relative z-20">
           <div className="space-y-3">
             <div className="flex items-start justify-between gap-2">
-              <h3 className="font-bold text-base line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300 flex-1">
+              <h3 className="font-bold text-lg line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300 flex-1">
                 {getLocalizedText(video.title)}
               </h3>
             </div>
@@ -2021,8 +2061,8 @@ const EnhancedVideoCard = memo(({
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2">
                   <div className="relative">
-                    <div className="w-7 h-7 bg-gradient-to-br from-emerald-500/20 to-green-500/20 rounded-full flex items-center justify-center">
-                      <User className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <div className="w-8 h-8 bg-gradient-to-br from-emerald-500/20 to-green-500/20 rounded-full flex items-center justify-center">
+                      <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     {showCharacterInfo && onCharacterInfoClick && (
                       <button
@@ -2031,16 +2071,16 @@ const EnhancedVideoCard = memo(({
                           e.preventDefault();
                           onCharacterInfoClick();
                         }}
-                        className="absolute -right-1 -top-1 h-4 w-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-0.5 rounded-full border border-background shadow-sm flex items-center justify-center"
+                        className="absolute -right-1 -top-1 h-5 w-5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-0.5 rounded-full border border-background shadow-sm flex items-center justify-center"
                         aria-label={language === 'fr' ? 'Personnages' : 'Characters'}
                         title={language === 'fr' ? 'Personnages' : 'Characters'}
                       >
-                        <Info className="w-2 h-2" />
+                        <Info className="w-3 h-3" />
                       </button>
                     )}
                   </div>
                   <div>
-                    <span className="text-xs font-medium">
+                    <span className="text-sm font-medium">
                       {video.creator.name}
                     </span>
                     <p className="text-xs text-muted-foreground">{video.creator.role}</p>
@@ -2049,15 +2089,15 @@ const EnhancedVideoCard = memo(({
               </div>
             )}
             
-            <p className="text-xs text-muted-foreground line-clamp-2 group-hover:text-foreground/80 transition-colors duration-300">
+            <p className="text-sm text-muted-foreground line-clamp-2 group-hover:text-foreground/80 transition-colors duration-300">
               {getLocalizedText(video.description)}
             </p>
             
             <div className="flex items-center justify-between pt-3 border-t border-border/50">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 {video.publishDate && (
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
+                  <span className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
                     <span>{formatDate(video.publishDate)}</span>
                   </span>
                 )}
@@ -2066,11 +2106,11 @@ const EnhancedVideoCard = memo(({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 px-2 text-xs hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-300 hover:scale-105 active:scale-95"
+                className="h-8 px-3 text-sm hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-300 hover:scale-105 active:scale-95"
                 onClick={() => handleVideoSelect(video)}
                 aria-label={language === 'fr' ? 'Regarder' : 'Watch'}
               >
-                <Play className="w-3 h-3 mr-1" />
+                <Play className="w-4 h-4 mr-1" />
                 {language === 'fr' ? 'Voir' : 'View'}
               </Button>
             </div>
