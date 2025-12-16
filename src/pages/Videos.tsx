@@ -12,7 +12,9 @@ import {
   ExternalLink, 
   Calendar, 
   Clock, 
+  TrendingUp, 
   Users, 
+  Sparkles,
   Recycle,
   Zap,
   X,
@@ -32,13 +34,7 @@ import {
   RefreshCw,
   Heart,
   RotateCw,
-  ChevronRight,
-  Filter,
-  Grid,
-  List,
-  ChevronLeft,
-  ChevronDown,
-  Sparkles
+  ChevronRight
 } from "lucide-react";
 
 interface Video {
@@ -53,7 +49,6 @@ interface Video {
   aspect?: 'landscape' | 'portrait';
   creator?: { name: string; role: string };
   isShort?: boolean;
-  tags?: string[];
 }
 
 interface Character {
@@ -62,7 +57,6 @@ interface Character {
   imageUrl: string;
   role: string;
   color: string;
-  description: { fr: string; en: string };
 }
 
 export default function Videos() {
@@ -83,55 +77,16 @@ export default function Videos() {
   const [imageError, setImageError] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isRotated, setIsRotated] = useState(false);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchResults, setSearchResults] = useState<Video[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [hoveredVideoId, setHoveredVideoId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [hasLoaded, setHasLoaded] = useState(false);
-  const [contentKey, setContentKey] = useState(0);
-  
   const modalRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout>();
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const videoSectionRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const lastSectionRef = useRef<string>('tutorials');
+  const lastScrollY = useRef(0);
   
-  // Enhanced scroll reveal with better performance
-  useScrollReveal({
-    threshold: isMobile ? 0.05 : 0.1,
-    distance: isMobile ? '15px' : '25px',
-    easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
-    duration: isMobile ? 500 : 700,
-    delay: 50
-  });
-
-  // Enhanced mobile detection with debouncing
-  useEffect(() => {
-    let resizeTimer: NodeJS.Timeout;
-    
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    const handleResize = () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(checkMobile, 150);
-    };
-    
-    checkMobile();
-    setHasLoaded(true);
-    
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      clearTimeout(resizeTimer);
-    };
-  }, []);
+  useScrollReveal();
 
   // Memoized characters data
   const characters: Character[] = useMemo(() => [
@@ -140,47 +95,51 @@ export default function Videos() {
       name: "Meow",
       imageUrl: "https://i.ibb.co/d06DQqBR/Meow-png.jpg",
       role: language === 'fr' ? "Mascotte" : "Mascot",
-      color: "from-blue-500 to-cyan-500",
-      description: {
-        fr: "La mascotte adorable qui encourage le recyclage et la réutilisation créative",
-        en: "The adorable mascot who encourages recycling and creative reuse"
-      }
+      color: "from-blue-500 to-cyan-500"
     },
     {
       id: "basma",
       name: "Basma",
       imageUrl: "https://i.ibb.co/4npFCFPd/Basma-png.jpg",
       role: language === 'fr' ? "Artiste Écologique" : "Ecological Artist",
-      color: "from-emerald-500 to-green-500",
-      description: {
-        fr: "Artiste passionnée qui transforme les déchets en œuvres d'art inspirantes",
-        en: "Passionate artist who transforms waste into inspiring works of art"
-      }
+      color: "from-emerald-500 to-green-500"
     },
     {
       id: "cat",
       name: "Cat",
       imageUrl: "https://i.ibb.co/Kzp4Rg9s/CAT-png.jpg",
       role: language === 'fr' ? "Super-héros Écologique" : "Ecological Superhero",
-      color: "from-purple-500 to-pink-500",
-      description: {
-        fr: "Super-héros qui combat la pollution et enseigne les bonnes pratiques environnementales",
-        en: "Superhero who fights pollution and teaches good environmental practices"
-      }
+      color: "from-purple-500 to-pink-500"
     }
   ], [language]);
+
+  // Check mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    
+    const handleResize = () => {
+      requestAnimationFrame(checkMobile);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Memoized videos data
   const videos: Video[] = useMemo(() => [
     {
       id: "channel-showcase",
       title: {
-        fr: "Présentation du Site Web",
+        fr: "Website Showcase",
         en: "Website Showcase"
       },
       description: {
-        fr: "Découvrez toutes les fonctionnalités de notre plateforme éducative",
-        en: "Discover all the features of our educational platform"
+        fr: "Présentation complète de notre site web et de ses fonctionnalités",
+        en: "Complete overview of our website and its features"
       },
       youtubeId: "v_EyngbVFb8",
       duration: "1:28",
@@ -188,8 +147,7 @@ export default function Videos() {
       category: { fr: "Chaîne", en: "Channel" },
       type: "channel",
       aspect: "landscape",
-      creator: { name: "Yahia", role: language === 'fr' ? "Développeur" : "Developer" },
-      tags: ["présentation", "développement", "éducation"]
+      creator: { name: "Yahia", role: language === 'fr' ? "Développeur" : "Developer" }
     },
     {
       id: "reuse-cat-4",
@@ -198,8 +156,8 @@ export default function Videos() {
         en: "Reuse with Cat - Episode 4"
       },
       description: {
-        fr: "Apprenez des techniques créatives de réutilisation avec notre super-héros préféré",
-        en: "Learn creative reuse techniques with our favorite superhero"
+        fr: "Créé par Salsabile - Apprenez à réutiliser avec Cat",
+        en: "Made by Salsabile - Learn to reuse with Cat"
       },
       youtubeId: "aEnA1z-G7qE",
       duration: "0:57",
@@ -208,18 +166,17 @@ export default function Videos() {
       type: "community",
       aspect: "portrait",
       creator: { name: "Salsabile", role: language === 'fr' ? "Artiste" : "Artist" },
-      isShort: true,
-      tags: ["réutilisation", "créativité", "cat"]
+      isShort: true
     },
     {
       id: "laundry-cat",
       title: {
-        fr: "Le Chat du Lavage",
+        fr: "Laundry cat",
         en: "Laundry cat"
       },
       description: {
-        fr: "Une aventure amusante avec Cat qui apprend les bonnes pratiques écologiques",
-        en: "A fun adventure with Cat learning eco-friendly practices"
+        fr: "Créé par Salsabile",
+        en: "Made by Salsabile"
       },
       youtubeId: "c7akmKesIq4",
       duration: "0:45",
@@ -228,8 +185,7 @@ export default function Videos() {
       type: "community",
       aspect: "portrait",
       creator: { name: "Salsabile", role: language === 'fr' ? "Artiste" : "Artist" },
-      isShort: true,
-      tags: ["écologie", "apprentissage", "animation"]
+      isShort: true
     },
     {
       id: "community-short",
@@ -238,8 +194,8 @@ export default function Videos() {
         en: "Don't throw your bottles - Episode 2"
       },
       description: {
-        fr: "Découvrez comment transformer vos bouteilles en objets utiles",
-        en: "Discover how to transform your bottles into useful objects"
+        fr: "Créé par Salsabile",
+        en: "Made by Salsabile"
       },
       youtubeId: "TeS8QfpPHic",
       duration: "0:53",
@@ -248,8 +204,7 @@ export default function Videos() {
       type: "community",
       aspect: "portrait",
       creator: { name: "Salsabile", role: language === 'fr' ? "Artiste" : "Artist" },
-      isShort: true,
-      tags: ["recyclage", "bouteilles", "DIY"]
+      isShort: true
     },
     {
       id: "community1",
@@ -258,8 +213,8 @@ export default function Videos() {
         en: "Cleaner Future with Cat - Trailer"
       },
       description: {
-        fr: "Bande-annonce de notre série éducative sur un avenir durable",
-        en: "Trailer of our educational series on a sustainable future"
+        fr: "Créé par Salsabile - Un avenir durable avec Chat",
+        en: "Created by Salsabile - A sustainable future with Cat"
       },
       youtubeId: "CtcgvPj1vGk",
       duration: "0:36",
@@ -268,8 +223,7 @@ export default function Videos() {
       type: "community",
       aspect: "portrait",
       creator: { name: "Salsabile", role: language === 'fr' ? "Artiste" : "Artist" },
-      isShort: true,
-      tags: ["trailer", "série", "éducation"]
+      isShort: true
     },
     {
       id: "community2",
@@ -278,8 +232,8 @@ export default function Videos() {
         en: "Crafting and recycling - Episode 1"
       },
       description: {
-        fr: "Premier épisode de notre série sur l'artisanat avec des matériaux recyclés",
-        en: "First episode of our series on crafting with recycled materials"
+        fr: "Créé par Salsabile - Astuces simples pour recycler",
+        en: "Created by Salsabile - Simple tips for recycling"
       },
       youtubeId: "g8MBdRd99LU",
       duration: "1:12",
@@ -288,8 +242,7 @@ export default function Videos() {
       type: "community",
       aspect: "portrait",
       creator: { name: "Salsabile", role: language === 'fr' ? "Artiste" : "Artist" },
-      isShort: true,
-      tags: ["artisanat", "recyclage", "tutoriel"]
+      isShort: true
     },
     {
       id: "tutorial1",
@@ -298,8 +251,8 @@ export default function Videos() {
         en: "Recycling Introduction"
       },
       description: {
-        fr: "Les bases essentielles du recyclage pour débutants",
-        en: "Essential recycling basics for beginners"
+        fr: "Découvrez les bases du recyclage et son importance pour l'environnement",
+        en: "Discover the basics of recycling and its importance for the environment"
       },
       youtubeId: "c5sPRL0YKUw",
       duration: "7:03",
@@ -307,7 +260,6 @@ export default function Videos() {
       category: { fr: "Éducation", en: "Education" },
       type: "tutorial",
       aspect: "landscape",
-      tags: ["débutant", "bases", "éducation"]
     },
     {
       id: "tutorial2",
@@ -324,8 +276,7 @@ export default function Videos() {
       publishDate: "2024-02-10",
       category: { fr: "Processus", en: "Process" },
       type: "tutorial",
-      aspect: "landscape",
-      tags: ["papier", "carton", "processus"]
+      aspect: "landscape"
     },
     {
       id: "tutorial3",
@@ -334,98 +285,72 @@ export default function Videos() {
         en: "Journey to the Heart of Sorting"
       },
       description: {
-        fr: "Découvrez le parcours des déchets recyclables",
-        en: "Discover the journey of recyclable waste"
+        fr: "Parcours des déchets recyclables depuis le tri jusqu'à la transformation",
+        en: "Journey of recyclable waste from sorting to transformation"
       },
       youtubeId: "p67EWIamCIw",
       duration: "5:33",
       publishDate: "2024-03-05",
       category: { fr: "Documentaire", en: "Documentary" },
       type: "tutorial",
-      aspect: "landscape",
-      tags: ["documentaire", "tri", "déchets"]
+      aspect: "landscape"
     }
   ], [language]);
 
-  // Get section videos - FIXED: No disappearing issue
-  const getSectionVideos = useCallback((section: typeof activeSection): Video[] => {
-    return videos.filter(v => v.type === section.slice(0, -1) as Video['type']);
-  }, [videos]);
+  // Filter videos by type
+  const tutorialVideos = useMemo(() => videos.filter(v => v.type === "tutorial"), [videos]);
+  const communityVideos = useMemo(() => videos.filter(v => v.type === "community"), [videos]);
+  const channelVideos = useMemo(() => videos.filter(v => v.type === "channel"), [videos]);
 
-  // Enhanced search function - works across all sections
-  const searchVideos = useCallback((query: string): Video[] => {
-    if (!query.trim()) return [];
-    
-    const searchTerms = query.toLowerCase().trim().split(/\s+/).filter(term => term.length > 1);
-    if (searchTerms.length === 0) return [];
-    
-    return videos.filter(video => {
-      const searchableText = [
-        video.title[language].toLowerCase(),
-        video.description[language].toLowerCase(),
-        video.category?.[language]?.toLowerCase() || '',
-        video.creator?.name.toLowerCase() || '',
-        video.creator?.role.toLowerCase() || '',
-        video.type.toLowerCase(),
-        ...(video.tags || []).map(tag => tag.toLowerCase())
-      ].join(' ');
-      
-      return searchTerms.every(term => searchableText.includes(term));
-    });
-  }, [videos, language]);
-
-  // Enhanced search with better debounce
+  // Auto search with debounce
   useEffect(() => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
     
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      setDebouncedSearchQuery("");
-      setIsSearching(false);
-      setSearchLoading(false);
-      return;
-    }
-    
-    setSearchLoading(true);
-    setIsSearching(true);
-    
     searchTimeoutRef.current = setTimeout(() => {
-      const results = searchVideos(searchQuery);
-      setSearchResults(results);
       setDebouncedSearchQuery(searchQuery);
-      setIsSearching(false);
-      setSearchLoading(false);
-      
-      // Scroll to videos when searching
-      if (results.length > 0 && videoSectionRef.current) {
-        setTimeout(() => {
-          videoSectionRef.current?.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start' 
-          });
-        }, 100);
-      }
-    }, 350);
+    }, 300);
     
     return () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [searchQuery, searchVideos]);
+  }, [searchQuery]);
 
-  // FIXED: Get current videos - No disappearing issue
-  const currentVideos = useMemo(() => {
-    // If searching, show search results filtered by current section
-    if (searchResults.length > 0 && debouncedSearchQuery.trim()) {
-      return searchResults.filter(video => video.type === activeSection.slice(0, -1) as Video['type']);
-    }
+  // Optimized search function
+  const searchVideos = useCallback((videos: Video[], query: string): Video[] => {
+    if (!query.trim()) return videos;
     
-    // Otherwise show all videos for current section
-    return getSectionVideos(activeSection);
-  }, [activeSection, getSectionVideos, debouncedSearchQuery, searchResults]);
+    const searchTerms = query.toLowerCase().trim().split(/\s+/);
+    
+    return videos.filter(video => {
+      const searchableText = [
+        video.title[language].toLowerCase(),
+        video.description[language].toLowerCase(),
+        video.category?.[language].toLowerCase() || '',
+        video.creator?.name.toLowerCase() || '',
+        video.creator?.role.toLowerCase() || '',
+        video.type.toLowerCase()
+      ].join(' ');
+      
+      return searchTerms.every(term => searchableText.includes(term));
+    });
+  }, [language]);
+
+  // Memoized filtered videos
+  const filteredTutorialVideos = useMemo(() => 
+    searchVideos(tutorialVideos, debouncedSearchQuery),
+  [tutorialVideos, debouncedSearchQuery, searchVideos]);
+
+  const filteredCommunityVideos = useMemo(() => 
+    searchVideos(communityVideos, debouncedSearchQuery),
+  [communityVideos, debouncedSearchQuery, searchVideos]);
+
+  const filteredChannelVideos = useMemo(() => 
+    searchVideos(channelVideos, debouncedSearchQuery),
+  [channelVideos, debouncedSearchQuery, searchVideos]);
 
   // Memoized text translation
   const getLocalizedText = useCallback((text: { fr: string; en: string } | string) => {
@@ -433,51 +358,57 @@ export default function Videos() {
     return text[language];
   }, [language]);
 
-  // Enhanced video modal handling
-  const openVideoModal = useCallback((video: Video) => {
-    setIsLoading(true);
-    setSelectedVideo(video);
-    setVideoError(false);
-    setErrorMessage("");
-    setIsRotated(false);
-    
-    setTimeout(() => {
-      setIsModalOpen(true);
-    }, 50);
-  }, []);
+  // Get total results for current section
+  const getTotalResults = useCallback(() => {
+    switch(activeSection) {
+      case 'tutorials': return filteredTutorialVideos.length;
+      case 'community': return filteredCommunityVideos.length;
+      case 'channel': return filteredChannelVideos.length;
+      default: return 0;
+    }
+  }, [activeSection, filteredTutorialVideos.length, filteredCommunityVideos.length, filteredChannelVideos.length]);
 
-  // Handle video modal state
+  // Handle video modal
   useEffect(() => {
-    if (selectedVideo && !isModalOpen) {
+    if (selectedVideo) {
       setIsModalOpen(true);
       setShowInterface(true);
       setShowControls(true);
+      setVideoError(false);
+      setErrorMessage("");
+      setIsRotated(false);
       
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
       }
       
       controlsTimeoutRef.current = setTimeout(() => {
-        if (isModalOpen) {
-          setShowControls(false);
-        }
-      }, 3500);
+        setShowControls(false);
+      }, 3000);
+    } else {
+      setIsModalOpen(false);
     }
-  }, [selectedVideo, isModalOpen]);
+  }, [selectedVideo]);
 
   // Fullscreen handling
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      const isFullscreen = !!document.fullscreenElement;
+      setIsFullscreen(isFullscreen);
+      if (isFullscreen) {
+        setShowInterface(true);
+        setShowControls(true);
+      }
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // Enhanced thumbnail URL helper with quality optimization
+  // Thumbnail URL helper
   const getThumbnailUrl = useCallback((youtubeId: string, isShort?: boolean) => {
-    return `https://img.youtube.com/vi/${youtubeId}/${isShort ? 'hqdefault' : 'maxresdefault'}.jpg`;
+    const quality = isShort ? 'hqdefault' : 'maxresdefault';
+    return `https://img.youtube.com/vi/${youtubeId}/${quality}.jpg`;
   }, []);
 
   // Open in YouTube
@@ -485,51 +416,48 @@ export default function Videos() {
     window.open(`https://www.youtube.com/watch?v=${youtubeId}`, '_blank', 'noopener,noreferrer');
   }, []);
 
-  // Enhanced date formatting
-  const formatDate = useCallback((dateString?: string) => {
-    if (!dateString) return '';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      });
-    } catch {
-      return dateString;
-    }
+  // Date formatting
+  const formatDate = useCallback((dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
   }, [language]);
 
   // Video selection handler
   const handleVideoSelect = useCallback((video: Video) => {
-    try {
-      openVideoModal(video);
-    } catch (error) {
-      console.error('Video selection error:', error);
-      setErrorMessage(getLocalizedText({
-        fr: "Erreur lors de l'ouverture de la vidéo",
-        en: "Error opening video"
-      }));
+    setIsLoading(true);
+    setSelectedVideo(video);
+    setShowInterface(true);
+    setVideoError(false);
+    setErrorMessage("");
+    
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
     }
-  }, [openVideoModal, getLocalizedText]);
+  }, []);
 
   // Thumbnail click handler
   const handleThumbnailClick = useCallback((e: React.MouseEvent, video: Video) => {
     e.stopPropagation();
-    e.preventDefault();
     handleVideoSelect(video);
   }, [handleVideoSelect]);
 
-  // Enhanced fullscreen toggle
-  const toggleFullscreen = useCallback(async () => {
-    try {
-      if (!document.fullscreenElement) {
-        await modalRef.current?.requestFullscreen();
-      } else {
-        await document.exitFullscreen();
-      }
-    } catch (error) {
-      console.error('Fullscreen error:', error);
+  // Fullscreen toggle
+  const toggleFullscreen = useCallback(() => {
+    const iframe = document.querySelector('iframe');
+    const modal = modalRef.current;
+    
+    if (!iframe && !modal) return;
+
+    if (!document.fullscreenElement) {
+      (modal || iframe)?.requestFullscreen?.();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen?.();
+      setIsFullscreen(false);
     }
   }, []);
 
@@ -542,31 +470,21 @@ export default function Videos() {
     }
     
     controlsTimeoutRef.current = setTimeout(() => {
-      if (isModalOpen) {
-        setShowControls(false);
-      }
-    }, 3500);
-  }, [isModalOpen]);
+      setShowControls(false);
+    }, 3000);
+  }, []);
 
   // Modal close handler
   const handleModalClose = useCallback(() => {
-    setIsModalOpen(false);
-    setTimeout(() => {
-      setSelectedVideo(null);
-      setIsLoading(false);
-      setVideoError(false);
-      setErrorMessage("");
-      setIsRotated(false);
-      setShowInterface(true);
-      setShowControls(true);
-      
-      if (document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {});
-      }
-    }, 200);
-    
-    if (controlsTimeoutRef.current) {
-      clearTimeout(controlsTimeoutRef.current);
+    setSelectedVideo(null);
+    setIsFullscreen(false);
+    setShowInterface(true);
+    setIsLoading(false);
+    setVideoError(false);
+    setErrorMessage("");
+    setIsRotated(false);
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
     }
   }, []);
 
@@ -574,29 +492,22 @@ export default function Videos() {
   const toggleInterface = useCallback(() => {
     setShowInterface(prev => !prev);
     setShowControls(true);
-    
     if (controlsTimeoutRef.current) {
       clearTimeout(controlsTimeoutRef.current);
     }
-    
     controlsTimeoutRef.current = setTimeout(() => {
-      if (isModalOpen) {
-        setShowControls(false);
-      }
-    }, 3500);
-  }, [isModalOpen]);
+      setShowControls(false);
+    }, 3000);
+  }, []);
 
   // Mute toggle
   const toggleMute = useCallback(() => {
     setIsMuted(prev => !prev);
   }, []);
 
-  // Enhanced search handlers
+  // Search handlers
   const handleClearSearch = useCallback(() => {
     setSearchQuery("");
-    setDebouncedSearchQuery("");
-    setSearchResults([]);
-    setIsSearching(false);
     searchInputRef.current?.focus();
   }, []);
 
@@ -613,7 +524,6 @@ export default function Videos() {
       
       switch(e.key) {
         case 'Escape':
-          e.preventDefault();
           handleModalClose();
           break;
         case 'f':
@@ -625,10 +535,7 @@ export default function Videos() {
           break;
         case 'm':
         case 'M':
-          if (e.ctrlKey || e.metaKey) {
-            e.preventDefault();
-            toggleMute();
-          }
+          toggleMute();
           break;
         case ' ':
           e.preventDefault();
@@ -653,32 +560,30 @@ export default function Videos() {
     };
   }, []);
 
-  // FIXED: Section change - NO DISAPPEARING CONTENT
-  const handleSectionChange = useCallback((section: typeof activeSection) => {
-    if (section === activeSection) return;
-    
-    // Update active section immediately
-    lastSectionRef.current = activeSection;
+  // Section change with smooth transition
+  const handleSectionChange = useCallback((section: 'tutorials' | 'community' | 'channel') => {
+    setIsTransitioning(true);
     setActiveSection(section);
     
-    // Update content key to trigger smooth transition
-    setContentKey(prev => prev + 1);
+    setTimeout(() => setIsTransitioning(false), 300);
+  }, []);
+
+  // Track scroll position
+  useEffect(() => {
+    const handleScroll = () => {
+      lastScrollY.current = window.scrollY;
+    };
     
-    // Scroll to videos
-    setTimeout(() => {
-      videoSectionRef.current?.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'start' 
-      });
-    }, 50);
-  }, [activeSection]);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Aspect ratio helper
   const getAspectRatio = useCallback((video: Video): '16:9' | '9:16' => {
-    return video.aspect === 'portrait' || video.isShort ? '9:16' : '16:9';
+    return video.aspect === 'portrait' ? '9:16' : '16:9';
   }, []);
 
-  // Video event handlers
+  // Video event handlers with better error handling
   const handleVideoLoad = useCallback(() => {
     setIsLoading(false);
     setVideoError(false);
@@ -688,18 +593,18 @@ export default function Videos() {
   const handleVideoError = useCallback((error?: string) => {
     setIsLoading(false);
     setVideoError(true);
-    setErrorMessage(error || getLocalizedText({
-      fr: "Impossible de charger la vidéo",
-      en: "Unable to load video"
-    }));
-  }, [getLocalizedText]);
+    setErrorMessage(error || (language === 'fr' 
+      ? 'Impossible de charger la vidéo. Veuillez vérifier votre connexion internet.'
+      : 'Unable to load video. Please check your internet connection.'
+    ));
+  }, [language]);
 
   // Image error handler
   const handleImageError = useCallback(() => {
     setImageError(true);
   }, []);
 
-  // Character handlers
+  // Character handlers with smooth transitions
   const handleCharacterSelectionOpen = useCallback(() => {
     setShowCharacterSelection(true);
     setSelectedCharacter(null);
@@ -713,19 +618,13 @@ export default function Videos() {
   const handleCharacterSelect = useCallback((character: Character) => {
     setSelectedCharacter(character);
     setShowCharacterSelection(false);
-    
-    setTimeout(() => {
-      setShowCharacterDetail(true);
-    }, 200);
+    setTimeout(() => setShowCharacterDetail(true), 150);
+    setImageError(false);
   }, []);
 
   const handleCharacterDetailClose = useCallback(() => {
     setShowCharacterDetail(false);
-    
-    setTimeout(() => {
-      setSelectedCharacter(null);
-      setImageError(false);
-    }, 200);
+    setTimeout(() => setSelectedCharacter(null), 300);
   }, []);
 
   // Retry video loading
@@ -737,378 +636,349 @@ export default function Videos() {
     }
   }, [selectedVideo]);
 
-  // Toggle rotation for mobile only
+  // Toggle rotation for mobile
   const toggleRotation = useCallback(() => {
-    if (isMobile && selectedVideo?.aspect === 'landscape') {
-      setIsRotated(prev => !prev);
-    }
-  }, [isMobile, selectedVideo]);
+    setIsRotated(prev => !prev);
+  }, []);
 
-  // Get modal style for mobile compatibility
-  const getModalStyle = useCallback((): React.CSSProperties => {
+  // Get modal style based on device and video type - FIXED CENTERING
+  const getModalStyle = useCallback(() => {
     if (!selectedVideo) return {};
     
-    const isPortrait = selectedVideo.aspect === 'portrait' || selectedVideo.isShort;
+    const isShort = selectedVideo.isShort;
+    const isPortrait = selectedVideo.aspect === 'portrait';
     
     if (isMobile) {
-      if (isRotated && selectedVideo?.aspect === 'landscape') {
+      // Mobile styles
+      if (isShort || isPortrait) {
+        // Shorts/Vertical on mobile: Full screen vertical
         return {
-          width: '100vh',
-          height: '100vw',
-          margin: 0,
-          padding: 0,
+          width: '100vw',
+          height: '100vh',
+          maxWidth: '100vw',
+          maxHeight: '100vh',
+          aspectRatio: '9/16',
           borderRadius: 0,
-          position: 'fixed',
+          margin: 0,
           top: '50%',
           left: '50%',
-          transform: 'translate(-50%, -50%) rotate(90deg)',
-          zIndex: 9999
+          transform: 'translate(-50%, -50%)',
+          position: 'fixed',
+        };
+      } else {
+        // Regular videos on mobile: Full screen horizontal
+        return {
+          width: '100vw',
+          height: '100vh',
+          maxWidth: '100vw',
+          maxHeight: '100vh',
+          aspectRatio: '16/9',
+          borderRadius: 0,
+          margin: 0,
+          top: '50%',
+          left: '50%',
+          transform: `translate(-50%, -50%) ${isRotated ? 'rotate(90deg)' : ''}`,
+          position: 'fixed',
         };
       }
-      
-      return {
-        width: '100vw',
-        height: '100vh',
-        margin: 0,
-        padding: 0,
-        borderRadius: 0,
-        top: 0,
-        left: 0,
-        position: 'fixed',
-        zIndex: 9999
-      };
     } else {
-      if (isPortrait) {
+      // PC styles
+      if (isShort || isPortrait) {
+        // Shorts/Vertical on PC: Floating vertical modal
         return {
           width: '400px',
           height: '710px',
-          maxWidth: '90vw',
-          maxHeight: '90vh',
+          maxWidth: '400px',
+          maxHeight: '710px',
+          aspectRatio: '9/16',
+          borderRadius: '24px',
           margin: 0,
-          position: 'fixed',
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          borderRadius: '20px',
-          overflow: 'hidden',
-          zIndex: 50
+          position: 'fixed',
         };
       } else {
+        // Regular videos on PC: Floating horizontal modal
         return {
           width: 'min(1200px, 90vw)',
           height: 'min(675px, 90vh)',
-          maxWidth: '90vw',
-          maxHeight: '90vh',
+          maxWidth: 'min(1200px, 90vw)',
+          maxHeight: 'min(675px, 90vh)',
+          aspectRatio: '16/9',
+          borderRadius: '24px',
           margin: 0,
-          position: 'fixed',
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          borderRadius: '20px',
-          overflow: 'hidden',
-          zIndex: 50
+          position: 'fixed',
         };
       }
     }
   }, [selectedVideo, isMobile, isRotated]);
 
-  // FIXED: Render video section - NO DISAPPEARING CONTENT
+  // Render sections based on active section
   const renderVideoSection = useCallback(() => {
-    const hasSearchQuery = debouncedSearchQuery.trim().length > 0;
-    const hasVideos = currentVideos.length > 0;
+    const noResultsText = debouncedSearchQuery 
+      ? (language === 'fr' ? 'Aucun résultat trouvé' : 'No results found')
+      : (language === 'fr' ? 'Aucune vidéo disponible' : 'No videos available');
     
-    const noResultsText = hasSearchQuery 
-      ? getLocalizedText({ fr: 'Aucun résultat trouvé', en: 'No results found' })
-      : getLocalizedText({ fr: 'Aucune vidéo disponible', en: 'No videos available' });
-    
-    const noResultsDescription = hasSearchQuery 
-      ? getLocalizedText({ fr: 'Essayez avec d\'autres termes', en: 'Try different terms' })
-      : getLocalizedText({ fr: 'De nouvelles vidéos arrivent bientôt', en: 'New videos coming soon' });
+    const noResultsDescription = debouncedSearchQuery 
+      ? (language === 'fr' ? 'Essayez avec d\'autres termes de recherche' : 'Try different search terms')
+      : (language === 'fr' ? 'De nouvelles vidéos seront bientôt disponibles' : 'New videos will be available soon');
 
-    if (!hasVideos) {
-      return (
-        <NoResults 
-          icon={activeSection === 'tutorials' ? <Recycle className="w-12 h-12" /> :
-                activeSection === 'community' ? <Users className="w-12 h-12" /> :
-                <Youtube className="w-12 h-12" />}
-          title={noResultsText}
-          description={noResultsDescription}
-          searchQuery={debouncedSearchQuery}
-        />
-      );
-    }
-
-    return (
-      <div 
-        ref={videoSectionRef}
-        key={contentKey}
-        className={`${viewMode === 'grid' 
-          ? `grid ${isMobile ? 'grid-cols-1 gap-4' : 'sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8'}`
-          : 'flex flex-col gap-4 max-w-4xl mx-auto'
-        } animate-content-appear`}
-      >
-        {currentVideos.map((video, index) => (
-          <div
-            key={`${video.id}-${index}`}
-            className="scroll-reveal"
-            style={{ 
-              animationDelay: `${Math.min(index * 0.04, 0.4)}s`,
-              transitionDelay: `${Math.min(index * 0.02, 0.2)}s`
-            }}
-            onMouseEnter={() => !isMobile && setHoveredVideoId(video.id)}
-            onMouseLeave={() => !isMobile && setHoveredVideoId(null)}
-          >
-            <EnhancedVideoCard
-              video={video}
-              getLocalizedText={getLocalizedText}
-              getThumbnailUrl={getThumbnailUrl}
-              formatDate={formatDate}
-              openInYouTube={openInYouTube}
-              handleVideoSelect={handleVideoSelect}
-              handleThumbnailClick={handleThumbnailClick}
-              language={language}
-              isMobile={isMobile}
-              isHovered={hoveredVideoId === video.id}
-              showCharacterInfo={video.creator?.name === "Salsabile"}
-              onCharacterInfoClick={handleCharacterSelectionOpen}
-              viewMode={viewMode}
-              isLoading={!hasLoaded}
-            />
+    switch (activeSection) {
+      case 'tutorials':
+        return filteredTutorialVideos.length === 0 ? (
+          <NoResults 
+            icon={<Video className="w-10 h-10" />}
+            title={noResultsText}
+            description={noResultsDescription}
+          />
+        ) : (
+          <div className={`grid ${isMobile ? 'grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-3'} gap-6 md:gap-8`}>
+            {filteredTutorialVideos.map((video, index) => (
+              <div
+                key={video.id}
+                className="scroll-reveal"
+                style={{ animationDelay: `${Math.min(index * 0.05, 0.5)}s` }}
+              >
+                <EnhancedVideoCard
+                  video={video}
+                  getLocalizedText={getLocalizedText}
+                  getThumbnailUrl={getThumbnailUrl}
+                  formatDate={formatDate}
+                  openInYouTube={openInYouTube}
+                  handleVideoSelect={handleVideoSelect}
+                  handleThumbnailClick={handleThumbnailClick}
+                  language={language}
+                  isMobile={isMobile}
+                />
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-    );
+        );
+      
+      case 'community':
+        return filteredCommunityVideos.length === 0 ? (
+          <NoResults 
+            icon={<Users className="w-10 h-10" />}
+            title={noResultsText}
+            description={noResultsDescription}
+          />
+        ) : (
+          <div className={`grid ${isMobile ? 'grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-3'} gap-6 md:gap-8`}>
+            {filteredCommunityVideos.map((video, index) => (
+              <div 
+                key={video.id}
+                className="scroll-reveal"
+                style={{ animationDelay: `${Math.min(index * 0.05, 0.5)}s` }}
+              >
+                <EnhancedVideoCard
+                  video={video}
+                  getLocalizedText={getLocalizedText}
+                  getThumbnailUrl={getThumbnailUrl}
+                  formatDate={formatDate}
+                  openInYouTube={openInYouTube}
+                  handleVideoSelect={handleVideoSelect}
+                  handleThumbnailClick={handleThumbnailClick}
+                  language={language}
+                  isMobile={isMobile}
+                  showCharacterInfo={video.creator?.name === "Salsabile"}
+                  onCharacterInfoClick={handleCharacterSelectionOpen}
+                />
+              </div>
+            ))}
+          </div>
+        );
+      
+      case 'channel':
+        return filteredChannelVideos.length === 0 ? (
+          <NoResults 
+            icon={<Youtube className="w-10 h-10" />}
+            title={noResultsText}
+            description={noResultsDescription}
+          />
+        ) : (
+          <div className={`grid ${isMobile ? 'grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-3'} gap-6 md:gap-8 max-w-6xl mx-auto`}>
+            {filteredChannelVideos.map((video, index) => (
+              <div 
+                key={video.id}
+                className="scroll-reveal"
+                style={{ animationDelay: `${Math.min(index * 0.05, 0.5)}s` }}
+              >
+                <EnhancedVideoCard
+                  video={video}
+                  getLocalizedText={getLocalizedText}
+                  getThumbnailUrl={getThumbnailUrl}
+                  formatDate={formatDate}
+                  openInYouTube={openInYouTube}
+                  handleVideoSelect={handleVideoSelect}
+                  handleThumbnailClick={handleThumbnailClick}
+                  language={language}
+                  isMobile={isMobile}
+                />
+              </div>
+            ))}
+          </div>
+        );
+    }
   }, [
-    activeSection,
-    currentVideos,
-    debouncedSearchQuery,
-    contentKey,
-    getLocalizedText,
-    isMobile,
-    viewMode,
-    hoveredVideoId,
-    getThumbnailUrl,
-    formatDate,
-    openInYouTube,
-    handleVideoSelect,
-    handleThumbnailClick,
-    language,
-    handleCharacterSelectionOpen,
-    hasLoaded
+    activeSection, 
+    filteredTutorialVideos, 
+    filteredCommunityVideos, 
+    filteredChannelVideos, 
+    debouncedSearchQuery, 
+    language, 
+    isMobile, 
+    getLocalizedText, 
+    getThumbnailUrl, 
+    formatDate, 
+    openInYouTube, 
+    handleVideoSelect, 
+    handleThumbnailClick, 
+    handleCharacterSelectionOpen
   ]);
 
-  // Get section icon with better quality
-  const getSectionIcon = useCallback((section: typeof activeSection) => {
-    const size = isMobile ? "w-5 h-5" : "w-6 h-6";
-    switch(section) {
-      case 'tutorials': return <Recycle className={size} />;
-      case 'community': return <Users className={size} />;
-      case 'channel': return <Youtube className={size} />;
-    }
-  }, [isMobile]);
-
-  // Get section count
-  const getSectionCount = useCallback((section: typeof activeSection) => {
-    return getSectionVideos(section).length;
-  }, [getSectionVideos]);
-
-  // Adjusted button sizes for mobile
-  const getButtonSize = useCallback(() => {
-    return isMobile ? "default" : "lg";
-  }, [isMobile]);
-
   return (
-    <div 
-      ref={containerRef}
-      className="min-h-screen bg-gradient-to-b from-background via-background to-emerald-50/5 dark:to-emerald-950/5"
-    >
-      <div className="container mx-auto px-4 py-8 md:py-12 lg:py-16">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-emerald-50/5 dark:to-emerald-950/5">
+      <div className="container mx-auto px-4 py-12 md:py-16 lg:py-20">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-8 md:mb-12 lg:mb-16 animate-fade-up">
-            <div className="inline-flex items-center justify-center p-3 mb-4 md:mb-6 animate-float">
+          <div className="text-center mb-12 md:mb-16 lg:mb-20">
+            <div className="inline-flex items-center justify-center p-3 mb-6 animate-float-slow">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/30 to-green-500/30 blur-xl rounded-full animate-pulse-slow"></div>
-                <div className="relative bg-gradient-to-br from-emerald-500/20 via-green-500/20 to-teal-500/20 backdrop-blur-sm border border-emerald-500/30 p-3 md:p-4 rounded-2xl shadow-lg shadow-emerald-500/10 hover:shadow-xl hover:shadow-emerald-500/20 transition-all duration-500 hover:scale-105 group">
-                  <Video className="w-8 h-8 md:w-10 md:h-10 text-emerald-600 dark:text-emerald-400 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12" />
+                <div className="relative bg-gradient-to-br from-emerald-500/20 via-green-500/20 to-teal-500/20 backdrop-blur-sm border border-emerald-500/30 p-4 rounded-2xl shadow-lg shadow-emerald-500/10 hover:shadow-2xl hover:shadow-emerald-500/20 transition-all duration-500 hover:scale-105 group">
+                  <Video className="w-8 h-8 text-emerald-600 dark:text-emerald-400 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12 ease-out" />
                 </div>
               </div>
             </div>
             
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4 animate-fade-up">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 animate-fade-up">
               <span className="bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 bg-clip-text text-transparent">
-                {getLocalizedText({ fr: 'Vidéos Éducatives', en: 'Educational Videos' })}
+                {language === 'fr' ? 'Vidéos Éducatives' : 'Educational Videos'}
               </span>
             </h1>
             
-            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto mb-6 md:mb-8 animate-fade-up" style={{ animationDelay: '0.1s' }}>
-              {getLocalizedText({ 
-                fr: 'Apprenez et inspirez-vous pour un avenir durable', 
-                en: 'Learn and get inspired for a sustainable future' 
-              })}
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 animate-fade-up" style={{ animationDelay: '0.1s' }}>
+              {language === 'fr' 
+                ? 'Apprenez et inspirez-vous pour un avenir plus durable' 
+                : 'Learn and get inspired for a more sustainable future'}
             </p>
           </div>
 
-          {/* Enhanced Search Bar */}
-          <div className="mb-8 md:mb-10 animate-fade-up" style={{ animationDelay: '0.15s' }}>
+          {/* Auto Search Bar */}
+          <div className="mb-10">
             <div className="relative max-w-2xl mx-auto">
               <div className="relative flex items-center group">
-                <div className="absolute left-3 md:left-4 top-1/2 transform -translate-y-1/2 z-10">
-                  <Search className={`w-5 h-5 md:w-6 md:h-6 transition-all duration-300 ${
-                    searchQuery ? 'text-emerald-500 scale-110' : 'text-muted-foreground'
-                  }`} />
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+                  <Search className="w-5 h-5 text-muted-foreground group-focus-within:text-emerald-500 transition-colors duration-300" />
                 </div>
                 <Input
                   ref={searchInputRef}
                   type="text"
-                  placeholder={getLocalizedText({ fr: 'Rechercher des vidéos...', en: 'Search videos...' })}
+                  placeholder={language === 'fr' ? 'Rechercher des vidéos...' : 'Search videos...'}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className={`pl-12 md:pl-14 ${
-                    isMobile ? 'pr-12 py-3 text-base' : 'pr-14 py-5 text-lg'
-                  } rounded-xl md:rounded-2xl border border-border/50 bg-background/90 backdrop-blur-sm shadow-lg hover:shadow-xl focus:shadow-2xl transition-all duration-300 hover:border-emerald-500/30 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20`}
-                  aria-label={getLocalizedText({ fr: 'Rechercher des vidéos', en: 'Search videos' })}
+                  className={`pl-12 ${isMobile ? 'pr-10 py-4 text-sm' : 'pr-10 py-6 text-base'} rounded-xl border-border/50 bg-background/80 backdrop-blur-sm shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-black/10 focus:shadow-2xl focus:shadow-emerald-500/10 transition-all duration-300 hover:border-emerald-500/30 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20`}
+                  aria-label={language === 'fr' ? 'Rechercher des vidéos' : 'Search videos'}
                 />
-                <div className="absolute right-3 md:right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-                  {searchLoading && (
-                    <div className="relative">
-                      <Loader2 className="w-5 h-5 md:w-6 md:h-6 text-emerald-500 animate-spin" />
-                    </div>
-                  )}
-                  {searchQuery && !searchLoading && (
-                    <button
-                      onClick={handleClearSearch}
-                      className={`${
-                        isMobile ? 'h-9 w-9' : 'h-10 w-10'
-                      } text-muted-foreground hover:text-foreground hover:bg-emerald-500/10 rounded-full transition-all duration-300 hover:scale-110 active:scale-95 flex items-center justify-center`}
-                      aria-label={getLocalizedText({ fr: 'Effacer la recherche', en: 'Clear search' })}
-                    >
-                      <X className="w-5 h-5 md:w-6 md:h-6" />
-                    </button>
-                  )}
-                </div>
+                {searchQuery && (
+                  <button
+                    onClick={handleClearSearch}
+                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${
+                      isMobile ? 'h-8 w-8' : 'h-10 w-10'
+                    } text-muted-foreground hover:text-foreground hover:bg-emerald-500/10 rounded-full transition-all duration-200 hover:scale-110 active:scale-95 flex items-center justify-center`}
+                    aria-label={language === 'fr' ? 'Effacer la recherche' : 'Clear search'}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
               </div>
-              
-              {/* Search Stats */}
-              {(searchQuery || debouncedSearchQuery) && (
-                <div className="mt-3 flex items-center justify-center gap-2 text-sm animate-fade-in">
-                  <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 px-3 py-1.5 rounded-full">
-                    <Filter className="w-4 h-4" />
-                    <span>{currentVideos.length} {getLocalizedText({ fr: 'résultats', en: 'results' })}</span>
-                    {searchResults.length > currentVideos.length && (
-                      <span className="text-xs opacity-70">
-                        ({searchResults.length} {getLocalizedText({ fr: 'au total', en: 'total' })})
-                      </span>
-                    )}
-                  </div>
+              {debouncedSearchQuery && (
+                <div className="mt-3 text-center animate-fade-in">
+                  <span className="text-emerald-600 dark:text-emerald-400 font-medium text-sm">
+                    {getTotalResults()} {language === 'fr' ? 'résultats' : 'results'}
+                  </span>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Enhanced Navigation */}
-          <div className="mb-8 md:mb-10 animate-fade-up" style={{ animationDelay: '0.2s' }}>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 md:mb-8">
-              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                {(['tutorials', 'community', 'channel'] as const).map((section) => (
-                  <button
-                    key={section}
-                    onClick={() => handleSectionChange(section)}
-                    className={`group relative px-5 md:px-7 py-3 md:py-4 rounded-lg md:rounded-xl text-base font-medium transition-all duration-300 flex items-center gap-3 md:gap-4 ${
-                      activeSection === section
-                        ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/25'
-                        : 'bg-background/50 border border-border hover:border-emerald-500/30 hover:bg-emerald-500/5 text-muted-foreground hover:text-foreground'
-                    }`}
-                    aria-label={
-                      section === 'tutorials' 
-                        ? getLocalizedText({ fr: 'Tutoriels', en: 'Tutorials' })
-                        : section === 'community'
-                        ? getLocalizedText({ fr: 'Communauté', en: 'Community' })
-                        : getLocalizedText({ fr: 'Chaîne', en: 'Channel' })
-                    }
-                  >
-                    {getSectionIcon(section)}
-                    <span className="whitespace-nowrap">
-                      {section === 'tutorials' ? getLocalizedText({ fr: 'Tutoriels', en: 'Tutorials' }) :
-                       section === 'community' ? getLocalizedText({ fr: 'Communauté', en: 'Community' }) :
-                       getLocalizedText({ fr: 'Chaîne', en: 'Channel' })}
-                    </span>
-                    <span className={`px-2 md:px-3 py-1 text-sm rounded-full transition-all duration-300 ${
-                      activeSection === section 
-                        ? 'bg-white/30' 
-                        : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 group-hover:bg-emerald-500/20'
-                    }`}>
-                      {getSectionCount(section)}
-                    </span>
-                  </button>
-                ))}
-              </div>
-              
-              {/* View Mode Toggle - Desktop only */}
-              {!isMobile && (
-                <div className="flex items-center gap-2 bg-background/50 border border-border rounded-xl p-1.5 animate-fade-in">
-                  <button
-                    onClick={() => setViewMode('grid')}
-                    className={`p-2.5 rounded-lg transition-all duration-300 ${
-                      viewMode === 'grid' 
-                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' 
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                    aria-label={getLocalizedText({ fr: 'Vue grille', en: 'Grid view' })}
-                  >
-                    <Grid className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={`p-2.5 rounded-lg transition-all duration-300 ${
-                      viewMode === 'list' 
-                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' 
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                    aria-label={getLocalizedText({ fr: 'Vue liste', en: 'List view' })}
-                  >
-                    <List className="w-5 h-5" />
-                  </button>
-                </div>
-              )}
+          {/* Navigation */}
+          <div className="mb-10">
+            <div className="flex flex-wrap gap-2 justify-center mb-8">
+              {(['tutorials', 'community', 'channel'] as const).map((section) => (
+                <button
+                  key={section}
+                  onClick={() => handleSectionChange(section)}
+                  className={`group relative px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-3 transform hover:-translate-y-1 active:translate-y-0 ${
+                    activeSection === section
+                      ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/25 animate-glow'
+                      : 'bg-background/50 border border-border hover:border-emerald-500/30 hover:bg-emerald-500/5 text-muted-foreground hover:text-foreground'
+                  }`}
+                  aria-label={section === 'tutorials' 
+                    ? (language === 'fr' ? 'Voir les tutoriels' : 'View tutorials')
+                    : section === 'community'
+                    ? (language === 'fr' ? 'Voir les vidéos communautaires' : 'View community videos')
+                    : (language === 'fr' ? 'Voir les vidéos de la chaîne' : 'View channel videos')
+                  }
+                >
+                  {section === 'tutorials' ? <Recycle className="w-4 h-4 transition-transform group-hover:rotate-180 duration-500" /> :
+                   section === 'community' ? <Users className="w-4 h-4 transition-transform group-hover:scale-125 duration-300" /> :
+                   <Youtube className="w-4 h-4 transition-transform group-hover:scale-125 duration-300" />}
+                  {section === 'tutorials' ? (language === 'fr' ? 'Tutoriels' : 'Tutorials') :
+                   section === 'community' ? (language === 'fr' ? 'Communauté' : 'Community') :
+                   (language === 'fr' ? 'Chaîne' : 'Channel')}
+                  <span className={`px-2 py-0.5 text-xs rounded-full transition-all duration-300 ${
+                    activeSection === section 
+                      ? 'bg-white/30 animate-pulse-slow' 
+                      : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 group-hover:bg-emerald-500/20'
+                  }`}>
+                    {section === 'tutorials' ? filteredTutorialVideos.length :
+                     section === 'community' ? filteredCommunityVideos.length :
+                     filteredChannelVideos.length}
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Content Sections - FIXED: No disappearing content */}
-          <div key={`content-${activeSection}`} className="animate-content-fade">
+          {/* Content Sections */}
+          <div className={`transition-all duration-500 ease-out ${isTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
             {renderVideoSection()}
           </div>
 
           {/* YouTube Channel Link */}
-          <div className="mt-12 md:mt-16 animate-fade-up" style={{ animationDelay: '0.25s' }}>
-            <div className="relative bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-teal-500/5 rounded-xl md:rounded-2xl border border-emerald-500/20 p-5 md:p-7 hover:border-emerald-500/30 hover:shadow-lg transition-all duration-300 group">
-              <div className="relative flex flex-col md:flex-row items-center justify-between gap-5 md:gap-7">
+          <div className="mt-16">
+            <div className="relative bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-teal-500/5 rounded-2xl border border-emerald-500/20 p-6 md:p-8 hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-500 group overflow-hidden">
+              <div className="relative flex flex-col md:flex-row items-center justify-between gap-6">
                 <div className="text-center md:text-left">
-                  <div className="inline-flex items-center gap-4 mb-3 md:mb-4">
-                    <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-r from-emerald-500 to-green-500 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/25">
-                      <Youtube className="w-6 h-6 md:w-7 md:h-7 text-white" />
+                  <div className="inline-flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/25">
+                      <Youtube className="w-6 h-6 text-white" />
                     </div>
-                    <h3 className="text-xl md:text-2xl font-bold group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
-                      {getLocalizedText({ fr: 'Chaîne YouTube', en: 'YouTube Channel' })}
+                    <h3 className="text-xl font-bold group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-500">
+                      {language === 'fr' ? 'Notre Chaîne YouTube' : 'Our YouTube Channel'}
                     </h3>
                   </div>
-                  <p className="text-sm md:text-base text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300">
-                    {getLocalizedText({ 
-                      fr: 'Plus de contenu éducatif sur notre chaîne', 
-                      en: 'More educational content on our channel' 
-                    })}
+                  <p className="text-muted-foreground mb-4 md:mb-0 group-hover:text-foreground/80 transition-colors duration-500">
+                    {language === 'fr' 
+                      ? 'Plus de contenu éducatif disponible sur notre chaîne' 
+                      : 'More educational content available on our channel'}
                   </p>
                 </div>
                 
                 <Button
-                  size={getButtonSize()}
-                  className="gap-3 md:gap-4 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 shadow-lg shadow-emerald-500/25 px-6 md:px-10 py-5 hover:scale-105 active:scale-95 transition-all duration-300 group"
+                  size="lg"
+                  className="gap-3 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 shadow-lg shadow-emerald-500/25 px-8 group-hover:shadow-xl group-hover:shadow-emerald-500/30 hover:scale-105 active:scale-95 transition-all duration-300 group"
                   onClick={() => window.open("https://www.youtube.com/channel/UC1H5HYDNTWHw7fGOYBJp0RQ", '_blank')}
-                  aria-label={getLocalizedText({ fr: 'Visiter notre chaîne YouTube', en: 'Visit our YouTube channel' })}
+                  aria-label={language === 'fr' ? 'Visiter notre chaîne YouTube' : 'Visit our YouTube channel'}
                 >
-                  <ExternalLink className="w-5 h-5 md:w-6 md:h-6 group-hover:rotate-12 transition-transform duration-300" />
-                  {getLocalizedText({ fr: 'Visiter', en: 'Visit' })}
+                  <ExternalLink className="w-5 h-5 group-hover:rotate-12 transition-transform duration-500 ease-out" />
+                  {language === 'fr' ? 'Visiter la chaîne' : 'Visit the channel'}
                 </Button>
               </div>
             </div>
@@ -1116,23 +986,30 @@ export default function Videos() {
         </div>
       </div>
 
-      {/* Enhanced Video Modal */}
-      <Dialog open={isModalOpen} onOpenChange={(open) => !open && handleModalClose()}>
+      {/* Enhanced Video Modal - FIXED CENTERING */}
+      <Dialog open={isModalOpen} onOpenChange={handleModalClose}>
         <DialogContent 
           ref={modalRef}
-          className="fixed border-none bg-black shadow-2xl overflow-hidden p-0 transition-all duration-300 ease-out z-[9999]"
+          className="fixed border-none bg-black shadow-2xl overflow-hidden p-0 transition-all duration-300 ease-out z-50"
           style={getModalStyle()}
           onMouseMove={handleMouseMove}
           onTouchMove={handleMouseMove}
           onTouchStart={() => setShowControls(true)}
+          onMouseLeave={() => {
+            if (controlsTimeoutRef.current) {
+              clearTimeout(controlsTimeoutRef.current);
+            }
+            setTimeout(() => setShowControls(false), 100);
+          }}
         >
+          
           {/* Loading Overlay */}
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm z-50 animate-fade-in">
               <div className="relative">
-                <div className="w-20 h-20 border-4 border-transparent border-t-emerald-500 rounded-full animate-spin-slow"></div>
+                <div className="w-16 h-16 border-3 border-transparent border-t-emerald-500 rounded-full animate-spin-slow"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Play className="w-10 h-10 text-emerald-500 animate-pulse-slow" />
+                  <Play className="w-8 h-8 text-emerald-500 animate-pulse-slow" />
                 </div>
               </div>
             </div>
@@ -1142,32 +1019,31 @@ export default function Videos() {
           {videoError && !isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm z-50 animate-fade-in">
               <div className="text-center p-6 max-w-sm">
-                <AlertCircle className="w-16 h-16 md:w-20 md:h-20 text-red-500 mx-auto mb-4 animate-bounce" />
-                <h3 className="text-xl md:text-2xl font-semibold text-white mb-3">
-                  {getLocalizedText({ fr: 'Erreur', en: 'Error' })}
+                <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4 animate-bounce" />
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  {language === 'fr' ? 'Erreur de chargement' : 'Loading Error'}
                 </h3>
-                <p className="text-white/80 mb-6 text-base md:text-lg">
-                  {errorMessage || getLocalizedText({ 
-                    fr: 'Impossible de charger la vidéo', 
-                    en: 'Unable to load video' 
-                  })}
+                <p className="text-white/80 mb-6">
+                  {errorMessage || (language === 'fr' 
+                    ? 'Impossible de charger la vidéo. Veuillez réessayer.'
+                    : 'Unable to load video. Please try again.')}
                 </p>
-                <div className="flex gap-4 md:gap-5 justify-center">
+                <div className="flex gap-4 justify-center">
                   <Button
                     onClick={handleRetryVideo}
-                    className="gap-3 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-base"
-                    aria-label={getLocalizedText({ fr: 'Réessayer', en: 'Retry' })}
+                    className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600"
+                    aria-label={language === 'fr' ? 'Réessayer' : 'Retry'}
                   >
-                    <RefreshCw className="w-5 h-5" />
-                    {getLocalizedText({ fr: 'Réessayer', en: 'Retry' })}
+                    <RefreshCw className="w-4 h-4" />
+                    {language === 'fr' ? 'Réessayer' : 'Retry'}
                   </Button>
                   <Button
                     variant="outline"
                     onClick={handleModalClose}
-                    className="border-white/30 text-white hover:bg-white/10 text-base px-6"
-                    aria-label={getLocalizedText({ fr: 'Fermer', en: 'Close' })}
+                    className="border-white/30 text-white hover:bg-white/10"
+                    aria-label={language === 'fr' ? 'Fermer' : 'Close'}
                   >
-                    {getLocalizedText({ fr: 'Fermer', en: 'Close' })}
+                    {language === 'fr' ? 'Fermer' : 'Close'}
                   </Button>
                 </div>
               </div>
@@ -1177,45 +1053,45 @@ export default function Videos() {
           {/* Top Controls Bar */}
           {showInterface && !videoError && (
             <div 
-              className={`absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/95 via-black/85 to-transparent p-4 md:p-5 transition-all duration-300 ease-out ${
+              className={`absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/95 via-black/85 to-transparent p-4 transition-all duration-300 ease-out ${
                 showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'
               }`}
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 md:gap-4">
+                <div className="flex items-center gap-3">
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`${isMobile ? 'h-10 w-10' : 'h-11 w-11'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
+                    className={`${isMobile ? 'h-10 w-10' : 'h-9 w-9'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
                     onClick={handleModalClose}
-                    aria-label={getLocalizedText({ fr: 'Fermer', en: 'Close' })}
+                    aria-label={language === 'fr' ? 'Fermer la vidéo' : 'Close video'}
                   >
-                    <X className="w-5 h-5 md:w-6 md:h-6" />
+                    <X className="w-4 h-4" />
                   </Button>
                   
                   {selectedVideo && (
-                    <div className="ml-2 max-w-[calc(100%-160px)] md:max-w-[calc(100%-200px)]">
-                      <h3 className="text-sm md:text-base font-semibold text-white/95 truncate animate-fade-in">
+                    <div className="ml-1 max-w-[calc(100%-180px)]">
+                      <h3 className="text-sm font-semibold text-white/95 truncate animate-fade-in">
                         {getLocalizedText(selectedVideo.title)}
                       </h3>
                     </div>
                   )}
                 </div>
                 
-                <div className="flex items-center gap-2 md:gap-3">
+                <div className="flex items-center gap-2">
                   {/* Hide UI Button */}
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`${isMobile ? 'h-10 w-10' : 'h-11 w-11'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
+                    className={`${isMobile ? 'h-10 w-10' : 'h-9 w-9'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
                     onClick={toggleInterface}
-                    title={getLocalizedText({ fr: 'Masquer l\'interface', en: 'Hide interface' })}
-                    aria-label={getLocalizedText({ fr: 'Masquer l\'interface', en: 'Hide interface' })}
+                    title={language === 'fr' ? 'Masquer l\'interface' : 'Hide interface'}
+                    aria-label={language === 'fr' ? 'Masquer l\'interface' : 'Hide interface'}
                   >
                     {showInterface ? (
-                      <EyeOff className="w-5 h-5 md:w-6 md:h-6" />
+                      <EyeOff className="w-4 h-4" />
                     ) : (
-                      <Eye className="w-5 h-5 md:w-6 md:h-6" />
+                      <Eye className="w-4 h-4" />
                     )}
                   </Button>
                   
@@ -1224,38 +1100,38 @@ export default function Videos() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-10 w-10 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300"
+                      className={`h-10 w-10 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
                       onClick={toggleRotation}
-                      title={getLocalizedText({ fr: 'Tourner', en: 'Rotate' })}
-                      aria-label={getLocalizedText({ fr: 'Tourner', en: 'Rotate' })}
+                      title={language === 'fr' ? 'Tourner l\'écran' : 'Rotate screen'}
+                      aria-label={language === 'fr' ? 'Tourner l\'écran' : 'Rotate screen'}
                     >
-                      <RotateCw className={`w-5 h-5 md:w-6 md:h-6 transition-transform duration-300 ${isRotated ? 'rotate-180' : ''}`} />
+                      <RotateCw className={`w-4 h-4 transition-transform duration-500 ${isRotated ? 'rotate-180' : ''}`} />
                     </Button>
                   )}
                   
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`${isMobile ? 'h-10 w-10' : 'h-11 w-11'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
+                    className={`${isMobile ? 'h-10 w-10' : 'h-9 w-9'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
                     onClick={() => selectedVideo && openInYouTube(selectedVideo.youtubeId)}
-                    title={getLocalizedText({ fr: 'YouTube', en: 'YouTube' })}
-                    aria-label={getLocalizedText({ fr: 'YouTube', en: 'YouTube' })}
+                    title={language === 'fr' ? 'Ouvrir sur YouTube' : 'Open on YouTube'}
+                    aria-label={language === 'fr' ? 'Ouvrir sur YouTube' : 'Open on YouTube'}
                   >
-                    <ExternalLink className="w-5 h-5 md:w-6 md:h-6" />
+                    <ExternalLink className="w-4 h-4" />
                   </Button>
                   
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`${isMobile ? 'h-10 w-10' : 'h-11 w-11'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
+                    className={`${isMobile ? 'h-10 w-10' : 'h-9 w-9'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
                     onClick={toggleFullscreen}
-                    title={getLocalizedText({ fr: 'Plein écran', en: 'Fullscreen' })}
-                    aria-label={getLocalizedText({ fr: 'Plein écran', en: 'Fullscreen' })}
+                    title={language === 'fr' ? 'Plein écran' : 'Fullscreen'}
+                    aria-label={language === 'fr' ? 'Plein écran' : 'Fullscreen'}
                   >
                     {isFullscreen ? (
-                      <Minimize2 className="w-5 h-5 md:w-6 md:h-6" />
+                      <Minimize2 className="w-4 h-4" />
                     ) : (
-                      <Maximize2 className="w-5 h-5 md:w-6 md:h-6" />
+                      <Maximize2 className="w-4 h-4" />
                     )}
                   </Button>
                 </div>
@@ -1264,7 +1140,7 @@ export default function Videos() {
           )}
 
           {/* Video Player */}
-          <div className="relative w-full h-full flex items-center justify-center bg-black">
+          <div className={`relative w-full h-full flex items-center justify-center bg-black`}>
             {selectedVideo && !videoError && (
               <div className="w-full h-full flex items-center justify-center animate-scale-in">
                 <LazyVideoPlayer
@@ -1273,75 +1149,42 @@ export default function Videos() {
                   autoplay={true}
                   muted={isMuted}
                   loop={selectedVideo.isShort}
-                  showControls={true}
+                  showControls={false}
                   aspectRatio={getAspectRatio(selectedVideo)}
                   className="w-full h-full"
                   onLoad={handleVideoLoad}
                   onError={() => handleVideoError()}
                   onPlay={handleVideoLoad}
-                  playsInline={true}
-                  modestbranding={1}
-                  rel={0}
-                  config={{
-                    playerVars: {
-                      playsinline: 1,
-                      modestbranding: 1,
-                      rel: 0,
-                      origin: window.location.origin
-                    }
-                  }}
                 />
               </div>
             )}
             
-            {/* Floating Controls */}
+            {/* Floating Controls for when interface is hidden */}
             {!showInterface && showControls && !videoError && (
-              <div className="absolute top-4 md:top-5 right-4 md:right-5 z-50 flex flex-col gap-2 md:gap-3 animate-fade-in">
+              <div className="absolute top-4 right-4 z-50 flex flex-col gap-2 animate-fade-in">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className={`${isMobile ? 'h-12 w-12' : 'h-11 w-11'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
+                  className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
                   onClick={toggleInterface}
-                  title={getLocalizedText({ fr: 'Afficher', en: 'Show' })}
-                  aria-label={getLocalizedText({ fr: 'Afficher', en: 'Show' })}
+                  title={language === 'fr' ? 'Afficher l\'interface' : 'Show interface'}
+                  aria-label={language === 'fr' ? 'Afficher l\'interface' : 'Show interface'}
                 >
-                  <Eye className="w-5 h-5 md:w-6 md:h-6" />
+                  <Eye className="w-4 h-4" />
                 </Button>
                 
-                {/* Floating Rotate Button for mobile */}
-                {isMobile && selectedVideo?.aspect === 'landscape' && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-12 w-12 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300"
-                    onClick={toggleRotation}
-                    title={getLocalizedText({ fr: 'Tourner', en: 'Rotate' })}
-                    aria-label={getLocalizedText({ fr: 'Tourner', en: 'Rotate' })}
-                  >
-                    <RotateCw className="w-5 h-5 md:w-6 md:h-6" />
-                  </Button>
-                )}
-                
                 <Button
                   variant="ghost"
                   size="icon"
-                  className={`${isMobile ? 'h-12 w-12' : 'h-11 w-11'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
+                  className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
                   onClick={toggleMute}
-                  title={
-                    isMuted 
-                      ? getLocalizedText({ fr: 'Son', en: 'Sound' })
-                      : getLocalizedText({ fr: 'Muet', en: 'Mute' })
-                  }
-                  aria-label={
-                    isMuted 
-                      ? getLocalizedText({ fr: 'Son', en: 'Sound' })
-                      : getLocalizedText({ fr: 'Muet', en: 'Mute' })
-                  }
+                  title={isMuted ? (language === 'fr' ? 'Activer le son' : 'Unmute') : (language === 'fr' ? 'Désactiver le son' : 'Mute')}
+                  aria-label={isMuted ? (language === 'fr' ? 'Activer le son' : 'Unmute') : (language === 'fr' ? 'Désactiver le son' : 'Mute')}
                 >
                   {isMuted ? (
-                    <VolumeX className="w-5 h-5 md:w-6 md:h-6" />
+                    <VolumeX className="w-4 h-4" />
                   ) : (
-                    <Volume2 className="w-5 h-5 md:w-6 md:h-6" />
+                    <Volume2 className="w-4 h-4" />
                   )}
                 </Button>
               </div>
@@ -1351,58 +1194,50 @@ export default function Videos() {
           {/* Bottom Controls Bar */}
           {showInterface && !videoError && (
             <div 
-              className={`absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/95 via-black/85 to-transparent p-4 md:p-5 transition-all duration-300 ease-out ${
+              className={`absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/95 via-black/85 to-transparent p-4 transition-all duration-300 ease-out ${
                 showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full pointer-events-none'
               }`}
             >
               {selectedVideo && (
-                <div className="space-y-3 md:space-y-4 animate-fade-in">
+                <div className="space-y-3 animate-fade-in">
                   <div>
-                    <h3 className="text-base md:text-lg font-semibold text-white line-clamp-1">
+                    <h3 className="text-base font-semibold text-white line-clamp-1">
                       {getLocalizedText(selectedVideo.title)}
                     </h3>
-                    <p className="text-sm md:text-base text-white/80 line-clamp-2 mt-2">
+                    <p className="text-sm text-white/80 line-clamp-2 mt-1">
                       {getLocalizedText(selectedVideo.description)}
                     </p>
                   </div>
                   
-                  <div className="flex items-center justify-between pt-3 border-t border-white/20">
-                    <div className="flex items-center gap-4 md:gap-5 text-sm md:text-base text-white/70">
+                  <div className="flex items-center justify-between pt-2 border-t border-white/20">
+                    <div className="flex items-center gap-4 text-sm text-white/70">
                       {selectedVideo.publishDate && (
-                        <span className="flex items-center gap-2 md:gap-2.5">
-                          <Calendar className="w-4 h-4 md:w-5 md:h-5" />
+                        <span className="flex items-center gap-1.5 animate-fade-in hover:text-white transition-colors duration-200">
+                          <Calendar className="w-4 h-4" />
                           <span>{formatDate(selectedVideo.publishDate)}</span>
                         </span>
                       )}
                       {selectedVideo.duration && (
-                        <span className="flex items-center gap-2 md:gap-2.5">
-                          <Clock className="w-4 h-4 md:w-5 md:h-5" />
+                        <span className="flex items-center gap-1.5 animate-fade-in hover:text-white transition-colors duration-200">
+                          <Clock className="w-4 h-4" />
                           <span>{selectedVideo.duration}</span>
                         </span>
                       )}
                     </div>
                     
-                    <div className="flex items-center gap-2 md:gap-3">
+                    <div className="flex items-center gap-2">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-9 w-9 md:h-10 md:w-10 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-110 hover:border-emerald-500/50 active:scale-95 transition-all duration-300"
+                        className="h-9 w-9 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300"
                         onClick={toggleMute}
-                        title={
-                          isMuted 
-                            ? getLocalizedText({ fr: 'Son', en: 'Sound' })
-                            : getLocalizedText({ fr: 'Muet', en: 'Mute' })
-                        }
-                        aria-label={
-                          isMuted 
-                            ? getLocalizedText({ fr: 'Son', en: 'Sound' })
-                            : getLocalizedText({ fr: 'Muet', en: 'Mute' })
-                        }
+                        title={isMuted ? (language === 'fr' ? 'Activer le son' : 'Unmute') : (language === 'fr' ? 'Désactiver le son' : 'Mute')}
+                        aria-label={isMuted ? (language === 'fr' ? 'Activer le son' : 'Unmute') : (language === 'fr' ? 'Désactiver le son' : 'Mute')}
                       >
                         {isMuted ? (
-                          <VolumeX className="w-4 h-4 md:w-5 md:h-5" />
+                          <VolumeX className="w-4 h-4" />
                         ) : (
-                          <Volume2 className="w-4 h-4 md:w-5 md:h-5" />
+                          <Volume2 className="w-4 h-4" />
                         )}
                       </Button>
                     </div>
@@ -1414,45 +1249,50 @@ export default function Videos() {
         </DialogContent>
       </Dialog>
 
-      {/* Character Selection Dialog */}
-      {showCharacterSelection && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          <div 
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm animate-fade-in"
-            onClick={handleCharacterSelectionClose}
-          />
-          <div className="relative bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-950 rounded-2xl overflow-hidden border border-emerald-500/20 shadow-2xl animate-scale-in max-w-[95vw] sm:max-w-md w-full">
+      {/* Enhanced Character Selection Dialog */}
+      <Dialog open={showCharacterSelection} onOpenChange={handleCharacterSelectionClose}>
+        <DialogContent 
+          className="max-w-[95vw] sm:max-w-md p-0 border-0 overflow-hidden bg-transparent"
+          style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            margin: 0,
+          }}
+        >
+          <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-950 rounded-2xl overflow-hidden border border-emerald-500/20 shadow-2xl animate-scale-in">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200">
-                    {getLocalizedText({ fr: 'Personnages', en: 'Characters' })}
+                    {language === 'fr' ? 'Personnages' : 'Characters'}
                   </h3>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {getLocalizedText({ fr: 'Choisissez un personnage', en: 'Choose a character' })}
+                    {language === 'fr' ? 'Choisissez un personnage' : 'Choose a character'}
                   </p>
                 </div>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 active:scale-95 transition-all duration-300"
+                  className="h-8 w-8 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 active:scale-95 transition-all duration-200"
                   onClick={handleCharacterSelectionClose}
-                  aria-label={getLocalizedText({ fr: 'Fermer', en: 'Close' })}
+                  aria-label={language === 'fr' ? 'Fermer' : 'Close'}
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </Button>
               </div>
               
-              <div className="grid grid-cols-3 gap-3 md:gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 {characters.map((character) => (
                   <button
                     key={character.id}
                     onClick={() => handleCharacterSelect(character)}
-                    className="group relative flex flex-col items-center p-3 md:p-4 rounded-xl md:rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-95 bg-gradient-to-b from-white/50 to-transparent dark:from-gray-800/50 border border-emerald-500/10 hover:border-emerald-500/30"
+                    className="group relative flex flex-col items-center p-4 rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-2xl active:scale-95 bg-gradient-to-b from-white/50 to-transparent dark:from-gray-800/50 border border-emerald-500/10 hover:border-emerald-500/30"
                   >
-                    <div className="relative mb-2 md:mb-3">
+                    <div className="relative mb-3">
                       <div className={`absolute inset-0 bg-gradient-to-r ${character.color} rounded-full blur-lg opacity-60 group-hover:opacity-80 transition-opacity duration-300`} />
-                      <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-white/20 overflow-hidden group-hover:border-emerald-500/30 transition-all duration-300">
+                      <div className="relative w-20 h-20 rounded-full border-4 border-white/20 overflow-hidden">
                         <img
                           src={character.imageUrl}
                           alt={character.name}
@@ -1462,96 +1302,106 @@ export default function Videos() {
                         />
                       </div>
                     </div>
-                    <h4 className="font-bold text-lg md:text-xl text-gray-800 dark:text-gray-200 mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                    <h4 className="font-bold text-lg text-gray-800 dark:text-gray-200 mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
                       {character.name}
                     </h4>
-                    <p className="text-sm text-muted-foreground group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                    <p className="text-xs text-muted-foreground group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors duration-300">
                       {character.role}
                     </p>
-                    <ChevronRight className="absolute top-2 right-2 md:top-3 md:right-3 w-4 h-4 md:w-5 md:h-5 text-emerald-500 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-0.5" />
+                    <ChevronRight className="absolute top-2 right-2 w-4 h-4 text-emerald-500 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-0.5" />
                   </button>
                 ))}
               </div>
             </div>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
-      {/* Character Detail Dialog */}
-      {showCharacterDetail && selectedCharacter && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          <div 
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm animate-fade-in"
-            onClick={handleCharacterDetailClose}
-          />
-          <div className="relative bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-950 rounded-2xl overflow-hidden border border-emerald-500/20 shadow-2xl animate-scale-in max-w-[95vw] sm:max-w-md w-full">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-r ${selectedCharacter.color} flex items-center justify-center text-white font-bold text-xl shadow-lg`}>
-                    {selectedCharacter.name.charAt(0)}
+      {/* Enhanced Character Detail Dialog - Single close button */}
+      <Dialog open={showCharacterDetail} onOpenChange={handleCharacterDetailClose}>
+        <DialogContent 
+          className="max-w-[95vw] sm:max-w-md p-0 border-0 overflow-hidden bg-transparent"
+          style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            margin: 0,
+          }}
+        >
+          {selectedCharacter && (
+            <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-950 rounded-2xl overflow-hidden border border-emerald-500/20 shadow-2xl animate-scale-in">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${selectedCharacter.color} flex items-center justify-center text-white font-bold text-lg shadow-lg`}>
+                      {selectedCharacter.name.charAt(0)}
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+                        {selectedCharacter.name}
+                      </h3>
+                      <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
+                        {selectedCharacter.role}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-200">
-                      {selectedCharacter.name}
-                    </h3>
-                    <p className="text-base text-emerald-600 dark:text-emerald-400 font-medium">
-                      {selectedCharacter.role}
-                    </p>
-                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 active:scale-95 transition-all duration-200"
+                    onClick={handleCharacterDetailClose}
+                    aria-label={language === 'fr' ? 'Fermer' : 'Close'}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 active:scale-95 transition-all duration-300"
-                  onClick={handleCharacterDetailClose}
-                  aria-label={getLocalizedText({ fr: 'Fermer', en: 'Close' })}
-                >
-                  <X className="w-5 h-5" />
-                </Button>
-              </div>
-              
-              <div className="relative aspect-square rounded-xl overflow-hidden mb-6 border border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-green-500/5">
-                {imageError ? (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
-                    <AlertCircle className="w-16 h-16 md:w-20 md:h-20 text-emerald-500/50 mb-2" />
-                    <p className="text-center text-base text-emerald-500/70">
-                      {getLocalizedText({ fr: 'Image non disponible', en: 'Image not available' })}
-                    </p>
-                  </div>
-                ) : (
-                  <img
-                    src={selectedCharacter.imageUrl}
-                    alt={selectedCharacter.name}
-                    className="w-full h-full object-contain p-4"
-                    onError={handleImageError}
-                    loading="lazy"
-                  />
-                )}
-              </div>
-              
-              <div className="space-y-4">
-                <p className="text-base text-muted-foreground text-center">
-                  {getLocalizedText(selectedCharacter.description)}
-                </p>
-                <div className="flex items-center justify-center gap-4 text-base text-muted-foreground">
+                
+                <div className="relative aspect-square rounded-xl overflow-hidden mb-6 border border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-green-500/5 group">
+                  {imageError ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+                      <AlertCircle className="w-16 h-16 text-emerald-500/50 mb-2" />
+                      <p className="text-center text-sm text-emerald-500/70">
+                        {language === 'fr' ? 'Image non disponible' : 'Image not available'}
+                      </p>
+                    </div>
+                  ) : (
+                    <img
+                      src={selectedCharacter.imageUrl}
+                      alt={selectedCharacter.name}
+                      className="w-full h-full object-contain p-4 transition-transform duration-700 group-hover:scale-110"
+                      onError={handleImageError}
+                      loading="lazy"
+                    />
+                  )}
+                </div>
+                
+                <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
-                    <Heart className="w-5 h-5 text-pink-500" />
-                    <span>{getLocalizedText({ fr: 'Créé par Salsabile', en: 'Created by Salsabile' })}</span>
+                    <Heart className="w-4 h-4 text-pink-500" />
+                    <span>{language === 'fr' ? 'Créé par Salsabile' : 'Created by Salsabile'}</span>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Backdrop */}
+      {isModalOpen && (
+        <div 
+          className="fixed inset-0 bg-black/90 backdrop-blur-sm z-40 transition-all duration-500 animate-fade-in"
+          onClick={handleModalClose}
+        />
       )}
 
-      {/* Performance Optimized CSS */}
+      {/* Animations CSS */}
       <style>{`
         @keyframes fade-up {
           from {
             opacity: 0;
-            transform: translateY(15px);
+            transform: translateY(20px);
           }
           to {
             opacity: 1;
@@ -1564,16 +1414,16 @@ export default function Videos() {
             opacity: 1;
           }
           50% {
-            opacity: 0.8;
+            opacity: 0.5;
           }
         }
         
-        @keyframes float {
+        @keyframes float-slow {
           0%, 100% {
-            transform: translateY(0px);
+            transform: translateY(0);
           }
           50% {
-            transform: translateY(-8px);
+            transform: translateY(-15px);
           }
         }
         
@@ -1591,7 +1441,16 @@ export default function Videos() {
             transform: translateY(0);
           }
           50% {
-            transform: translateY(-8px);
+            transform: translateY(-10px);
+          }
+        }
+        
+        @keyframes glow {
+          0%, 100% {
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+          }
+          50% {
+            box-shadow: 0 0 40px rgba(16, 185, 129, 0.6);
           }
         }
         
@@ -1606,7 +1465,7 @@ export default function Videos() {
         
         @keyframes scale-in {
           from {
-            transform: scale(0.95);
+            transform: scale(0.9);
             opacity: 0;
           }
           to {
@@ -1615,36 +1474,27 @@ export default function Videos() {
           }
         }
         
-        @keyframes content-fade {
+        @keyframes slide-up {
           from {
-            opacity: 0.8;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        @keyframes content-appear {
-          from {
+            transform: translateY(30px);
             opacity: 0;
           }
           to {
+            transform: translateY(0);
             opacity: 1;
           }
         }
         
         .animate-fade-up {
-          animation: fade-up 0.5s ease-out forwards;
+          animation: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         
         .animate-pulse-slow {
-          animation: pulse-slow 2.5s ease-in-out infinite;
+          animation: pulse-slow 3s ease-in-out infinite;
         }
         
-        .animate-float {
-          animation: float 3s ease-in-out infinite;
+        .animate-float-slow {
+          animation: float-slow 6s ease-in-out infinite;
         }
         
         .animate-spin-slow {
@@ -1652,35 +1502,81 @@ export default function Videos() {
         }
         
         .animate-bounce {
-          animation: bounce 1.2s ease-in-out infinite;
+          animation: bounce 1s ease-in-out infinite;
+        }
+        
+        .animate-glow {
+          animation: glow 3s ease-in-out infinite;
         }
         
         .animate-fade-in {
-          animation: fade-in 0.4s ease-out forwards;
+          animation: fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         
         .animate-scale-in {
-          animation: scale-in 0.4s ease-out forwards;
+          animation: scale-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
         
-        .animate-content-fade {
-          animation: content-fade 0.3s ease-out forwards;
+        .animate-slide-up {
+          animation: slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         
-        .animate-content-appear {
-          animation: content-appear 0.4s ease-out forwards;
+        /* Smooth scroll behavior */
+        html {
+          scroll-behavior: smooth;
         }
         
-        /* Fix blurry sections */
+        /* Enhanced hover effects */
+        .hover-lift {
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .hover-lift:hover {
+          transform: translateY(-8px);
+        }
+        
+        .hover-glow {
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .hover-glow:hover {
+          box-shadow: 0 20px 40px rgba(16, 185, 129, 0.15);
+        }
+        
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+          .animate-pulse-slow,
+          .animate-float-slow,
+          .animate-spin-slow,
+          .animate-bounce,
+          .animate-glow,
+          .animate-fade-up,
+          .animate-fade-in,
+          .animate-scale-in,
+          .animate-slide-up,
+          .scroll-reveal,
+          .transition-all,
+          .transition-transform,
+          .transition-colors,
+          .hover-lift,
+          .hover-glow {
+            animation: none !important;
+            opacity: 1 !important;
+            transform: none !important;
+            transition: none !important;
+          }
+          
+          html {
+            scroll-behavior: auto;
+          }
+        }
+        
+        /* Scroll reveal */
         .scroll-reveal {
           opacity: 0;
-          transform: translateY(20px);
-          transition: opacity 0.7s ease-out, 
-                      transform 0.7s ease-out;
-          backface-visibility: hidden;
-          -webkit-backface-visibility: hidden;
-          -webkit-font-smoothing: antialiased;
-          -moz-osx-font-smoothing: grayscale;
+          transform: translateY(30px);
+          transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), 
+                      transform 1s cubic-bezier(0.16, 1, 0.3, 1);
         }
         
         .scroll-reveal.visible {
@@ -1688,124 +1584,60 @@ export default function Videos() {
           transform: translateY(0);
         }
         
-        /* Image optimization */
-        img {
-          image-rendering: auto;
-          image-rendering: crisp-edges;
-          -webkit-font-smoothing: antialiased;
-          -moz-osx-font-smoothing: grayscale;
-        }
-        
-        /* Icon optimization */
-        svg {
-          shape-rendering: geometricPrecision;
-          text-rendering: geometricPrecision;
-        }
-        
-        /* Mobile performance */
+        /* Mobile optimizations */
         @media (max-width: 768px) {
-          .scroll-reveal {
-            transform: translateY(15px);
-            transition-duration: 0.5s;
-          }
-          
-          button {
+          /* Better touch targets */
+          button, 
+          [role="button"] {
             min-height: 44px;
             min-width: 44px;
           }
           
-          /* Improve video embeds */
-          .video-player {
-            width: 100% !important;
-            height: auto !important;
+          /* Modal touch improvements */
+          [data-radix-dialog-content] {
+            touch-action: pan-y;
           }
         }
         
-        /* Reduced motion */
-        @media (prefers-reduced-motion: reduce) {
-          .scroll-reveal,
-          .animate-fade-up,
-          .animate-pulse-slow,
-          .animate-float,
-          .animate-spin-slow,
-          .animate-bounce,
-          .animate-fade-in,
-          .animate-scale-in,
-          .animate-content-fade,
-          .animate-content-appear,
-          .transition-all,
-          .transition-transform {
-            animation: none !important;
-            transition: none !important;
-          }
-        }
-        
-        /* Hardware acceleration */
+        /* Performance optimizations */
         .will-change-transform {
           will-change: transform;
         }
         
-        /* Smooth transitions */
-        .smooth-transition {
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        /* Better button sizing */
-        button {
-          touch-action: manipulation;
-        }
-        
-        /* Improved modal */
-        [data-state="open"] {
-          z-index: 9999 !important;
-        }
-        
-        /* Better focus styles */
-        *:focus-visible {
-          outline: 2px solid theme('colors.emerald.500');
-          outline-offset: 2px;
+        .backface-hidden {
+          backface-visibility: hidden;
         }
       `}</style>
     </div>
   );
 }
 
-// Enhanced No Results Component
+// No Results Component
 const NoResults = memo(({ 
   icon, 
   title, 
-  description,
-  searchQuery = ""
+  description 
 }: { 
   icon: React.ReactNode; 
   title: string; 
   description: string;
-  searchQuery?: string;
 }) => (
-  <div className="text-center py-16 md:py-20 animate-fade-in">
-    <div className="w-24 h-24 md:w-28 md:h-28 mx-auto mb-6 bg-gradient-to-br from-emerald-500/10 to-green-500/10 rounded-full flex items-center justify-center">
-      <div className="text-emerald-600 dark:text-emerald-400">
-        {icon}
-      </div>
+  <div className="text-center py-16 animate-fade-in">
+    <div className="w-20 h-20 mx-auto mb-6 bg-emerald-500/10 rounded-full flex items-center justify-center">
+      {icon}
     </div>
-    <h3 className="text-2xl md:text-3xl font-bold mb-3 text-foreground">
+    <h3 className="text-2xl font-semibold mb-3 text-foreground">
       {title}
     </h3>
-    <p className="text-muted-foreground max-w-md mx-auto text-lg md:text-xl mb-4">
+    <p className="text-muted-foreground max-w-md mx-auto text-lg">
       {description}
     </p>
-    {searchQuery && (
-      <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 rounded-full text-base">
-        <Search className="w-4 h-4" />
-        <span>{searchQuery}</span>
-      </div>
-    )}
   </div>
 ));
 
 NoResults.displayName = 'NoResults';
 
-// Enhanced Video Card Component
+// Memoized Enhanced Video Card Component
 const EnhancedVideoCard = memo(({
   video,
   getLocalizedText,
@@ -1816,300 +1648,145 @@ const EnhancedVideoCard = memo(({
   handleThumbnailClick,
   language,
   isMobile,
-  isHovered = false,
   showCharacterInfo = false,
-  onCharacterInfoClick,
-  viewMode = 'grid',
-  isLoading = false
+  onCharacterInfoClick
 }: {
   video: Video;
   getLocalizedText: (text: { fr: string; en: string } | string) => string;
   getThumbnailUrl: (youtubeId: string, isShort?: boolean) => string;
-  formatDate: (dateString?: string) => string;
+  formatDate: (dateString: string) => string;
   openInYouTube: (youtubeId: string) => void;
   handleVideoSelect: (video: Video) => void;
   handleThumbnailClick: (e: React.MouseEvent, video: Video) => void;
   language: string;
   isMobile: boolean;
-  isHovered?: boolean;
   showCharacterInfo?: boolean;
   onCharacterInfoClick?: () => void;
-  viewMode?: 'grid' | 'list';
-  isLoading?: boolean;
-}) => {
-  const [imageLoaded, setImageLoaded] = useState(false);
-
-  const handleImageLoad = useCallback(() => {
-    setImageLoaded(true);
-  }, []);
-
-  const aspectClass = video.aspect === 'portrait' || video.isShort ? 'aspect-[9/16]' : 'aspect-video';
-  
-  if (viewMode === 'list' && !isMobile) {
-    return (
-      <Card className="group relative overflow-hidden bg-gradient-to-b from-card to-card/50 backdrop-blur-sm cursor-pointer transition-all duration-500 hover:shadow-2xl border-border/40 hover:border-emerald-500/30 animate-fade-in">
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+}) => (
+  <Card className="group relative h-full border-border/40 hover:border-emerald-500/50 overflow-hidden bg-gradient-to-b from-card to-card/50 backdrop-blur-sm cursor-pointer transition-all duration-500 hover-lift hover-glow active:scale-95">
+    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+    
+    <CardContent className="p-0">
+      <div className={`relative ${video.aspect === 'portrait' ? 'aspect-[9/16]' : 'aspect-video'} overflow-hidden bg-gradient-to-br from-emerald-500/5 via-green-500/5 to-teal-500/5`}>
+        <img
+          src={getThumbnailUrl(video.youtubeId, video.isShort)}
+          alt={getLocalizedText(video.title)}
+          className="absolute inset-0 w-full h-full object-cover z-10 transition-all duration-700 group-hover:scale-110 group-hover:brightness-110"
+          loading="lazy"
+          decoding="async"
+        />
         
-        <CardContent className="p-4 md:p-6">
-          <div className="flex flex-col md:flex-row gap-4 md:gap-6">
-            {/* Thumbnail */}
-            <div className={`relative ${aspectClass} w-full md:w-64 rounded-xl overflow-hidden bg-gradient-to-br from-emerald-500/5 via-green-500/5 to-teal-500/5 flex-shrink-0`}>
-              <div 
-                className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 cursor-pointer"
-                onClick={(e) => handleThumbnailClick(e, video)}
-              >
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="relative">
-                    <div className="relative w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-500">
-                      <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center">
-                        <Play className="w-6 h-6 md:w-7 md:h-7 text-emerald-600 ml-0.5" fill="currentColor" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <img
-                src={getThumbnailUrl(video.youtubeId, video.isShort)}
-                alt={getLocalizedText(video.title)}
-                className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
-                  imageLoaded ? 'opacity-100' : 'opacity-0'
-                } ${isHovered ? 'scale-110' : 'scale-100'}`}
-                loading="lazy"
-                decoding="async"
-                onLoad={handleImageLoad}
-              />
-              
-              {!imageLoaded && !isLoading && (
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-green-500/10" />
-              )}
-              
-              {/* Badges */}
-              <div className="absolute top-2 left-2 z-30">
-                {video.isShort ? (
-                  <Badge className="bg-gradient-to-r from-emerald-600 to-green-500 text-white border-0 text-sm px-3 py-1">
-                    <Zap className="w-4 h-4 mr-1" />
-                    SHORT
-                  </Badge>
-                ) : (
-                  video.category && (
-                    <Badge className="bg-black/80 backdrop-blur-sm text-white border-0 text-sm px-3 py-1">
-                      {getLocalizedText(video.category)}
-                    </Badge>
-                  )
-                )}
-              </div>
-            </div>
-            
-            {/* Content */}
-            <div className="flex-1">
-              <div className="space-y-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <h3 className="font-bold text-xl md:text-2xl mb-2 md:mb-3 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-500">
-                      {getLocalizedText(video.title)}
-                    </h3>
-                    <p className="text-base text-muted-foreground line-clamp-2 group-hover:text-foreground/80 transition-colors duration-500">
-                      {getLocalizedText(video.description)}
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-10 px-4 text-base hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-500 hover:scale-110 active:scale-95"
-                    onClick={() => handleVideoSelect(video)}
-                    aria-label={language === 'fr' ? 'Regarder' : 'Watch'}
-                  >
-                    <Play className="w-5 h-5 mr-2" />
-                    {language === 'fr' ? 'Regarder' : 'Watch'}
-                  </Button>
-                </div>
-                
-                {video.creator && (
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-2 group">
-                      <div className="relative">
-                        <div className="w-10 h-10 bg-gradient-to-br from-emerald-500/20 to-green-500/20 rounded-full flex items-center justify-center">
-                          <User className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                        </div>
-                        {showCharacterInfo && onCharacterInfoClick && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              onCharacterInfoClick();
-                            }}
-                            className="absolute -right-1 -top-1 h-6 w-6 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white p-1 rounded-full border-2 border-background transition-all duration-500 hover:scale-110 active:scale-95 shadow-md flex items-center justify-center"
-                            aria-label={language === 'fr' ? 'Personnages' : 'Characters'}
-                            title={language === 'fr' ? 'Personnages' : 'Characters'}
-                          >
-                            <Info className="w-3 h-3" />
-                          </button>
-                        )}
-                      </div>
-                      <div>
-                        <span className="text-base font-medium">
-                          {video.creator.name}
-                        </span>
-                        <p className="text-sm text-muted-foreground">{video.creator.role}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="flex items-center justify-between pt-3 border-t border-border/50">
-                  <div className="flex items-center gap-3 md:gap-4 text-sm text-muted-foreground">
-                    {video.publishDate && (
-                      <span className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
-                        <span>{formatDate(video.publishDate)}</span>
-                      </span>
-                    )}
-                    {video.duration && (
-                      <span className="flex items-center gap-2">
-                        <Clock className="w-4 h-4" />
-                        <span>{video.duration}</span>
-                      </span>
-                    )}
-                  </div>
+        <div 
+          className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 cursor-pointer"
+          onClick={(e) => handleThumbnailClick(e, video)}
+        >
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="relative">
+              <div className="relative w-20 h-20 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-xl shadow-emerald-500/40 transition-all duration-500 group-hover:scale-110 group-hover:shadow-2xl group-hover:shadow-emerald-500/60">
+                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-inner shadow-black/20 group-hover:scale-110 transition-transform duration-300">
+                  <Play className="w-6 h-6 text-emerald-600 ml-0.5" fill="currentColor" />
                 </div>
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
-    );
-  }
+        </div>
 
-  // Grid View
-  return (
-    <Card className="group relative h-full border-border/40 hover:border-emerald-500/30 overflow-hidden bg-gradient-to-b from-card to-card/50 backdrop-blur-sm cursor-pointer transition-all duration-500 hover:shadow-2xl animate-fade-in">
-      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-      
-      <CardContent className="p-0">
-        <div className={`relative ${aspectClass} overflow-hidden bg-gradient-to-br from-emerald-500/5 via-green-500/5 to-teal-500/5`}>
-          <img
-            src={getThumbnailUrl(video.youtubeId, video.isShort)}
-            alt={getLocalizedText(video.title)}
-            className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
-              imageLoaded ? 'opacity-100' : 'opacity-0'
-            } ${isHovered ? 'scale-110' : 'scale-100'}`}
-            loading="lazy"
-            decoding="async"
-            onLoad={handleImageLoad}
-          />
-          
-          {!imageLoaded && !isLoading && (
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-green-500/10" />
-          )}
-          
-          <div 
-            className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 cursor-pointer"
-            onClick={(e) => handleThumbnailClick(e, video)}
-          >
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="relative">
-                <div className="relative w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-500">
-                  <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center">
-                    <Play className="w-6 h-6 md:w-7 md:h-7 text-emerald-600 ml-0.5" fill="currentColor" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="absolute top-2 left-2 z-30">
-            {video.isShort ? (
-              <Badge className="bg-gradient-to-r from-emerald-600 to-green-500 text-white border-0 text-sm px-3 py-1">
-                <Zap className="w-4 h-4 mr-1" />
-                SHORT
+        <div className="absolute top-3 left-3 z-30">
+          {video.isShort ? (
+            <Badge className="bg-gradient-to-r from-emerald-600 to-green-500 text-white border-0 text-xs px-2.5 py-1 animate-pulse-slow">
+              <Zap className="w-3 h-3 mr-1.5" />
+              SHORT
+            </Badge>
+          ) : (
+            video.category && (
+              <Badge className="bg-black/80 backdrop-blur-sm text-white border-0 text-xs px-2.5 py-1">
+                {getLocalizedText(video.category)}
               </Badge>
-            ) : (
-              video.category && (
-                <Badge className="bg-black/80 backdrop-blur-sm text-white border-0 text-sm px-3 py-1">
-                  {getLocalizedText(video.category)}
-                </Badge>
-              )
-            )}
-          </div>
-
-          {video.duration && (
-            <div className="absolute bottom-2 right-2 z-30 bg-black/80 backdrop-blur-sm text-white text-sm px-2 py-1 rounded">
-              {video.duration}
-            </div>
+            )
           )}
         </div>
 
-        <div className="p-4 relative z-20">
-          <div className="space-y-3">
-            <div className="flex items-start justify-between gap-2">
-              <h3 className="font-bold text-lg line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-500 flex-1">
-                {getLocalizedText(video.title)}
-              </h3>
-            </div>
-            
-            {video.creator && (
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <div className="w-8 h-8 bg-gradient-to-br from-emerald-500/20 to-green-500/20 rounded-full flex items-center justify-center">
-                      <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                    {showCharacterInfo && onCharacterInfoClick && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          onCharacterInfoClick();
-                        }}
-                        className="absolute -right-1 -top-1 h-5 w-5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-0.5 rounded-full border border-background shadow-sm flex items-center justify-center"
-                        aria-label={language === 'fr' ? 'Personnages' : 'Characters'}
-                        title={language === 'fr' ? 'Personnages' : 'Characters'}
-                      >
-                        <Info className="w-3 h-3" />
-                      </button>
-                    )}
+        {video.duration && (
+          <div className="absolute bottom-3 right-3 z-30 bg-black/80 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-md">
+            {video.duration}
+          </div>
+        )}
+      </div>
+
+      <div className="p-5 relative z-20">
+        <div className="space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="font-bold text-lg line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300 flex-1">
+              {getLocalizedText(video.title)}
+            </h3>
+          </div>
+          
+          {video.creator && (
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 group">
+                <div className="relative">
+                  <div className="w-8 h-8 bg-gradient-to-br from-emerald-500/20 to-green-500/20 rounded-full flex items-center justify-center group-hover:from-emerald-500/30 group-hover:to-green-500/30 transition-all duration-300 group-hover:scale-110">
+                    <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   </div>
-                  <div>
-                    <span className="text-sm font-medium">
-                      {video.creator.name}
-                    </span>
-                    <p className="text-xs text-muted-foreground">{video.creator.role}</p>
-                  </div>
+                  {showCharacterInfo && onCharacterInfoClick && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCharacterInfoClick();
+                      }}
+                      className="absolute -right-1 -top-1 h-5 w-5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white p-0.5 rounded-full border-2 border-background transition-all duration-300 hover:scale-125 active:scale-95 shadow-lg flex items-center justify-center"
+                      aria-label={language === 'fr' ? 'Voir les personnages' : 'View characters'}
+                      title={language === 'fr' ? 'Voir les personnages' : 'View characters'}
+                    >
+                      <Info className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+                <div>
+                  <span className="text-sm font-medium group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                    {video.creator.name}
+                  </span>
+                  <p className="text-xs text-muted-foreground">{video.creator.role}</p>
                 </div>
               </div>
-            )}
-            
-            <p className="text-sm text-muted-foreground line-clamp-2 group-hover:text-foreground/80 transition-colors duration-500">
-              {getLocalizedText(video.description)}
-            </p>
-            
-            <div className="flex items-center justify-between pt-3 border-t border-border/50">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                {video.publishDate && (
-                  <span className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    <span>{formatDate(video.publishDate)}</span>
-                  </span>
-                )}
-              </div>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 px-3 text-sm hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-500 hover:scale-110 active:scale-95"
-                onClick={() => handleVideoSelect(video)}
-                aria-label={language === 'fr' ? 'Regarder' : 'Watch'}
-              >
-                <Play className="w-4 h-4 mr-1" />
-                {language === 'fr' ? 'Voir' : 'View'}
-              </Button>
             </div>
+          )}
+          
+          <p className="text-sm text-muted-foreground line-clamp-2 group-hover:text-foreground/80 transition-colors duration-300">
+            {getLocalizedText(video.description)}
+          </p>
+          
+          <div className="flex items-center justify-between pt-4 border-t border-border/50">
+            <div className="flex items-center gap-3 text-xs text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300">
+              {video.publishDate && (
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="w-3 h-3" />
+                  <span>{formatDate(video.publishDate)}</span>
+                </span>
+              )}
+              {video.duration && (
+                <span className="flex items-center gap-1.5">
+                  <Clock className="w-3 h-3" />
+                  <span>{video.duration}</span>
+                </span>
+              )}
+            </div>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-3 text-xs hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-300 hover:scale-105 active:scale-95 group"
+              onClick={() => handleVideoSelect(video)}
+              aria-label={language === 'fr' ? 'Regarder la vidéo' : 'Watch video'}
+            >
+              <Play className="w-3 h-3 mr-1.5 group-hover:scale-125 transition-transform duration-300" />
+              {language === 'fr' ? 'Regarder' : 'Watch'}
+            </Button>
           </div>
         </div>
-      </CardContent>
-    </Card>
-  );
-});
+      </div>
+    </CardContent>
+  </Card>
+));
 
 EnhancedVideoCard.displayName = 'EnhancedVideoCard';
