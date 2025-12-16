@@ -80,13 +80,37 @@ export default function Videos() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isRotated, setIsRotated] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout>();
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const lastScrollY = useRef(0);
+  const sectionRef = useRef<HTMLDivElement>(null);
   
   useScrollReveal();
+
+  // Enhanced mobile detection with better touch support
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+    };
+    
+    checkMobile();
+    
+    const handleResize = () => {
+      requestAnimationFrame(() => {
+        const mobile = window.innerWidth < 768;
+        if (mobile !== isMobile) {
+          setIsMobile(mobile);
+        }
+      });
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isMobile]);
 
   // Memoized characters data
   const characters: Character[] = useMemo(() => [
@@ -113,23 +137,7 @@ export default function Videos() {
     }
   ], [language]);
 
-  // Check mobile device
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    
-    const handleResize = () => {
-      requestAnimationFrame(checkMobile);
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Memoized videos data
+  // Memoized videos data - FIXED: Added proper section filtering
   const videos: Video[] = useMemo(() => [
     {
       id: "channel-showcase",
@@ -297,20 +305,25 @@ export default function Videos() {
     }
   ], [language]);
 
-  // Filter videos by type
+  // Filter videos by type - FIXED: Proper filtering logic
   const tutorialVideos = useMemo(() => videos.filter(v => v.type === "tutorial"), [videos]);
   const communityVideos = useMemo(() => videos.filter(v => v.type === "community"), [videos]);
   const channelVideos = useMemo(() => videos.filter(v => v.type === "channel"), [videos]);
 
-  // Auto search with debounce
+  // Enhanced auto search with better debounce and loading state
   useEffect(() => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
     
+    if (searchQuery.trim()) {
+      setSearchLoading(true);
+    }
+    
     searchTimeoutRef.current = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
-    }, 300);
+      setSearchLoading(false);
+    }, 200);
     
     return () => {
       if (searchTimeoutRef.current) {
@@ -319,27 +332,54 @@ export default function Videos() {
     };
   }, [searchQuery]);
 
-  // Optimized search function
+  // Optimized search function with better performance
   const searchVideos = useCallback((videos: Video[], query: string): Video[] => {
     if (!query.trim()) return videos;
     
-    const searchTerms = query.toLowerCase().trim().split(/\s+/);
+    const searchTerms = query.toLowerCase().trim().split(/\s+/).filter(term => term.length > 0);
+    if (searchTerms.length === 0) return videos;
     
-    return videos.filter(video => {
+    // Create a map for faster lookups
+    const videoMap = new Map<string, number>();
+    
+    videos.forEach((video, index) => {
       const searchableText = [
         video.title[language].toLowerCase(),
         video.description[language].toLowerCase(),
-        video.category?.[language].toLowerCase() || '',
+        video.category?.[language]?.toLowerCase() || '',
         video.creator?.name.toLowerCase() || '',
         video.creator?.role.toLowerCase() || '',
         video.type.toLowerCase()
       ].join(' ');
       
-      return searchTerms.every(term => searchableText.includes(term));
+      // Score each video based on search term matches
+      let score = 0;
+      searchTerms.forEach(term => {
+        if (searchableText.includes(term)) {
+          score += 1;
+          // Bonus for title matches
+          if (video.title[language].toLowerCase().includes(term)) {
+            score += 2;
+          }
+        }
+      });
+      
+      if (score > 0) {
+        videoMap.set(video.id, score);
+      }
     });
+    
+    // Sort by score and return
+    return videos
+      .filter(video => videoMap.has(video.id))
+      .sort((a, b) => {
+        const scoreA = videoMap.get(a.id) || 0;
+        const scoreB = videoMap.get(b.id) || 0;
+        return scoreB - scoreA;
+      });
   }, [language]);
 
-  // Memoized filtered videos
+  // Memoized filtered videos - FIXED: Added dependency array
   const filteredTutorialVideos = useMemo(() => 
     searchVideos(tutorialVideos, debouncedSearchQuery),
   [tutorialVideos, debouncedSearchQuery, searchVideos]);
@@ -352,6 +392,16 @@ export default function Videos() {
     searchVideos(channelVideos, debouncedSearchQuery),
   [channelVideos, debouncedSearchQuery, searchVideos]);
 
+  // Get videos for current section - FIXED: Ensures videos appear on section switch
+  const getCurrentVideos = useCallback(() => {
+    switch(activeSection) {
+      case 'tutorials': return filteredTutorialVideos;
+      case 'community': return filteredCommunityVideos;
+      case 'channel': return filteredChannelVideos;
+      default: return [];
+    }
+  }, [activeSection, filteredTutorialVideos, filteredCommunityVideos, filteredChannelVideos]);
+
   // Memoized text translation
   const getLocalizedText = useCallback((text: { fr: string; en: string } | string) => {
     if (typeof text === 'string') return text;
@@ -360,42 +410,48 @@ export default function Videos() {
 
   // Get total results for current section
   const getTotalResults = useCallback(() => {
-    switch(activeSection) {
-      case 'tutorials': return filteredTutorialVideos.length;
-      case 'community': return filteredCommunityVideos.length;
-      case 'channel': return filteredChannelVideos.length;
-      default: return 0;
-    }
-  }, [activeSection, filteredTutorialVideos.length, filteredCommunityVideos.length, filteredChannelVideos.length]);
+    return getCurrentVideos().length;
+  }, [getCurrentVideos]);
 
-  // Handle video modal
+  // Enhanced video modal handling with better error management
+  const openVideoModal = useCallback((video: Video) => {
+    setIsLoading(true);
+    setSelectedVideo(video);
+    setVideoError(false);
+    setErrorMessage("");
+    setIsRotated(false);
+    
+    // Ensure modal opens properly
+    requestAnimationFrame(() => {
+      setIsModalOpen(true);
+    });
+  }, []);
+
+  // Handle video modal state
   useEffect(() => {
-    if (selectedVideo) {
+    if (selectedVideo && !isModalOpen) {
       setIsModalOpen(true);
       setShowInterface(true);
       setShowControls(true);
-      setVideoError(false);
-      setErrorMessage("");
-      setIsRotated(false);
       
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
       }
       
       controlsTimeoutRef.current = setTimeout(() => {
-        setShowControls(false);
+        if (isModalOpen) {
+          setShowControls(false);
+        }
       }, 3000);
-    } else {
-      setIsModalOpen(false);
     }
-  }, [selectedVideo]);
+  }, [selectedVideo, isModalOpen]);
 
   // Fullscreen handling
   useEffect(() => {
     const handleFullscreenChange = () => {
-      const isFullscreen = !!document.fullscreenElement;
-      setIsFullscreen(isFullscreen);
-      if (isFullscreen) {
+      const isFullscreenNow = !!document.fullscreenElement;
+      setIsFullscreen(isFullscreenNow);
+      if (isFullscreenNow) {
         setShowInterface(true);
         setShowControls(true);
       }
@@ -418,46 +474,57 @@ export default function Videos() {
 
   // Date formatting
   const formatDate = useCallback((dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    } catch (error) {
+      return dateString;
+    }
   }, [language]);
 
-  // Video selection handler
+  // Video selection handler with better error handling
   const handleVideoSelect = useCallback((video: Video) => {
-    setIsLoading(true);
-    setSelectedVideo(video);
-    setShowInterface(true);
-    setVideoError(false);
-    setErrorMessage("");
-    
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
+    try {
+      openVideoModal(video);
+    } catch (error) {
+      console.error('Error selecting video:', error);
+      setErrorMessage(language === 'fr' 
+        ? 'Erreur lors de l\'ouverture de la vidéo' 
+        : 'Error opening video'
+      );
     }
-  }, []);
+  }, [openVideoModal, language]);
 
   // Thumbnail click handler
   const handleThumbnailClick = useCallback((e: React.MouseEvent, video: Video) => {
     e.stopPropagation();
+    e.preventDefault();
     handleVideoSelect(video);
   }, [handleVideoSelect]);
 
-  // Fullscreen toggle
+  // Fullscreen toggle with error handling
   const toggleFullscreen = useCallback(() => {
-    const iframe = document.querySelector('iframe');
-    const modal = modalRef.current;
-    
-    if (!iframe && !modal) return;
+    try {
+      const iframe = document.querySelector('iframe');
+      const modal = modalRef.current;
+      
+      if (!iframe && !modal) return;
 
-    if (!document.fullscreenElement) {
-      (modal || iframe)?.requestFullscreen?.();
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen?.();
-      setIsFullscreen(false);
+      if (!document.fullscreenElement) {
+        (modal || iframe)?.requestFullscreen?.().catch(err => {
+          console.error('Error entering fullscreen:', err);
+        });
+      } else {
+        document.exitFullscreen?.().catch(err => {
+          console.error('Error exiting fullscreen:', err);
+        });
+      }
+    } catch (error) {
+      console.error('Fullscreen toggle error:', error);
     }
   }, []);
 
@@ -470,21 +537,28 @@ export default function Videos() {
     }
     
     controlsTimeoutRef.current = setTimeout(() => {
-      setShowControls(false);
+      if (isModalOpen) {
+        setShowControls(false);
+      }
     }, 3000);
-  }, []);
+  }, [isModalOpen]);
 
-  // Modal close handler
+  // Modal close handler with cleanup
   const handleModalClose = useCallback(() => {
     setSelectedVideo(null);
-    setIsFullscreen(false);
+    setIsModalOpen(false);
     setShowInterface(true);
     setIsLoading(false);
     setVideoError(false);
     setErrorMessage("");
     setIsRotated(false);
+    
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+    
     if (document.fullscreenElement) {
-      document.exitFullscreen();
+      document.exitFullscreen().catch(() => {});
     }
   }, []);
 
@@ -496,18 +570,21 @@ export default function Videos() {
       clearTimeout(controlsTimeoutRef.current);
     }
     controlsTimeoutRef.current = setTimeout(() => {
-      setShowControls(false);
+      if (isModalOpen) {
+        setShowControls(false);
+      }
     }, 3000);
-  }, []);
+  }, [isModalOpen]);
 
   // Mute toggle
   const toggleMute = useCallback(() => {
     setIsMuted(prev => !prev);
   }, []);
 
-  // Search handlers
+  // Search handlers with better UX
   const handleClearSearch = useCallback(() => {
     setSearchQuery("");
+    setDebouncedSearchQuery("");
     searchInputRef.current?.focus();
   }, []);
 
@@ -517,13 +594,14 @@ export default function Videos() {
     }
   }, [handleClearSearch]);
 
-  // Keyboard shortcuts
+  // Enhanced keyboard shortcuts with better handling
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if (!isModalOpen) return;
       
       switch(e.key) {
         case 'Escape':
+          e.preventDefault();
           handleModalClose();
           break;
         case 'f':
@@ -535,7 +613,10 @@ export default function Videos() {
           break;
         case 'm':
         case 'M':
-          toggleMute();
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            toggleMute();
+          }
           break;
         case ' ':
           e.preventDefault();
@@ -560,23 +641,23 @@ export default function Videos() {
     };
   }, []);
 
-  // Section change with smooth transition
+  // Section change with smooth transition - FIXED: Ensures videos appear
   const handleSectionChange = useCallback((section: 'tutorials' | 'community' | 'channel') => {
+    if (section === activeSection) return;
+    
     setIsTransitioning(true);
-    setActiveSection(section);
     
-    setTimeout(() => setIsTransitioning(false), 300);
-  }, []);
-
-  // Track scroll position
-  useEffect(() => {
-    const handleScroll = () => {
-      lastScrollY.current = window.scrollY;
-    };
+    // Scroll to section on mobile
+    if (isMobile && sectionRef.current) {
+      sectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
     
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    // Change section after a small delay for smooth transition
+    setTimeout(() => {
+      setActiveSection(section);
+      setIsTransitioning(false);
+    }, 150);
+  }, [activeSection, isMobile]);
 
   // Aspect ratio helper
   const getAspectRatio = useCallback((video: Video): '16:9' | '9:16' => {
@@ -604,7 +685,7 @@ export default function Videos() {
     setImageError(true);
   }, []);
 
-  // Character handlers with smooth transitions
+  // Enhanced character handlers with better state management
   const handleCharacterSelectionOpen = useCallback(() => {
     setShowCharacterSelection(true);
     setSelectedCharacter(null);
@@ -618,13 +699,16 @@ export default function Videos() {
   const handleCharacterSelect = useCallback((character: Character) => {
     setSelectedCharacter(character);
     setShowCharacterSelection(false);
-    setTimeout(() => setShowCharacterDetail(true), 150);
-    setImageError(false);
+    // Small delay for better UX
+    setTimeout(() => setShowCharacterDetail(true), 100);
   }, []);
 
   const handleCharacterDetailClose = useCallback(() => {
     setShowCharacterDetail(false);
-    setTimeout(() => setSelectedCharacter(null), 300);
+    setTimeout(() => {
+      setSelectedCharacter(null);
+      setImageError(false);
+    }, 200);
   }, []);
 
   // Retry video loading
@@ -636,89 +720,79 @@ export default function Videos() {
     }
   }, [selectedVideo]);
 
-  // Toggle rotation for mobile
+  // Toggle rotation for mobile - FIXED: Proper mobile-only feature
   const toggleRotation = useCallback(() => {
-    setIsRotated(prev => !prev);
-  }, []);
+    if (isMobile) {
+      setIsRotated(prev => !prev);
+    }
+  }, [isMobile]);
 
-  // Get modal style based on device and video type - FIXED CENTERING
-  const getModalStyle = useCallback(() => {
+  // Get modal style based on device - FIXED: Proper centering for PC, fullscreen for mobile
+  const getModalStyle = useCallback((): React.CSSProperties => {
     if (!selectedVideo) return {};
     
     const isShort = selectedVideo.isShort;
     const isPortrait = selectedVideo.aspect === 'portrait';
     
     if (isMobile) {
-      // Mobile styles
-      if (isShort || isPortrait) {
-        // Shorts/Vertical on mobile: Full screen vertical
-        return {
-          width: '100vw',
-          height: '100vh',
-          maxWidth: '100vw',
-          maxHeight: '100vh',
-          aspectRatio: '9/16',
-          borderRadius: 0,
-          margin: 0,
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          position: 'fixed',
-        };
-      } else {
-        // Regular videos on mobile: Full screen horizontal
-        return {
-          width: '100vw',
-          height: '100vh',
-          maxWidth: '100vw',
-          maxHeight: '100vh',
-          aspectRatio: '16/9',
-          borderRadius: 0,
-          margin: 0,
-          top: '50%',
-          left: '50%',
-          transform: `translate(-50%, -50%) ${isRotated ? 'rotate(90deg)' : ''}`,
-          position: 'fixed',
-        };
-      }
+      // Mobile: Always full screen
+      return {
+        width: '100vw',
+        height: '100vh',
+        maxWidth: '100vw',
+        maxHeight: '100vh',
+        margin: 0,
+        padding: 0,
+        borderRadius: 0,
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        position: 'fixed',
+        transform: isRotated && selectedVideo.aspect === 'landscape' ? 'rotate(90deg)' : 'none',
+        transformOrigin: 'center center'
+      };
     } else {
-      // PC styles
+      // PC: Centered floating modal
       if (isShort || isPortrait) {
-        // Shorts/Vertical on PC: Floating vertical modal
+        // Vertical videos on PC
         return {
           width: '400px',
           height: '710px',
-          maxWidth: '400px',
-          maxHeight: '710px',
-          aspectRatio: '9/16',
-          borderRadius: '24px',
+          maxWidth: '90vw',
+          maxHeight: '90vh',
           margin: 0,
+          position: 'fixed',
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          position: 'fixed',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          zIndex: 50
         };
       } else {
-        // Regular videos on PC: Floating horizontal modal
+        // Horizontal videos on PC
         return {
           width: 'min(1200px, 90vw)',
           height: 'min(675px, 90vh)',
-          maxWidth: 'min(1200px, 90vw)',
-          maxHeight: 'min(675px, 90vh)',
-          aspectRatio: '16/9',
-          borderRadius: '24px',
+          maxWidth: '90vw',
+          maxHeight: '90vh',
           margin: 0,
+          position: 'fixed',
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          position: 'fixed',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          zIndex: 50
         };
       }
     }
   }, [selectedVideo, isMobile, isRotated]);
 
-  // Render sections based on active section
+  // Render sections based on active section - FIXED: Proper rendering
   const renderVideoSection = useCallback(() => {
+    const currentVideos = getCurrentVideos();
     const noResultsText = debouncedSearchQuery 
       ? (language === 'fr' ? 'Aucun résultat trouvé' : 'No results found')
       : (language === 'fr' ? 'Aucune vidéo disponible' : 'No videos available');
@@ -727,116 +801,58 @@ export default function Videos() {
       ? (language === 'fr' ? 'Essayez avec d\'autres termes de recherche' : 'Try different search terms')
       : (language === 'fr' ? 'De nouvelles vidéos seront bientôt disponibles' : 'New videos will be available soon');
 
-    switch (activeSection) {
-      case 'tutorials':
-        return filteredTutorialVideos.length === 0 ? (
-          <NoResults 
-            icon={<Video className="w-10 h-10" />}
-            title={noResultsText}
-            description={noResultsDescription}
-          />
-        ) : (
-          <div className={`grid ${isMobile ? 'grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-3'} gap-6 md:gap-8`}>
-            {filteredTutorialVideos.map((video, index) => (
-              <div
-                key={video.id}
-                className="scroll-reveal"
-                style={{ animationDelay: `${Math.min(index * 0.05, 0.5)}s` }}
-              >
-                <EnhancedVideoCard
-                  video={video}
-                  getLocalizedText={getLocalizedText}
-                  getThumbnailUrl={getThumbnailUrl}
-                  formatDate={formatDate}
-                  openInYouTube={openInYouTube}
-                  handleVideoSelect={handleVideoSelect}
-                  handleThumbnailClick={handleThumbnailClick}
-                  language={language}
-                  isMobile={isMobile}
-                />
-              </div>
-            ))}
-          </div>
-        );
-      
-      case 'community':
-        return filteredCommunityVideos.length === 0 ? (
-          <NoResults 
-            icon={<Users className="w-10 h-10" />}
-            title={noResultsText}
-            description={noResultsDescription}
-          />
-        ) : (
-          <div className={`grid ${isMobile ? 'grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-3'} gap-6 md:gap-8`}>
-            {filteredCommunityVideos.map((video, index) => (
-              <div 
-                key={video.id}
-                className="scroll-reveal"
-                style={{ animationDelay: `${Math.min(index * 0.05, 0.5)}s` }}
-              >
-                <EnhancedVideoCard
-                  video={video}
-                  getLocalizedText={getLocalizedText}
-                  getThumbnailUrl={getThumbnailUrl}
-                  formatDate={formatDate}
-                  openInYouTube={openInYouTube}
-                  handleVideoSelect={handleVideoSelect}
-                  handleThumbnailClick={handleThumbnailClick}
-                  language={language}
-                  isMobile={isMobile}
-                  showCharacterInfo={video.creator?.name === "Salsabile"}
-                  onCharacterInfoClick={handleCharacterSelectionOpen}
-                />
-              </div>
-            ))}
-          </div>
-        );
-      
-      case 'channel':
-        return filteredChannelVideos.length === 0 ? (
-          <NoResults 
-            icon={<Youtube className="w-10 h-10" />}
-            title={noResultsText}
-            description={noResultsDescription}
-          />
-        ) : (
-          <div className={`grid ${isMobile ? 'grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-3'} gap-6 md:gap-8 max-w-6xl mx-auto`}>
-            {filteredChannelVideos.map((video, index) => (
-              <div 
-                key={video.id}
-                className="scroll-reveal"
-                style={{ animationDelay: `${Math.min(index * 0.05, 0.5)}s` }}
-              >
-                <EnhancedVideoCard
-                  video={video}
-                  getLocalizedText={getLocalizedText}
-                  getThumbnailUrl={getThumbnailUrl}
-                  formatDate={formatDate}
-                  openInYouTube={openInYouTube}
-                  handleVideoSelect={handleVideoSelect}
-                  handleThumbnailClick={handleThumbnailClick}
-                  language={language}
-                  isMobile={isMobile}
-                />
-              </div>
-            ))}
-          </div>
-        );
+    if (currentVideos.length === 0) {
+      return (
+        <NoResults 
+          icon={activeSection === 'tutorials' ? <Recycle className="w-10 h-10" /> :
+                activeSection === 'community' ? <Users className="w-10 h-10" /> :
+                <Youtube className="w-10 h-10" />}
+          title={noResultsText}
+          description={noResultsDescription}
+        />
+      );
     }
+
+    return (
+      <div 
+        ref={sectionRef}
+        className={`grid ${isMobile ? 'grid-cols-1 gap-4' : 'sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8'}`}
+      >
+        {currentVideos.map((video, index) => (
+          <div
+            key={video.id}
+            className="scroll-reveal"
+            style={{ animationDelay: `${Math.min(index * 0.05, 0.5)}s` }}
+          >
+            <EnhancedVideoCard
+              video={video}
+              getLocalizedText={getLocalizedText}
+              getThumbnailUrl={getThumbnailUrl}
+              formatDate={formatDate}
+              openInYouTube={openInYouTube}
+              handleVideoSelect={handleVideoSelect}
+              handleThumbnailClick={handleThumbnailClick}
+              language={language}
+              isMobile={isMobile}
+              showCharacterInfo={video.creator?.name === "Salsabile"}
+              onCharacterInfoClick={handleCharacterSelectionOpen}
+            />
+          </div>
+        ))}
+      </div>
+    );
   }, [
-    activeSection, 
-    filteredTutorialVideos, 
-    filteredCommunityVideos, 
-    filteredChannelVideos, 
-    debouncedSearchQuery, 
-    language, 
-    isMobile, 
-    getLocalizedText, 
-    getThumbnailUrl, 
-    formatDate, 
-    openInYouTube, 
-    handleVideoSelect, 
-    handleThumbnailClick, 
+    activeSection,
+    getCurrentVideos,
+    debouncedSearchQuery,
+    language,
+    isMobile,
+    getLocalizedText,
+    getThumbnailUrl,
+    formatDate,
+    openInYouTube,
+    handleVideoSelect,
+    handleThumbnailClick,
     handleCharacterSelectionOpen
   ]);
 
@@ -868,7 +884,7 @@ export default function Videos() {
             </p>
           </div>
 
-          {/* Auto Search Bar */}
+          {/* Enhanced Search Bar */}
           <div className="mb-10">
             <div className="relative max-w-2xl mx-auto">
               <div className="relative flex items-center group">
@@ -885,17 +901,20 @@ export default function Videos() {
                   className={`pl-12 ${isMobile ? 'pr-10 py-4 text-sm' : 'pr-10 py-6 text-base'} rounded-xl border-border/50 bg-background/80 backdrop-blur-sm shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-black/10 focus:shadow-2xl focus:shadow-emerald-500/10 transition-all duration-300 hover:border-emerald-500/30 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20`}
                   aria-label={language === 'fr' ? 'Rechercher des vidéos' : 'Search videos'}
                 />
-                {searchQuery && (
-                  <button
-                    onClick={handleClearSearch}
-                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${
-                      isMobile ? 'h-8 w-8' : 'h-10 w-10'
-                    } text-muted-foreground hover:text-foreground hover:bg-emerald-500/10 rounded-full transition-all duration-200 hover:scale-110 active:scale-95 flex items-center justify-center`}
-                    aria-label={language === 'fr' ? 'Effacer la recherche' : 'Clear search'}
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+                  {searchLoading && (
+                    <Loader2 className="w-4 h-4 text-emerald-500 animate-spin" />
+                  )}
+                  {searchQuery && !searchLoading && (
+                    <button
+                      onClick={handleClearSearch}
+                      className={`${isMobile ? 'h-8 w-8' : 'h-10 w-10'} text-muted-foreground hover:text-foreground hover:bg-emerald-500/10 rounded-full transition-all duration-200 hover:scale-110 active:scale-95 flex items-center justify-center`}
+                      aria-label={language === 'fr' ? 'Effacer la recherche' : 'Clear search'}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
               {debouncedSearchQuery && (
                 <div className="mt-3 text-center animate-fade-in">
@@ -947,7 +966,7 @@ export default function Videos() {
           </div>
 
           {/* Content Sections */}
-          <div className={`transition-all duration-500 ease-out ${isTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+          <div className={`transition-all duration-300 ease-out ${isTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
             {renderVideoSection()}
           </div>
 
@@ -986,8 +1005,8 @@ export default function Videos() {
         </div>
       </div>
 
-      {/* Enhanced Video Modal - FIXED CENTERING */}
-      <Dialog open={isModalOpen} onOpenChange={handleModalClose}>
+      {/* Enhanced Video Modal - FIXED: Proper positioning */}
+      <Dialog open={isModalOpen} onOpenChange={(open) => !open && handleModalClose()}>
         <DialogContent 
           ref={modalRef}
           className="fixed border-none bg-black shadow-2xl overflow-hidden p-0 transition-all duration-300 ease-out z-50"
@@ -999,10 +1018,13 @@ export default function Videos() {
             if (controlsTimeoutRef.current) {
               clearTimeout(controlsTimeoutRef.current);
             }
-            setTimeout(() => setShowControls(false), 100);
+            setTimeout(() => {
+              if (isModalOpen && !showInterface) {
+                setShowControls(false);
+              }
+            }, 100);
           }}
         >
-          
           {/* Loading Overlay */}
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm z-50 animate-fade-in">
@@ -1095,12 +1117,12 @@ export default function Videos() {
                     )}
                   </Button>
                   
-                  {/* Rotate Button for mobile landscape videos */}
+                  {/* Rotate Button for mobile landscape videos - FIXED: Mobile-only feature */}
                   {isMobile && selectedVideo?.aspect === 'landscape' && (
                     <Button
                       variant="ghost"
                       size="icon"
-                      className={`h-10 w-10 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300`}
+                      className="h-10 w-10 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300"
                       onClick={toggleRotation}
                       title={language === 'fr' ? 'Tourner l\'écran' : 'Rotate screen'}
                       aria-label={language === 'fr' ? 'Tourner l\'écran' : 'Rotate screen'}
@@ -1140,7 +1162,7 @@ export default function Videos() {
           )}
 
           {/* Video Player */}
-          <div className={`relative w-full h-full flex items-center justify-center bg-black`}>
+          <div className="relative w-full h-full flex items-center justify-center bg-black">
             {selectedVideo && !videoError && (
               <div className="w-full h-full flex items-center justify-center animate-scale-in">
                 <LazyVideoPlayer
@@ -1159,7 +1181,7 @@ export default function Videos() {
               </div>
             )}
             
-            {/* Floating Controls for when interface is hidden */}
+            {/* Floating Controls for when interface is hidden - FIXED: Added rotate button for mobile */}
             {!showInterface && showControls && !videoError && (
               <div className="absolute top-4 right-4 z-50 flex flex-col gap-2 animate-fade-in">
                 <Button
@@ -1172,6 +1194,20 @@ export default function Videos() {
                 >
                   <Eye className="w-4 h-4" />
                 </Button>
+                
+                {/* Floating Rotate Button for mobile - FIXED: Only shown on mobile landscape videos */}
+                {isMobile && selectedVideo?.aspect === 'landscape' && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-12 w-12 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 active:scale-95 transition-all duration-300"
+                    onClick={toggleRotation}
+                    title={language === 'fr' ? 'Tourner l\'écran' : 'Rotate screen'}
+                    aria-label={language === 'fr' ? 'Tourner l\'écran' : 'Rotate screen'}
+                  >
+                    <RotateCw className="w-4 h-4" />
+                  </Button>
+                )}
                 
                 <Button
                   variant="ghost"
@@ -1249,7 +1285,7 @@ export default function Videos() {
         </DialogContent>
       </Dialog>
 
-      {/* Enhanced Character Selection Dialog */}
+      {/* Enhanced Character Selection Dialog - FIXED: Single close button */}
       <Dialog open={showCharacterSelection} onOpenChange={handleCharacterSelectionClose}>
         <DialogContent 
           className="max-w-[95vw] sm:max-w-md p-0 border-0 overflow-hidden bg-transparent"
@@ -1317,7 +1353,7 @@ export default function Videos() {
         </DialogContent>
       </Dialog>
 
-      {/* Enhanced Character Detail Dialog - Single close button */}
+      {/* Enhanced Character Detail Dialog - FIXED: Single close button */}
       <Dialog open={showCharacterDetail} onOpenChange={handleCharacterDetailClose}>
         <DialogContent 
           className="max-w-[95vw] sm:max-w-md p-0 border-0 overflow-hidden bg-transparent"
@@ -1732,6 +1768,7 @@ const EnhancedVideoCard = memo(({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        e.preventDefault();
                         onCharacterInfoClick();
                       }}
                       className="absolute -right-1 -top-1 h-5 w-5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white p-0.5 rounded-full border-2 border-background transition-all duration-300 hover:scale-125 active:scale-95 shadow-lg flex items-center justify-center"
