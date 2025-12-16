@@ -37,7 +37,8 @@ import {
   Grid,
   List,
   ChevronLeft,
-  ChevronDown
+  ChevronDown,
+  Sparkles
 } from "lucide-react";
 
 interface Video {
@@ -82,7 +83,6 @@ export default function Videos() {
   const [imageError, setImageError] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isRotated, setIsRotated] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -91,46 +91,47 @@ export default function Videos() {
   const [hoveredVideoId, setHoveredVideoId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [contentKey, setContentKey] = useState(0);
   
   const modalRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout>();
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
-  const transitionTimeoutRef = useRef<NodeJS.Timeout>();
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const sectionRef = useRef<HTMLDivElement>(null);
   const videoSectionRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const lastSectionRef = useRef<string>('tutorials');
   
-  // Enhanced scroll reveal with mobile optimization
+  // Enhanced scroll reveal with better performance
   useScrollReveal({
     threshold: isMobile ? 0.05 : 0.1,
-    distance: isMobile ? '20px' : '30px',
+    distance: isMobile ? '15px' : '25px',
     easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
-    duration: isMobile ? 600 : 800
+    duration: isMobile ? 500 : 700,
+    delay: 50
   });
 
-  // Enhanced mobile detection with performance optimization
+  // Enhanced mobile detection with debouncing
   useEffect(() => {
+    let resizeTimer: NodeJS.Timeout;
+    
     const checkMobile = () => {
-      const mobile = window.innerWidth < 768;
-      if (mobile !== isMobile) {
-        setIsMobile(mobile);
-      }
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    const handleResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(checkMobile, 150);
     };
     
     checkMobile();
     setHasLoaded(true);
     
-    const handleResize = () => {
-      let resizeTimeout: NodeJS.Timeout;
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(checkMobile, 200);
-    };
-    
     window.addEventListener('resize', handleResize);
     return () => {
       window.removeEventListener('resize', handleResize);
+      clearTimeout(resizeTimer);
     };
-  }, [isMobile]);
+  }, []);
 
   // Memoized characters data
   const characters: Character[] = useMemo(() => [
@@ -169,7 +170,7 @@ export default function Videos() {
     }
   ], [language]);
 
-  // Memoized videos data - FIXED: Clear structure with all videos
+  // Memoized videos data
   const videos: Video[] = useMemo(() => [
     {
       id: "channel-showcase",
@@ -346,29 +347,17 @@ export default function Videos() {
     }
   ], [language]);
 
-  // FIXED: Get videos for current section - RELIABLE FILTERING
+  // Get section videos - FIXED: No disappearing issue
   const getSectionVideos = useCallback((section: typeof activeSection): Video[] => {
-    switch(section) {
-      case 'tutorials':
-        return videos.filter(v => v.type === 'tutorial');
-      case 'community':
-        return videos.filter(v => v.type === 'community');
-      case 'channel':
-        return videos.filter(v => v.type === 'channel');
-      default:
-        return [];
-    }
+    return videos.filter(v => v.type === section.slice(0, -1) as Video['type']);
   }, [videos]);
 
-  // FIXED: Enhanced search function that searches ALL videos, not just current section
-  const searchVideos = useCallback((
-    videos: Video[], 
-    query: string
-  ): Video[] => {
-    if (!query.trim()) return videos;
+  // Enhanced search function - works across all sections
+  const searchVideos = useCallback((query: string): Video[] => {
+    if (!query.trim()) return [];
     
     const searchTerms = query.toLowerCase().trim().split(/\s+/).filter(term => term.length > 1);
-    if (searchTerms.length === 0) return videos;
+    if (searchTerms.length === 0) return [];
     
     return videos.filter(video => {
       const searchableText = [
@@ -381,28 +370,17 @@ export default function Videos() {
         ...(video.tags || []).map(tag => tag.toLowerCase())
       ].join(' ');
       
-      // Check if all search terms are found
-      return searchTerms.every(term => {
-        if (searchableText.includes(term)) return true;
-        
-        // Try partial matches
-        return searchableText.split(/\s+/).some(word => 
-          word.startsWith(term) || word.includes(term)
-        );
-      });
+      return searchTerms.every(term => searchableText.includes(term));
     });
-  }, [language]);
+  }, [videos, language]);
 
-  // FIXED: Enhanced search with global search across all videos
+  // Enhanced search with better debounce
   useEffect(() => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
     
-    if (searchQuery.trim()) {
-      setIsSearching(true);
-      setSearchLoading(true);
-    } else {
+    if (!searchQuery.trim()) {
       setSearchResults([]);
       setDebouncedSearchQuery("");
       setIsSearching(false);
@@ -410,17 +388,18 @@ export default function Videos() {
       return;
     }
     
+    setSearchLoading(true);
+    setIsSearching(true);
+    
     searchTimeoutRef.current = setTimeout(() => {
-      // Search in ALL videos, not just current section
-      const results = searchVideos(videos, searchQuery);
+      const results = searchVideos(searchQuery);
       setSearchResults(results);
       setDebouncedSearchQuery(searchQuery);
-      
       setIsSearching(false);
       setSearchLoading(false);
       
-      // Scroll to section when searching
-      if (searchQuery.trim() && videoSectionRef.current) {
+      // Scroll to videos when searching
+      if (results.length > 0 && videoSectionRef.current) {
         setTimeout(() => {
           videoSectionRef.current?.scrollIntoView({ 
             behavior: 'smooth', 
@@ -428,23 +407,23 @@ export default function Videos() {
           });
         }, 100);
       }
-    }, 300);
+    }, 350);
     
     return () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [searchQuery, videos, searchVideos]);
+  }, [searchQuery, searchVideos]);
 
-  // FIXED: Get current videos - HANDLES BOTH SEARCH AND SECTION FILTERING PROPERLY
-  const getCurrentVideos = useMemo(() => {
-    // If we have search results, filter them by active section
+  // FIXED: Get current videos - No disappearing issue
+  const currentVideos = useMemo(() => {
+    // If searching, show search results filtered by current section
     if (searchResults.length > 0 && debouncedSearchQuery.trim()) {
-      return searchResults.filter(video => video.type === activeSection);
+      return searchResults.filter(video => video.type === activeSection.slice(0, -1) as Video['type']);
     }
     
-    // Otherwise return videos for current section
+    // Otherwise show all videos for current section
     return getSectionVideos(activeSection);
   }, [activeSection, getSectionVideos, debouncedSearchQuery, searchResults]);
 
@@ -462,10 +441,9 @@ export default function Videos() {
     setErrorMessage("");
     setIsRotated(false);
     
-    // Small delay to ensure state updates
     setTimeout(() => {
       setIsModalOpen(true);
-    }, 10);
+    }, 50);
   }, []);
 
   // Handle video modal state
@@ -483,7 +461,7 @@ export default function Videos() {
         if (isModalOpen) {
           setShowControls(false);
         }
-      }, 3000);
+      }, 3500);
     }
   }, [selectedVideo, isModalOpen]);
 
@@ -497,14 +475,9 @@ export default function Videos() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // FIXED: Enhanced thumbnail URL helper with better quality images
+  // Enhanced thumbnail URL helper with quality optimization
   const getThumbnailUrl = useCallback((youtubeId: string, isShort?: boolean) => {
-    // Always use higher quality thumbnails
-    if (isShort) {
-      return `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
-    }
-    // Try maxresdefault first, fallback to hqdefault
-    return `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
+    return `https://img.youtube.com/vi/${youtubeId}/${isShort ? 'hqdefault' : 'maxresdefault'}.jpg`;
   }, []);
 
   // Open in YouTube
@@ -572,26 +545,28 @@ export default function Videos() {
       if (isModalOpen) {
         setShowControls(false);
       }
-    }, 3000);
+    }, 3500);
   }, [isModalOpen]);
 
   // Modal close handler
   const handleModalClose = useCallback(() => {
     setIsModalOpen(false);
-    setSelectedVideo(null);
-    setIsLoading(false);
-    setVideoError(false);
-    setErrorMessage("");
-    setIsRotated(false);
-    setShowInterface(true);
-    setShowControls(true);
+    setTimeout(() => {
+      setSelectedVideo(null);
+      setIsLoading(false);
+      setVideoError(false);
+      setErrorMessage("");
+      setIsRotated(false);
+      setShowInterface(true);
+      setShowControls(true);
+      
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }, 200);
     
     if (controlsTimeoutRef.current) {
       clearTimeout(controlsTimeoutRef.current);
-    }
-    
-    if (document.fullscreenElement) {
-      document.exitFullscreen().catch(() => {});
     }
   }, []);
 
@@ -608,7 +583,7 @@ export default function Videos() {
       if (isModalOpen) {
         setShowControls(false);
       }
-    }, 3000);
+    }, 3500);
   }, [isModalOpen]);
 
   // Mute toggle
@@ -675,40 +650,27 @@ export default function Videos() {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
       }
-      if (transitionTimeoutRef.current) {
-        clearTimeout(transitionTimeoutRef.current);
-      }
     };
   }, []);
 
-  // FIXED: Section change without disappearing content
+  // FIXED: Section change - NO DISAPPEARING CONTENT
   const handleSectionChange = useCallback((section: typeof activeSection) => {
     if (section === activeSection) return;
     
-    setIsTransitioning(true);
-    
-    // Change section immediately but keep content visible
+    // Update active section immediately
+    lastSectionRef.current = activeSection;
     setActiveSection(section);
     
-    // Clear any existing transition timeout
-    if (transitionTimeoutRef.current) {
-      clearTimeout(transitionTimeoutRef.current);
-    }
+    // Update content key to trigger smooth transition
+    setContentKey(prev => prev + 1);
     
-    // Reset transition state after animation
-    transitionTimeoutRef.current = setTimeout(() => {
-      setIsTransitioning(false);
-    }, 150);
-    
-    // Scroll to section
-    if (sectionRef.current) {
-      setTimeout(() => {
-        sectionRef.current?.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start' 
-        });
-      }, 50);
-    }
+    // Scroll to videos
+    setTimeout(() => {
+      videoSectionRef.current?.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+    }, 50);
   }, [activeSection]);
 
   // Aspect ratio helper
@@ -737,7 +699,7 @@ export default function Videos() {
     setImageError(true);
   }, []);
 
-  // FIXED: Character handlers
+  // Character handlers
   const handleCharacterSelectionOpen = useCallback(() => {
     setShowCharacterSelection(true);
     setSelectedCharacter(null);
@@ -754,7 +716,7 @@ export default function Videos() {
     
     setTimeout(() => {
       setShowCharacterDetail(true);
-    }, 150);
+    }, 200);
   }, []);
 
   const handleCharacterDetailClose = useCallback(() => {
@@ -782,7 +744,7 @@ export default function Videos() {
     }
   }, [isMobile, selectedVideo]);
 
-  // FIXED: Better modal style for mobile compatibility
+  // Get modal style for mobile compatibility
   const getModalStyle = useCallback((): React.CSSProperties => {
     if (!selectedVideo) return {};
     
@@ -852,8 +814,8 @@ export default function Videos() {
 
   // FIXED: Render video section - NO DISAPPEARING CONTENT
   const renderVideoSection = useCallback(() => {
-    const currentVideos = getCurrentVideos;
     const hasSearchQuery = debouncedSearchQuery.trim().length > 0;
+    const hasVideos = currentVideos.length > 0;
     
     const noResultsText = hasSearchQuery 
       ? getLocalizedText({ fr: 'Aucun résultat trouvé', en: 'No results found' })
@@ -863,7 +825,7 @@ export default function Videos() {
       ? getLocalizedText({ fr: 'Essayez avec d\'autres termes', en: 'Try different terms' })
       : getLocalizedText({ fr: 'De nouvelles vidéos arrivent bientôt', en: 'New videos coming soon' });
 
-    if (currentVideos.length === 0) {
+    if (!hasVideos) {
       return (
         <NoResults 
           icon={activeSection === 'tutorials' ? <Recycle className="w-12 h-12" /> :
@@ -879,18 +841,19 @@ export default function Videos() {
     return (
       <div 
         ref={videoSectionRef}
+        key={contentKey}
         className={`${viewMode === 'grid' 
           ? `grid ${isMobile ? 'grid-cols-1 gap-4' : 'sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8'}`
           : 'flex flex-col gap-4 max-w-4xl mx-auto'
-        }`}
+        } animate-content-appear`}
       >
         {currentVideos.map((video, index) => (
           <div
-            key={video.id}
+            key={`${video.id}-${index}`}
             className="scroll-reveal"
             style={{ 
-              animationDelay: `${Math.min(index * 0.03, 0.3)}s`,
-              transitionDelay: `${Math.min(index * 0.01, 0.1)}s`
+              animationDelay: `${Math.min(index * 0.04, 0.4)}s`,
+              transitionDelay: `${Math.min(index * 0.02, 0.2)}s`
             }}
             onMouseEnter={() => !isMobile && setHoveredVideoId(video.id)}
             onMouseLeave={() => !isMobile && setHoveredVideoId(null)}
@@ -917,8 +880,9 @@ export default function Videos() {
     );
   }, [
     activeSection,
-    getCurrentVideos,
+    currentVideos,
     debouncedSearchQuery,
+    contentKey,
     getLocalizedText,
     isMobile,
     viewMode,
@@ -933,9 +897,9 @@ export default function Videos() {
     hasLoaded
   ]);
 
-  // FIXED: Get section icon with better quality (larger default sizes)
+  // Get section icon with better quality
   const getSectionIcon = useCallback((section: typeof activeSection) => {
-    const size = isMobile ? "w-5 h-5" : "w-6 h-6"; // Increased sizes for better quality
+    const size = isMobile ? "w-5 h-5" : "w-6 h-6";
     switch(section) {
       case 'tutorials': return <Recycle className={size} />;
       case 'community': return <Users className={size} />;
@@ -954,12 +918,15 @@ export default function Videos() {
   }, [isMobile]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-emerald-50/5 dark:to-emerald-950/5">
+    <div 
+      ref={containerRef}
+      className="min-h-screen bg-gradient-to-b from-background via-background to-emerald-50/5 dark:to-emerald-950/5"
+    >
       <div className="container mx-auto px-4 py-8 md:py-12 lg:py-16">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-8 md:mb-12 lg:mb-16">
-            <div className="inline-flex items-center justify-center p-3 mb-4 md:mb-6 animate-float-slow">
+          <div className="text-center mb-8 md:mb-12 lg:mb-16 animate-fade-up">
+            <div className="inline-flex items-center justify-center p-3 mb-4 md:mb-6 animate-float">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/30 to-green-500/30 blur-xl rounded-full animate-pulse-slow"></div>
                 <div className="relative bg-gradient-to-br from-emerald-500/20 via-green-500/20 to-teal-500/20 backdrop-blur-sm border border-emerald-500/30 p-3 md:p-4 rounded-2xl shadow-lg shadow-emerald-500/10 hover:shadow-xl hover:shadow-emerald-500/20 transition-all duration-500 hover:scale-105 group">
@@ -982,8 +949,8 @@ export default function Videos() {
             </p>
           </div>
 
-          {/* Enhanced Search Bar - FIXED: Works across all sections */}
-          <div className="mb-8 md:mb-10">
+          {/* Enhanced Search Bar */}
+          <div className="mb-8 md:mb-10 animate-fade-up" style={{ animationDelay: '0.15s' }}>
             <div className="relative max-w-2xl mx-auto">
               <div className="relative flex items-center group">
                 <div className="absolute left-3 md:left-4 top-1/2 transform -translate-y-1/2 z-10">
@@ -1028,10 +995,10 @@ export default function Videos() {
                 <div className="mt-3 flex items-center justify-center gap-2 text-sm animate-fade-in">
                   <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 px-3 py-1.5 rounded-full">
                     <Filter className="w-4 h-4" />
-                    <span>{getCurrentVideos.length} {getLocalizedText({ fr: 'résultats', en: 'results' })}</span>
-                    {searchResults.length > getCurrentVideos.length && (
+                    <span>{currentVideos.length} {getLocalizedText({ fr: 'résultats', en: 'results' })}</span>
+                    {searchResults.length > currentVideos.length && (
                       <span className="text-xs opacity-70">
-                        ({searchResults.length} total)
+                        ({searchResults.length} {getLocalizedText({ fr: 'au total', en: 'total' })})
                       </span>
                     )}
                   </div>
@@ -1041,7 +1008,7 @@ export default function Videos() {
           </div>
 
           {/* Enhanced Navigation */}
-          <div className="mb-8 md:mb-10">
+          <div className="mb-8 md:mb-10 animate-fade-up" style={{ animationDelay: '0.2s' }}>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 md:mb-8">
               <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                 {(['tutorials', 'community', 'channel'] as const).map((section) => (
@@ -1080,7 +1047,7 @@ export default function Videos() {
               
               {/* View Mode Toggle - Desktop only */}
               {!isMobile && (
-                <div className="flex items-center gap-2 bg-background/50 border border-border rounded-xl p-1.5">
+                <div className="flex items-center gap-2 bg-background/50 border border-border rounded-xl p-1.5 animate-fade-in">
                   <button
                     onClick={() => setViewMode('grid')}
                     className={`p-2.5 rounded-lg transition-all duration-300 ${
@@ -1109,22 +1076,12 @@ export default function Videos() {
           </div>
 
           {/* Content Sections - FIXED: No disappearing content */}
-          <div 
-            ref={sectionRef}
-            className={`transition-opacity duration-200 ease-out ${
-              isTransitioning ? 'opacity-80' : 'opacity-100'
-            }`}
-            style={{
-              willChange: 'opacity',
-              backfaceVisibility: 'hidden',
-              WebkitFontSmoothing: 'antialiased'
-            }}
-          >
+          <div key={`content-${activeSection}`} className="animate-content-fade">
             {renderVideoSection()}
           </div>
 
           {/* YouTube Channel Link */}
-          <div className="mt-12 md:mt-16 animate-fade-up" style={{ animationDelay: '0.2s' }}>
+          <div className="mt-12 md:mt-16 animate-fade-up" style={{ animationDelay: '0.25s' }}>
             <div className="relative bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-teal-500/5 rounded-xl md:rounded-2xl border border-emerald-500/20 p-5 md:p-7 hover:border-emerald-500/30 hover:shadow-lg transition-all duration-300 group">
               <div className="relative flex flex-col md:flex-row items-center justify-between gap-5 md:gap-7">
                 <div className="text-center md:text-left">
@@ -1159,7 +1116,7 @@ export default function Videos() {
         </div>
       </div>
 
-      {/* Enhanced Video Modal - FIXED: Better mobile compatibility */}
+      {/* Enhanced Video Modal */}
       <Dialog open={isModalOpen} onOpenChange={(open) => !open && handleModalClose()}>
         <DialogContent 
           ref={modalRef}
@@ -1306,7 +1263,7 @@ export default function Videos() {
             </div>
           )}
 
-          {/* Video Player - FIXED: Better mobile compatibility */}
+          {/* Video Player */}
           <div className="relative w-full h-full flex items-center justify-center bg-black">
             {selectedVideo && !videoError && (
               <div className="w-full h-full flex items-center justify-center animate-scale-in">
@@ -1325,7 +1282,6 @@ export default function Videos() {
                   playsInline={true}
                   modestbranding={1}
                   rel={0}
-                  // Mobile specific optimizations
                   config={{
                     playerVars: {
                       playsinline: 1,
@@ -1595,7 +1551,7 @@ export default function Videos() {
         @keyframes fade-up {
           from {
             opacity: 0;
-            transform: translateY(10px);
+            transform: translateY(15px);
           }
           to {
             opacity: 1;
@@ -1608,16 +1564,16 @@ export default function Videos() {
             opacity: 1;
           }
           50% {
-            opacity: 0.7;
+            opacity: 0.8;
           }
         }
         
-        @keyframes float-slow {
+        @keyframes float {
           0%, 100% {
-            transform: translateY(0);
+            transform: translateY(0px);
           }
           50% {
-            transform: translateY(-5px);
+            transform: translateY(-8px);
           }
         }
         
@@ -1635,7 +1591,7 @@ export default function Videos() {
             transform: translateY(0);
           }
           50% {
-            transform: translateY(-5px);
+            transform: translateY(-8px);
           }
         }
         
@@ -1659,40 +1615,68 @@ export default function Videos() {
           }
         }
         
+        @keyframes content-fade {
+          from {
+            opacity: 0.8;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes content-appear {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        
         .animate-fade-up {
-          animation: fade-up 0.4s ease-out forwards;
+          animation: fade-up 0.5s ease-out forwards;
         }
         
         .animate-pulse-slow {
-          animation: pulse-slow 2s ease-in-out infinite;
+          animation: pulse-slow 2.5s ease-in-out infinite;
         }
         
-        .animate-float-slow {
-          animation: float-slow 3s ease-in-out infinite;
+        .animate-float {
+          animation: float 3s ease-in-out infinite;
         }
         
         .animate-spin-slow {
-          animation: spin-slow 1.5s linear infinite;
+          animation: spin-slow 2s linear infinite;
         }
         
         .animate-bounce {
-          animation: bounce 1s ease-in-out infinite;
+          animation: bounce 1.2s ease-in-out infinite;
         }
         
         .animate-fade-in {
-          animation: fade-in 0.3s ease-out forwards;
+          animation: fade-in 0.4s ease-out forwards;
         }
         
         .animate-scale-in {
-          animation: scale-in 0.3s ease-out forwards;
+          animation: scale-in 0.4s ease-out forwards;
+        }
+        
+        .animate-content-fade {
+          animation: content-fade 0.3s ease-out forwards;
+        }
+        
+        .animate-content-appear {
+          animation: content-appear 0.4s ease-out forwards;
         }
         
         /* Fix blurry sections */
         .scroll-reveal {
           opacity: 0;
           transform: translateY(20px);
-          transition: opacity 0.6s ease-out, 
-                      transform 0.6s ease-out;
+          transition: opacity 0.7s ease-out, 
+                      transform 0.7s ease-out;
           backface-visibility: hidden;
           -webkit-backface-visibility: hidden;
           -webkit-font-smoothing: antialiased;
@@ -1704,7 +1688,7 @@ export default function Videos() {
           transform: translateY(0);
         }
         
-        /* Image optimization for better quality */
+        /* Image optimization */
         img {
           image-rendering: auto;
           image-rendering: crisp-edges;
@@ -1712,7 +1696,7 @@ export default function Videos() {
           -moz-osx-font-smoothing: grayscale;
         }
         
-        /* Icon optimization - prevent pixelization */
+        /* Icon optimization */
         svg {
           shape-rendering: geometricPrecision;
           text-rendering: geometricPrecision;
@@ -1721,17 +1705,16 @@ export default function Videos() {
         /* Mobile performance */
         @media (max-width: 768px) {
           .scroll-reveal {
-            transform: translateY(10px);
-            transition-duration: 0.4s;
+            transform: translateY(15px);
+            transition-duration: 0.5s;
           }
           
-          /* Better touch targets */
           button {
             min-height: 44px;
             min-width: 44px;
           }
           
-          /* Improve video embeds on mobile */
+          /* Improve video embeds */
           .video-player {
             width: 100% !important;
             height: auto !important;
@@ -1743,11 +1726,13 @@ export default function Videos() {
           .scroll-reveal,
           .animate-fade-up,
           .animate-pulse-slow,
-          .animate-float-slow,
+          .animate-float,
           .animate-spin-slow,
           .animate-bounce,
           .animate-fade-in,
           .animate-scale-in,
+          .animate-content-fade,
+          .animate-content-appear,
           .transition-all,
           .transition-transform {
             animation: none !important;
@@ -1770,9 +1755,15 @@ export default function Videos() {
           touch-action: manipulation;
         }
         
-        /* Improved modal z-index */
+        /* Improved modal */
         [data-state="open"] {
           z-index: 9999 !important;
+        }
+        
+        /* Better focus styles */
+        *:focus-visible {
+          outline: 2px solid theme('colors.emerald.500');
+          outline-offset: 2px;
         }
       `}</style>
     </div>
@@ -1814,7 +1805,7 @@ const NoResults = memo(({
 
 NoResults.displayName = 'NoResults';
 
-// Enhanced Video Card Component with better icon quality
+// Enhanced Video Card Component
 const EnhancedVideoCard = memo(({
   video,
   getLocalizedText,
@@ -1856,20 +1847,20 @@ const EnhancedVideoCard = memo(({
   
   if (viewMode === 'list' && !isMobile) {
     return (
-      <Card className="group relative overflow-hidden bg-gradient-to-b from-card to-card/50 backdrop-blur-sm cursor-pointer transition-all duration-300 hover:shadow-xl border-border/40 hover:border-emerald-500/30">
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <Card className="group relative overflow-hidden bg-gradient-to-b from-card to-card/50 backdrop-blur-sm cursor-pointer transition-all duration-500 hover:shadow-2xl border-border/40 hover:border-emerald-500/30 animate-fade-in">
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         
         <CardContent className="p-4 md:p-6">
           <div className="flex flex-col md:flex-row gap-4 md:gap-6">
             {/* Thumbnail */}
-            <div className={`relative ${aspectClass} w-full md:w-64 rounded-lg overflow-hidden bg-gradient-to-br from-emerald-500/5 via-green-500/5 to-teal-500/5 flex-shrink-0`}>
+            <div className={`relative ${aspectClass} w-full md:w-64 rounded-xl overflow-hidden bg-gradient-to-br from-emerald-500/5 via-green-500/5 to-teal-500/5 flex-shrink-0`}>
               <div 
-                className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer"
+                className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 cursor-pointer"
                 onClick={(e) => handleThumbnailClick(e, video)}
               >
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="relative">
-                    <div className="relative w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <div className="relative w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-500">
                       <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center">
                         <Play className="w-6 h-6 md:w-7 md:h-7 text-emerald-600 ml-0.5" fill="currentColor" />
                       </div>
@@ -1881,9 +1872,9 @@ const EnhancedVideoCard = memo(({
               <img
                 src={getThumbnailUrl(video.youtubeId, video.isShort)}
                 alt={getLocalizedText(video.title)}
-                className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 ${
+                className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
                   imageLoaded ? 'opacity-100' : 'opacity-0'
-                } ${isHovered ? 'scale-105' : 'scale-100'}`}
+                } ${isHovered ? 'scale-110' : 'scale-100'}`}
                 loading="lazy"
                 decoding="async"
                 onLoad={handleImageLoad}
@@ -1915,17 +1906,17 @@ const EnhancedVideoCard = memo(({
               <div className="space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
-                    <h3 className="font-bold text-xl md:text-2xl mb-2 md:mb-3 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                    <h3 className="font-bold text-xl md:text-2xl mb-2 md:mb-3 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-500">
                       {getLocalizedText(video.title)}
                     </h3>
-                    <p className="text-base text-muted-foreground line-clamp-2 group-hover:text-foreground/80 transition-colors duration-300">
+                    <p className="text-base text-muted-foreground line-clamp-2 group-hover:text-foreground/80 transition-colors duration-500">
                       {getLocalizedText(video.description)}
                     </p>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-10 px-4 text-base hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-300 hover:scale-105 active:scale-95"
+                    className="h-10 px-4 text-base hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-500 hover:scale-110 active:scale-95"
                     onClick={() => handleVideoSelect(video)}
                     aria-label={language === 'fr' ? 'Regarder' : 'Watch'}
                   >
@@ -1948,7 +1939,7 @@ const EnhancedVideoCard = memo(({
                               e.preventDefault();
                               onCharacterInfoClick();
                             }}
-                            className="absolute -right-1 -top-1 h-6 w-6 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white p-1 rounded-full border-2 border-background transition-all duration-300 hover:scale-110 active:scale-95 shadow-md flex items-center justify-center"
+                            className="absolute -right-1 -top-1 h-6 w-6 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white p-1 rounded-full border-2 border-background transition-all duration-500 hover:scale-110 active:scale-95 shadow-md flex items-center justify-center"
                             aria-label={language === 'fr' ? 'Personnages' : 'Characters'}
                             title={language === 'fr' ? 'Personnages' : 'Characters'}
                           >
@@ -1992,17 +1983,17 @@ const EnhancedVideoCard = memo(({
 
   // Grid View
   return (
-    <Card className="group relative h-full border-border/40 hover:border-emerald-500/30 overflow-hidden bg-gradient-to-b from-card to-card/50 backdrop-blur-sm cursor-pointer transition-all duration-300">
-      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+    <Card className="group relative h-full border-border/40 hover:border-emerald-500/30 overflow-hidden bg-gradient-to-b from-card to-card/50 backdrop-blur-sm cursor-pointer transition-all duration-500 hover:shadow-2xl animate-fade-in">
+      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       
       <CardContent className="p-0">
         <div className={`relative ${aspectClass} overflow-hidden bg-gradient-to-br from-emerald-500/5 via-green-500/5 to-teal-500/5`}>
           <img
             src={getThumbnailUrl(video.youtubeId, video.isShort)}
             alt={getLocalizedText(video.title)}
-            className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 ${
+            className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
               imageLoaded ? 'opacity-100' : 'opacity-0'
-            } ${isHovered ? 'scale-105' : 'scale-100'}`}
+            } ${isHovered ? 'scale-110' : 'scale-100'}`}
             loading="lazy"
             decoding="async"
             onLoad={handleImageLoad}
@@ -2013,12 +2004,12 @@ const EnhancedVideoCard = memo(({
           )}
           
           <div 
-            className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer"
+            className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 cursor-pointer"
             onClick={(e) => handleThumbnailClick(e, video)}
           >
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="relative">
-                <div className="relative w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <div className="relative w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-500">
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center">
                     <Play className="w-6 h-6 md:w-7 md:h-7 text-emerald-600 ml-0.5" fill="currentColor" />
                   </div>
@@ -2052,7 +2043,7 @@ const EnhancedVideoCard = memo(({
         <div className="p-4 relative z-20">
           <div className="space-y-3">
             <div className="flex items-start justify-between gap-2">
-              <h3 className="font-bold text-lg line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300 flex-1">
+              <h3 className="font-bold text-lg line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-500 flex-1">
                 {getLocalizedText(video.title)}
               </h3>
             </div>
@@ -2089,7 +2080,7 @@ const EnhancedVideoCard = memo(({
               </div>
             )}
             
-            <p className="text-sm text-muted-foreground line-clamp-2 group-hover:text-foreground/80 transition-colors duration-300">
+            <p className="text-sm text-muted-foreground line-clamp-2 group-hover:text-foreground/80 transition-colors duration-500">
               {getLocalizedText(video.description)}
             </p>
             
@@ -2106,7 +2097,7 @@ const EnhancedVideoCard = memo(({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 px-3 text-sm hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-300 hover:scale-105 active:scale-95"
+                className="h-8 px-3 text-sm hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-500 hover:scale-110 active:scale-95"
                 onClick={() => handleVideoSelect(video)}
                 aria-label={language === 'fr' ? 'Regarder' : 'Watch'}
               >
