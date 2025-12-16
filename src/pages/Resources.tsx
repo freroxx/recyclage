@@ -26,6 +26,34 @@ export default function Resources() {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isReducedMotion, setIsReducedMotion] = useState(false);
+
+  // Detect mobile device and reduced motion preference
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    const checkReducedMotion = () => {
+      setIsReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    };
+    
+    // Set smooth scrolling for entire page
+    document.documentElement.style.scrollBehavior = 'smooth';
+    
+    checkMobile();
+    checkReducedMotion();
+    
+    window.addEventListener('resize', checkMobile);
+    window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', checkReducedMotion);
+    
+    return () => {
+      document.documentElement.style.scrollBehavior = '';
+      window.removeEventListener('resize', checkMobile);
+      window.matchMedia('(prefers-reduced-motion: reduce)').removeEventListener('change', checkReducedMotion);
+    };
+  }, []);
 
   const resources = [
     { 
@@ -89,7 +117,7 @@ export default function Resources() {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
+        staggerChildren: isMobile ? 0.05 : 0.1,
         delayChildren: 0.2
       }
     }
@@ -103,7 +131,8 @@ export default function Resources() {
       transition: {
         type: "spring",
         stiffness: 100,
-        damping: 15
+        damping: isMobile ? 25 : 15,
+        mass: isMobile ? 1.2 : 1
       }
     }
   };
@@ -111,84 +140,108 @@ export default function Resources() {
   const cardHoverVariants = {
     rest: { scale: 1 },
     hover: { 
-      scale: 1.03,
+      scale: isMobile ? 1.01 : 1.03,
       transition: {
         type: "spring",
-        stiffness: 300,
-        damping: 20
+        stiffness: isMobile ? 200 : 300,
+        damping: isMobile ? 25 : 20
       }
     }
   };
 
+  // Optimize animations for mobile and reduced motion
+  const shouldAnimate = !isReducedMotion && !isMobile;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 overflow-hidden">
-      {/* Animated background decorations */}
+      {/* Optimized animated background decorations for mobile */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <motion.div 
-          className="absolute top-20 right-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.1, 1],
-            opacity: [0.1, 0.15, 0.1]
-          }}
-          transition={{
-            duration: 4,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-        <motion.div 
-          className="absolute bottom-40 left-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.1, 0.2, 0.1]
-          }}
-          transition={{
-            duration: 5,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 1
-          }}
-        />
-        <motion.div 
-          className="absolute top-1/2 left-1/3 w-64 h-64 bg-green-500/5 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.15, 1],
-            opacity: [0.05, 0.1, 0.05]
-          }}
-          transition={{
-            duration: 6,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2
-          }}
-        />
+        {shouldAnimate && (
+          <>
+            <motion.div 
+              className="absolute top-20 right-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl"
+              animate={{
+                scale: [1, 1.1, 1],
+                opacity: [0.1, 0.15, 0.1]
+              }}
+              transition={{
+                duration: 4,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+            <motion.div 
+              className="absolute bottom-40 left-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"
+              animate={{
+                scale: [1, 1.2, 1],
+                opacity: [0.1, 0.2, 0.1]
+              }}
+              transition={{
+                duration: 5,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 1
+              }}
+            />
+            <motion.div 
+              className="absolute top-1/2 left-1/3 w-64 h-64 bg-green-500/5 rounded-full blur-3xl"
+              animate={{
+                scale: [1, 1.15, 1],
+                opacity: [0.05, 0.1, 0.05]
+              }}
+              transition={{
+                duration: 6,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 2
+              }}
+            />
+          </>
+        )}
+        {/* Static fallback for reduced motion */}
+        {!shouldAnimate && (
+          <>
+            <div className="absolute top-20 right-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl opacity-10" />
+            <div className="absolute bottom-40 left-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl opacity-10" />
+          </>
+        )}
       </div>
 
-      <div className="container mx-auto px-4 py-12 relative z-10">
+      {/* Remove gap by using pt instead of py for top padding only */}
+      <div className="container mx-auto px-4 pt-12 relative z-10">
         <div className="max-w-6xl mx-auto">
           {/* Header with enhanced animations */}
           <motion.div 
-            className="text-center mb-16"
+            className="text-center mb-12 md:mb-16"
             initial={{ opacity: 0, y: -30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
+            transition={{ 
+              duration: isReducedMotion ? 0.3 : 0.6, 
+              ease: "easeOut" 
+            }}
           >
             <motion.div 
               className="inline-flex items-center gap-2 bg-primary/10 text-primary px-5 py-2.5 rounded-full text-sm font-medium mb-6 border border-primary/20"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.4 }}
-              whileHover={{ scale: 1.05 }}
+              transition={{ 
+                delay: isReducedMotion ? 0 : 0.2, 
+                duration: isReducedMotion ? 0.2 : 0.4 
+              }}
+              whileHover={shouldAnimate ? { scale: 1.05 } : {}}
             >
               <BookOpen className="w-4 h-4" />
               <span>{language === "fr" ? "Centre de Ressources" : "Resource Center"}</span>
             </motion.div>
             
             <motion.h1 
-              className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6"
+              className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 px-4"
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
+              transition={{ 
+                delay: isReducedMotion ? 0 : 0.3, 
+                duration: isReducedMotion ? 0.3 : 0.5 
+              }}
             >
               <span className="bg-gradient-to-r from-primary via-green-600 to-emerald-500 bg-clip-text text-transparent">
                 {t("resources.title")}
@@ -196,31 +249,40 @@ export default function Resources() {
             </motion.h1>
             
             <motion.p 
-              className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8"
+              className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto mb-8 px-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.4, duration: 0.5 }}
+              transition={{ 
+                delay: isReducedMotion ? 0 : 0.4, 
+                duration: isReducedMotion ? 0.3 : 0.5 
+              }}
             >
               {t("resources.subtitle")}
             </motion.p>
 
-            {/* Stats bar */}
+            {/* Stats bar - optimized for mobile */}
             <motion.div 
-              className="flex flex-wrap justify-center gap-6 md:gap-12 mb-8"
+              className="flex flex-wrap justify-center gap-4 md:gap-8 mb-8 px-2"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.5 }}
+              transition={{ 
+                delay: isReducedMotion ? 0 : 0.5, 
+                duration: isReducedMotion ? 0.3 : 0.5 
+              }}
             >
               {featuredStats.map((stat, index) => (
                 <motion.div 
                   key={index}
-                  className="flex items-center gap-3 px-4 py-2 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10"
-                  whileHover={{ scale: 1.05, backgroundColor: "rgba(255,255,255,0.1)" }}
+                  className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10"
+                  whileHover={shouldAnimate ? { 
+                    scale: 1.05, 
+                    backgroundColor: "rgba(255,255,255,0.1)" 
+                  } : {}}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
                   <stat.icon className="w-4 h-4 text-primary" />
                   <div>
-                    <div className="font-bold text-xl">{stat.value}</div>
+                    <div className="font-bold text-lg md:text-xl">{stat.value}</div>
                     <div className="text-xs text-muted-foreground">{stat.label}</div>
                   </div>
                 </motion.div>
@@ -228,24 +290,24 @@ export default function Resources() {
             </motion.div>
           </motion.div>
 
-          {/* Resources Grid with enhanced animations */}
+          {/* Resources Grid with mobile optimizations */}
           <motion.div 
-            className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 mb-16"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-12 md:mb-16 px-2 md:px-0"
+            variants={shouldAnimate ? containerVariants : {}}
+            initial={shouldAnimate ? "hidden" : false}
+            animate={shouldAnimate ? "visible" : false}
           >
             {resources.map((resource, index) => (
               <motion.div
                 key={resource.key}
-                variants={itemVariants}
+                variants={shouldAnimate ? itemVariants : {}}
                 custom={index}
               >
                 <motion.div
-                  variants={cardHoverVariants}
+                  variants={shouldAnimate ? cardHoverVariants : {}}
                   initial="rest"
-                  whileHover="hover"
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={shouldAnimate ? "hover" : {}}
+                  whileTap={shouldAnimate ? { scale: 0.98 } : {}}
                   onMouseEnter={() => setHoveredCard(resource.key)}
                   onMouseLeave={() => setHoveredCard(null)}
                   className="h-full"
@@ -255,73 +317,77 @@ export default function Resources() {
                       h-full border-2 ${resource.borderColor} 
                       cursor-pointer overflow-hidden 
                       backdrop-blur-sm bg-card/50
-                      transition-all duration-300
-                      hover:shadow-2xl hover:shadow-primary/10
+                      transition-all duration-200
+                      ${shouldAnimate ? 'hover:shadow-xl hover:shadow-primary/10' : ''}
                       group
+                      ${isMobile ? 'active:scale-[0.995]' : ''}
                     `}
                     onClick={() => navigate(resource.path)}
                   >
-                    {/* Animated gradient background */}
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                    {/* Optimized gradient background for mobile */}
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out">
                       <div className={`absolute inset-0 bg-gradient-to-br ${resource.gradient}`} />
                     </div>
 
-                    {/* Glow effect */}
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-30 transition-opacity duration-300">
-                      <div className={`absolute -inset-1 bg-gradient-to-r ${resource.gradient} blur-lg`} />
-                    </div>
+                    {/* Reduced glow effect for mobile */}
+                    {shouldAnimate && (
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300">
+                        <div className={`absolute -inset-1 bg-gradient-to-r ${resource.gradient} blur-md md:blur-lg`} />
+                      </div>
+                    )}
 
-                    <CardContent className="p-6 md:p-8 relative h-full flex flex-col">
-                      {/* Icon container with animation */}
+                    <CardContent className="p-5 md:p-6 lg:p-8 relative h-full flex flex-col">
+                      {/* Icon container with optimized animation */}
                       <motion.div 
-                        className={`w-14 h-14 rounded-2xl ${resource.bg} flex items-center justify-center mb-6 
-                          shadow-lg group-hover:shadow-xl transition-all duration-300`}
-                        animate={{ 
+                        className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl ${resource.bg} flex items-center justify-center mb-4 md:mb-6 
+                          shadow-lg transition-all duration-200 ${shouldAnimate ? 'group-hover:shadow-xl' : ''}`}
+                        animate={shouldAnimate ? { 
                           rotate: hoveredCard === resource.key ? [0, 10, -10, 0] : 0,
                           scale: hoveredCard === resource.key ? 1.1 : 1
-                        }}
-                        transition={{ 
+                        } : {}}
+                        transition={shouldAnimate ? { 
                           rotate: { duration: 0.6 },
                           scale: { type: "spring", stiffness: 200 }
-                        }}
+                        } : {}}
                       >
-                        <resource.icon className={`w-7 h-7 ${resource.color}`} />
+                        <resource.icon className={`w-6 h-6 md:w-7 md:h-7 ${resource.color}`} />
                       </motion.div>
 
-                      <h3 className="font-bold text-xl mb-3 group-hover:text-primary transition-colors duration-300">
+                      <h3 className="font-bold text-lg md:text-xl mb-2 md:mb-3 transition-colors duration-200 group-hover:text-primary">
                         {t(`resources.${resource.key}`)}
                       </h3>
                       
-                      <p className="text-muted-foreground text-sm mb-4 flex-grow">
+                      <p className="text-muted-foreground text-sm md:text-base mb-3 md:mb-4 flex-grow">
                         {resource.description}
                       </p>
 
                       {/* Stats badge */}
-                      <div className="mb-6">
-                        <span className="inline-flex items-center gap-1 text-xs font-medium px-3 py-1 rounded-full bg-secondary/50 text-secondary-foreground">
+                      <div className="mb-4 md:mb-6">
+                        <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-secondary/50 text-secondary-foreground">
                           <resource.actionIcon className="w-3 h-3" />
                           {resource.stats}
                         </span>
                       </div>
 
-                      {/* Action button with animation */}
+                      {/* Action button with optimized animation */}
                       <motion.div
-                        whileHover={{ x: 5 }}
-                        transition={{ type: "spring", stiffness: 300 }}
+                        whileHover={shouldAnimate ? { x: 5 } : {}}
+                        transition={shouldAnimate ? { type: "spring", stiffness: 300 } : {}}
                       >
                         <Button 
                           variant="outline" 
-                          className="w-full group/btn border-2 hover:border-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+                          className="w-full group/btn border hover:border-primary hover:bg-primary/5 hover:text-primary transition-all duration-200 active:scale-[0.98]"
+                          size={isMobile ? "sm" : "default"}
                         >
                           <span className="flex items-center justify-center w-full">
                             {t("resources.view")}
                             <motion.span
-                              animate={{ 
+                              animate={shouldAnimate ? { 
                                 x: hoveredCard === resource.key ? 5 : 0 
-                              }}
-                              transition={{ type: "spring", stiffness: 400 }}
+                              } : {}}
+                              transition={shouldAnimate ? { type: "spring", stiffness: 400 } : {}}
                             >
-                              <ChevronRight className="w-4 h-4 ml-2 transition-transform duration-300 group-hover/btn:translate-x-1" />
+                              <ChevronRight className="w-4 h-4 ml-2 transition-transform duration-200 group-hover/btn:translate-x-1" />
                             </motion.span>
                           </span>
                         </Button>
@@ -333,76 +399,84 @@ export default function Resources() {
             ))}
           </motion.div>
 
-          {/* CTA Section with enhanced animations */}
+          {/* CTA Section with mobile optimizations */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true, amount: 0.3 }}
-            className="mb-16"
+            transition={{ duration: isReducedMotion ? 0.3 : 0.6 }}
+            viewport={{ once: true, amount: 0.1 }}
+            className="mb-12 md:mb-16 px-2 md:px-0"
           >
-            <Card className="border-2 border-primary/20 shadow-2xl overflow-hidden backdrop-blur-sm bg-card/50">
-              <div className="bg-gradient-to-r from-primary/10 via-green-500/10 to-primary/10 p-8 md:p-12 relative">
-                {/* Floating particles */}
-                <div className="absolute inset-0 overflow-hidden">
-                  {[...Array(5)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      className="absolute w-2 h-2 bg-primary/20 rounded-full"
-                      animate={{
-                        y: [0, -30, 0],
-                        x: [0, Math.sin(i) * 20, 0],
-                        opacity: [0.2, 0.5, 0.2]
-                      }}
-                      transition={{
-                        duration: 3 + i,
-                        repeat: Infinity,
-                        delay: i * 0.5
-                      }}
-                      style={{
-                        left: `${20 + i * 15}%`,
-                        top: `${30 + i * 10}%`
-                      }}
-                    />
-                  ))}
-                </div>
+            <Card className="border-2 border-primary/20 shadow-xl overflow-hidden backdrop-blur-sm bg-card/50">
+              <div className="bg-gradient-to-r from-primary/10 via-green-500/10 to-primary/10 p-6 md:p-8 lg:p-12 relative">
+                {/* Optimized floating particles */}
+                {shouldAnimate && (
+                  <div className="absolute inset-0 overflow-hidden">
+                    {[...Array(isMobile ? 3 : 5)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        className="absolute w-1 h-1 md:w-2 md:h-2 bg-primary/20 rounded-full"
+                        animate={{
+                          y: [0, -20, 0],
+                          x: [0, Math.sin(i) * 15, 0],
+                          opacity: [0.2, 0.4, 0.2]
+                        }}
+                        transition={{
+                          duration: 2 + i,
+                          repeat: Infinity,
+                          delay: i * 0.5
+                        }}
+                        style={{
+                          left: `${20 + i * 15}%`,
+                          top: `${30 + i * 10}%`
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
 
                 <div className="relative z-10 text-center">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                    className="inline-block mb-6"
-                  >
-                    <Sparkles className="w-12 h-12 text-primary" />
-                  </motion.div>
+                  {shouldAnimate ? (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                      className="inline-block mb-4 md:mb-6"
+                    >
+                      <Sparkles className="w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 text-primary" />
+                    </motion.div>
+                  ) : (
+                    <div className="inline-block mb-4 md:mb-6">
+                      <Sparkles className="w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 text-primary" />
+                    </div>
+                  )}
                   
-                  <h2 className="text-2xl md:text-4xl font-bold mb-4">
+                  <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-3 md:mb-4">
                     {language === "fr" ? "Prêt à commencer ?" : "Ready to start?"}
                   </h2>
                   
-                  <p className="text-muted-foreground mb-8 max-w-lg mx-auto text-lg">
+                  <p className="text-muted-foreground mb-6 md:mb-8 max-w-lg mx-auto text-sm md:text-base lg:text-lg">
                     {language === "fr" 
                       ? "Explorez nos ressources et devenez un champion du recyclage !"
                       : "Explore our resources and become a recycling champion!"}
                   </p>
                   
                   <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={shouldAnimate ? { scale: 1.05 } : {}}
+                    whileTap={shouldAnimate ? { scale: 0.95 } : {}}
                   >
                     <Button 
-                      size="lg" 
-                      className="px-10 py-7 text-lg shadow-lg hover:shadow-xl transition-all duration-300 group"
+                      size={isMobile ? "default" : "lg"}
+                      className="px-6 md:px-8 lg:px-10 py-5 md:py-6 text-base md:text-lg shadow-lg transition-all duration-200 group active:scale-[0.98]"
                       onClick={() => navigate("/guide")}
                     >
                       <span className="flex items-center">
                         {language === "fr" ? "Commencer le guide" : "Start the guide"}
-                        <ArrowRight className="w-5 h-5 ml-3 transition-transform duration-300 group-hover:translate-x-2" />
+                        <ArrowRight className="w-4 h-4 md:w-5 md:h-5 ml-2 md:ml-3 transition-transform duration-200 group-hover:translate-x-1" />
                       </span>
                     </Button>
                   </motion.div>
                   
-                  <p className="text-sm text-muted-foreground mt-6">
+                  <p className="text-xs md:text-sm text-muted-foreground mt-4 md:mt-6">
                     {language === "fr" 
                       ? "Accès gratuit à toutes les ressources"
                       : "Free access to all resources"}
@@ -412,42 +486,59 @@ export default function Resources() {
             </Card>
           </motion.div>
 
-          {/* Quick Links Section */}
+          {/* Improved Quick Links Section */}
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: isReducedMotion ? 0.2 : 0.5 }}
             viewport={{ once: true }}
-            className="text-center"
+            className="text-center pb-8 md:pb-12"
           >
-            <h3 className="text-2xl font-bold mb-8">
+            <h3 className="text-xl md:text-2xl font-bold mb-6 md:mb-8">
               {language === "fr" ? "Navigation rapide" : "Quick Navigation"}
             </h3>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Button
-                variant="outline"
-                className="gap-2 hover:bg-secondary"
-                onClick={() => navigate("/")}
+            <div className="flex flex-wrap justify-center gap-3 md:gap-4 px-2">
+              <motion.div
+                whileHover={shouldAnimate ? { y: -2 } : {}}
+                whileTap={shouldAnimate ? { scale: 0.98 } : {}}
               >
-                {language === "fr" ? "Accueil" : "Home"}
-                <ExternalLink className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="gap-2 hover:bg-secondary"
-                onClick={() => navigate("/project")}
+                <Button
+                  variant="outline"
+                  className="gap-2 bg-background/50 backdrop-blur-sm border-2 hover:border-primary/30 hover:bg-gradient-to-r hover:from-primary/5 hover:to-primary/10 transition-all duration-200 group"
+                  onClick={() => navigate("/")}
+                >
+                  {language === "fr" ? "Accueil" : "Home"}
+                  <ExternalLink className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                </Button>
+              </motion.div>
+              
+              <motion.div
+                whileHover={shouldAnimate ? { y: -2 } : {}}
+                whileTap={shouldAnimate ? { scale: 0.98 } : {}}
               >
-                {language === "fr" ? "Notre projet" : "Our project"}
-                <ExternalLink className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="gap-2 hover:bg-secondary"
-                onClick={() => navigate("/contact")}
+                <Button
+                  variant="outline"
+                  className="gap-2 bg-background/50 backdrop-blur-sm border-2 hover:border-primary/30 hover:bg-gradient-to-r hover:from-primary/5 hover:to-primary/10 transition-all duration-200 group"
+                  onClick={() => navigate("/project")}
+                >
+                  {language === "fr" ? "Notre projet" : "Our project"}
+                  <ExternalLink className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                </Button>
+              </motion.div>
+              
+              <motion.div
+                whileHover={shouldAnimate ? { y: -2 } : {}}
+                whileTap={shouldAnimate ? { scale: 0.98 } : {}}
               >
-                {language === "fr" ? "Contact" : "Contact"}
-                <ExternalLink className="w-4 h-4" />
-              </Button>
+                <Button
+                  variant="outline"
+                  className="gap-2 bg-background/50 backdrop-blur-sm border-2 hover:border-primary/30 hover:bg-gradient-to-r hover:from-primary/5 hover:to-primary/10 transition-all duration-200 group"
+                  onClick={() => navigate("/contact")}
+                >
+                  {language === "fr" ? "Contact" : "Contact"}
+                  <ExternalLink className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                </Button>
+              </motion.div>
             </div>
           </motion.div>
         </div>
