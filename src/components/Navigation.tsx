@@ -534,7 +534,7 @@ export function Navigation() {
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-muted-foreground">
-                      {t("nav.quickActions") || "Actions rapides"}
+                      {t("Quick actions") || "Actions rapides"}
                     </span>
                     <div className="flex items-center gap-2">
                       <motion.div
