@@ -10,7 +10,7 @@ import { Footer } from "@/components/Footer";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { lazy, Suspense } from "react";
 
-// Vercel Analytics + Speed Insights
+// ✅ Vercel Analytics + Speed Insights
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 
@@ -27,7 +27,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
-// Loader
+// Loader component
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[60vh]">
     <div className="flex flex-col items-center gap-4">
@@ -43,7 +43,7 @@ const App = () => (
       attribute="class" 
       defaultTheme="light" 
       enableSystem 
-      disableTransitionOnChange={false}  // CHANGEMENT ICI
+      disableTransitionOnChange={false}
     >
       <LanguageProvider>
         <TooltipProvider>
@@ -77,10 +77,10 @@ const App = () => (
               <Footer />
               <ScrollToTop />
 
-              {/* Vercel Analytics */}
+              {/* ✅ Vercel Analytics */}
               <Analytics />
 
-              {/* Vercel Speed Insights */}
+              {/* ✅ Vercel Speed Insights */}
               <SpeedInsights />
             </div>
           </BrowserRouter>
