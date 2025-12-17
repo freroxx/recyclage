@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Languages, Bot } from "lucide-react";
@@ -8,7 +8,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AIChat } from "@/components/AIChat";
 import logo from "@/assets/logo.png";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useAnimationControls } from "framer-motion";
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,6 +17,7 @@ export function Navigation() {
   const [isHoveredLogo, setIsHoveredLogo] = useState(false);
   const { language, setLanguage, t } = useLanguage();
   const [isMobile, setIsMobile] = useState(false);
+  const logoControls = useAnimationControls();
 
   const navItems = [
     { key: "nav.home", path: "/" },
@@ -25,24 +26,42 @@ export function Navigation() {
     { key: "nav.contact", path: "/contact" },
   ];
 
-  // Mobile detection
+  // Optimized mobile detection with throttling
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
     
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  // Détection du scroll pour l'effet de fond - optimized for mobile
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+    const handleResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(checkMobile, 100);
     };
     
-    // Use passive listener for better mobile performance
+    checkMobile();
+    window.addEventListener('resize', handleResize, { passive: true });
+    
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  // Scroll detection with throttling for mobile performance
+  useEffect(() => {
+    let ticking = false;
+    
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          setScrolled(window.scrollY > 20);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -51,14 +70,70 @@ export function Navigation() {
     setLanguage(language === "fr" ? "en" : "fr");
   };
 
-  // Optimized mobile menu close handler
-  const closeMobileMenu = () => {
-    setIsOpen(false);
-    // Use requestAnimationFrame for smoother scrolling
-    requestAnimationFrame(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  };
+  // Optimized logo hover effect for desktop
+  const handleLogoHoverStart = useCallback(() => {
+    if (!isMobile) {
+      setIsHoveredLogo(true);
+      logoControls.start({
+        rotate: 360,
+        scale: 1.1,
+        transition: {
+          rotate: {
+            duration: 0.6,
+            ease: "easeInOut"
+          },
+          scale: {
+            type: "spring",
+            stiffness: 300,
+            damping: 10
+          }
+        }
+      });
+    }
+  }, [isMobile, logoControls]);
+
+  const handleLogoHoverEnd = useCallback(() => {
+    if (!isMobile) {
+      setIsHoveredLogo(false);
+      logoControls.start({
+        rotate: 0,
+        scale: 1,
+        transition: {
+          type: "spring",
+          stiffness: 200,
+          damping: 15
+        }
+      });
+    }
+  }, [isMobile, logoControls]);
+
+  const closeMobileMenu = useCallback(() => {
+    if (isOpen) {
+      setIsOpen(false);
+      // Prevent body scroll when menu is open
+      document.body.style.overflow = 'auto';
+    }
+  }, [isOpen]);
+
+  // Handle body scroll when mobile menu is open
+  useEffect(() => {
+    if (isOpen && isMobile) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [isOpen, isMobile]);
+
+  // Close mobile menu on resize to desktop
+  useEffect(() => {
+    if (!isMobile && isOpen) {
+      closeMobileMenu();
+    }
+  }, [isMobile, isOpen, closeMobileMenu]);
 
   return (
     <motion.nav 
@@ -80,41 +155,36 @@ export function Navigation() {
         theme-transition
       `}
       style={{ 
-        // Hardware acceleration for mobile
+        // Optimize for mobile
         transform: 'translateZ(0)',
-        backfaceVisibility: 'hidden'
+        backfaceVisibility: 'hidden',
+        willChange: 'transform, backdrop-filter'
       }}
     >
       <div className="container mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16 sm:h-20">
-          {/* Logo with conditional animations */}
+          {/* Logo with enhanced animations */}
           <NavLink 
             to="/" 
-            className="flex items-center gap-2 sm:gap-3 group focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background rounded-lg px-2 -mx-2"
-            onMouseEnter={() => !isMobile && setIsHoveredLogo(true)}
-            onMouseLeave={() => !isMobile && setIsHoveredLogo(false)}
-            onClick={() => isOpen && setIsOpen(false)}
+            className="flex items-center gap-2 sm:gap-3 group focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background rounded-lg px-2 -mx-2 select-none"
+            onMouseEnter={handleLogoHoverStart}
+            onMouseLeave={handleLogoHoverEnd}
+            onClick={closeMobileMenu}
+            aria-label="Accueil"
           >
             <motion.div
-              whileHover={!isMobile ? { rotate: 360, scale: 1.1 } : undefined}
+              animate={logoControls}
               whileTap={{ scale: 0.95 }}
-              animate={!isMobile ? { 
-                rotate: isHoveredLogo ? 360 : 0,
-                scale: isHoveredLogo ? 1.1 : 1
-              } : undefined}
-              transition={!isMobile ? { 
-                rotate: { duration: 0.6, ease: "easeInOut" },
-                scale: { type: "spring", stiffness: 300, damping: 10 }
-              } : { duration: 0.15 }}
               className="relative"
+              style={{ originX: 0.5, originY: 0.5 }}
             >
-              {/* Only show complex glow effects on desktop */}
+              {/* Desktop-only glow effects */}
               {!isMobile && (
                 <motion.div
-                  className="absolute -inset-2 rounded-full opacity-0 group-hover:opacity-100 blur-sm"
+                  className="absolute -inset-2 rounded-full opacity-0"
                   animate={{ 
                     scale: isHoveredLogo ? [1, 1.2, 1] : 1,
-                    opacity: isHoveredLogo ? [0, 0.4, 0] : 0
+                    opacity: isHoveredLogo ? [0, 0.3, 0] : 0
                   }}
                   transition={{ 
                     duration: 2, 
@@ -122,38 +192,22 @@ export function Navigation() {
                     ease: "easeInOut",
                     times: [0, 0.5, 1]
                   }}
+                  style={{ willChange: 'transform, opacity' }}
                 >
                   <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary/40 via-accent/30 to-primary/40 dark:from-primary/30 dark:via-accent/20 dark:to-primary/30" />
                 </motion.div>
               )}
               
-              {/* Optimized for mobile: simpler effects */}
-              {!isMobile && (
-                <motion.div
-                  className="absolute -inset-3 rounded-full opacity-0"
-                  animate={{ 
-                    scale: isHoveredLogo ? 1.1 : 1,
-                    opacity: isHoveredLogo ? 0.2 : 0
-                  }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="absolute inset-0 rounded-full bg-primary/20 dark:bg-primary/10 blur-lg" />
-                </motion.div>
-              )}
-              
-              {/* Logo with conditional shine effect */}
+              {/* Logo container with shine effect */}
               <div className="relative overflow-hidden rounded-lg">
-                {!isMobile && (
+                {!isMobile && isHoveredLogo && (
                   <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                    animate={{ 
-                      x: isHoveredLogo ? ["-100%", "100%"] : "-100%"
-                    }}
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                    initial={{ x: "-100%" }}
+                    animate={{ x: "100%" }}
                     transition={{ 
-                      duration: 1,
-                      ease: "easeInOut",
-                      repeat: isHoveredLogo ? Infinity : 0,
-                      repeatDelay: 2
+                      duration: 0.8,
+                      ease: "easeInOut"
                     }}
                   />
                 )}
@@ -163,6 +217,7 @@ export function Navigation() {
                   className="relative w-9 h-9 sm:w-10 sm:h-10 object-contain transition-transform duration-300 group-hover:scale-110 z-10"
                   loading="eager"
                   draggable="false"
+                  decoding="async"
                 />
               </div>
             </motion.div>
@@ -171,12 +226,12 @@ export function Navigation() {
               className="font-bold text-base sm:text-lg text-foreground transition-colors duration-300 group-hover:text-primary whitespace-nowrap"
               animate={!isMobile ? { 
                 scale: isHoveredLogo ? 1.05 : 1,
-                x: isHoveredLogo ? [0, 2, 0] : 0
-              } : undefined}
+                x: isHoveredLogo ? [0, 2, -2, 0] : 0
+              } : {}}
               transition={!isMobile ? { 
-                scale: { type: "spring", stiffness: 300 },
-                x: { duration: 0.3, ease: "easeInOut" }
-              } : { duration: 0.15 }}
+                scale: { type: "spring", stiffness: 300, damping: 10 },
+                x: { duration: 0.5, ease: "easeInOut" }
+              } : {}}
             >
               Recyclage Maria
             </motion.span>
@@ -196,6 +251,7 @@ export function Navigation() {
                 }}
                 className="relative"
                 whileHover={{ y: -2 }}
+                whileTap={{ y: 0, scale: 0.98 }}
               >
                 <NavLink
                   to={item.path}
@@ -212,26 +268,29 @@ export function Navigation() {
                     whileFocus={{ width: "75%", transition: { duration: 0.3 } }}
                   />
                   
+                  {/* Pulse effect on hover */}
                   <motion.div
-                    className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100"
+                    className="absolute inset-0 rounded-lg opacity-0"
                     initial={false}
                     animate={{ 
                       scale: [1, 1.05, 1],
-                      opacity: [0, 0.1, 0]
+                      opacity: [0, 0.15, 0]
                     }}
                     transition={{ 
                       duration: 2,
                       repeat: Infinity,
-                      ease: "easeInOut"
+                      ease: "easeInOut",
+                      times: [0, 0.5, 1]
                     }}
+                    style={{ willChange: 'transform, opacity' }}
                   >
-                    <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-primary/20 via-accent/10 to-primary/20 blur-sm" />
+                    <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-primary/20 via-accent/10 to-primary/20" />
                   </motion.div>
                 </NavLink>
               </motion.div>
             ))}
             
-            {/* Desktop Controls - Enhanced */}
+            {/* Desktop Controls - Enhanced with better alignment */}
             <motion.div 
               className="flex items-center gap-1 ml-2 pl-2 border-l border-border"
               initial={{ opacity: 0, scale: 0.9 }}
@@ -241,16 +300,17 @@ export function Navigation() {
                 type: "spring"
               }}
             >
+              {/* AI Chat Button */}
               <motion.div
                 whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                className="relative hover-glow"
+                whileTap={{ scale: 0.95, y: 0 }}
+                className="relative"
               >
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setAiChatOpen(true)}
-                  className="gap-2 hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background text-primary relative group/ai hover-scale-smooth"
+                  className="w-10 h-10 p-0 hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background text-primary relative group/ai"
                   aria-label="Assistant IA"
                 >
                   <motion.div
@@ -264,6 +324,7 @@ export function Navigation() {
                       repeat: Infinity,
                       ease: "easeInOut"
                     }}
+                    style={{ willChange: 'transform, opacity' }}
                   >
                     <div className="absolute inset-0 rounded-full bg-primary/10 dark:bg-primary/20" />
                   </motion.div>
@@ -271,123 +332,146 @@ export function Navigation() {
                   <motion.div
                     className="absolute -inset-2 rounded-full opacity-0"
                     whileHover={{ opacity: 0.3, scale: 1.1 }}
+                    whileTap={{ opacity: 0.2, scale: 1 }}
                     transition={{ duration: 0.3 }}
                   >
                     <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 dark:from-purple-500/30 dark:to-pink-500/30 blur-md" />
                   </motion.div>
                   
-                  <Bot className="w-4 h-4 relative z-10 transition-transform duration-300 group-hover/ai:scale-110 group-hover/ai:rotate-12" />
-                  <span className="hidden lg:inline relative z-10 text-sm font-medium transition-all duration-300 group-hover/ai:tracking-wider">
-                    IA
-                  </span>
+                  <Bot className="w-5 h-5 relative z-10" />
                 </Button>
               </motion.div>
               
+              {/* Theme Toggle - Wrapped for consistent size */}
               <motion.div
                 whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                className="hover-rotate-smooth"
+                whileTap={{ scale: 0.95, y: 0 }}
+                className="relative"
               >
-                <ThemeToggle />
+                <div className="w-10 h-10">
+                  <ThemeToggle />
+                </div>
               </motion.div>
               
+              {/* Language Toggle */}
               <motion.div
                 whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                className="relative hover-glow"
+                whileTap={{ scale: 0.95, y: 0 }}
+                className="relative"
               >
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={toggleLanguage}
-                  className="gap-2 hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background hover-scale-smooth group/lang"
+                  className="w-10 h-10 p-0 hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background group/lang"
                   aria-label={`Changer la langue (actuelle: ${language.toUpperCase()})`}
                 >
                   <motion.div
                     className="absolute -inset-2 rounded-full opacity-0"
                     whileHover={{ opacity: 0.2, scale: 1.1 }}
+                    whileTap={{ opacity: 0.1, scale: 1 }}
                     transition={{ duration: 0.3 }}
                   >
                     <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500/20 to-cyan-500/20 dark:from-blue-500/30 dark:to-cyan-500/30 blur-md" />
                   </motion.div>
                   
-                  <Languages className="w-4 h-4 transition-transform duration-300 group-hover/lang:scale-110 group-hover/lang:rotate-3" />
-                  <motion.span 
-                    key={language}
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: "spring" }}
-                    className="hidden lg:inline text-sm font-medium whitespace-nowrap transition-all duration-300 group-hover/lang:tracking-wider"
+                  <motion.div
+                    animate={{ rotate: language === "fr" ? 0 : 180 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 10 }}
                   >
-                    {language.toUpperCase()}
-                  </motion.span>
+                    <Languages className="w-5 h-5" />
+                  </motion.div>
                 </Button>
               </motion.div>
             </motion.div>
           </div>
 
-          {/* Mobile Menu Button - OPTIMIZED for mobile */}
+          {/* Mobile Menu Button - Optimized */}
           <div className="flex md:hidden items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setAiChatOpen(true)}
-              className="min-h-10 min-w-10 p-2 hover:bg-primary/5 active:scale-95 transition-transform duration-150"
-              aria-label="Assistant IA"
+            {/* AI Chat Button */}
+            <motion.div
+              whileTap={{ scale: 0.9 }}
+              transition={{ duration: 0.15 }}
             >
-              <Bot className="w-4 h-4" />
-            </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setAiChatOpen(true)}
+                className="w-10 h-10 p-2 hover:bg-primary/5 active:bg-primary/10 transition-colors"
+                aria-label="Assistant IA"
+              >
+                <Bot className="w-5 h-5" />
+              </Button>
+            </motion.div>
             
-            <div className="scale-75">
-              <ThemeToggle />
-            </div>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleLanguage}
-              className="min-h-10 min-w-10 p-2 hover:bg-primary/5 active:scale-95 transition-transform duration-150"
-              aria-label={`Changer la langue (actuelle: ${language.toUpperCase()})`}
+            {/* Theme Toggle */}
+            <motion.div
+              whileTap={{ scale: 0.9 }}
+              transition={{ duration: 0.15 }}
             >
-              <Languages className="w-4 h-4" />
-            </Button>
+              <div className="w-10 h-10">
+                <ThemeToggle />
+              </div>
+            </motion.div>
             
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsOpen(!isOpen)}
-              className="min-h-10 min-w-10 p-2 hover:bg-primary/5 active:scale-95 transition-transform duration-150"
-              aria-label="Menu"
-              aria-expanded={isOpen}
+            {/* Language Toggle */}
+            <motion.div
+              whileTap={{ scale: 0.9 }}
+              transition={{ duration: 0.15 }}
             >
-              <AnimatePresence mode="wait" initial={false}>
-                {isOpen ? (
-                  <motion.div
-                    key="close"
-                    initial={{ rotate: -90, opacity: 0 }}
-                    animate={{ rotate: 0, opacity: 1 }}
-                    exit={{ rotate: 90, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <X className="w-5 h-5" />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="menu"
-                    initial={{ rotate: 90, opacity: 0 }}
-                    animate={{ rotate: 0, opacity: 1 }}
-                    exit={{ rotate: -90, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Menu className="w-5 h-5" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleLanguage}
+                className="w-10 h-10 p-2 hover:bg-primary/5 active:bg-primary/10 transition-colors"
+                aria-label={`Changer la langue (${language.toUpperCase()})`}
+              >
+                <Languages className="w-5 h-5" />
+              </Button>
+            </motion.div>
+            
+            {/* Menu Toggle */}
+            <motion.div
+              whileTap={{ scale: 0.9 }}
+              transition={{ duration: 0.15 }}
+            >
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-10 h-10 p-2 hover:bg-primary/5 active:bg-primary/10 transition-colors"
+                aria-label="Menu"
+                aria-expanded={isOpen}
+              >
+                <AnimatePresence mode="wait" initial={false}>
+                  {isOpen ? (
+                    <motion.div
+                      key="close"
+                      initial={{ rotate: -90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: 90, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <X className="w-5 h-5" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="menu"
+                      initial={{ rotate: 90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: -90, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Menu className="w-5 h-5" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </Button>
+            </motion.div>
           </div>
         </div>
 
-        {/* Mobile Menu - OPTIMIZED for mobile performance */}
+        {/* Mobile Menu - Optimized for performance */}
         <AnimatePresence>
           {isOpen && (
             <motion.div
@@ -404,9 +488,8 @@ export function Navigation() {
                 duration: 0.25,
                 ease: "easeInOut"
               }}
-              className="md:hidden overflow-hidden theme-transition"
+              className="md:hidden overflow-hidden theme-transition bg-background"
               style={{
-                // Force hardware acceleration
                 transform: 'translateZ(0)',
                 willChange: 'height, opacity'
               }}
@@ -415,63 +498,84 @@ export function Navigation() {
                 {navItems.map((item, index) => (
                   <motion.div
                     key={item.path}
-                    initial={{ opacity: 0, x: -10 }}
+                    initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ 
                       delay: index * 0.05,
                       duration: 0.2
                     }}
+                    whileTap={{ x: -5 }}
                   >
                     <NavLink
                       to={item.path}
                       end={item.path === "/"}
-                      className="block px-4 py-3 text-sm font-medium text-muted-foreground hover:text-primary active:text-primary active:bg-primary/5 rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
+                      className="block px-6 py-4 text-base font-medium text-muted-foreground hover:text-primary active:text-primary active:bg-primary/5 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background rounded-lg mx-2"
                       activeClassName="text-primary bg-primary/10"
                       onClick={closeMobileMenu}
                     >
-                      <span className="block active:scale-95 transition-transform duration-150">
+                      <span className="flex items-center">
+                        <motion.span 
+                          className="inline-block w-1 h-4 mr-3 bg-primary rounded-full opacity-0"
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: index * 0.05 + 0.1 }}
+                        />
                         {t(item.key)}
                       </span>
                     </NavLink>
                   </motion.div>
                 ))}
                 
-                <div className="pt-4 px-4 border-t border-border">
+                {/* Mobile quick actions */}
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: navItems.length * 0.05 }}
+                  className="pt-6 px-4 border-t border-border"
+                >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">
-                      {t("nav.quickActions") || "Actions rapides:"}
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {t("nav.quickActions") || "Actions rapides"}
                     </span>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setIsOpen(false);
-                          setAiChatOpen(true);
-                        }}
-                        className="p-2 hover:bg-primary/5 active:scale-95 transition-transform duration-150"
-                        aria-label="Ouvrir l'assistant IA"
+                    <div className="flex items-center gap-2">
+                      <motion.div
+                        whileTap={{ scale: 0.9 }}
+                        transition={{ duration: 0.15 }}
                       >
-                        <Bot className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          toggleLanguage();
-                          setIsOpen(false);
-                        }}
-                        className="p-2 hover:bg-primary/5 active:scale-95 transition-transform duration-150"
-                        aria-label="Changer la langue"
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            closeMobileMenu();
+                            setTimeout(() => setAiChatOpen(true), 100);
+                          }}
+                          className="gap-2"
+                          aria-label="Ouvrir l'assistant IA"
+                        >
+                          <Bot className="w-4 h-4" />
+                          <span>IA</span>
+                        </Button>
+                      </motion.div>
+                      <motion.div
+                        whileTap={{ scale: 0.9 }}
+                        transition={{ duration: 0.15 }}
                       >
-                        <Languages className="w-4 h-4" />
-                        <span className="ml-1 text-xs font-medium">
-                          {language.toUpperCase()}
-                        </span>
-                      </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            toggleLanguage();
+                            closeMobileMenu();
+                          }}
+                          className="gap-2"
+                          aria-label="Changer la langue"
+                        >
+                          <Languages className="w-4 h-4" />
+                          <span>{language.toUpperCase()}</span>
+                        </Button>
+                      </motion.div>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               </div>
             </motion.div>
           )}
