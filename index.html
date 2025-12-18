@@ -2,16 +2,22 @@
 <html lang="fr" class="theme-transition">
 <head>
   <meta charset="UTF-8" />
+
+  <!-- Viewport -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+
+  <!-- SEO -->
   <meta name="author" content="École Maria" />
-  <meta name="description" content="Découvrez le projet de recyclage de l’école Maria à Agadir : sensibilisation des élèves, installation de bacs de tri et actions concrètes pour protéger l’environnemen." />
+  <meta name="description" content="Découvrez le projet de recyclage de l’école Maria à Agadir : sensibilisation des élèves, installation de bacs de tri et actions concrètes pour protéger l’environnement." />
   <meta name="keywords" content="recyclage, école, Maria, environnement, écologie, tri, déchets, éducation, Agadir, Yahia, Ikni" />
+  <link rel="canonical" href="https://recyclage.vercel.app" />
+
+  <!-- Verification -->
   <meta name="msvalidate.01" content="1B31B71BA5B3CF00272A274DEF48C16C" />
 
   <title>Recyclage École Maria - Initiative de recyclage scolaire</title>
-  <link rel="canonical" href="https://recyclage.vercel.app" />
 
-  <!-- Open Graph / Facebook -->
+  <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Recyclage Maria" />
   <meta property="og:description" content="Découvrez le projet de recyclage de l'école Maria à Agadir" />
@@ -24,19 +30,34 @@
   <meta name="twitter:description" content="Découvrez le projet de recyclage de l'école Maria à Agadir" />
   <meta name="twitter:image" content="https://i.ibb.co/SXCn8nLp/image-7.png" />
 
-  <!-- Mobile App Capabilities -->
+  <!-- PWA / Mobile -->
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
-  <!-- Preload hero image for LCP -->
-  <link rel="preload" as="image" href="/hero.webp" type="image/webp" fetchpriority="high">
+  <!-- Google Tag Manager -->
+  <script>
+    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-MD3BNVWK');
+  </script>
+  <!-- End Google Tag Manager -->
 
-  <!-- Fonts - Non-blocking -->
+  <!-- Preload LCP image -->
+  <link rel="preload" as="image" href="/hero.webp" type="image/webp" fetchpriority="high" />
+
+  <!-- Fonts (non-blocking) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+    media="print"
+    onload="this.media='all'"
+  />
   <noscript>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   </noscript>
@@ -44,8 +65,18 @@
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6418144328904526" crossorigin="anonymous"></script>
 </head>
+
 <body class="bg-background text-foreground">
+
+  <!-- Google Tag Manager (noscript) -->
+  <noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MD3BNVWK"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe>
+  </noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
   <main id="root" role="main" aria-label="Application Recyclage École Maria"></main>
+
   <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
