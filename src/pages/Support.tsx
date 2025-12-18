@@ -239,26 +239,26 @@ export default function Support() {
   const impactStats = [
     {
       icon: Users,
-      value: "300+",
-      label: t("support.students", "students educated"),
+      value: "150+",
+      label: t("Utilisateurs", "students educated"),
       color: "text-blue-600"
     },
     {
       icon: Leaf,
-      value: "50+",
-      label: t("support.bins", "recycling bins installed"),
+      value: "4",
+      label: t("Types de déchets", "recycling bins installed"),
       color: "text-green-600"
     },
     {
       icon: Trophy,
       value: "95%",
-      label: t("support.satisfaction", "satisfaction rate"),
+      label: t("Satisfaction Globale", "satisfaction rate"),
       color: "text-amber-600"
     },
     {
       icon: Zap,
-      value: "1000+",
-      label: t("support.resources", "educational resources"),
+      value: "Google",
+      label: t("Fournisseur de publicité", "educational resources"),
       color: "text-purple-600"
     }
   ];
@@ -289,23 +289,23 @@ export default function Support() {
 
   const fundUsage = [
     { 
-      percentage: "45%", 
-      label: t("support.fund1", "Website hosting & domain"),
+      percentage: "0%", 
+      label: t("Objectif 1", "Website hosting & domain"),
       description: t("support.fund1.desc", "Server costs and domain renewal")
     },
     { 
-      percentage: "30%", 
-      label: t("support.fund2", "Educational materials development"),
+      percentage: "0%", 
+      label: t("Objectif 2", "Educational materials development"),
       description: t("support.fund2.desc", "Creating new content and resources")
     },
     { 
-      percentage: "15%", 
-      label: t("support.fund3", "Recycling equipment for schools"),
+      percentage: "0%", 
+      label: t("Objectif 3", "Recycling equipment for schools"),
       description: t("support.fund3.desc", "Bins, sorting stations, and tools")
     },
     { 
-      percentage: "10%", 
-      label: t("support.fund4", "Community workshops & events"),
+      percentage: "0%", 
+      label: t("Objectif 4", "Community workshops & events"),
       description: t("support.fund4.desc", "Educational events and outreach")
     }
   ];
