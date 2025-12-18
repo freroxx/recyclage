@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Footer } from "@/components/Footer";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -1003,7 +1002,6 @@ export default function Support() {
         </motion.div>
       </div>
 
-      <Footer />
     </main>
   );
 }
