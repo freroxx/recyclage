@@ -42,7 +42,8 @@ import {
   Code,
   BookOpen,
   TrendingUp,
-  ShieldCheck
+  ShieldCheck,
+  Info
 } from "lucide-react";
 
 // Declare global AdSense types
@@ -97,7 +98,7 @@ export default function Support() {
         
       } catch (error) {
         console.error('Initialization error:', error);
-        showAdErrorToast();
+        showAdErrorToast("Erreur d'initialisation", "Impossible de charger les ressources de la page.");
       } finally {
         setIsLoading(false);
       }
@@ -114,11 +115,12 @@ export default function Support() {
           const isBlocked = testElement.offsetHeight === 0;
           setShowAdBlockerWarning(isBlocked);
           if (isBlocked) {
-            toast({
-              title: t("support.adBlockTitle", "Blocage de publicités détecté"),
-              description: t("support.adBlockMessage", "Veuillez désactiver votre bloqueur pour nous soutenir gratuitement."),
-              variant: "destructive",
-            });
+            showAdErrorToast(
+              language === 'fr' ? "Blocage de publicités détecté" : "Ad Blocker Detected",
+              language === 'fr' 
+                ? "Veuillez désactiver votre bloqueur pour nous soutenir gratuitement." 
+                : "Please disable your ad blocker to support us for free."
+            );
           }
           document.body.removeChild(testElement);
         }, 100);
@@ -133,7 +135,6 @@ export default function Support() {
         
         // Check if script already exists
         if (document.getElementById(scriptId)) {
-          initializeAds();
           resolve();
           return;
         }
@@ -146,13 +147,17 @@ export default function Support() {
         
         script.onload = () => {
           console.log('✅ AdSense script loaded successfully');
-          initializeAds();
           resolve();
         };
         
         script.onerror = (error) => {
           console.error('❌ Failed to load AdSense script:', error);
-          showAdErrorToast();
+          showAdErrorToast(
+            language === 'fr' ? "Erreur de chargement des publicités" : "Ad Loading Error",
+            language === 'fr' 
+              ? "Impossible de charger les publicités. Veuillez réessayer." 
+              : "Unable to load ads. Please try again."
+          );
           reject(error);
         };
         
@@ -163,50 +168,26 @@ export default function Support() {
     const initializeAds = () => {
       try {
         if (window.adsbygoogle) {
-          // Add page-level ads configuration
-          window.adsbygoogle.push({
-            google_ad_client: "ca-pub-6418144328904526",
-            enable_page_level_ads: true,
-            overlays: false
-          });
+          // Push the ads to initialize them
+          window.adsbygoogle.push({});
+          window.adsbygoogle.push({});
           
-          // Initialize ad slots with retry logic
-          const initializeAdSlot = (element: HTMLDivElement | null, retries = 3) => {
-            if (!element || retries <= 0) return;
-            
-            try {
-              (window.adsbygoogle = window.adsbygoogle || []).push({});
-              
-              // Show success toast for first ad
-              if (retries === 3) {
-                toast({
-                  title: t("support.adsLoaded", "Publicités chargées"),
-                  description: t("support.adsReady", "Les publicités sont prêtes à générer des revenus."),
-                  variant: "default",
-                });
-              }
-            } catch (error) {
-              console.error('Ad initialization error:', error);
-              setTimeout(() => initializeAdSlot(element, retries - 1), 1000);
-            }
-          };
-
-          // Initialize ad slots when they become visible
-          const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-              if (entry.isIntersecting) {
-                initializeAdSlot(entry.target as HTMLDivElement);
-                observer.unobserve(entry.target);
-              }
-            });
-          }, { threshold: 0.1 });
-
-          if (adRef1.current) observer.observe(adRef1.current);
-          if (adRef2.current) observer.observe(adRef2.current);
+          toast({
+            title: language === 'fr' ? "Publicités chargées" : "Ads Loaded",
+            description: language === 'fr' 
+              ? "Les publicités sont prêtes à générer des revenus pour notre projet." 
+              : "Ads are ready to generate revenue for our project.",
+            variant: "default",
+          });
         }
       } catch (error) {
-        console.error('AdSense initialization error:', error);
-        showAdErrorToast();
+        console.error('Ad initialization error:', error);
+        showAdErrorToast(
+          language === 'fr' ? "Erreur d'initialisation des publicités" : "Ad Initialization Error",
+          language === 'fr' 
+            ? "Les publicités n'ont pas pu être initialisées correctement." 
+            : "Ads could not be initialized properly."
+        );
       }
     };
 
@@ -233,16 +214,16 @@ export default function Support() {
     };
 
     const initializeProgress = () => {
-      // Simulate initial progress (you can replace with real data)
+      // Simulate initial progress
       const simulatedAmount = 0.50; // $0.50 already raised
       setCurrentAmount(simulatedAmount);
       setDomainProgress((simulatedAmount / domainAmount) * 100);
     };
 
-    const showAdErrorToast = () => {
+    const showAdErrorToast = (title: string, description: string) => {
       toast({
-        title: t("support.adErrorTitle", "Erreur de chargement des publicités"),
-        description: t("support.adErrorDesc", "Impossible de charger les publicités. Veuillez réessayer."),
+        title,
+        description,
         variant: "destructive",
         action: (
           <Button 
@@ -252,35 +233,40 @@ export default function Support() {
             className="ml-2"
           >
             <RefreshCw className="w-3 h-3 mr-1" />
-            {t("support.retry", "Réessayer")}
+            {language === 'fr' ? "Réessayer" : "Retry"}
           </Button>
         ),
       });
     };
 
-    // Add a small delay before initialization for better UX
+    // Initialize ads after a short delay
     const timer = setTimeout(() => {
       initializePage();
+      setTimeout(initializeAds, 1000); // Initialize ads 1 second after page load
     }, 500);
 
     return () => {
       clearTimeout(timer);
     };
-  }, [toast, t]);
+  }, [toast, language]);
 
   const retryAds = () => {
     if (window.adsbygoogle) {
       try {
         window.adsbygoogle.push({});
         toast({
-          title: t("support.retrySuccess", "Réessayer"),
-          description: t("support.retrySuccessDesc", "Tentative de rechargement des publicités..."),
+          title: language === 'fr' ? "Réessayer" : "Retry",
+          description: language === 'fr' 
+            ? "Tentative de rechargement des publicités..." 
+            : "Attempting to reload ads...",
           variant: "default",
         });
       } catch (error) {
         toast({
-          title: t("support.retryFailed", "Échec"),
-          description: t("support.retryFailedDesc", "Impossible de recharger les publicités."),
+          title: language === 'fr' ? "Échec" : "Failed",
+          description: language === 'fr' 
+            ? "Impossible de recharger les publicités." 
+            : "Unable to reload ads.",
           variant: "destructive",
         });
       }
@@ -291,60 +277,68 @@ export default function Support() {
     {
       icon: Users,
       value: "300+",
-      label: t("support.students", "Élèves sensibilisés"),
+      label: language === 'fr' ? "Élèves sensibilisés" : "Students educated",
       color: "text-blue-600"
     },
     {
       icon: Leaf,
       value: "50+",
-      label: t("support.bins", "Bacs de tri installés"),
+      label: language === 'fr' ? "Bacs de tri installés" : "Recycling bins installed",
       color: "text-green-600"
     },
     {
       icon: Trophy,
       value: "95%",
-      label: t("support.satisfaction", "Taux de satisfaction"),
+      label: language === 'fr' ? "Taux de satisfaction" : "Satisfaction rate",
       color: "text-amber-600"
     },
     {
       icon: Zap,
       value: "1000+",
-      label: t("support.resources", "Ressources éducatives"),
+      label: language === 'fr' ? "Ressources éducatives" : "Educational resources",
       color: "text-purple-600"
     }
   ];
 
   const fundingGoal = {
-    title: t("support.domainGoal", "Acheter un nom de domaine"),
-    description: t("support.domainGoalDesc", "Un nom de domaine professionnel pour notre plateforme éducative"),
+    title: language === 'fr' ? "Objectif Principal : Acheter un nom de domaine" : "Primary Goal: Buy a Website Domain",
+    description: language === 'fr' 
+      ? "Nous avons besoin de $25 pour acheter et renouveler notre nom de domaine (recyclagemaria.org) pendant un an." 
+      : "We need $25 to purchase and renew our domain name (recyclagemaria.org) for one year.",
     target: domainAmount,
     current: currentAmount,
     progress: domainProgress,
     icon: GlobeIcon,
     details: [
-      t("support.domainDetail1", "Renouvellement annuel du domaine"),
-      t("support.domainDetail2", "Certificat SSL pour la sécurité"),
-      t("support.domainDetail3", "Adresse email professionnelle")
+      language === 'fr' ? "Nom de domaine professionnel" : "Professional domain name",
+      language === 'fr' ? "Certificat SSL inclus" : "SSL certificate included",
+      language === 'fr' ? "Renouvellement annuel" : "Annual renewal"
     ]
   };
 
   const howItWorks = [
     {
       icon: Eye,
-      title: t("support.how1.title", "Comment nous gagnons de l'argent ?"),
-      description: t("support.how1.desc", "Grâce aux publicités Google AdSense affichées sur cette page. Chaque clic et vue génère des revenus qui financent notre projet."),
+      title: language === 'fr' ? "Comment nous gagnons de l'argent ?" : "How do we earn money?",
+      description: language === 'fr' 
+        ? "Nous utilisons Google AdSense pour afficher des publicités sur cette page. Chaque clic et chaque vue génère de petits revenus qui s'accumulent pour financer notre domaine." 
+        : "We use Google AdSense to display ads on this page. Each click and view generates small revenues that accumulate to fund our domain.",
       color: "text-blue-600"
     },
     {
       icon: DollarSign,
-      title: t("support.how2.title", "Que faisons-nous avec l'argent ?"),
-      description: t("support.how2.desc", "Nous utilisons 100% des revenus pour acheter et maintenir notre nom de domaine, garantissant l'accès permanent à nos ressources éducatives."),
+      title: language === 'fr' ? "Que faisons-nous avec l'argent ?" : "What do we do with the money?",
+      description: language === 'fr' 
+        ? "100% des revenus sont utilisés pour acheter et maintenir notre nom de domaine. Cela garantit que notre plateforme éducative reste accessible gratuitement." 
+        : "100% of the revenue is used to purchase and maintain our domain name. This ensures our educational platform remains freely accessible.",
       color: "text-green-600"
     },
     {
       icon: Globe,
-      title: t("support.how3.title", "Qu'est-ce qu'un nom de domaine ?"),
-      description: t("support.how3.desc", "C'est l'adresse unique de notre site web (ex: recyclagemaria.org). C'est essentiel pour être trouvé sur internet et avoir une présence professionnelle."),
+      title: language === 'fr' ? "Qu'est-ce qu'un nom de domaine ?" : "What is a website domain?",
+      description: language === 'fr' 
+        ? "C'est l'adresse unique de notre site web (ex: recyclagemaria.org). C'est essentiel pour être trouvé sur internet, avoir une présence professionnelle et protéger notre marque." 
+        : "It's the unique address of our website (e.g., recyclagemaria.org). It's essential to be found online, have a professional presence, and protect our brand.",
       color: "text-purple-600"
     }
   ];
@@ -352,48 +346,54 @@ export default function Support() {
   const transparencyInfo = [
     {
       icon: ShieldCheck,
-      title: t("support.transparency1.title", "Transparence totale"),
-      description: t("support.transparency1.desc", "Nous publions des rapports mensuels sur l'utilisation des fonds.")
+      title: language === 'fr' ? "Transparence totale" : "Complete transparency",
+      description: language === 'fr' 
+        ? "Nous publions des rapports mensuels montrant exactement comment chaque dollar est utilisé." 
+        : "We publish monthly reports showing exactly how every dollar is used."
     },
     {
       icon: TrendingUp,
-      title: t("support.transparency2.title", "Impact mesurable"),
-      description: t("support.transparency2.desc", "Chaque dollar contribue directement à l'éducation environnementale.")
+      title: language === 'fr' ? "Impact mesurable" : "Measurable impact",
+      description: language === 'fr' 
+        ? "Chaque dollar contribue directement à maintenir notre plateforme éducative en ligne." 
+        : "Every dollar directly contributes to keeping our educational platform online."
     },
     {
       icon: BookOpen,
-      title: t("support.transparency3.title", "Ressources gratuites"),
-      description: t("support.transparency3.desc", "Toutes nos ressources resteront toujours gratuites pour les écoles.")
+      title: language === 'fr' ? "Ressources toujours gratuites" : "Always free resources",
+      description: language === 'fr' 
+        ? "Toutes nos ressources éducatives resteront gratuites, maintenant et à l'avenir." 
+        : "All our educational resources will remain free, now and in the future."
     }
   ];
 
   const quickFacts = [
     { 
       icon: Clock, 
-      text: t("support.fact1", "Projet lancé en 2023"),
-      desc: t("support.fact1.desc", "Initiative éducative depuis plus d'un an")
+      text: language === 'fr' ? "Projet lancé en 2023" : "Project launched in 2023",
+      desc: language === 'fr' ? "Plus d'un an d'éducation environnementale" : "Over a year of environmental education"
     },
     { 
       icon: Award, 
-      text: t("support.fact2", "Projet éducatif à but non lucratif"),
-      desc: t("support.fact2.desc", "100% des revenus réinvestis")
+      text: language === 'fr' ? "Projet à but non lucratif" : "Non-profit project",
+      desc: language === 'fr' ? "100% des revenus réinvestis" : "100% of revenue reinvested"
     },
     { 
       icon: Infinity, 
-      text: t("support.fact3", "Ressources gratuites à vie"),
-      desc: t("support.fact3.desc", "Accès libre pour toutes les écoles")
+      text: language === 'fr' ? "Accès gratuit permanent" : "Permanent free access",
+      desc: language === 'fr' ? "Pour toutes les écoles et enseignants" : "For all schools and teachers"
     },
     { 
       icon: BarChart3, 
-      text: t("support.fact4", "Rapports d'impact mensuels"),
-      desc: t("support.fact4.desc", "Transparence sur nos progrès")
+      text: language === 'fr' ? "Progrès transparents" : "Transparent progress",
+      desc: language === 'fr' ? "Mises à jour régulières sur nos objectifs" : "Regular updates on our goals"
     }
   ];
 
   const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
   const shareText = language === 'fr' 
-    ? "Soutenez Recyclage Maria - Aidez-nous à acheter notre nom de domaine pour l'éducation environnementale !" 
-    : "Support Recyclage Maria - Help us buy our domain name for environmental education!";
+    ? "Aidez Recyclage Maria à acheter son nom de domaine ! Soutenez l'éducation environnementale gratuite en visionnant des publicités." 
+    : "Help Recyclage Maria buy its domain name! Support free environmental education by viewing ads.";
 
   const handleShare = async () => {
     if (typeof navigator === 'undefined') return;
@@ -401,17 +401,24 @@ export default function Support() {
     try {
       if (navigator.share) {
         await navigator.share({
-          title: language === 'fr' ? "Recyclage Maria - Soutien" : "Recyclage Maria - Support",
+          title: language === 'fr' ? "Soutenez Recyclage Maria" : "Support Recyclage Maria",
           text: shareText,
           url: shareUrl,
         });
       } else {
         await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+        toast({
+          title: language === 'fr' ? "Lien copié !" : "Link copied!",
+          description: language === 'fr' 
+            ? "Le lien a été copié dans votre presse-papier." 
+            : "The link has been copied to your clipboard.",
+          variant: "default",
+        });
       }
       setShowThankYou(true);
       setTimeout(() => setShowThankYou(false), 3000);
     } catch (error) {
-      // Share cancelled or failed - silent fail
+      // Share cancelled or failed
     }
   };
 
@@ -575,7 +582,7 @@ export default function Support() {
             className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight"
           >
             <span className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 dark:from-green-400 dark:via-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
-              {language === 'fr' ? "Achetons notre nom de domaine ensemble" : "Let's Buy Our Domain Name Together"}
+              {language === 'fr' ? "Aidez-nous à acheter notre nom de domaine" : "Help Us Buy Our Domain Name"}
             </span>
           </motion.h1>
           
@@ -586,8 +593,8 @@ export default function Support() {
             className="text-lg md:text-xl text-gray-700 dark:text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed"
           >
             {language === 'fr' 
-              ? "Aidez-nous à acheter un nom de domaine professionnel pour maintenir notre plateforme éducative gratuite. Chaque vue de publicité nous rapproche de notre objectif !"
-              : "Help us buy a professional domain name to maintain our free educational platform. Every ad view brings us closer to our goal!"}
+              ? "Nous avons besoin de votre aide pour acheter un nom de domaine professionnel. Chaque publicité que vous visionnez sur cette page nous rapproche de notre objectif !"
+              : "We need your help to buy a professional domain name. Every ad you view on this page brings us closer to our goal!"}
           </motion.p>
 
           {/* Progress bar for domain goal */}
@@ -597,50 +604,52 @@ export default function Support() {
             transition={{ delay: 0.5 }}
             className="mb-8 max-w-2xl mx-auto"
           >
-            <div className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-green-200 dark:border-green-800 shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <GlobeIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
-                  <div>
-                    <h3 className="font-bold text-lg">{fundingGoal.title}</h3>
-                    <p className="text-sm text-muted-foreground">{fundingGoal.description}</p>
+            <Card className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border-2 border-green-200 dark:border-green-800 shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <GlobeIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
+                    <div>
+                      <h3 className="font-bold text-lg">{fundingGoal.title}</h3>
+                      <p className="text-sm text-muted-foreground">{fundingGoal.description}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-green-700 dark:text-green-400">
+                      {formatCurrency(fundingGoal.current)}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {language === 'fr' ? "sur" : "of"} {formatCurrency(fundingGoal.target)}
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-green-700 dark:text-green-400">
-                    {formatCurrency(fundingGoal.current)}
+                
+                {/* Progress bar */}
+                <div className="mb-4">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>{language === 'fr' ? "Progression" : "Progress"}</span>
+                    <span className="font-bold">{fundingGoal.progress.toFixed(1)}%</span>
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    {language === 'fr' ? "sur" : "of"} {formatCurrency(fundingGoal.target)}
+                  <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${fundingGoal.progress}%` }}
+                      transition={{ duration: 1.5, ease: "easeOut" }}
+                      className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"
+                    />
                   </div>
                 </div>
-              </div>
-              
-              {/* Progress bar */}
-              <div className="mb-4">
-                <div className="flex justify-between text-sm mb-1">
-                  <span>{language === 'fr' ? "Progression" : "Progress"}</span>
-                  <span className="font-bold">{fundingGoal.progress.toFixed(1)}%</span>
+                
+                <div className="grid grid-cols-3 gap-2 text-center text-sm">
+                  {fundingGoal.details.map((detail, index) => (
+                    <div key={index} className="flex items-center gap-1 justify-center">
+                      <CheckCircle2 className="w-3 h-3 text-green-600" />
+                      <span className="text-xs">{detail}</span>
+                    </div>
+                  ))}
                 </div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${fundingGoal.progress}%` }}
-                    transition={{ duration: 1.5, ease: "easeOut" }}
-                    className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-2 text-center text-sm">
-                {fundingGoal.details.map((detail, index) => (
-                  <div key={index} className="flex items-center gap-1 justify-center">
-                    <CheckCircle2 className="w-3 h-3 text-green-600" />
-                    <span className="text-xs">{detail}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </motion.div>
 
           {/* Impact counter */}
@@ -684,7 +693,7 @@ export default function Support() {
                 <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                 <Share2 className="w-5 h-5 relative z-10 transition-transform duration-300 group-hover:scale-110" />
                 <span className="relative z-10">
-                  {language === 'fr' ? "Partager la page" : "Share this page"}
+                  {language === 'fr' ? "Partager cette page" : "Share this page"}
                 </span>
                 <ArrowUpRight className="w-5 h-5 relative z-10" />
               </Button>
@@ -705,7 +714,7 @@ export default function Support() {
                 <div className="absolute inset-0 bg-gradient-to-r from-green-50/0 via-green-100/20 to-green-50/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <ExternalLink className="w-5 h-5 relative z-10 transition-transform duration-300 group-hover:rotate-12" />
                 <span className="relative z-10">
-                  {language === 'fr' ? "Voir notre projet" : "View our project"}
+                  {language === 'fr' ? "Découvrir notre projet" : "Discover our project"}
                 </span>
               </Button>
             </motion.div>
@@ -754,7 +763,7 @@ export default function Support() {
             className="text-3xl md:text-4xl font-bold text-center mb-10"
           >
             <span className="bg-gradient-to-r from-primary to-green-600 bg-clip-text text-transparent">
-              {language === 'fr' ? "Notre Impact" : "Our Impact"}
+              {language === 'fr' ? "Notre Impact Éducatif" : "Our Educational Impact"}
             </span>
           </motion.h2>
           
@@ -841,7 +850,7 @@ export default function Support() {
           </div>
         </motion.section>
 
-        {/* AdSense #1 */}
+        {/* First Ad - In-article format */}
         <motion.div
           ref={adRef1}
           initial={{ opacity: 0, y: 30 }}
@@ -856,11 +865,11 @@ export default function Support() {
                 <Coins className="w-5 h-5 text-green-600 dark:text-green-400" />
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {language === 'fr' 
-                    ? "Cette publicité finance notre nom de domaine" 
-                    : "This ad funds our domain name"} 💚
+                    ? "Publicité 1/2 - Cette vue rapproche notre objectif" 
+                    : "Ad 1/2 - This view brings us closer to our goal"} 💚
                 </p>
               </div>
-              <Star className="w-4 h-4 text-yellow-500" />
+              <Info className="w-4 h-4 text-green-600" />
             </div>
             
             {showAdBlockerWarning && (
@@ -885,33 +894,30 @@ export default function Support() {
               </motion.div>
             )}
             
-            <div className="min-h-[280px] flex items-center justify-center bg-gradient-to-br from-white/50 to-transparent dark:from-gray-900/30 rounded-xl border-2 border-dashed border-green-300 dark:border-green-700 relative">
+            <div className="min-h-[280px] flex items-center justify-center bg-gradient-to-br from-white/50 to-transparent dark:from-gray-900/30 rounded-xl border-2 border-dashed border-green-300 dark:border-green-700">
+              {/* First Ad Slot */}
               <ins
-                className="adsbygoogle block mx-auto"
+                className="adsbygoogle"
                 style={{
                   display: 'block',
+                  textAlign: 'center',
                   width: '100%',
                   maxWidth: '728px',
-                  minHeight: '280px',
-                  backgroundColor: 'transparent'
+                  minHeight: '250px'
                 }}
+                data-ad-layout="in-article"
+                data-ad-format="fluid"
                 data-ad-client="ca-pub-6418144328904526"
-                data-ad-slot="XXXXXXXX"
-                data-ad-format="auto"
-                data-full-width-responsive="true"
+                data-ad-slot="2955145363"
               />
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="text-center p-4">
-                  <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <DollarSign className="w-8 h-8 text-green-600 dark:text-green-400" />
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {language === 'fr' 
-                      ? "Chargement des publicités... Merci de votre soutien !" 
-                      : "Loading ads... Thank you for your support!"}
-                  </p>
-                </div>
-              </div>
+            </div>
+            
+            <div className="mt-4 text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {language === 'fr' 
+                  ? "💡 Conseil : Les publicités qui vous intéressent génèrent plus de revenus pour notre projet." 
+                  : "💡 Tip: Ads that interest you generate more revenue for our project."}
+              </p>
             </div>
           </div>
         </motion.div>
@@ -951,60 +957,60 @@ export default function Support() {
           </div>
 
           {/* Detailed explanation */}
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-2xl p-8 border-2 border-green-200 dark:border-green-800">
-            <h4 className="text-xl font-bold mb-6 text-center">
-              {language === 'fr' 
-                ? "Questions fréquentes sur notre financement" 
-                : "Frequently Asked Questions About Our Funding"}
-            </h4>
-            
-            <div className="space-y-6">
-              <div>
-                <h5 className="font-bold text-lg mb-2 flex items-center gap-2">
-                  <Server className="w-5 h-5 text-green-600" />
-                  {language === 'fr' 
-                    ? "Pourquoi avons-nous besoin d'un nom de domaine ?" 
-                    : "Why do we need a domain name?"}
-                </h5>
-                <p className="text-gray-700 dark:text-gray-300">
-                  {language === 'fr'
-                    ? "Un nom de domaine (comme recyclagemaria.org) est essentiel pour avoir une présence professionnelle sur internet. Il permet aux écoles et enseignants de nous trouver facilement, de faire confiance à nos ressources, et d'accéder à notre contenu de manière sécurisée. Sans domaine, notre site serait beaucoup moins accessible et professionnel."
-                    : "A domain name (like recyclagemaria.org) is essential for professional online presence. It allows schools and teachers to find us easily, trust our resources, and access our content securely. Without a domain, our website would be much less accessible and professional."}
-                </p>
-              </div>
+          <Card className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-2 border-green-200 dark:border-green-800">
+            <CardContent className="p-8">
+              <h4 className="text-xl font-bold mb-6 text-center flex items-center justify-center gap-2">
+                <Lightbulb className="w-6 h-6 text-green-600" />
+                {language === 'fr' 
+                  ? "Informations détaillées sur notre financement" 
+                  : "Detailed Information About Our Funding"}
+              </h4>
               
-              <div>
-                <h5 className="font-bold text-lg mb-2 flex items-center gap-2">
-                  <Code className="w-5 h-5 text-green-600" />
-                  {language === 'fr' 
-                    ? "Comment les publicités génèrent-elles des revenus ?" 
-                    : "How do ads generate revenue?"}
-                </h5>
-                <p className="text-gray-700 dark:text-gray-300">
-                  {language === 'fr'
-                    ? "Google AdSense affiche des publicités pertinentes sur cette page. Chaque fois qu'un visiteur voit une publicité ou clique dessus, Google nous verse une petite commission. Ces micro-paiements s'accumulent pour financer notre projet. Plus il y a de visiteurs, plus nous pouvons collecter de fonds pour notre domaine."
-                    : "Google AdSense displays relevant ads on this page. Each time a visitor sees or clicks on an ad, Google pays us a small commission. These micro-payments accumulate to fund our project. The more visitors we have, the more funds we can collect for our domain."}
-                </p>
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <h5 className="font-bold text-lg">
+                    {language === 'fr' 
+                      ? "Comment les publicités génèrent-elles de l'argent ?" 
+                      : "How do ads generate money?"}
+                  </h5>
+                  <p className="text-gray-700 dark:text-gray-300">
+                    {language === 'fr'
+                      ? "Google AdSense affiche des publicités pertinentes basées sur le contenu de notre page. Chaque fois que vous voyez une publicité, Google nous paie une petite commission. Les clics sur les publicités génèrent des revenus supplémentaires. Ces micro-paiements s'accumulent pour financer notre projet éducatif."
+                      : "Google AdSense displays relevant ads based on our page content. Each time you see an ad, Google pays us a small commission. Clicks on ads generate additional revenue. These micro-payments accumulate to fund our educational project."}
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <h5 className="font-bold text-lg">
+                    {language === 'fr' 
+                      ? "Pourquoi un nom de domaine est-il important ?" 
+                      : "Why is a domain name important?"}
+                  </h5>
+                  <p className="text-gray-700 dark:text-gray-300">
+                    {language === 'fr'
+                      ? "Un nom de domaine professionnel (comme recyclagemaria.org) est essentiel pour :\n• Être facilement trouvable sur internet\n• Avoir une adresse email professionnelle\n• Gagner la confiance des écoles et enseignants\n• Protéger notre marque et notre contenu\n• Offrir une expérience utilisateur professionnelle"
+                      : "A professional domain name (like recyclagemaria.org) is essential for:\n• Being easily found online\n• Having a professional email address\n• Gaining trust from schools and teachers\n• Protecting our brand and content\n• Providing a professional user experience"}
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <h5 className="font-bold text-lg">
+                    {language === 'fr' 
+                      ? "Comment suivre nos progrès ?" 
+                      : "How to track our progress?"}
+                  </h5>
+                  <p className="text-gray-700 dark:text-gray-300">
+                    {language === 'fr'
+                      ? "Nous mettrons à jour régulièrement notre progression vers l'objectif de 25$. Vous pouvez suivre nos avancées sur cette page et via nos communications. Une fois le domaine acheté, nous partagerons la facture et les détails avec notre communauté."
+                      : "We will regularly update our progress toward the $25 goal. You can track our progress on this page and through our communications. Once the domain is purchased, we will share the receipt and details with our community."}
+                  </p>
+                </div>
               </div>
-              
-              <div>
-                <h5 className="font-bold text-lg mb-2 flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-green-600" />
-                  {language === 'fr' 
-                    ? "Que se passe-t-il après avoir atteint notre objectif ?" 
-                    : "What happens after we reach our goal?"}
-                </h5>
-                <p className="text-gray-700 dark:text-gray-300">
-                  {language === 'fr'
-                    ? "Une fois notre nom de domaine acheté, nous continuerons à utiliser les revenus publicitaires pour le renouvellement annuel (environ 15$/an) et pour développer de nouvelles ressources éducatives. Notre priorité restera toujours de fournir un contenu éducatif gratuit et de qualité."
-                    : "Once our domain name is purchased, we will continue using ad revenue for annual renewal (about $15/year) and to develop new educational resources. Our priority will always remain providing free, quality educational content."}
-                </p>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </motion.section>
 
-        {/* AdSense #2 */}
+        {/* Second Ad - In-article format */}
         <motion.div
           ref={adRef2}
           initial={{ opacity: 0, y: 30 }}
@@ -1018,43 +1024,40 @@ export default function Support() {
               <Gift className="w-8 h-8 text-emerald-600 dark:text-emerald-400 mx-auto mb-2" />
               <p className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-2">
                 {language === 'fr' 
-                  ? "Merci de soutenir l'éducation environnementale !" 
-                  : "Thank you for supporting environmental education!"}
+                  ? "Publicité 2/2 - Merci de votre soutien !" 
+                  : "Ad 2/2 - Thank you for your support!"}
               </p>
               <p className="text-sm text-muted-foreground">
                 {language === 'fr'
-                  ? "Chaque vue de publicité nous rapproche de notre objectif de domaine"
-                  : "Every ad view brings us closer to our domain goal"} 🌱
+                  ? "Cette publicité nous aide à atteindre notre objectif de domaine"
+                  : "This ad helps us reach our domain goal"} 🌱
               </p>
             </div>
             
-            <div className="min-h-[250px] flex items-center justify-center bg-gradient-to-br from-white/50 to-transparent dark:from-gray-900/30 rounded-xl border-2 border-dashed border-emerald-300 dark:border-emerald-700 relative">
+            <div className="min-h-[250px] flex items-center justify-center bg-gradient-to-br from-white/50 to-transparent dark:from-gray-900/30 rounded-xl border-2 border-dashed border-emerald-300 dark:border-emerald-700">
+              {/* Second Ad Slot */}
               <ins
-                className="adsbygoogle block mx-auto"
+                className="adsbygoogle"
                 style={{
                   display: 'block',
+                  textAlign: 'center',
                   width: '100%',
                   maxWidth: '728px',
-                  minHeight: '250px',
-                  backgroundColor: 'transparent'
+                  minHeight: '250px'
                 }}
+                data-ad-layout="in-article"
+                data-ad-format="fluid"
                 data-ad-client="ca-pub-6418144328904526"
-                data-ad-slot="YYYYYYY"
-                data-ad-format="auto"
-                data-full-width-responsive="true"
+                data-ad-slot="9536865580"
               />
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="text-center p-4">
-                  <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Heart className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {language === 'fr'
-                      ? "En attente des publicités... Votre soutien compte !"
-                      : "Waiting for ads... Your support matters!"}
-                  </p>
-                </div>
-              </div>
+            </div>
+            
+            <div className="mt-4 text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {language === 'fr' 
+                  ? "🎯 Objectif : 25$ pour notre domaine | Actuel : " + formatCurrency(currentAmount)
+                  : "🎯 Goal: $25 for our domain | Current: " + formatCurrency(currentAmount)}
+              </p>
             </div>
           </div>
         </motion.div>
@@ -1084,14 +1087,14 @@ export default function Support() {
               
               <h3 className="text-3xl font-bold mb-4">
                 {language === 'fr' 
-                  ? "Ensemble, nous pouvons y arriver !" 
-                  : "Together, we can do this!"}
+                  ? "Votre soutien fait la différence !" 
+                  : "Your support makes a difference!"}
               </h3>
               
               <p className="text-muted-foreground mb-8 max-w-2xl mx-auto text-lg">
                 {language === 'fr'
-                  ? "Chaque petit geste compte. En partageant cette page et en désactivant votre bloqueur de publicités, vous contribuez directement à l'éducation environnementale de centaines d'élèves."
-                  : "Every small action counts. By sharing this page and disabling your ad blocker, you directly contribute to the environmental education of hundreds of students."}
+                  ? "Chaque vue de publicité, chaque partage, chaque visite nous rapproche de notre objectif. Merci de contribuer à l'éducation environnementale des générations futures."
+                  : "Every ad view, every share, every visit brings us closer to our goal. Thank you for contributing to the environmental education of future generations."}
               </p>
               
               <div className="flex flex-wrap gap-4 justify-center">
@@ -1108,7 +1111,7 @@ export default function Support() {
                     <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                     <Share2 className="w-5 h-5 relative z-10" />
                     <span className="relative z-10">
-                      {language === 'fr' ? "Partager cette page" : "Share this page"}
+                      {language === 'fr' ? "Partager avec vos amis" : "Share with your friends"}
                     </span>
                     <ChevronRight className="w-5 h-5 relative z-10 transition-transform duration-300 group-hover:translate-x-2" />
                   </Button>
@@ -1127,7 +1130,7 @@ export default function Support() {
                   >
                     <CreditCard className="w-5 h-5 relative z-10" />
                     <span className="relative z-10">
-                      {language === 'fr' ? "Autres moyens d'aider" : "Other ways to help"}
+                      {language === 'fr' ? "Autres moyens de nous aider" : "Other ways to help us"}
                     </span>
                   </Button>
                 </motion.div>
