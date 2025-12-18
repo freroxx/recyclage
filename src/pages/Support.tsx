@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Footer } from "@/components/Footer";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,8 +29,20 @@ import {
   Star,
   RefreshCw,
   DollarSign,
-  Lightbulb
+  Lightbulb,
+  Award,
+  BarChart3,
+  Calendar,
+  Clock,
+  Eye
 } from "lucide-react";
+
+// Declare global AdSense types
+declare global {
+  interface Window {
+    adsbygoogle: any[];
+  }
+}
 
 export default function Support() {
   const { t, language } = useLanguage();
@@ -37,9 +50,43 @@ export default function Support() {
   const [adError, setAdError] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
   const [adViews, setAdViews] = useState(0);
+  const [isClient, setIsClient] = useState(false);
+  const adRef1 = useRef<HTMLDivElement>(null);
+  const adRef2 = useRef<HTMLDivElement>(null);
 
-  // Check for ad blocker and handle AdSense
+  // Check if we're on the client side
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Load AdSense script
+  useEffect(() => {
+    if (!isClient) return;
+
+    const loadAdSenseScript = () => {
+      const scriptId = 'adsbygoogle-script';
+      
+      // Check if script already exists
+      if (document.getElementById(scriptId)) return;
+      
+      const script = document.createElement('script');
+      script.id = scriptId;
+      script.async = true;
+      script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6418144328904526';
+      script.crossOrigin = 'anonymous';
+      script.onload = () => {
+        console.log('AdSense script loaded successfully');
+        initializeAds();
+      };
+      script.onerror = () => {
+        console.error('Failed to load AdSense script');
+        setAdError(true);
+      };
+      
+      document.head.appendChild(script);
+    };
+
+    // Check for ad blocker
     const checkAdBlocker = async () => {
       try {
         const testUrl = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
@@ -49,60 +96,96 @@ export default function Support() {
       }
     };
 
-    checkAdBlocker();
-
-    // Load AdSense ads
-    const loadAds = () => {
+    // Initialize ads after script loads
+    const initializeAds = () => {
       try {
+        // Push ads to Google AdSense queue
+        if (window.adsbygoogle) {
+          window.adsbygoogle.push({});
+          window.adsbygoogle.push({});
+        }
+        
         // Simulate ad views for demo
         const interval = setInterval(() => {
-          setAdViews(prev => prev + Math.floor(Math.random() * 5));
-        }, 30000);
-
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
+          setAdViews(prev => prev + Math.floor(Math.random() * 3) + 1);
+        }, 45000); // Every 45 seconds
 
         return () => clearInterval(interval);
       } catch (error) {
-        console.error('AdSense error:', error);
+        console.error('AdSense initialization error:', error);
         setAdError(true);
       }
     };
 
+    // Load everything with a delay for better UX
     const timer = setTimeout(() => {
-      if (document.readyState === 'complete') {
-        loadAds();
-      } else {
-        window.addEventListener('load', loadAds);
-      }
-    }, 1500);
+      loadAdSenseScript();
+      checkAdBlocker();
+    }, 2000);
 
     return () => {
       clearTimeout(timer);
-      window.removeEventListener('load', loadAds);
     };
-  }, []);
+  }, [isClient]);
+
+  // Intersection Observer for lazy loading ads
+  useEffect(() => {
+    if (!isClient || !window.IntersectionObserver) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            // Ad becomes visible, ensure it's loaded
+            if (window.adsbygoogle) {
+              try {
+                window.adsbygoogle.push({});
+              } catch (error) {
+                console.error('Error loading visible ad:', error);
+              }
+            }
+          }
+        });
+      },
+      {
+        threshold: 0.1,
+        rootMargin: '100px'
+      }
+    );
+
+    if (adRef1.current) observer.observe(adRef1.current);
+    if (adRef2.current) observer.observe(adRef2.current);
+
+    return () => {
+      if (adRef1.current) observer.unobserve(adRef1.current);
+      if (adRef2.current) observer.unobserve(adRef2.current);
+    };
+  }, [isClient]);
 
   const impactStats = [
     {
       icon: Users,
       value: "300+",
-      label: t("support.students", "students educated")
+      label: t("support.students", "students educated"),
+      color: "text-blue-600"
     },
     {
       icon: Leaf,
       value: "50+",
-      label: t("support.bins", "recycling bins installed")
+      label: t("support.bins", "recycling bins installed"),
+      color: "text-green-600"
     },
     {
       icon: Trophy,
       value: "95%",
-      label: t("support.satisfaction", "satisfaction rate")
+      label: t("support.satisfaction", "satisfaction rate"),
+      color: "text-amber-600"
     },
     {
       icon: Zap,
       value: "1000+",
-      label: t("support.resources", "educational resources")
+      label: t("support.resources", "educational resources"),
+      color: "text-purple-600"
     }
   ];
 
@@ -111,46 +194,76 @@ export default function Support() {
       icon: Shield,
       title: t("support.benefit1.title", "Website Hosting & Maintenance"),
       description: t("support.benefit1.desc", "Keep our educational platform online and updated 24/7"),
-      gradient: "from-blue-500/10 to-cyan-500/10"
+      gradient: "from-blue-500/10 to-cyan-500/10",
+      borderColor: "border-blue-200"
     },
     {
       icon: Globe,
       title: t("support.benefit2.title", "Free Educational Resources"),
       description: t("support.benefit2.desc", "Develop new guides, activities, and learning materials"),
-      gradient: "from-green-500/10 to-emerald-500/10"
+      gradient: "from-green-500/10 to-emerald-500/10",
+      borderColor: "border-green-200"
     },
     {
       icon: Sparkles,
       title: t("support.benefit3.title", "School Recycling Program"),
       description: t("support.benefit3.desc", "Fund physical recycling bins and collection programs"),
-      gradient: "from-purple-500/10 to-pink-500/10"
+      gradient: "from-purple-500/10 to-pink-500/10",
+      borderColor: "border-purple-200"
     }
   ];
 
   const fundUsage = [
-    { percentage: "45%", label: t("support.fund1", "Website hosting & domain") },
-    { percentage: "30%", label: t("support.fund2", "Educational materials development") },
-    { percentage: "15%", label: t("support.fund3", "Recycling equipment for schools") },
-    { percentage: "10%", label: t("support.fund4", "Community workshops & events") }
+    { 
+      percentage: "45%", 
+      label: t("support.fund1", "Website hosting & domain"),
+      description: t("support.fund1.desc", "Server costs and domain renewal")
+    },
+    { 
+      percentage: "30%", 
+      label: t("support.fund2", "Educational materials development"),
+      description: t("support.fund2.desc", "Creating new content and resources")
+    },
+    { 
+      percentage: "15%", 
+      label: t("support.fund3", "Recycling equipment for schools"),
+      description: t("support.fund3.desc", "Bins, sorting stations, and tools")
+    },
+    { 
+      percentage: "10%", 
+      label: t("support.fund4", "Community workshops & events"),
+      description: t("support.fund4.desc", "Educational events and outreach")
+    }
   ];
 
   const testimonials = [
     {
-      quote: t("support.testimonial1", "This project completely changed how our students think about recycling!"),
+      quote: t("support.testimonial1", "This project completely changed how our students think about recycling! The resources are incredibly valuable."),
       author: t("support.teacher", "Maria School Teacher"),
-      role: t("support.role1", "Science Department")
+      role: t("support.role1", "Science Department"),
+      rating: 5
     },
     {
-      quote: t("support.testimonial2", "I love the interactive activities! Learning about recycling has never been so fun."),
+      quote: t("support.testimonial2", "I love the interactive activities! Learning about recycling has never been so fun. My whole class is engaged!"),
       author: t("support.student", "Lucas, 5th Grade"),
-      role: t("support.role2", "Student Ambassador")
+      role: t("support.role2", "Student Ambassador"),
+      rating: 5
     }
   ];
 
-  const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+  const quickFacts = [
+    { icon: Clock, text: t("support.fact1", "Founded in 2023") },
+    { icon: Award, text: t("support.fact2", "Non-profit educational project") },
+    { icon: Infinity, text: t("support.fact3", "100% free forever") },
+    { icon: BarChart3, text: t("support.fact4", "Monthly impact reports") }
+  ];
+
+  const shareUrl = isClient ? window.location.href : '';
   const shareText = t("support.shareText", "Support Recyclage Maria - Join us in making schools more eco-friendly!");
 
   const handleShare = async () => {
+    if (!isClient) return;
+    
     if (navigator.share) {
       try {
         await navigator.share({
@@ -170,17 +283,12 @@ export default function Support() {
     }
   };
 
-  const handleSupportClick = () => {
-    setShowThankYou(true);
-    setTimeout(() => setShowThankYou(false), 3000);
-  };
-
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1
+        staggerChildren: 0.08
       }
     }
   };
@@ -193,7 +301,7 @@ export default function Support() {
       transition: {
         type: "spring",
         stiffness: 100,
-        damping: 15
+        damping: 12
       }
     }
   };
@@ -205,11 +313,35 @@ export default function Support() {
       transition: {
         type: "spring",
         stiffness: 400,
-        damping: 25
+        damping: 20
       }
     },
-    tap: { scale: 0.95 }
+    tap: { scale: 0.97 }
   };
+
+  const cardHoverVariants = {
+    rest: { y: 0 },
+    hover: { 
+      y: -8,
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 15
+      }
+    }
+  };
+
+  // Loading skeleton for ads
+  if (!isClient) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse text-center">
+          <div className="w-16 h-16 bg-green-200 rounded-full mx-auto mb-4"></div>
+          <div className="text-lg text-gray-600">Loading support page...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen flex flex-col bg-gradient-to-b from-background via-background/95 to-primary/5 text-foreground theme-transition overflow-hidden">
@@ -242,6 +374,19 @@ export default function Support() {
             delay: 2
           }}
         />
+        <motion.div
+          className="absolute top-1/3 left-1/4 w-64 h-64 bg-purple-500/3 rounded-full blur-3xl"
+          animate={{
+            scale: [1, 1.1, 1],
+            opacity: [0.03, 0.06, 0.03]
+          }}
+          transition={{
+            duration: 12,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1
+          }}
+        />
       </div>
 
       {/* Floating thank you message */}
@@ -251,11 +396,16 @@ export default function Support() {
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -50, scale: 0.9 }}
-            className="fixed top-20 right-8 z-50"
+            className="fixed top-20 right-4 md:right-8 z-50"
           >
-            <Card className="bg-gradient-to-r from-green-500/90 to-emerald-500/90 backdrop-blur-md border-0 shadow-2xl">
+            <Card className="bg-gradient-to-r from-green-500/90 to-emerald-500/90 backdrop-blur-md border-0 shadow-2xl max-w-sm">
               <CardContent className="p-4 flex items-center gap-3">
-                <Heart className="w-6 h-6 text-white animate-pulse" />
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, ease: "linear" }}
+                >
+                  <Heart className="w-6 h-6 text-white" />
+                </motion.div>
                 <div>
                   <p className="font-bold text-white text-sm">
                     {t("support.thankYouQuick", "Thank you for your support!")}
@@ -274,14 +424,11 @@ export default function Support() {
       <motion.section
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         className="relative flex flex-col items-center justify-center text-center px-4 py-20 md:py-24 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-green-950/40 dark:via-emerald-950/40 dark:to-teal-950/40 border-b border-green-200 dark:border-green-800"
       >
-        {/* Animated background pattern */}
-        <div className="absolute inset-0 opacity-10 dark:opacity-5">
-          <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] bg-repeat" />
-        </div>
-
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10 dark:opacity-5 bg-center" />
+        
         <div className="relative z-10 max-w-5xl mx-auto">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
@@ -318,7 +465,7 @@ export default function Support() {
           >
             {t(
               "support.intro",
-              "Help us maintain this free educational platform and bring recycling education to schools worldwide. Every contribution supports sustainable education."
+              "Help us maintain this free educational platform and bring recycling education to schools worldwide. Every contribution supports sustainable education for future generations."
             )}
           </motion.p>
 
@@ -331,7 +478,7 @@ export default function Support() {
           >
             <div className="inline-flex items-center gap-3 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-full px-5 py-3 border border-green-200 dark:border-green-800">
               <div className="flex items-center gap-2">
-                <RefreshCw className="w-4 h-4 text-green-600 dark:text-green-400" />
+                <Eye className="w-4 h-4 text-green-600 dark:text-green-400" />
                 <span className="text-sm text-gray-600 dark:text-gray-400">
                   {t("support.adsViewed", "Ads viewed this session:")}
                 </span>
@@ -347,7 +494,7 @@ export default function Support() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
             variants={containerVariants}
-            className="flex flex-wrap gap-4 justify-center"
+            className="flex flex-wrap gap-3 justify-center"
           >
             <motion.div
               variants={buttonHoverVariants}
@@ -357,17 +504,13 @@ export default function Support() {
             >
               <Button
                 size="lg"
-                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl gap-3 group"
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl gap-3 group relative overflow-hidden"
                 onClick={handleShare}
               >
-                <Share2 className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" />
-                <span>{t("support.share", "Share with Friends")}</span>
-                <motion.span
-                  animate={{ x: [0, 3, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                >
-                  <ArrowUpRight className="w-5 h-5" />
-                </motion.span>
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                <Share2 className="w-5 h-5 relative z-10 transition-transform duration-300 group-hover:scale-110" />
+                <span className="relative z-10">{t("support.share", "Share with Friends")}</span>
+                <ArrowUpRight className="w-5 h-5 relative z-10" />
               </Button>
             </motion.div>
 
@@ -380,13 +523,35 @@ export default function Support() {
               <Button
                 variant="outline"
                 size="lg"
-                className="border-2 border-green-600 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 gap-3 group"
+                className="border-2 border-green-600 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 gap-3 group relative"
                 onClick={() => window.open('/project', '_blank')}
               >
-                <ExternalLink className="w-5 h-5 transition-transform duration-300 group-hover:rotate-12" />
-                <span>{t("support.learnMore", "Learn About Our Project")}</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-green-50/0 via-green-100/20 to-green-50/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <ExternalLink className="w-5 h-5 relative z-10 transition-transform duration-300 group-hover:rotate-12" />
+                <span className="relative z-10">{t("support.learnMore", "Learn About Our Project")}</span>
               </Button>
             </motion.div>
+          </motion.div>
+
+          {/* Quick facts */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl mx-auto"
+          >
+            {quickFacts.map((fact, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.9 + index * 0.1 }}
+                className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm rounded-lg px-3 py-2"
+              >
+                <fact.icon className="w-4 h-4 text-green-600 dark:text-green-400" />
+                <span>{fact.text}</span>
+              </motion.div>
+            ))}
           </motion.div>
         </div>
       </motion.section>
@@ -416,16 +581,17 @@ export default function Support() {
                 key={index}
                 variants={itemVariants}
                 custom={index}
-                whileHover={{ y: -8, transition: { type: "spring", stiffness: 300 } }}
+                whileHover="hover"
+                variants={cardHoverVariants}
               >
-                <Card className="border-2 border-green-200 dark:border-green-800 hover:border-green-300 dark:hover:border-green-700 transition-all duration-300 hover:shadow-xl bg-gradient-to-br from-white/50 to-transparent dark:from-gray-900/50 backdrop-blur-sm h-full">
+                <Card className="border-2 border-green-200 dark:border-green-800 hover:border-green-300 dark:hover:border-green-700 transition-all duration-300 hover:shadow-xl bg-gradient-to-br from-white/50 to-transparent dark:from-gray-900/50 backdrop-blur-sm h-full group">
                   <CardContent className="p-6 text-center">
                     <motion.div
                       whileHover={{ rotate: 360, scale: 1.1 }}
                       transition={{ duration: 0.6 }}
-                      className="w-14 h-14 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 flex items-center justify-center mx-auto mb-4 shadow-lg"
+                      className="w-14 h-14 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl"
                     >
-                      <stat.icon className="w-7 h-7 text-green-600 dark:text-green-400" />
+                      <stat.icon className={`w-7 h-7 ${stat.color}`} />
                     </motion.div>
                     <div className="text-3xl font-bold text-green-700 dark:text-green-400 mb-2">
                       {stat.value}
@@ -463,27 +629,31 @@ export default function Support() {
             whileInView={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.1 }}
             viewport={{ once: true }}
-            className="bg-gradient-to-r from-green-50/80 to-emerald-50/80 dark:from-green-950/30 dark:to-emerald-950/30 rounded-2xl p-8 md:p-10 border-2 border-green-200 dark:border-green-800 backdrop-blur-sm"
+            className="bg-gradient-to-r from-green-50/80 to-emerald-50/80 dark:from-green-950/30 dark:to-emerald-950/30 rounded-2xl p-8 md:p-10 border-2 border-green-200 dark:border-green-800 backdrop-blur-sm relative overflow-hidden"
           >
-            <div className="flex items-start gap-4 mb-6">
-              <Lightbulb className="w-8 h-8 text-green-600 dark:text-green-400 flex-shrink-0" />
-              <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
-                {t(
-                  "support.mainText",
-                  "Recyclage Maria is a 100% free educational initiative. We believe eco-education should be accessible to every school, everywhere. Your support through viewing ads on this page directly funds our platform's hosting, domain costs, and the development of new educational resources. Every interaction helps us reach more students and create a greener future."
-                )}
-              </p>
-            </div>
-            
-            <div className="flex flex-wrap items-center gap-4 mt-6">
-              <BadgeCheck className="w-5 h-5 text-green-600 dark:text-green-400" />
-              <span className="text-sm text-muted-foreground">
-                {t("support.fact", "Non-profit educational project since 2023")}
-              </span>
-              <Infinity className="w-5 h-5 text-green-600 dark:text-green-400 ml-4" />
-              <span className="text-sm text-muted-foreground">
-                {t("support.free", "100% free resources forever")}
-              </span>
+            <div className="absolute top-0 left-0 w-32 h-32 bg-green-500/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
+            <div className="relative z-10">
+              <div className="flex items-start gap-4 mb-6">
+                <Lightbulb className="w-8 h-8 text-green-600 dark:text-green-400 flex-shrink-0 mt-1" />
+                <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
+                  {t(
+                    "support.mainText",
+                    "Recyclage Maria is a 100% free educational initiative. We believe eco-education should be accessible to every school, everywhere. Your support through viewing ads on this page directly funds our platform's hosting, domain costs, and the development of new educational resources. Every interaction helps us reach more students and create a greener future."
+                  )}
+                </p>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-4 mt-8 pt-6 border-t border-green-200 dark:border-green-800">
+                <BadgeCheck className="w-5 h-5 text-green-600 dark:text-green-400" />
+                <span className="text-sm text-muted-foreground">
+                  {t("support.fact", "Non-profit educational project since 2023")}
+                </span>
+                <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
+                <Infinity className="w-5 h-5 text-green-600 dark:text-green-400" />
+                <span className="text-sm text-muted-foreground">
+                  {t("support.free", "100% free resources forever")}
+                </span>
+              </div>
             </div>
           </motion.div>
 
@@ -496,15 +666,16 @@ export default function Support() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1, type: "spring" }}
                 viewport={{ once: true }}
-                whileHover={{ y: -10 }}
+                whileHover="hover"
+                variants={cardHoverVariants}
               >
-                <Card className="h-full hover:shadow-2xl transition-all duration-300 border-2 border-green-200 dark:border-green-800 overflow-hidden group">
+                <Card className={`h-full hover:shadow-2xl transition-all duration-300 border-2 ${benefit.borderColor} dark:border-green-800 overflow-hidden group relative`}>
                   <div className={`absolute inset-0 bg-gradient-to-br ${benefit.gradient} opacity-0 group-hover:opacity-30 transition-opacity duration-500`} />
                   <CardContent className="p-6 relative">
                     <motion.div
                       whileHover={{ rotate: 360 }}
                       transition={{ duration: 0.6 }}
-                      className="w-12 h-12 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300"
+                      className="w-12 h-12 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg"
                     >
                       <benefit.icon className="w-6 h-6 text-green-600 dark:text-green-400" />
                     </motion.div>
@@ -542,15 +713,21 @@ export default function Support() {
                   whileInView={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
                   viewport={{ once: true }}
-                  className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-green-50/50 to-emerald-50/50 dark:from-green-900/20 dark:to-emerald-900/20 hover:scale-[1.02] transition-transform duration-300"
+                  whileHover={{ scale: 1.02 }}
+                  className="flex flex-col p-4 rounded-xl bg-gradient-to-r from-green-50/50 to-emerald-50/50 dark:from-green-900/20 dark:to-emerald-900/20 hover:bg-gradient-to-r hover:from-green-100/50 hover:to-emerald-100/50 dark:hover:from-green-800/20 dark:hover:to-emerald-800/20 transition-all duration-300 border border-green-200 dark:border-green-800"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full bg-gradient-to-r from-green-500 to-emerald-500" />
-                    <span className="font-medium">{item.label}</span>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 rounded-full bg-gradient-to-r from-green-500 to-emerald-500" />
+                      <span className="font-medium">{item.label}</span>
+                    </div>
+                    <span className="font-bold text-green-700 dark:text-green-400">
+                      {item.percentage}
+                    </span>
                   </div>
-                  <span className="font-bold text-green-700 dark:text-green-400">
-                    {item.percentage}
-                  </span>
+                  <p className="text-sm text-muted-foreground pl-6">
+                    {item.description}
+                  </p>
                 </motion.div>
               ))}
             </div>
@@ -569,9 +746,10 @@ export default function Support() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <Button variant="outline" className="gap-2 w-full">
+                    <Button variant="outline" className="gap-2 w-full group">
                       <DollarSign className="w-4 h-4" />
                       {t("support.viewReport", "View Financial Report")}
+                      <ChevronRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                     </Button>
                   </motion.div>
                 </div>
@@ -582,6 +760,7 @@ export default function Support() {
 
         {/* AdSense #1 */}
         <motion.div
+          ref={adRef1}
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -613,6 +792,26 @@ export default function Support() {
                     </p>
                     <p className="text-xs text-yellow-700 dark:text-yellow-400">
                       {t("support.adBlockerMessage", "Please consider disabling your ad blocker for this site. Ads are our primary funding source!")}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+            
+            {adError && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-950/30 dark:to-pink-950/30 border-2 border-red-300 dark:border-red-700 rounded-lg p-4 mb-4"
+              >
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-bold text-red-800 dark:text-red-300 mb-1">
+                      {t("support.adError", "Ad Loading Issue")}
+                    </p>
+                    <p className="text-xs text-red-700 dark:text-red-400">
+                      {t("support.adErrorMessage", "We're having trouble loading ads. Please refresh the page or check your connection.")}
                     </p>
                   </div>
                 </div>
@@ -657,19 +856,21 @@ export default function Support() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.2 }}
                 viewport={{ once: true }}
+                whileHover="hover"
+                variants={cardHoverVariants}
               >
-                <Card className="border-2 border-green-200 dark:border-green-800 hover:border-green-300 dark:hover:border-green-700 transition-all duration-300">
+                <Card className="border-2 border-green-200 dark:border-green-800 hover:border-green-300 dark:hover:border-green-700 transition-all duration-300 group">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-2 mb-4">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      {[...Array(testimonial.rating)].map((_, i) => (
+                        <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400 group-hover:scale-110 transition-transform duration-300" />
                       ))}
                     </div>
-                    <p className="text-gray-700 dark:text-gray-300 italic mb-4">
+                    <p className="text-gray-700 dark:text-gray-300 italic mb-4 leading-relaxed">
                       "{testimonial.quote}"
                     </p>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 flex items-center justify-center">
+                    <div className="flex items-center gap-3 pt-4 border-t border-green-200 dark:border-green-800">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                         <Users className="w-5 h-5 text-green-600 dark:text-green-400" />
                       </div>
                       <div>
@@ -686,6 +887,7 @@ export default function Support() {
 
         {/* AdSense #2 */}
         <motion.div
+          ref={adRef2}
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -754,39 +956,45 @@ export default function Support() {
               
               <div className="flex flex-wrap gap-4 justify-center">
                 <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover="hover"
+                  whileTap="tap"
+                  variants={buttonHoverVariants}
                 >
                   <Button
-                    onClick={handleSupportClick}
-                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-6 text-lg gap-3 group"
+                    onClick={handleShare}
+                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-6 text-lg gap-3 group relative overflow-hidden"
                     size="lg"
                   >
-                    <Share2 className="w-5 h-5" />
-                    {t("support.shareAgain", "Share This Page")}
-                    <ChevronRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-2" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                    <Share2 className="w-5 h-5 relative z-10" />
+                    <span className="relative z-10">{t("support.shareAgain", "Share This Page")}</span>
+                    <ChevronRight className="w-5 h-5 relative z-10 transition-transform duration-300 group-hover:translate-x-2" />
                   </Button>
                 </motion.div>
                 
                 <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover="hover"
+                  whileTap="tap"
+                  variants={buttonHoverVariants}
                 >
                   <Button
                     variant="outline"
                     onClick={() => window.open('/contact', '_blank')}
-                    className="border-2 border-green-600 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 px-8 py-6 text-lg gap-3"
+                    className="border-2 border-green-600 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 px-8 py-6 text-lg gap-3 group relative"
                     size="lg"
                   >
-                    <CreditCard className="w-5 h-5" />
-                    {t("support.otherWays", "Other Ways to Help")}
+                    <CreditCard className="w-5 h-5 relative z-10" />
+                    <span className="relative z-10">{t("support.otherWays", "Other Ways to Help")}</span>
                   </Button>
                 </motion.div>
               </div>
               
-              <p className="text-sm text-muted-foreground mt-8">
+              <p className="text-sm text-muted-foreground mt-8 pt-6 border-t border-green-200 dark:border-green-800">
                 {t("support.contactInfo", "Questions? Contact us at")}{' '}
-                <a href="mailto:contact@recyclagemaria.org" className="text-green-600 dark:text-green-400 hover:underline">
+                <a 
+                  href="mailto:contact@recyclagemaria.org" 
+                  className="text-green-600 dark:text-green-400 hover:underline font-medium"
+                >
                   contact@recyclagemaria.org
                 </a>
               </p>
@@ -795,6 +1003,7 @@ export default function Support() {
         </motion.div>
       </div>
 
+      <Footer />
     </main>
   );
 }
