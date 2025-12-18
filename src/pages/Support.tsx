@@ -795,7 +795,6 @@ export default function Support() {
         </motion.div>
       </div>
 
-      <Footer />
     </main>
   );
 }
