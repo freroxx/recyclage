@@ -215,7 +215,7 @@ export default function Support() {
 
     const initializeProgress = () => {
       // Simulate initial progress
-      const simulatedAmount = 0.50; // $0.50 already raised
+      const simulatedAmount = 0; // $0
       setCurrentAmount(simulatedAmount);
       setDomainProgress((simulatedAmount / domainAmount) * 100);
     };
@@ -242,7 +242,7 @@ export default function Support() {
     // Initialize ads after a short delay
     const timer = setTimeout(() => {
       initializePage();
-      setTimeout(initializeAds, 1000); // Initialize ads 1 second after page load
+      setTimeout(initializeAds, 500); // Initialize ads 0.5 second after page load
     }, 500);
 
     return () => {
@@ -276,13 +276,13 @@ export default function Support() {
   const impactStats = [
     {
       icon: Users,
-      value: "300+",
+      value: "150+",
       label: language === 'fr' ? "Élèves sensibilisés" : "Students educated",
       color: "text-blue-600"
     },
     {
       icon: Leaf,
-      value: "50+",
+      value: "4",
       label: language === 'fr' ? "Bacs de tri installés" : "Recycling bins installed",
       color: "text-green-600"
     },
@@ -294,8 +294,8 @@ export default function Support() {
     },
     {
       icon: Zap,
-      value: "1000+",
-      label: language === 'fr' ? "Ressources éducatives" : "Educational resources",
+      value: "Google",
+      label: language === 'fr' ? "Fournisseur de publicité" : "Ads provider",
       color: "text-purple-600"
     }
   ];
@@ -303,7 +303,7 @@ export default function Support() {
   const fundingGoal = {
     title: language === 'fr' ? "Objectif Principal : Acheter un nom de domaine" : "Primary Goal: Buy a Website Domain",
     description: language === 'fr' 
-      ? "Nous avons besoin de $25 pour acheter et renouveler notre nom de domaine (recyclagemaria.org) pendant un an." 
+      ? "Nous avons besoin de $25 pour acheter et renouveler notre nom de domaine (recyclagemaria.com) pendant un an." 
       : "We need $25 to purchase and renew our domain name (recyclagemaria.org) for one year.",
     target: domainAmount,
     current: currentAmount,
@@ -370,8 +370,8 @@ export default function Support() {
   const quickFacts = [
     { 
       icon: Clock, 
-      text: language === 'fr' ? "Projet lancé en 2023" : "Project launched in 2023",
-      desc: language === 'fr' ? "Plus d'un an d'éducation environnementale" : "Over a year of environmental education"
+      text: language === 'fr' ? "Projet lancé en November 2025" : "Project launched in November 2025",
+      desc: language === 'fr' ? "On viens de commencer...!" : "We just started...!"
     },
     { 
       icon: Award, 
@@ -915,8 +915,8 @@ export default function Support() {
             <div className="mt-4 text-center">
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {language === 'fr' 
-                  ? "💡 Conseil : Les publicités qui vous intéressent génèrent plus de revenus pour notre projet." 
-                  : "💡 Tip: Ads that interest you generate more revenue for our project."}
+                  ? "Conseil : Les publicités qui vous intéressent génèrent plus de revenus pour notre projet." 
+                  : "Tip: Ads that interest you generate more revenue for our project."}
               </p>
             </div>
           </div>
@@ -1055,8 +1055,8 @@ export default function Support() {
             <div className="mt-4 text-center">
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {language === 'fr' 
-                  ? "🎯 Objectif : 25$ pour notre domaine | Actuel : " + formatCurrency(currentAmount)
-                  : "🎯 Goal: $25 for our domain | Current: " + formatCurrency(currentAmount)}
+                  ? "Objectif : 25$ pour notre domaine | Actuel : " + formatCurrency(currentAmount)
+                  : "Goal: $25 for our domain | Current: " + formatCurrency(currentAmount)}
               </p>
             </div>
           </div>
@@ -1139,10 +1139,10 @@ export default function Support() {
               <p className="text-sm text-muted-foreground mt-8 pt-6 border-t border-green-200 dark:border-green-800">
                 {language === 'fr' ? "Des questions ? Contactez-nous à" : "Questions? Contact us at"}{' '}
                 <a 
-                  href="mailto:contact@recyclagemaria.org" 
+                  href="mailto:recyclagemaria@gmail.com" 
                   className="text-green-600 dark:text-green-400 hover:underline font-medium"
                 >
-                  contact@recyclagemaria.org
+                  recyclagemaria@gmail.com
                 </a>
               </p>
             </CardContent>
