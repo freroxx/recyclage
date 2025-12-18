@@ -1,7 +1,7 @@
 import { useEffect } from "react";
-import { motion } from "framer-motion"; // pour animations scroll
 import { useLanguage } from "@/contexts/LanguageContext"; // ton context
 import { Footer } from "@/components/Footer";
+import { motion } from "framer-motion"; // animations scroll
 
 export default function Support() {
   const { t } = useLanguage(); // traduction
@@ -13,6 +13,7 @@ export default function Support() {
 
   return (
     <main className="min-h-screen flex flex-col bg-background text-foreground theme-transition">
+
       {/* Hero Section */}
       <motion.section
         initial={{ opacity: 0, y: 50 }}
@@ -26,12 +27,12 @@ export default function Support() {
         <p className="max-w-2xl text-lg">
           {t(
             "support_intro",
-            "Cette page aide à financer le domaine et maintenir le projet actif. Chaque action compte pour un futur plus vert !"
+            "Cette page aide à financer l’hébergement du site et le domaine, tout en soutenant les initiatives de recyclage à l’école Maria."
           )}
         </p>
       </motion.section>
 
-      {/* Contenu explicatif */}
+      {/* Pourquoi soutenir */}
       <motion.section
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
@@ -55,7 +56,7 @@ export default function Support() {
         >
           {t(
             "support_text",
-            "Votre soutien permet à l’école Maria de mettre en place des actions concrètes de recyclage et sensibilisation auprès des élèves. Les publicités affichées sur cette page nous aident à maintenir le site et financer le domaine."
+            "Votre soutien permet à l’école Maria de mettre en place des actions concrètes de recyclage et de sensibiliser les élèves à l’environnement. Les publicités affichées sur cette page nous aident à maintenir le site et financer le domaine."
           )}
         </motion.p>
 
@@ -71,13 +72,14 @@ export default function Support() {
           ></ins>
         </div>
 
+        {/* Impact du projet */}
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
           className="space-y-4"
         >
-          <h3 className="text-2xl font-semibold">{t("support_impact", "Impact du projet")}</h3>
+          <h3 className="text-2xl font-semibold text-center">{t("support_impact", "Impact du projet")}</h3>
           <ul className="list-disc list-inside text-lg text-muted-foreground space-y-2">
             <li>{t("support_point1", "Sensibilisation de plus de 300 élèves à l'écologie.")}</li>
             <li>{t("support_point2", "Installation de bacs de tri dans toute l'école.")}</li>
@@ -98,7 +100,7 @@ export default function Support() {
         </div>
       </motion.section>
 
-      {/* Footer intégré */}
+      {/* Footer unique */}
       <Footer />
     </main>
   );
