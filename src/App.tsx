@@ -9,6 +9,7 @@ import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { lazy, Suspense } from "react";
+import Support from "./pages/Support";
 
 // ✅ Vercel Analytics + Speed Insights
 import { Analytics } from "@vercel/analytics/react";
