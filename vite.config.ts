@@ -3,9 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  // Charger les variables d'environnement
   const env = loadEnv(mode, process.cwd(), "");
 
   return {
@@ -13,7 +11,7 @@ export default defineConfig(({ mode }) => {
       host: "::",
       port: Number(env.VITE_PORT) || 8080,
       strictPort: true,
-      open: true, // ouvre automatiquement le navigateur
+      open: true,
     },
     resolve: {
       alias: {
@@ -25,12 +23,15 @@ export default defineConfig(({ mode }) => {
       mode === "development" ? componentTagger() : undefined,
     ].filter(Boolean),
     build: {
-      target: "esnext",
+      target: "es2018", // ✅ plus sûr que esnext
       outDir: "dist",
-      sourcemap: mode === "development",
+      sourcemap: false, // ✅ prod clean
       rollupOptions: {
         output: {
-          manualChunks: undefined, // optionnel : optimiser le split
+          manualChunks: {
+            react: ["react", "react-dom"],
+            router: ["react-router-dom"],
+          },
         },
       },
     },
