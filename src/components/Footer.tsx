@@ -1,340 +1,189 @@
-import { Instagram, Mail, Heart, Globe, Code, Sparkles, ExternalLink, ChevronRight } from "lucide-react";
+import { Instagram, Mail, Globe, Heart, MessageCircle, RefreshCw, Info } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import logo from "@/assets/logo.png";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export function Footer() {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const navigate = useNavigate();
-  const [isMobile, setIsMobile] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [showCredits, setShowCredits] = useState(false);
 
-  // Check for mobile device
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  const handleRefresh = () => {
+    window.location.reload();
+  };
 
-  const handleSupportClick = () => {
+  const handleSupport = () => {
     navigate("/support");
   };
 
-  const currentYear = new Date().getFullYear();
+  const handleContact = () => {
+    navigate("/contact");
+  };
 
   return (
-    <footer className="relative overflow-hidden border-t border-border/50 mt-16 sm:mt-20">
-      {/* Gradient background overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-primary/5 to-background" />
-      
-      {/* Decorative elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -bottom-20 -right-20 w-80 h-80 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute -bottom-10 -left-10 w-60 h-60 rounded-full bg-eco-primary/5 blur-3xl" />
+    <footer className="mt-20 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
+      <div className="container mx-auto px-4 py-8">
+        
+        {/* Top Section: Logo & Description */}
+        <div className="mb-8 text-center">
+          <div className="inline-flex items-center gap-2 mb-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+              <span className="text-white font-bold text-lg">RM</span>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+              {t("footer.projectName", "Recyclage Maria")}
+            </h3>
+          </div>
+          <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+            {t("footer.tagline", "Promoting sustainable practices at Maria School, Agadir")}
+          </p>
+        </div>
+
+        {/* Action Buttons Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
+          {/* Instagram */}
+          <Button
+            variant="outline"
+            className="flex flex-col h-auto py-4 gap-2 hover:bg-pink-50 dark:hover:bg-pink-950/20 hover:border-pink-200 dark:hover:border-pink-800"
+            onClick={() => window.open("https://instagram.com/recyclage_projet", "_blank")}
+          >
+            <Instagram className="w-5 h-5 text-pink-600 dark:text-pink-500" />
+            <span className="text-sm font-medium">Instagram</span>
+          </Button>
+
+          {/* School Website */}
+          <Button
+            variant="outline"
+            className="flex flex-col h-auto py-4 gap-2 hover:bg-blue-50 dark:hover:bg-blue-950/20 hover:border-blue-200 dark:hover:border-blue-800"
+            onClick={() => window.open("https://ecolemaria.com", "_blank")}
+          >
+            <Globe className="w-5 h-5 text-blue-600 dark:text-blue-500" />
+            <span className="text-sm font-medium">{t("footer.website", "Website")}</span>
+          </Button>
+
+          {/* Email */}
+          <Button
+            variant="outline"
+            className="flex flex-col h-auto py-4 gap-2 hover:bg-red-50 dark:hover:bg-red-950/20 hover:border-red-200 dark:hover:border-red-800"
+            onClick={() => window.location.href = "mailto:recyclagemaria@gmail.com"}
+          >
+            <Mail className="w-5 h-5 text-red-600 dark:text-red-500" />
+            <span className="text-sm font-medium">Email</span>
+          </Button>
+
+          {/* Support Us */}
+          <Button
+            variant="outline"
+            className="flex flex-col h-auto py-4 gap-2 hover:bg-green-50 dark:hover:bg-green-950/20 hover:border-green-200 dark:hover:border-green-800"
+            onClick={handleSupport}
+          >
+            <Heart className="w-5 h-5 text-green-600 dark:text-green-500" />
+            <span className="text-sm font-medium">{t("footer.support", "Support")}</span>
+          </Button>
+
+          {/* Contact Us */}
+          <Button
+            variant="outline"
+            className="flex flex-col h-auto py-4 gap-2 hover:bg-purple-50 dark:hover:bg-purple-950/20 hover:border-purple-200 dark:hover:border-purple-800"
+            onClick={handleContact}
+          >
+            <MessageCircle className="w-5 h-5 text-purple-600 dark:text-purple-500" />
+            <span className="text-sm font-medium">{t("footer.contact", "Contact")}</span>
+          </Button>
+
+          {/* Refresh Page */}
+          <Button
+            variant="outline"
+            className="flex flex-col h-auto py-4 gap-2 hover:bg-orange-50 dark:hover:bg-orange-950/20 hover:border-orange-200 dark:hover:border-orange-800"
+            onClick={handleRefresh}
+          >
+            <RefreshCw className="w-5 h-5 text-orange-600 dark:text-orange-500" />
+            <span className="text-sm font-medium">{t("footer.refresh", "Refresh")}</span>
+          </Button>
+        </div>
+
+        {/* Bottom Section */}
+        <div className="pt-6 border-t border-gray-200 dark:border-gray-800 flex flex-col md:flex-row items-center justify-between gap-4">
+          {/* Copyright */}
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            © {new Date().getFullYear()} Maria School, Agadir • {t("footer.rights", "All rights reserved")}
+          </div>
+
+          {/* Credits Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            onClick={() => setShowCredits(true)}
+          >
+            <Info className="w-4 h-4 mr-2" />
+            {t("footer.credits", "Credits")}
+          </Button>
+        </div>
       </div>
 
-      <div className="relative container mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        {/* Main content */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 sm:gap-12 mb-10 sm:mb-16">
-          {/* Brand Section */}
-          <div className="lg:col-span-1">
-            <div className="flex flex-col sm:flex-row lg:flex-col items-center sm:items-start lg:items-start gap-4">
-              <div className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary to-eco-primary rounded-full opacity-20 blur-xl group-hover:opacity-30 transition-opacity duration-500" />
-                <img
-                  src={logo}
-                  alt={t("footer.logoAlt")}
-                  className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full object-contain bg-white dark:bg-gray-900 border-2 border-white/10 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-                  loading="lazy"
-                />
-              </div>
-              <div className="text-center sm:text-left lg:text-left space-y-3">
-                <div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-foreground bg-gradient-to-r from-primary to-eco-primary bg-clip-text text-transparent">
-                    {t("footer.projectName")}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mt-1">{t("footer.schoolName")}</p>
-                </div>
-                <p className="text-xs text-muted-foreground/70 max-w-xs">
-                  {t("footer.tagline")}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Links Section */}
-          <div className="lg:col-span-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
-              <div>
-                <h4 className="font-semibold text-foreground mb-4 text-sm tracking-wide uppercase">
-                  {t("footer.project")}
-                </h4>
-                <ul className="space-y-3">
-                  <li>
-                    <Link to="/" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200 inline-flex items-center gap-2 group">
-                      <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      {t("footer.home")}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/project" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200 inline-flex items-center gap-2 group">
-                      <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      {t("footer.ourProject")}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/resources" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200 inline-flex items-center gap-2 group">
-                      <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      {t("footer.resources")}
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-foreground mb-4 text-sm tracking-wide uppercase">
-                  {t("footer.support")}
-                </h4>
-                <ul className="space-y-3">
-                  <li>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full justify-start text-sm text-muted-foreground hover:text-primary hover:bg-primary/5 px-0"
-                      onClick={handleSupportClick}
-                    >
-                      <Heart className="w-4 h-4 mr-2 text-red-500" />
-                      {t("footer.supportProject")}
-                    </Button>
-                  </li>
-                  <li>
-                    <Link to="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200 inline-flex items-center gap-2 group">
-                      <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      {t("footer.contact")}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/faq" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200 inline-flex items-center gap-2 group">
-                      <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      {t("footer.faq")}
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-foreground mb-4 text-sm tracking-wide uppercase">
-                  {t("footer.connect")}
-                </h4>
-                <div className="space-y-3">
-                  <a
-                    href="https://www.instagram.com/recyclage_projet"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors duration-200 group"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
-                      <Instagram className="w-4 h-4 text-white" />
-                    </div>
-                    <span>Instagram</span>
-                    <ExternalLink className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" />
-                  </a>
-                  <a
-                    href="mailto:recyclagemaria@gmail.com"
-                    className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors duration-200 group"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center">
-                      <Mail className="w-4 h-4 text-white" />
-                    </div>
-                    <span>Email</span>
-                  </a>
-                  <a
-                    href="https://ecolemaria.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors duration-200 group"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-600 to-emerald-500 flex items-center justify-center">
-                      <Globe className="w-4 h-4 text-white" />
-                    </div>
-                    <span>{t("footer.website")}</span>
-                    <ExternalLink className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" />
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* CTA Section */}
-          <div className="lg:col-span-1">
-            <div className="bg-gradient-to-br from-primary/5 to-eco-primary/5 rounded-xl p-6 border border-primary/10 dark:border-primary/20">
-              <h4 className="font-bold text-foreground mb-3">
-                {t("footer.makeDifference")}
-              </h4>
-              <p className="text-sm text-muted-foreground mb-4">
-                {t("footer.makeDifferenceDescription")}
-              </p>
+      {/* Credits Modal */}
+      {showCredits && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-md w-full p-6 animate-fade-in">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                {t("footer.projectCredits", "Project Credits")}
+              </h3>
               <Button
-                onClick={handleSupportClick}
-                className="w-full group bg-gradient-to-r from-primary to-eco-primary hover:from-primary/90 hover:to-eco-primary/90 transition-all duration-300 shadow-lg hover:shadow-xl active:scale-95"
-                size={isMobile ? "default" : "lg"}
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowCredits(false)}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               >
-                <Heart className="w-4 h-4 mr-2 group-hover:animate-pulse" />
-                {t("footer.supportButton")}
+                ✕
               </Button>
             </div>
+
+            {/* Credits List */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-800">
+                <span className="text-gray-600 dark:text-gray-400">Project Title:</span>
+                <span className="font-semibold text-gray-900 dark:text-white">Recycling within Maria School</span>
+              </div>
+
+              <div className="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-800">
+                <span className="text-gray-600 dark:text-gray-400">Developer:</span>
+                <span className="font-semibold text-gray-900 dark:text-white">Yahia Ikni</span>
+              </div>
+
+              <div className="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-800">
+                <span className="text-gray-600 dark:text-gray-400">Hosting Platform:</span>
+                <span className="font-semibold text-gray-900 dark:text-white">Vercel</span>
+              </div>
+
+              <div className="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-800">
+                <span className="text-gray-600 dark:text-gray-400">Analytics:</span>
+                <span className="font-semibold text-gray-900 dark:text-white">Google Analytics</span>
+              </div>
+
+              <div className="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-800">
+                <span className="text-gray-600 dark:text-gray-400">Project Launch:</span>
+                <span className="font-semibold text-gray-900 dark:text-white">November 2025</span>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600 dark:text-gray-400">School:</span>
+                <span className="font-semibold text-gray-900 dark:text-white">Maria School, Agadir</span>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800 text-center">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {t("footer.thankYou", "Thank you for supporting sustainable education!")}
+              </p>
+            </div>
           </div>
         </div>
-
-        {/* Divider */}
-        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent my-8" />
-
-        {/* Bottom Bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          {/* Copyright */}
-          <div className="text-center sm:text-left">
-            <p className="text-sm text-muted-foreground">
-              © {currentYear} École Maria • {t("footer.allRightsReserved")}
-            </p>
-            <p className="text-xs text-muted-foreground/60 mt-1">
-              {t("footer.location")}
-            </p>
-          </div>
-
-          {/* Credits and Actions */}
-          <div className="flex flex-col sm:flex-row items-center gap-4">
-            {/* Credits Dialog */}
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-sm text-muted-foreground hover:text-primary hover:border-primary/30 dark:hover:border-primary/50 transition-all duration-200 group"
-                >
-                  <Code className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" />
-                  {t("footer.credits")}
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-lg">
-                <DialogHeader>
-                  <div className="flex items-center gap-3 mb-4">
-                    <img
-                      src={logo}
-                      alt="Logo"
-                      className="w-12 h-12 rounded-full border border-primary/20 dark:border-primary/40"
-                    />
-                    <div>
-                      <DialogTitle className="text-foreground text-xl">
-                        {t("footer.aboutProject")}
-                      </DialogTitle>
-                      <DialogDescription className="text-muted-foreground dark:text-muted-foreground/80">
-                        {t("footer.developmentDesign")}
-                      </DialogDescription>
-                    </div>
-                  </div>
-                </DialogHeader>
-                
-                <div className="space-y-6">
-                  {/* Project Info */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between py-2 border-b border-border/50 dark:border-border/30">
-                      <span className="text-sm text-muted-foreground">
-                        {t("footer.project")}
-                      </span>
-                      <span className="font-semibold text-foreground">{t("footer.projectName")}</span>
-                    </div>
-                    <div className="flex items-center justify-between py-2 border-b border-border/50 dark:border-border/30">
-                      <span className="text-sm text-muted-foreground">
-                        {t("footer.organization")}
-                      </span>
-                      <span className="font-semibold text-foreground">{t("footer.schoolName")}</span>
-                    </div>
-                    <div className="flex items-center justify-between py-2 border-b border-border/50 dark:border-border/30">
-                      <span className="text-sm text-muted-foreground">
-                        {t("footer.launched")}
-                      </span>
-                      <span className="font-semibold text-foreground">{t("footer.launchDate")}</span>
-                    </div>
-                  </div>
-
-                  {/* Development Team */}
-                  <div className="bg-gradient-to-r from-primary/5 to-eco-primary/5 dark:from-primary/10 dark:to-eco-primary/10 rounded-lg p-4 border border-primary/10 dark:border-primary/20">
-                    <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-                      <Code className="w-4 h-4" />
-                      {t("footer.developmentTeam")}
-                    </h4>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">
-                          {t("footer.webDeveloper")}
-                        </span>
-                        <span className="font-bold text-foreground bg-gradient-to-r from-primary to-eco-primary bg-clip-text text-transparent">
-                          Yahia Ikni
-                        </span>
-                      </div>
-                      <div className="text-xs text-muted-foreground/70 dark:text-muted-foreground/60">
-                        {t("footer.developerDescription")}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Project Vision */}
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-foreground text-sm">
-                      {t("footer.projectVision")}
-                    </h4>
-                    <p className="text-sm text-muted-foreground dark:text-muted-foreground/80">
-                      {t("footer.projectVisionDescription")}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center pt-4 border-t border-border dark:border-border/30">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setDialogOpen(false)}
-                    className="text-sm hover:bg-primary/10"
-                  >
-                    {t("footer.close")}
-                  </Button>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground dark:text-muted-foreground/70">
-                    <Sparkles className="w-3 h-3 text-primary" />
-                    {t("footer.developedWithPassion")}
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
-
-        {/* Extra Info */}
-        <div className="mt-8 text-center">
-          <p className="text-xs text-muted-foreground/50 dark:text-muted-foreground/60">
-            {t("footer.educationalProject")}
-          </p>
-          <div className="flex items-center justify-center gap-2 mt-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-xs text-muted-foreground/60 dark:text-muted-foreground/70">
-              {t("footer.activeProject")}
-            </span>
-          </div>
-        </div>
-      </div>
+      )}
     </footer>
   );
 }
