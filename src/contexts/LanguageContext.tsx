@@ -1,3 +1,13 @@
+import { createContext, useContext, useState, ReactNode } from "react";
+
+type Language = "fr" | "en";
+
+interface LanguageContextType {
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  t: (key: string) => string;
+}
+
 const translations = {
   fr: {
     // Navigation
