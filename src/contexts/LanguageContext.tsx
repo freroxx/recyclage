@@ -1,13 +1,3 @@
-import { createContext, useContext, useState, ReactNode } from "react";
-
-type Language = "fr" | "en";
-
-interface LanguageContextType {
-  language: Language;
-  setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
-}
-
 const translations = {
   fr: {
     // Navigation
@@ -47,7 +37,7 @@ const translations = {
     "project.impact.2": "Former des citoyens responsables et engagés, conscients de l'importance de protéger la planète.",
     "project.impact.3": "Créer un esprit collectif autour de la durabilité et du respect de l'environnement.",
     "project.impact.4": "Encourager Agadir à devenir un exemple de ville écoresponsable à travers des actions concrètes menées par ses jeunes citoyens.",
-"project.why.title": "Pourquoi participer ?",
+    "project.why.title": "Pourquoi participer ?",
     "project.why.text": "Le recyclage n'est pas seulement une action écologique, c'est un choix de vie durable. En s'impliquant dans ce projet, chaque élève devient un acteur du changement et contribue à un avenir plus propre et plus respectueux de l'environnement. L'École Maria invite donc tous ses élèves, enseignants et parents à rejoindre cette initiative et à faire partie d'un mouvement positif pour Agadir et notre planète.",
     "project.startLearning": "Commencer à apprendre",
     "project.bins.plastic": "Plastique",
@@ -125,12 +115,19 @@ const translations = {
     "contact.success": "Message envoyé avec succès !",
     "contact.error": "Erreur lors de l'envoi. Veuillez réessayer.",
     
-    // Footer
-    "footer.followUs": "Suivez-nous",
-    "footer.school": "École Maria",
+    // Footer - Updated with new keys
+    "footer.projectName": "Recyclage Maria",
+    "footer.tagline": "Promouvoir des pratiques durables à l'École Maria, Agadir",
+    "footer.website": "Site Web",
+    "footer.support": "Soutenir",
+    "footer.contact": "Contact",
+    "footer.refresh": "Actualiser",
     "footer.rights": "Tous droits réservés",
     "footer.credits": "Crédits",
-    "footer.creditsTitle": "Crédits du Projet",
+    "footer.projectCredits": "Crédits du Projet",
+    "footer.thankYou": "Merci de soutenir l'éducation durable !",
+    "footer.followUs": "Suivez-nous",
+    "footer.school": "École Maria",
     "footer.creator": "Créateur",
     "footer.organization": "Organisation",
     "footer.created": "Créé",
@@ -174,7 +171,7 @@ const translations = {
     "project.impact.2": "Train responsible and engaged citizens, aware of the importance of protecting the planet.",
     "project.impact.3": "Create a collective spirit around sustainability and respect for the environment.",
     "project.impact.4": "Encourage Agadir to become an example of an eco-responsible city through concrete actions led by its young citizens.",
-"project.why.title": "Why Participate?",
+    "project.why.title": "Why Participate?",
     "project.why.text": "Recycling is not just an ecological action, it is a sustainable lifestyle choice. By getting involved in this project, each student becomes an agent of change and contributes to a cleaner future that is more respectful of the environment. École Maria therefore invites all its students, teachers and parents to join this initiative and be part of a positive movement for Agadir and our planet.",
     "project.startLearning": "Start learning",
     "project.bins.plastic": "Plastic",
@@ -252,12 +249,19 @@ const translations = {
     "contact.success": "Message sent successfully!",
     "contact.error": "Error sending message. Please try again.",
     
-    // Footer
-    "footer.followUs": "Follow us",
-    "footer.school": "École Maria",
+    // Footer - Updated with new keys
+    "footer.projectName": "Recyclage Maria",
+    "footer.tagline": "Promoting sustainable practices at Maria School, Agadir",
+    "footer.website": "Website",
+    "footer.support": "Support",
+    "footer.contact": "Contact",
+    "footer.refresh": "Refresh",
     "footer.rights": "All rights reserved",
     "footer.credits": "Credits",
-    "footer.creditsTitle": "Project Credits",
+    "footer.projectCredits": "Project Credits",
+    "footer.thankYou": "Thank you for supporting sustainable education!",
+    "footer.followUs": "Follow us",
+    "footer.school": "École Maria",
     "footer.creator": "Creator",
     "footer.organization": "Organization",
     "footer.created": "Created",
@@ -265,27 +269,3 @@ const translations = {
     "footer.project": "Project",
   },
 };
-
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
-
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguage] = useState<Language>("fr");
-
-  const t = (key: string): string => {
-    return translations[language][key as keyof typeof translations.fr] || key;
-  };
-
-  return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
-      {children}
-    </LanguageContext.Provider>
-  );
-}
-
-export function useLanguage() {
-  const context = useContext(LanguageContext);
-  if (context === undefined) {
-    throw new Error("useLanguage must be used within a LanguageProvider");
-  }
-  return context;
-}
