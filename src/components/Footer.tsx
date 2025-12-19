@@ -34,8 +34,10 @@ export function Footer() {
     navigate("/support");
   };
 
+  const currentYear = new Date().getFullYear();
+
   return (
-    <footer className="relative overflow-hidden">
+    <footer className="relative overflow-hidden border-t border-border/50 mt-16 sm:mt-20">
       {/* Gradient background overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-background via-primary/5 to-background" />
       
@@ -55,7 +57,7 @@ export function Footer() {
                 <div className="absolute inset-0 bg-gradient-to-br from-primary to-eco-primary rounded-full opacity-20 blur-xl group-hover:opacity-30 transition-opacity duration-500" />
                 <img
                   src={logo}
-                  alt={language === "fr" ? "Logo École Maria" : "Maria School Logo"}
+                  alt={t("footer.logoAlt")}
                   className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full object-contain bg-white dark:bg-gray-900 border-2 border-white/10 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                   loading="lazy"
                 />
@@ -63,14 +65,12 @@ export function Footer() {
               <div className="text-center sm:text-left lg:text-left space-y-3">
                 <div>
                   <h3 className="text-xl sm:text-2xl font-bold text-foreground bg-gradient-to-r from-primary to-eco-primary bg-clip-text text-transparent">
-                    Recyclage Maria
+                    {t("footer.projectName")}
                   </h3>
-                  <p className="text-sm text-muted-foreground mt-1">{t("footer.school")}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{t("footer.schoolName")}</p>
                 </div>
                 <p className="text-xs text-muted-foreground/70 max-w-xs">
-                  {language === "fr" 
-                    ? "Initiative de développement durable pour un avenir plus vert"
-                    : "Sustainable development initiative for a greener future"}
+                  {t("footer.tagline")}
                 </p>
               </div>
             </div>
@@ -81,25 +81,25 @@ export function Footer() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
               <div>
                 <h4 className="font-semibold text-foreground mb-4 text-sm tracking-wide uppercase">
-                  {language === "fr" ? "Projet" : "Project"}
+                  {t("footer.project")}
                 </h4>
                 <ul className="space-y-3">
                   <li>
                     <Link to="/" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200 inline-flex items-center gap-2 group">
                       <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      {language === "fr" ? "Accueil" : "Home"}
+                      {t("footer.home")}
                     </Link>
                   </li>
                   <li>
                     <Link to="/project" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200 inline-flex items-center gap-2 group">
                       <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      {language === "fr" ? "Notre Projet" : "Our Project"}
+                      {t("footer.ourProject")}
                     </Link>
                   </li>
                   <li>
                     <Link to="/resources" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200 inline-flex items-center gap-2 group">
                       <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      {language === "fr" ? "Ressources" : "Resources"}
+                      {t("footer.resources")}
                     </Link>
                   </li>
                 </ul>
@@ -107,7 +107,7 @@ export function Footer() {
 
               <div>
                 <h4 className="font-semibold text-foreground mb-4 text-sm tracking-wide uppercase">
-                  {language === "fr" ? "Support" : "Support"}
+                  {t("footer.support")}
                 </h4>
                 <ul className="space-y-3">
                   <li>
@@ -118,19 +118,19 @@ export function Footer() {
                       onClick={handleSupportClick}
                     >
                       <Heart className="w-4 h-4 mr-2 text-red-500" />
-                      {language === "fr" ? "Soutenir le Projet" : "Support Project"}
+                      {t("footer.supportProject")}
                     </Button>
                   </li>
                   <li>
                     <Link to="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200 inline-flex items-center gap-2 group">
                       <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      {language === "fr" ? "Contact" : "Contact"}
+                      {t("footer.contact")}
                     </Link>
                   </li>
                   <li>
                     <Link to="/faq" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200 inline-flex items-center gap-2 group">
                       <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      {language === "fr" ? "FAQ" : "FAQ"}
+                      {t("footer.faq")}
                     </Link>
                   </li>
                 </ul>
@@ -138,7 +138,7 @@ export function Footer() {
 
               <div>
                 <h4 className="font-semibold text-foreground mb-4 text-sm tracking-wide uppercase">
-                  {language === "fr" ? "Connectez-vous" : "Connect"}
+                  {t("footer.connect")}
                 </h4>
                 <div className="space-y-3">
                   <a
@@ -171,7 +171,7 @@ export function Footer() {
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-600 to-emerald-500 flex items-center justify-center">
                       <Globe className="w-4 h-4 text-white" />
                     </div>
-                    <span>Site Web</span>
+                    <span>{t("footer.website")}</span>
                     <ExternalLink className="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" />
                   </a>
                 </div>
@@ -181,22 +181,20 @@ export function Footer() {
 
           {/* CTA Section */}
           <div className="lg:col-span-1">
-            <div className="bg-gradient-to-br from-primary/5 to-eco-primary/5 rounded-xl p-6 border border-primary/10">
+            <div className="bg-gradient-to-br from-primary/5 to-eco-primary/5 rounded-xl p-6 border border-primary/10 dark:border-primary/20">
               <h4 className="font-bold text-foreground mb-3">
-                {language === "fr" ? "Faites la différence" : "Make a Difference"}
+                {t("footer.makeDifference")}
               </h4>
               <p className="text-sm text-muted-foreground mb-4">
-                {language === "fr" 
-                  ? "Chaque contribution compte. Soutenez notre initiative de recyclage."
-                  : "Every contribution counts. Support our recycling initiative."}
+                {t("footer.makeDifferenceDescription")}
               </p>
               <Button
                 onClick={handleSupportClick}
-                className="w-full group bg-gradient-to-r from-primary to-eco-primary hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl"
+                className="w-full group bg-gradient-to-r from-primary to-eco-primary hover:from-primary/90 hover:to-eco-primary/90 transition-all duration-300 shadow-lg hover:shadow-xl active:scale-95"
                 size={isMobile ? "default" : "lg"}
               >
                 <Heart className="w-4 h-4 mr-2 group-hover:animate-pulse" />
-                {language === "fr" ? "Soutenir" : "Support"}
+                {t("footer.supportButton")}
               </Button>
             </div>
           </div>
@@ -210,10 +208,10 @@ export function Footer() {
           {/* Copyright */}
           <div className="text-center sm:text-left">
             <p className="text-sm text-muted-foreground">
-              © 2025 École Maria • {language === "fr" ? "Tous droits réservés" : "All rights reserved"}
+              © {currentYear} École Maria • {t("footer.allRightsReserved")}
             </p>
             <p className="text-xs text-muted-foreground/60 mt-1">
-              {language === "fr" ? "Agadir, Maroc" : "Agadir, Morocco"}
+              {t("footer.location")}
             </p>
           </div>
 
@@ -225,10 +223,10 @@ export function Footer() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-sm text-muted-foreground hover:text-primary hover:border-primary/30 transition-all duration-200 group"
+                  className="text-sm text-muted-foreground hover:text-primary hover:border-primary/30 dark:hover:border-primary/50 transition-all duration-200 group"
                 >
                   <Code className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" />
-                  {language === "fr" ? "Crédits" : "Credits"}
+                  {t("footer.credits")}
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-lg">
@@ -237,16 +235,14 @@ export function Footer() {
                     <img
                       src={logo}
                       alt="Logo"
-                      className="w-12 h-12 rounded-full border border-primary/20"
+                      className="w-12 h-12 rounded-full border border-primary/20 dark:border-primary/40"
                     />
                     <div>
                       <DialogTitle className="text-foreground text-xl">
-                        {language === "fr" ? "À propos du projet" : "About the Project"}
+                        {t("footer.aboutProject")}
                       </DialogTitle>
-                      <DialogDescription className="text-muted-foreground">
-                        {language === "fr" 
-                          ? "Développement et conception"
-                          : "Development and design"}
+                      <DialogDescription className="text-muted-foreground dark:text-muted-foreground/80">
+                        {t("footer.developmentDesign")}
                       </DialogDescription>
                     </div>
                   </div>
@@ -255,43 +251,43 @@ export function Footer() {
                 <div className="space-y-6">
                   {/* Project Info */}
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between py-2 border-b border-border/50">
+                    <div className="flex items-center justify-between py-2 border-b border-border/50 dark:border-border/30">
                       <span className="text-sm text-muted-foreground">
-                        {language === "fr" ? "Projet" : "Project"}
+                        {t("footer.project")}
                       </span>
-                      <span className="font-semibold text-foreground">Recyclage Maria</span>
+                      <span className="font-semibold text-foreground">{t("footer.projectName")}</span>
                     </div>
-                    <div className="flex items-center justify-between py-2 border-b border-border/50">
+                    <div className="flex items-center justify-between py-2 border-b border-border/50 dark:border-border/30">
                       <span className="text-sm text-muted-foreground">
-                        {language === "fr" ? "Organisation" : "Organization"}
+                        {t("footer.organization")}
                       </span>
-                      <span className="font-semibold text-foreground">École Maria</span>
+                      <span className="font-semibold text-foreground">{t("footer.schoolName")}</span>
                     </div>
-                    <div className="flex items-center justify-between py-2 border-b border-border/50">
+                    <div className="flex items-center justify-between py-2 border-b border-border/50 dark:border-border/30">
                       <span className="text-sm text-muted-foreground">
-                        {language === "fr" ? "Lancement" : "Launched"}
+                        {t("footer.launched")}
                       </span>
-                      <span className="font-semibold text-foreground">Décembre 2024</span>
+                      <span className="font-semibold text-foreground">{t("footer.launchDate")}</span>
                     </div>
                   </div>
 
                   {/* Development Team */}
-                  <div className="bg-gradient-to-r from-primary/5 to-eco-primary/5 rounded-lg p-4">
+                  <div className="bg-gradient-to-r from-primary/5 to-eco-primary/5 dark:from-primary/10 dark:to-eco-primary/10 rounded-lg p-4 border border-primary/10 dark:border-primary/20">
                     <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
                       <Code className="w-4 h-4" />
-                      {language === "fr" ? "Équipe de développement" : "Development Team"}
+                      {t("footer.developmentTeam")}
                     </h4>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">
-                          {language === "fr" ? "Développeur Web" : "Web Developer"}
+                          {t("footer.webDeveloper")}
                         </span>
-                        <span className="font-bold text-foreground">Yahia Ikni</span>
+                        <span className="font-bold text-foreground bg-gradient-to-r from-primary to-eco-primary bg-clip-text text-transparent">
+                          Yahia Ikni
+                        </span>
                       </div>
-                      <div className="text-xs text-muted-foreground/70">
-                        {language === "fr" 
-                          ? "Conception, développement et déploiement du site web"
-                          : "Design, development and deployment of the website"}
+                      <div className="text-xs text-muted-foreground/70 dark:text-muted-foreground/60">
+                        {t("footer.developerDescription")}
                       </div>
                     </div>
                   </div>
@@ -299,66 +295,42 @@ export function Footer() {
                   {/* Project Vision */}
                   <div className="space-y-2">
                     <h4 className="font-semibold text-foreground text-sm">
-                      {language === "fr" ? "Vision du projet" : "Project Vision"}
+                      {t("footer.projectVision")}
                     </h4>
-                    <p className="text-sm text-muted-foreground">
-                      {language === "fr" 
-                        ? "Créer une plateforme interactive pour promouvoir le recyclage et sensibiliser à l'importance du développement durable dans les écoles."
-                        : "Create an interactive platform to promote recycling and raise awareness about the importance of sustainable development in schools."}
+                    <p className="text-sm text-muted-foreground dark:text-muted-foreground/80">
+                      {t("footer.projectVisionDescription")}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center pt-4 border-t border-border">
+                <div className="flex justify-between items-center pt-4 border-t border-border dark:border-border/30">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setDialogOpen(false)}
-                    className="text-sm"
+                    className="text-sm hover:bg-primary/10"
                   >
-                    {language === "fr" ? "Fermer" : "Close"}
+                    {t("footer.close")}
                   </Button>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground dark:text-muted-foreground/70">
                     <Sparkles className="w-3 h-3 text-primary" />
-                    {language === "fr" ? "Développé avec passion" : "Developed with passion"}
+                    {t("footer.developedWithPassion")}
                   </div>
                 </div>
               </DialogContent>
             </Dialog>
-
-            {/* Legal Links */}
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <a
-                href="/privacy"
-                className="hover:text-primary transition-colors duration-200"
-              >
-                {language === "fr" ? "Confidentialité" : "Privacy"}
-              </a>
-              <a
-                href="/terms"
-                className="hover:text-primary transition-colors duration-200"
-              >
-                {language === "fr" ? "Conditions" : "Terms"}
-              </a>
-              <span className="text-border hidden sm:inline">•</span>
-              <span className="text-xs text-muted-foreground/60 hidden sm:inline">
-                v1.0.0
-              </span>
-            </div>
           </div>
         </div>
 
         {/* Extra Info */}
         <div className="mt-8 text-center">
-          <p className="text-xs text-muted-foreground/50">
-            {language === "fr" 
-              ? "Projet éducatif pour un avenir durable • École Maria, Agadir • Maroc"
-              : "Educational project for a sustainable future • Maria School, Agadir • Morocco"}
+          <p className="text-xs text-muted-foreground/50 dark:text-muted-foreground/60">
+            {t("footer.educationalProject")}
           </p>
           <div className="flex items-center justify-center gap-2 mt-2">
             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-xs text-muted-foreground/60">
-              {language === "fr" ? "Projet actif" : "Active project"}
+            <span className="text-xs text-muted-foreground/60 dark:text-muted-foreground/70">
+              {t("footer.activeProject")}
             </span>
           </div>
         </div>
