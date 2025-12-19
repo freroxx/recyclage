@@ -9,67 +9,81 @@
   <!-- SEO -->
   <meta name="author" content="École Maria" />
   <meta name="description" content="Découvrez le projet de recyclage de l’école Maria à Agadir : sensibilisation des élèves, installation de bacs de tri et actions concrètes pour protéger l’environnement." />
-  <meta name="keywords" content="recyclage, école, Maria, environnement, écologie, tri, déchets, éducation, Agadir, Yahia, Ikni" />
+  <meta name="keywords" content="recyclage, école, Maria, environnement, écologie, tri, déchets, éducation, Agadir" />
   <link rel="canonical" href="https://recyclage.vercel.app" />
 
   <!-- Verification -->
   <meta name="msvalidate.01" content="1B31B71BA5B3CF00272A274DEF48C16C" />
 
-  <title>Recyclage École Maria - Initiative de recyclage scolaire</title>
+  <title>Recyclage École Maria – Projet écologique scolaire</title>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" href="/favicon.ico" />
 
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Recyclage Maria" />
-  <meta property="og:description" content="Découvrez le projet de recyclage de l'école Maria à Agadir" />
+  <meta property="og:title" content="Recyclage École Maria" />
+  <meta property="og:description" content="Projet de recyclage scolaire à l’école Maria – Agadir" />
   <meta property="og:image" content="https://i.ibb.co/SXCn8nLp/image-7.png" />
   <meta property="og:url" content="https://recyclage.vercel.app" />
+  <meta property="og:site_name" content="Recyclage École Maria" />
 
-  <!-- Twitter Card -->
+  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Recyclage Maria" />
-  <meta name="twitter:description" content="Découvrez le projet de recyclage de l'école Maria à Agadir" />
+  <meta name="twitter:title" content="Recyclage École Maria" />
+  <meta name="twitter:description" content="Projet de recyclage scolaire à Agadir" />
   <meta name="twitter:image" content="https://i.ibb.co/SXCn8nLp/image-7.png" />
 
-  <!-- PWA / Mobile -->
+  <!-- PWA -->
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
-  <!-- Google Analytics (GA4 - gtag.js) -->
+  <!-- Google Analytics (GA4) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-YXRJ6GR9PW"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    gtag('config', 'G-YXRJ6GR9PW', { send_page_view: true });
+    gtag('config', 'G-YXRJ6GR9PW');
   </script>
-  <!-- End Google Analytics -->
 
-  <!-- Fonts (non-blocking) -->
+  <!-- Google AdSense -->
+  <script async
+    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6418144328904526"
+    crossorigin="anonymous">
+  </script>
+
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
     rel="stylesheet"
-    media="print"
-    onload="this.media='all'"
   />
-  <noscript>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  </noscript>
 
-<!-- Google AdSense -->
-<script
-  async
-  src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6418144328904526"
-  crossorigin="anonymous">
-</script>
+  <!-- Structured Data (CRUCIAL POUR GOOGLE) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Recyclage École Maria",
+    "url": "https://recyclage.vercel.app",
+    "publisher": {
+      "@type": "Organization",
+      "name": "École Maria",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://recyclage.vercel.app/favicon.ico"
+      }
+    }
+  }
+  </script>
+
+</head>
 
 <body class="bg-background text-foreground">
-
   <main id="root" role="main" aria-label="Application Recyclage École Maria"></main>
-
   <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
