@@ -279,3 +279,30 @@ const translations = {
     "footer.project": "Project",
   },
 };
+// Création du contexte
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+
+interface Props {
+  children: ReactNode;
+}
+
+export const LanguageProvider = ({ children }: Props) => {
+  const [language, setLanguage] = useState<Language>("fr");
+
+  const t = (key: string) => {
+    return translations[language][key] || key;
+  };
+
+  return (
+    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+      {children}
+    </LanguageContext.Provider>
+  );
+};
+
+// ✅ Export manquant : hook pour consommer le contexte
+export const useLanguage = (): LanguageContextType => {
+  const context = useContext(LanguageContext);
+  if (!context) throw new Error("useLanguage must be used within a LanguageProvider");
+  return context;
+};
