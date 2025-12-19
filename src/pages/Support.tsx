@@ -98,7 +98,7 @@ export default function Support() {
         
       } catch (error) {
         console.error('Initialization error:', error);
-        showAdErrorToast("Erreur d'initialisation", "Impossible de charger les ressources de la page.");
+        showAdErrorToast("Erreur d'initialisation", "Impossible de charger les ressources.");
       } finally {
         setIsLoading(false);
       }
@@ -200,7 +200,7 @@ export default function Support() {
           // Every 10 views add $0.01 to progress (simulation)
           if (newViews % 10 === 0) {
             setCurrentAmount(prev => {
-              const newAmount = Math.min(prev + 0.01, domainAmount);
+              const newAmount = Math.min(prev + 0.05, domainAmount);
               setDomainProgress((newAmount / domainAmount) * 100);
               return newAmount;
             });
