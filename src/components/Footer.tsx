@@ -13,6 +13,15 @@ export function Footer() {
   const [showCredits, setShowCredits] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
 
+  // Handle initial undefined state from useIsMobile
+  const [isMobileFinal, setIsMobileFinal] = useState(false);
+  
+  useEffect(() => {
+    if (isMobile !== undefined) {
+      setIsMobileFinal(isMobile);
+    }
+  }, [isMobile]);
+
   useEffect(() => {
     setIsVisible(true);
   }, []);
@@ -141,26 +150,27 @@ export function Footer() {
             </p>
           </div>
 
-          {/* Big Action Buttons Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-10">
+          {/* Big Action Buttons Grid - Optimized for mobile */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 mb-10">
             {actionButtons.map((button, index) => (
               <motion.div
                 key={button.label}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                whileHover={{ y: -4 }}
+                transition={{ delay: index * 0.05, duration: 0.3 }}
+                whileHover={!isMobileFinal ? { y: -4 } : {}}
+                whileTap={isMobileFinal ? { scale: 0.97 } : {}}
                 className="w-full"
               >
                 <Button
                   variant="outline"
                   className={`
                     group relative flex flex-col items-center justify-center
-                    h-24 sm:h-28 w-full p-4 gap-3
-                    border-2 border-gray-700 bg-gray-900/40
+                    h-20 sm:h-24 w-full p-3 gap-2
+                    border border-gray-700 bg-gray-900/40
                     hover:border-current hover:bg-black/30
                     transition-all duration-300 ease-out
-                    ${isMobile ? 'active:scale-95' : 'hover:scale-105'}
+                    ${!isMobileFinal ? 'hover:scale-105' : ''}
                     overflow-hidden
                   `}
                   onClick={button.onClick}
@@ -179,22 +189,24 @@ export function Footer() {
                   {/* Icon */}
                   <button.icon 
                     className={`
-                      w-7 h-7 sm:w-8 sm:h-8 transition-all duration-300
-                      group-hover:scale-110 group-hover:rotate-3
+                      w-6 h-6 sm:w-7 sm:h-7 transition-all duration-300
+                      ${!isMobileFinal ? 'group-hover:scale-110 group-hover:rotate-3' : ''}
                     `}
                     style={{ color: button.color }}
                   />
                   
                   {/* Label */}
-                  <span className="text-sm sm:text-base font-semibold text-white">
+                  <span className="text-xs sm:text-sm font-semibold text-white whitespace-nowrap">
                     {button.label}
                   </span>
                   
                   {/* Hover effect line */}
-                  <div 
-                    className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 h-0.5 group-hover:w-16 transition-all duration-300"
-                    style={{ backgroundColor: button.color }}
-                  />
+                  {!isMobileFinal && (
+                    <div 
+                      className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 h-0.5 group-hover:w-12 transition-all duration-300"
+                      style={{ backgroundColor: button.color }}
+                    />
+                  )}
                 </Button>
               </motion.div>
             ))}
@@ -214,19 +226,19 @@ export function Footer() {
 
             {/* Credits Button */}
             <motion.div 
-              whileHover={{ scale: 1.05 }}
+              whileHover={!isMobileFinal ? { scale: 1.05 } : {}}
               whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 400, damping: 25 }}
             >
               <Button
                 variant="ghost"
-                size={isMobile ? "sm" : "default"}
+                size={isMobileFinal ? "sm" : "default"}
                 className="group text-gray-300 hover:text-white bg-gray-900/50 hover:bg-emerald-900/30 border border-gray-700 hover:border-emerald-500/50 transition-all duration-300"
                 onClick={() => setShowCredits(true)}
               >
                 <Info className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" />
                 {t("footer.credits", "Credits")}
-                <span className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity">✨</span>
+                {!isMobileFinal && <span className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity">✨</span>}
               </Button>
             </motion.div>
           </motion.div>
@@ -253,35 +265,47 @@ export function Footer() {
 
             {/* Modal Content */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ 
                 type: "spring", 
-                damping: 25, 
+                damping: 20, 
                 stiffness: 300,
                 mass: 0.8 
               }}
               className={`
                 relative bg-gray-900 border border-gray-700 rounded-2xl 
-                shadow-2xl max-w-lg w-full max-h-[80vh] overflow-hidden
-                ${isMobile ? 'mx-4' : ''}
+                shadow-2xl w-full max-h-[85vh] overflow-hidden
+                ${isMobileFinal ? 'max-w-sm mx-4' : 'max-w-2xl'}
               `}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="sticky top-0 bg-gradient-to-r from-emerald-900/50 to-green-900/50 p-6 border-b border-gray-800 backdrop-blur-sm">
+              <div className="sticky top-0 bg-gradient-to-r from-emerald-900/50 to-green-900/50 p-5 border-b border-gray-800 backdrop-blur-sm z-10">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-xl sm:text-2xl font-bold text-white">
-                      {t("footer.projectCredits", "Project Credits")}
-                    </h3>
-                    <p className="text-emerald-300 text-sm mt-1">
-                      {t("footer.credits.subtitle", "Sustainable Education Initiative")}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+                      <img 
+                        src="/src/assets/logo.png" 
+                        alt="Logo"
+                        className="w-6 h-6 object-contain"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "https://via.placeholder.com/24/10B981/FFFFFF?text=RM";
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <h3 className="text-lg sm:text-xl font-bold text-white">
+                        {t("footer.projectCredits", "Project Credits")}
+                      </h3>
+                      <p className="text-emerald-300 text-xs sm:text-sm mt-0.5">
+                        {t("footer.credits.subtitle", "Sustainable Education Initiative")}
+                      </p>
+                    </div>
                   </div>
                   <motion.button
-                    whileHover={{ scale: 1.1, rotate: 90 }}
+                    whileHover={!isMobileFinal ? { scale: 1.1, rotate: 90 } : {}}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setShowCredits(false)}
                     className="p-2 rounded-full hover:bg-white/10 transition-colors"
@@ -293,25 +317,25 @@ export function Footer() {
               </div>
 
               {/* Scrollable Content */}
-              <div className="overflow-y-auto max-h-[calc(80vh-140px)]">
-                <div className="p-6">
-                  {/* Credits Grid - Two Columns on Desktop */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="overflow-y-auto max-h-[calc(85vh-140px)]">
+                <div className="p-5">
+                  {/* Credits Grid */}
+                  <div className={`grid gap-3 ${isMobileFinal ? 'grid-cols-1' : 'grid-cols-2'}`}>
                     {creditsData.map((item, index) => (
                       <motion.div
                         key={item.label}
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="bg-gray-800/50 rounded-lg p-4 border border-gray-700 hover:border-emerald-500/30 transition-colors"
+                        transition={{ delay: index * 0.08 }}
+                        className="bg-gray-800/30 rounded-lg p-4 border border-gray-700 hover:border-emerald-500/30 transition-colors"
                       >
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                          <span className="text-sm font-medium text-gray-400">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          <span className="text-xs font-medium text-gray-400">
                             {item.label}
                           </span>
                         </div>
-                        <span className="text-white font-semibold block text-lg">
+                        <span className="text-white font-semibold block text-base">
                           {item.value}
                         </span>
                       </motion.div>
@@ -322,46 +346,70 @@ export function Footer() {
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 0.6 }}
-                    className="mt-8 pt-6 border-t border-gray-800"
+                    transition={{ delay: 0.5 }}
+                    className="mt-6 pt-5 border-t border-gray-800"
                   >
-                    <h4 className="text-sm font-semibold text-gray-400 mb-3 flex items-center gap-2">
-                      <span>⚡</span>
-                      {t("footer.credits.builtWith", "Built With")}
-                    </h4>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-semibold text-gray-400 flex items-center gap-2">
+                        <span>⚡</span>
+                        {t("footer.credits.builtWith", "Built With")}
+                      </h4>
+                      <span className="text-xs text-emerald-400">v1.0.0</span>
+                    </div>
                     <div className="flex flex-wrap gap-2">
-                      {["React", "TypeScript", "Tailwind", "Vercel"].map((tech) => (
-                        <span
+                      {["React", "TypeScript", "Tailwind", "Vercel", "Framer Motion"].map((tech) => (
+                        <motion.span
                           key={tech}
-                          className="px-3 py-2 text-sm rounded-lg bg-emerald-900/30 text-emerald-300 border border-emerald-800/50 hover:bg-emerald-800/40 transition-colors"
+                          whileHover={!isMobileFinal ? { scale: 1.05 } : {}}
+                          className="px-3 py-1.5 text-xs rounded-lg bg-emerald-900/20 text-emerald-300 border border-emerald-800/30 hover:bg-emerald-800/30 transition-colors"
                         >
                           {tech}
-                        </span>
+                        </motion.span>
                       ))}
+                    </div>
+                  </motion.div>
+
+                  {/* Thank you message */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.7 }}
+                    className="mt-6 p-4 rounded-lg bg-gradient-to-r from-emerald-900/10 to-green-900/10 border border-emerald-800/20"
+                  >
+                    <div className="flex items-center gap-3">
+                      <motion.div
+                        animate={{ 
+                          rotate: isMobileFinal ? [0, 0] : [0, 360],
+                        }}
+                        transition={{ 
+                          rotate: { duration: 20, repeat: Infinity, ease: "linear" },
+                        }}
+                        className="text-2xl"
+                      >
+                        ♻️
+                      </motion.div>
+                      <p className="text-sm text-gray-300">
+                        {t("footer.thankYou", "Thank you for supporting sustainable education!")}
+                      </p>
                     </div>
                   </motion.div>
                 </div>
               </div>
 
               {/* Footer with CTA */}
-              <div className="sticky bottom-0 p-6 border-t border-gray-800 bg-gray-900/90 backdrop-blur-sm">
-                <div className="text-center">
-                  <p className="text-sm text-gray-300 mb-3">
-                    {t("footer.thankYou", "Thank you for supporting sustainable education!")}
-                  </p>
-                  <motion.div
-                    animate={{ 
-                      rotate: [0, 360],
-                      scale: [1, 1.2, 1]
-                    }}
-                    transition={{ 
-                      rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                      scale: { duration: 2, repeat: Infinity }
-                    }}
-                    className="inline-block"
+              <div className="sticky bottom-0 p-4 border-t border-gray-800 bg-gray-900/90 backdrop-blur-sm">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-500">
+                    {t("footer.credits.lastUpdated", "Updated")}: Dec 2024
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-xs text-emerald-400 hover:text-emerald-300 hover:bg-emerald-900/30"
+                    onClick={() => window.open("https://github.com", "_blank")}
                   >
-                    <span className="text-3xl">♻️</span>
-                  </motion.div>
+                    View Source
+                  </Button>
                 </div>
               </div>
             </motion.div>
