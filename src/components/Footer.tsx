@@ -446,24 +446,122 @@ export function Footer() {
                     ))}
                   </div>
 
-                  {/* Source Code Link */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6 }}
-                    whileHover={!isMobileFinal ? { scale: 1.02 } : {}}
-                    className="mt-6"
-                  >
-                    <Button
-                      variant="outline"
-                      className="w-full group relative bg-gray-800/50 border-gray-700 hover:border-emerald-500/50 hover:bg-emerald-900/20 transition-all duration-300"
-                      onClick={() => window.open("https://github.com/freroxx/recyclage", "_blank")}
-                    >
-                      <Github className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform duration-300" />
-                      <span>View Source Code on GitHub</span>
-                      <span className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">↗</span>
-                    </Button>
-                  </motion.div>
+{/* Source Code Link - Enhanced */}
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ 
+    delay: 0.6,
+    type: "spring",
+    stiffness: 300,
+    damping: 20
+  }}
+  whileHover={!isMobileFinal ? { 
+    scale: 1.02,
+    y: -2,
+    transition: { type: "spring", stiffness: 400, damping: 10 }
+  } : {}}
+  className="mt-8"
+>
+  <Button
+    variant="outline"
+    className="group relative w-full bg-gradient-to-br from-gray-900 to-[#0a1511] border border-gray-700 hover:border-emerald-500/60 hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 overflow-hidden"
+    onClick={() => window.open("https://github.com/freroxx/recyclage", "_blank")}
+  >
+    {/* Animated gradient background */}
+    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+    
+    {/* Glow effect */}
+    <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-transparent blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+    
+    {/* Content */}
+    <div className="relative z-10 flex items-center justify-center gap-3">
+      {/* Animated GitHub icon */}
+      <motion.div
+        animate={!isMobileFinal ? {
+          rotate: [0, 5, -5, 0],
+        } : {}}
+        transition={{
+          rotate: {
+            duration: 4,
+            repeat: Infinity,
+            repeatType: "reverse",
+            ease: "easeInOut"
+          }
+        }}
+        className="relative"
+      >
+        <Github className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
+        {/* Pulse effect */}
+        <div className="absolute inset-0 rounded-full bg-emerald-500/30 animate-ping opacity-0 group-hover:opacity-100" />
+      </motion.div>
+      
+      {/* Text with gradient */}
+      <span className="font-medium bg-gradient-to-r from-gray-200 to-emerald-200 bg-clip-text text-transparent group-hover:from-emerald-300 group-hover:to-green-300 transition-all duration-300">
+        {t("footer.viewSourceCode", "View Source Code on GitHub")}
+      </span>
+      
+      {/* Animated arrow */}
+      <motion.span
+        initial={{ x: 0, opacity: 0.6 }}
+        animate={!isMobileFinal ? {
+          x: [0, 5, 0],
+          opacity: [0.6, 1, 0.6],
+        } : {}}
+        transition={{
+          x: {
+            duration: 1.5,
+            repeat: Infinity,
+            ease: "easeInOut"
+          },
+          opacity: {
+            duration: 1.5,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }
+        }}
+        className="text-emerald-400 group-hover:text-emerald-300 transition-colors"
+      >
+        ✔️
+      </motion.span>
+    </div>
+    
+    {/* Bottom border animation */}
+    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-500 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
+    
+    {/* Star particles on hover */}
+    {!isMobileFinal && (
+      <>
+        <motion.span
+          initial={{ opacity: 0, scale: 0 }}
+          whileHover={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+          className="absolute top-2 left-4 text-emerald-400 text-xs"
+        >
+          ★
+        </motion.span>
+        <motion.span
+          initial={{ opacity: 0, scale: 0 }}
+          whileHover={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+          className="absolute top-3 right-6 text-emerald-400 text-xs"
+        >
+          ✨
+        </motion.span>
+      </>
+    )}
+  </Button>
+  
+  {/* Info text */}
+  <motion.p
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    transition={{ delay: 0.7 }}
+    className="mt-3 text-center text-xs text-gray-500"
+  >
+    {t("footer.openSource", "Open source project • Contributions welcome")}
+  </motion.p>
+</motion.div>
 
                   {/* Tech Stack */}
                   <motion.div
