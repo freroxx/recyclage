@@ -157,6 +157,7 @@ const translations = {
     "footer.credits.lastUpdated": "Mis à jour",
     "footer.viewSourceCode": "Voir le code source sur GitHub",
     "footer.viewSource": "Voir le code source",
+    "footer.openSource": "Projet open source • Contributions bienvenues",
     
     // Common
     "common.close": "Fermer",
@@ -331,6 +332,7 @@ const translations = {
     "footer.credits.lastUpdated": "Updated",
     "footer.viewSourceCode": "View Source Code on GitHub",
     "footer.viewSource": "View Source",
+    "footer.openSource": "Open source project • Contributions welcome",
     
     // Common
     "common.close": "Close",
