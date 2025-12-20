@@ -5,7 +5,7 @@ type Language = "fr" | "en";
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
+  t: (key: string, fallback?: string) => string;
 }
 
 const translations = {
@@ -125,7 +125,7 @@ const translations = {
     "contact.success": "Message envoyé avec succès !",
     "contact.error": "Erreur lors de l'envoi. Veuillez réessayer.",
     
-    // Footer - Updated with new keys
+    // Footer
     "footer.projectName": "Recyclage Maria",
     "footer.tagline": "Promouvoir des pratiques durables à l'École Maria, Agadir",
     "footer.website": "Site Web",
@@ -143,6 +143,45 @@ const translations = {
     "footer.created": "Créé",
     "footer.date": "Novembre 2025",
     "footer.project": "Projet",
+    
+    // Footer Credits (new translations)
+    "footer.credits.projectTitle": "Titre du projet",
+    "footer.credits.projectTitleValue": "Recyclage au sein de l'école Maria",
+    "footer.credits.developer": "Développeur",
+    "footer.credits.hosting": "Plateforme d'hébergement",
+    "footer.credits.analytics": "Analytiques",
+    "footer.credits.launch": "Lancement du projet",
+    "footer.credits.school": "École",
+    "footer.credits.subtitle": "Initiative d'éducation durable",
+    "footer.credits.builtWith": "Construit avec",
+    "footer.credits.lastUpdated": "Mis à jour",
+    "footer.viewSourceCode": "Voir le code source sur GitHub",
+    "footer.viewSource": "Voir le code source",
+    
+    // Common
+    "common.close": "Fermer",
+    "common.download": "Télécharger",
+    "common.learnMore": "En savoir plus",
+    "common.readMore": "Lire plus",
+    "common.seeAll": "Voir tout",
+    "common.loading": "Chargement",
+    "common.error": "Erreur",
+    "common.success": "Succès",
+    "common.cancel": "Annuler",
+    "common.confirm": "Confirmer",
+    "common.save": "Sauvegarder",
+    "common.edit": "Modifier",
+    "common.delete": "Supprimer",
+    "common.share": "Partager",
+    "common.copy": "Copier",
+    "common.copied": "Copié",
+    "common.search": "Rechercher",
+    "common.filter": "Filtrer",
+    "common.sort": "Trier",
+    "common.view": "Voir",
+    "common.back": "Retour",
+    "common.next": "Suivant",
+    "common.previous": "Précédent",
   },
   en: {
     // Navigation
@@ -150,6 +189,7 @@ const translations = {
     "nav.project": "The Project",
     "nav.resources": "Resources",
     "nav.contact": "Contact",
+    "nav.events": "Events",
     
     // Hero
     "hero.title": "A simple action for a cleaner future.",
@@ -205,8 +245,8 @@ const translations = {
     "resources.view": "View",
     
     // Posters
-    "posters.title": "Community Posters",
-    "posters.subtitle": "Amazing designs created by our talented community members",
+    "posters.title": "Recycling Posters",
+    "posters.subtitle": "Discover our educational posters about recycling",
     "posters.poster1": "Save the Earth With 3R Poster",
     "posters.poster2": "Minimalist Recycling Campaign Poster",
     "posters.yahiaSection": "Yahia's Designs",
@@ -259,7 +299,7 @@ const translations = {
     "contact.success": "Message sent successfully!",
     "contact.error": "Error sending message. Please try again.",
     
-    // Footer - Updated with new keys
+    // Footer
     "footer.projectName": "Recyclage Maria",
     "footer.tagline": "Promoting sustainable practices at Maria School, Agadir",
     "footer.website": "Website",
@@ -271,14 +311,54 @@ const translations = {
     "footer.projectCredits": "Project Credits",
     "footer.thankYou": "Thank you for supporting sustainable education!",
     "footer.followUs": "Follow us",
-    "footer.school": "École Maria",
+    "footer.school": "Maria School",
     "footer.creator": "Creator",
     "footer.organization": "Organization",
     "footer.created": "Created",
     "footer.date": "November 2025",
     "footer.project": "Project",
+    
+    // Footer Credits (new translations)
+    "footer.credits.projectTitle": "Project Title",
+    "footer.credits.projectTitleValue": "Recycling within Maria School",
+    "footer.credits.developer": "Developer",
+    "footer.credits.hosting": "Hosting Platform",
+    "footer.credits.analytics": "Analytics",
+    "footer.credits.launch": "Project Launch",
+    "footer.credits.school": "School",
+    "footer.credits.subtitle": "Sustainable Education Initiative",
+    "footer.credits.builtWith": "Built With",
+    "footer.credits.lastUpdated": "Updated",
+    "footer.viewSourceCode": "View Source Code on GitHub",
+    "footer.viewSource": "View Source",
+    
+    // Common
+    "common.close": "Close",
+    "common.download": "Download",
+    "common.learnMore": "Learn More",
+    "common.readMore": "Read More",
+    "common.seeAll": "See All",
+    "common.loading": "Loading",
+    "common.error": "Error",
+    "common.success": "Success",
+    "common.cancel": "Cancel",
+    "common.confirm": "Confirm",
+    "common.save": "Save",
+    "common.edit": "Edit",
+    "common.delete": "Delete",
+    "common.share": "Share",
+    "common.copy": "Copy",
+    "common.copied": "Copied",
+    "common.search": "Search",
+    "common.filter": "Filter",
+    "common.sort": "Sort",
+    "common.view": "View",
+    "common.back": "Back",
+    "common.next": "Next",
+    "common.previous": "Previous",
   },
 };
+
 // Création du contexte
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
@@ -289,8 +369,19 @@ interface Props {
 export const LanguageProvider = ({ children }: Props) => {
   const [language, setLanguage] = useState<Language>("fr");
 
-  const t = (key: string) => {
-    return translations[language][key] || key;
+  const t = (key: string, fallback?: string) => {
+    const translation = translations[language][key];
+    if (translation !== undefined) {
+      return translation;
+    }
+    
+    // If translation doesn't exist and we have a fallback, use it
+    if (fallback !== undefined) {
+      return fallback;
+    }
+    
+    // If no translation and no fallback, return the key
+    return key;
   };
 
   return (
@@ -300,7 +391,7 @@ export const LanguageProvider = ({ children }: Props) => {
   );
 };
 
-// ✅ Export manquant : hook pour consommer le contexte
+// Export everything yeah ok i'll stfu
 export const useLanguage = (): LanguageContextType => {
   const context = useContext(LanguageContext);
   if (!context) throw new Error("useLanguage must be used within a LanguageProvider");
