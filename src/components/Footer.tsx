@@ -532,7 +532,7 @@ export function Footer() {
               <div className="sticky bottom-0 p-4 border-t border-gray-800 bg-gray-900/90 backdrop-blur-sm">
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-gray-500">
-                    {t("footer.credits.lastUpdated", "Updated")}: Dec 2024
+                    {t("footer.credits.lastUpdated", "Updated")}: 20 Dec 2025
                   </span>
                   <span className="text-xs text-emerald-400 px-2 py-1 rounded-full bg-emerald-900/20">
                     v1.0.0
