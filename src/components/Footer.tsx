@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
-import logo from "@/assets/logo.png";
+import logo from "./assets/logo.png";
 
 export function Footer() {
   const { t } = useLanguage();
@@ -157,13 +157,13 @@ export function Footer() {
                     <span className="text-white font-bold text-lg">RM</span>
                   </div>
                 ) : (
-                  <img 
-                    src="/logo.png" 
-                    alt="Recyclage Maria Logo"
-                    className="w-10 h-10 object-contain transition-transform duration-300 group-hover:scale-110"
-                    onError={() => setLogoError(true)}
-                    onLoad={() => setLogoError(false)}
-                  />
+            <img 
+              src={logo} 
+              alt="Recyclage Maria Logo"
+              className="w-10 h-10 object-contain transition-transform duration-300 group-hover:scale-110"
+              onError={() => setLogoError(true)}
+              onLoad={() => setLogoError(false)}
+            />
                 )}
               </div>
               {/* Animated ring effect */}
