@@ -71,8 +71,6 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@prerenderer/rollup-plugin": "^0.3.12",
-    "@prerenderer/renderer-static": "^0.1.6",
     "@eslint/js": "^9.32.0",
     "@tailwindcss/typography": "^0.5.16",
     "@types/node": "^22.16.5",
