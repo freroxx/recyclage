@@ -77,12 +77,31 @@ const AppLoader = () => (
 // Protected Route wrapper
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  isOnboarded: boolean;
-  isLoading: boolean;
 }
 
-const ProtectedRoute = ({ children, isOnboarded, isLoading }: ProtectedRouteProps) => {
-  if (isLoading) {
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+  const [isChecking, setIsChecking] = useState(true);
+  const [isOnboarded, setIsOnboarded] = useState(false);
+
+  useEffect(() => {
+    const checkOnboarding = () => {
+      try {
+        const onboardingData = localStorage.getItem('app:onboarding');
+        if (onboardingData) {
+          const data = JSON.parse(onboardingData);
+          setIsOnboarded(data.onboarded === true);
+        }
+      } catch (error) {
+        console.error('Error checking onboarding:', error);
+      } finally {
+        setTimeout(() => setIsChecking(false), 300);
+      }
+    };
+
+    checkOnboarding();
+  }, []);
+
+  if (isChecking) {
     return <AppLoader />;
   }
 
@@ -94,20 +113,15 @@ const ProtectedRoute = ({ children, isOnboarded, isLoading }: ProtectedRouteProp
 };
 
 // Main App Layout (with Navigation & Footer)
-interface MainLayoutProps {
-  children: React.ReactNode;
-  language: 'en' | 'fr';
-}
-
-const MainLayout = ({ children, language }: MainLayoutProps) => (
+const MainLayout = ({ children }: { children: React.ReactNode }) => (
   <div className="min-h-screen flex flex-col bg-background theme-transition">
-    <Navigation language={language} />
+    <Navigation />
     <main className="flex-1 pt-16 sm:pt-20">
       <Suspense fallback={<PageLoader />}>
         {children}
       </Suspense>
     </main>
-    <Footer language={language} />
+    <Footer />
     <ScrollToTop />
     
     {/* ✅ Vercel Analytics */}
@@ -126,8 +140,7 @@ interface OnboardingData {
 }
 
 const App = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isOnboarded, setIsOnboarded] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [initialTheme, setInitialTheme] = useState<'light' | 'dark'>('light');
   const [initialLanguage, setInitialLanguage] = useState<'en' | 'fr'>('fr');
   const [userName, setUserName] = useState<string>('');
@@ -135,8 +148,60 @@ const App = () => {
   // Memoized query client
   const queryClient = useMemo(() => createQueryClient(), []);
 
-  // Function to save onboarding data
-  const saveOnboardingData = useCallback((data: OnboardingData) => {
+  // Initialize app state
+  useEffect(() => {
+    const initializeApp = () => {
+      try {
+        const onboardingData = localStorage.getItem('app:onboarding');
+        
+        if (onboardingData) {
+          const data: OnboardingData = JSON.parse(onboardingData);
+          
+          // Apply saved theme
+          if (data.theme === 'dark') {
+            document.documentElement.classList.add('dark');
+            document.documentElement.style.colorScheme = 'dark';
+          } else {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.style.colorScheme = 'light';
+          }
+          
+          // Apply language
+          document.documentElement.lang = data.language;
+          
+          // Update states
+          setInitialTheme(data.theme);
+          setInitialLanguage(data.language);
+          setUserName(data.name || '');
+        } else {
+          // No data found, use system preferences
+          const systemIsDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          const systemLanguage = navigator.language.toLowerCase().startsWith('fr') ? 'fr' : 'en';
+          
+          setInitialTheme(systemIsDark ? 'dark' : 'light');
+          setInitialLanguage(systemLanguage);
+          
+          // Apply system theme
+          if (systemIsDark) {
+            document.documentElement.classList.add('dark');
+            document.documentElement.style.colorScheme = 'dark';
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing app:', error);
+        // Fallback to defaults
+        setInitialTheme('light');
+        setInitialLanguage('fr');
+      } finally {
+        setTimeout(() => setIsInitializing(false), 500);
+      }
+    };
+
+    initializeApp();
+  }, []);
+
+  // Handle onboarding completion
+  const handleOnboardingComplete = useCallback((data: OnboardingData) => {
     try {
       localStorage.setItem('app:onboarding', JSON.stringify(data));
       
@@ -152,98 +217,18 @@ const App = () => {
       // Apply language to document
       document.documentElement.lang = data.language;
       
-      // Update initial states
-      setInitialTheme(data.theme);
-      setInitialLanguage(data.language);
-      setUserName(data.name);
-      setIsOnboarded(data.onboarded);
-      
-      return true;
+      // Force a small delay for smooth transition
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 600);
     } catch (error) {
       console.error('Error saving onboarding data:', error);
-      return false;
     }
   }, []);
 
-  // Check onboarding status on mount
-  useEffect(() => {
-    const checkOnboarding = () => {
-      try {
-        const onboardingData = localStorage.getItem('app:onboarding');
-        
-        if (onboardingData) {
-          const data: OnboardingData = JSON.parse(onboardingData);
-          
-          if (data.onboarded) {
-            // Apply saved theme
-            if (data.theme === 'dark') {
-              document.documentElement.classList.add('dark');
-              document.documentElement.style.colorScheme = 'dark';
-            } else {
-              document.documentElement.classList.remove('dark');
-              document.documentElement.style.colorScheme = 'light';
-            }
-            
-            // Apply language
-            document.documentElement.lang = data.language;
-            
-            // Update states
-            setInitialTheme(data.theme);
-            setInitialLanguage(data.language);
-            setUserName(data.name);
-            setIsOnboarded(true);
-          } else {
-            // Not onboarded, use system preferences
-            const systemIsDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const systemLanguage = navigator.language.toLowerCase().startsWith('fr') ? 'fr' : 'en';
-            
-            setInitialTheme(systemIsDark ? 'dark' : 'light');
-            setInitialLanguage(systemLanguage);
-          }
-        } else {
-          // No data found, use system preferences
-          const systemIsDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          const systemLanguage = navigator.language.toLowerCase().startsWith('fr') ? 'fr' : 'en';
-          
-          setInitialTheme(systemIsDark ? 'dark' : 'light');
-          setInitialLanguage(systemLanguage);
-        }
-      } catch (error) {
-        console.error('Error reading onboarding data:', error);
-        // Fallback to system preferences
-        const systemIsDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const systemLanguage = navigator.language.toLowerCase().startsWith('fr') ? 'fr' : 'en';
-        
-        setInitialTheme(systemIsDark ? 'dark' : 'light');
-        setInitialLanguage(systemLanguage);
-      } finally {
-        setTimeout(() => setIsLoading(false), 500);
-      }
-    };
-
-    checkOnboarding();
-  }, []);
-
-  // Handle onboarding completion
-  const handleOnboardingComplete = useCallback((data: OnboardingData) => {
-    saveOnboardingData(data);
-    
-    // Small delay for animation
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 300);
-  }, [saveOnboardingData]);
-
-  // Memoized render function for routes
-  const renderProtectedRoute = useMemo(() => (
-    (children: React.ReactNode) => (
-      <ProtectedRoute isOnboarded={isOnboarded} isLoading={isLoading}>
-        <MainLayout language={initialLanguage}>
-          {children}
-        </MainLayout>
-      </ProtectedRoute>
-    )
-  ), [isOnboarded, isLoading, initialLanguage]);
+  if (isInitializing) {
+    return <AppLoader />;
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -253,6 +238,7 @@ const App = () => {
         enableSystem={false}
         disableTransitionOnChange={false}
         storageKey="eco-school-theme"
+        forcedTheme={initialTheme}
       >
         <LanguageProvider defaultLanguage={initialLanguage} userName={userName}>
           <TooltipProvider delayDuration={300}>
@@ -281,27 +267,91 @@ const App = () => {
                 <Route 
                   path="/onboarding" 
                   element={
-                    !isOnboarded ? (
-                      <Onboarding onComplete={handleOnboardingComplete} />
-                    ) : (
-                      <Navigate to="/" replace />
-                    )
+                    <Onboarding onComplete={handleOnboardingComplete} />
                   } 
                 />
                 
                 {/* Main App Routes (Protected) */}
-                <Route path="/" element={renderProtectedRoute(<Home />)} />
-                <Route path="/project" element={renderProtectedRoute(<Project />)} />
-                <Route path="/resources" element={renderProtectedRoute(<Resources />)} />
-                <Route path="/guide" element={renderProtectedRoute(<Guide />)} />
-                <Route path="/posters" element={renderProtectedRoute(<Posters />)} />
-                <Route path="/videos" element={renderProtectedRoute(<Videos />)} />
-                <Route path="/activities" element={renderProtectedRoute(<Activities />)} />
-                <Route path="/contact" element={renderProtectedRoute(<Contact />)} />
-                <Route path="/support" element={renderProtectedRoute(<Support />)} />
+                <Route path="/" element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <Home />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/project" element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <Project />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/resources" element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <Resources />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/guide" element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <Guide />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/posters" element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <Posters />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/videos" element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <Videos />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/activities" element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <Activities />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/contact" element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <Contact />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/support" element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <Support />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } />
                 
                 {/* Catch-all route for 404 */}
-                <Route path="*" element={renderProtectedRoute(<NotFound />)} />
+                <Route path="*" element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <NotFound />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } />
               </Routes>
             </BrowserRouter>
           </TooltipProvider>
