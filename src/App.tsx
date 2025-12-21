@@ -8,7 +8,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { ScrollToTop } from "@/components/ScrollToTop";
-import { lazy, Suspense, useEffect, useState, useMemo, useCallback } from "react";
+import { lazy, Suspense, useEffect, useState, useMemo } from "react";
 import Support from "./pages/Support";
 
 // ✅ Vercel Analytics + Speed Insights
@@ -89,10 +89,13 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         const onboardingData = localStorage.getItem('app:onboarding');
         if (onboardingData) {
           const data = JSON.parse(onboardingData);
-          setIsOnboarded(data.onboarded === true);
+          setIsOnboarded(!!data.onboarded);
+        } else {
+          setIsOnboarded(false);
         }
       } catch (error) {
         console.error('Error checking onboarding:', error);
+        setIsOnboarded(false);
       } finally {
         setTimeout(() => setIsChecking(false), 300);
       }
@@ -148,61 +151,74 @@ const App = () => {
   // Memoized query client
   const queryClient = useMemo(() => createQueryClient(), []);
 
-  // Initialize app state
-  useEffect(() => {
-    const initializeApp = () => {
-      try {
-        const onboardingData = localStorage.getItem('app:onboarding');
+  // Initialize app state from localStorage
+  const initializeApp = () => {
+    try {
+      const onboardingData = localStorage.getItem('app:onboarding');
+      
+      if (onboardingData) {
+        const data: OnboardingData = JSON.parse(onboardingData);
         
-        if (onboardingData) {
-          const data: OnboardingData = JSON.parse(onboardingData);
-          
-          // Apply saved theme
-          if (data.theme === 'dark') {
-            document.documentElement.classList.add('dark');
-            document.documentElement.style.colorScheme = 'dark';
-          } else {
-            document.documentElement.classList.remove('dark');
-            document.documentElement.style.colorScheme = 'light';
-          }
-          
-          // Apply language
-          document.documentElement.lang = data.language;
-          
-          // Update states
-          setInitialTheme(data.theme);
-          setInitialLanguage(data.language);
-          setUserName(data.name || '');
+        // Apply saved theme
+        if (data.theme === 'dark') {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.colorScheme = 'dark';
         } else {
-          // No data found, use system preferences
-          const systemIsDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          const systemLanguage = navigator.language.toLowerCase().startsWith('fr') ? 'fr' : 'en';
-          
-          setInitialTheme(systemIsDark ? 'dark' : 'light');
-          setInitialLanguage(systemLanguage);
-          
-          // Apply system theme
-          if (systemIsDark) {
-            document.documentElement.classList.add('dark');
-            document.documentElement.style.colorScheme = 'dark';
-          }
+          document.documentElement.classList.remove('dark');
+          document.documentElement.style.colorScheme = 'light';
         }
-      } catch (error) {
-        console.error('Error initializing app:', error);
-        // Fallback to defaults
-        setInitialTheme('light');
-        setInitialLanguage('fr');
-      } finally {
-        setTimeout(() => setIsInitializing(false), 500);
+        
+        // Apply language to document
+        document.documentElement.lang = data.language || 'fr';
+        
+        // Update states
+        setInitialTheme(data.theme || 'light');
+        setInitialLanguage(data.language || 'fr');
+        setUserName(data.name || '');
+      } else {
+        // No data found, use system preferences
+        const systemIsDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const systemLanguage = navigator.language.toLowerCase().startsWith('fr') ? 'fr' : 'en';
+        
+        setInitialTheme(systemIsDark ? 'dark' : 'light');
+        setInitialLanguage(systemLanguage);
+        
+        // Apply system theme
+        if (systemIsDark) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.colorScheme = 'dark';
+        }
+      }
+    } catch (error) {
+      console.error('Error initializing app:', error);
+      // Fallback to defaults
+      setInitialTheme('light');
+      setInitialLanguage('fr');
+      document.documentElement.lang = 'fr';
+    } finally {
+      setTimeout(() => setIsInitializing(false), 500);
+    }
+  };
+
+  // Initialize app on mount
+  useEffect(() => {
+    initializeApp();
+    
+    // Listen for storage changes to update theme/language
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'app:onboarding') {
+        initializeApp();
       }
     };
-
-    initializeApp();
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   // Handle onboarding completion
-  const handleOnboardingComplete = useCallback((data: OnboardingData) => {
+  const handleOnboardingComplete = (data: OnboardingData) => {
     try {
+      // Save to localStorage
       localStorage.setItem('app:onboarding', JSON.stringify(data));
       
       // Apply theme immediately
@@ -217,14 +233,12 @@ const App = () => {
       // Apply language to document
       document.documentElement.lang = data.language;
       
-      // Force a small delay for smooth transition
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 600);
+      // Force reload to apply all changes properly
+      window.location.href = '/';
     } catch (error) {
       console.error('Error saving onboarding data:', error);
     }
-  }, []);
+  };
 
   if (isInitializing) {
     return <AppLoader />;
@@ -238,7 +252,6 @@ const App = () => {
         enableSystem={false}
         disableTransitionOnChange={false}
         storageKey="eco-school-theme"
-        forcedTheme={initialTheme}
       >
         <LanguageProvider defaultLanguage={initialLanguage} userName={userName}>
           <TooltipProvider delayDuration={300}>
