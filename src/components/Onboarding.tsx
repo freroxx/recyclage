@@ -7,7 +7,6 @@ import {
   Flag, 
   Check,
   Palette,
-  Languages,
   ArrowRight,
   ChevronRight
 } from 'lucide-react';
@@ -49,34 +48,36 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     { id: 'complete', icon: Check, titleKey: 'ready', subtitleKey: 'readySubtitle' }
   ], []);
 
-  // Auto-détection du thème système
+  // Initialize from localStorage or system preferences
   useEffect(() => {
-    const detectSystemTheme = () => {
+    const initialize = () => {
       try {
         const savedData = localStorage.getItem('app:onboarding');
+        
         if (savedData) {
           const data = JSON.parse(savedData);
-          if (data.theme) {
-            setTheme(data.theme);
-            if (data.language) setLanguage(data.language);
-            if (data.name) setName(data.name);
-          }
+          if (data.theme) setTheme(data.theme);
+          if (data.language) setLanguage(data.language);
+          if (data.name) setName(data.name);
         } else {
-          const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-          const systemTheme: Theme = mediaQuery.matches ? 'dark' : 'light';
-          setTheme(systemTheme);
+          // Use system preferences
+          const systemIsDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          const systemLanguage = navigator.language.toLowerCase().startsWith('fr') ? 'fr' : 'en';
+          
+          setTheme(systemIsDark ? 'dark' : 'light');
+          setLanguage(systemLanguage);
         }
       } catch (error) {
-        console.error('Error detecting theme:', error);
+        console.error('Error initializing onboarding:', error);
       } finally {
         setTimeout(() => setIsLoading(false), 800);
       }
     };
 
-    detectSystemTheme();
+    initialize();
   }, []);
 
-  // Appliquer le thème au document
+  // Apply theme to document
   useEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
@@ -87,7 +88,34 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     }
   }, [theme]);
 
-  // Gestionnaire de soumission
+  // Apply language to document
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
+
+  // Save partial data to localStorage as user progresses
+  const savePartialData = useCallback(() => {
+    try {
+      const partialData = {
+        theme,
+        language,
+        name,
+        onboarded: false
+      };
+      localStorage.setItem('app:onboarding', JSON.stringify(partialData));
+    } catch (error) {
+      console.error('Error saving partial onboarding data:', error);
+    }
+  }, [theme, language, name]);
+
+  // Save partial data when any setting changes
+  useEffect(() => {
+    if (!isLoading) {
+      savePartialData();
+    }
+  }, [theme, language, name, isLoading, savePartialData]);
+
+  // Handle form submission
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     
@@ -106,13 +134,13 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       onboarded: true,
     };
     
-    // Small delay for animation before calling onComplete
+    // Save final data and complete
     setTimeout(() => {
       onComplete(onboardingData);
     }, 600);
   }, [theme, language, name, onComplete]);
 
-  // Traductions
+  // Translations
   const translations = useMemo(() => ({
     en: {
       languageLabel: 'Select Language',
@@ -170,16 +198,13 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
   const t = translations[language];
 
-  // Écran de chargement amélioré
+  // Loading screen
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-eco-light via-white to-eco-light/30 dark:from-eco-dark dark:via-gray-900 dark:to-eco-dark/30">
         <div className="flex flex-col items-center gap-8">
           <div className="relative">
-            {/* Animation de chargement circulaire */}
             <div className="w-24 h-24 rounded-full border-4 border-transparent border-t-eco-green border-r-eco-green/30 animate-spin-slow" />
-            
-            {/* Points de progression */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 rounded-full bg-eco-green animate-pulse" />
@@ -191,10 +216,10 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           
           <div className="text-center space-y-3">
             <p className="text-lg font-medium text-gray-700 dark:text-gray-300 animate-pulse-slow">
-              {language === 'en' ? 'Initializing your experience...' : 'Initialisation de votre expérience...'}
+              {language === 'en' ? 'Loading your preferences...' : 'Chargement de vos préférences...'}
             </p>
             <p className="text-sm text-eco-green dark:text-eco-emerald">
-              {language === 'en' ? 'Loading preferences' : 'Chargement des préférences'}
+              {language === 'en' ? 'Just a moment' : 'Un instant'}
             </p>
           </div>
         </div>
@@ -204,7 +229,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-eco-light via-white to-eco-light/30 dark:from-eco-dark dark:via-gray-900 dark:to-eco-dark/30 transition-colors duration-500">
-      {/* Effet de glow autour de la carte */}
+      {/* Background glow effect */}
       <div className={`
         absolute inset-0 pointer-events-none
         ${theme === 'dark' 
@@ -213,14 +238,14 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         }
       `} />
 
-      {/* Carte principale */}
+      {/* Main card */}
       <div className={`
         relative w-full max-w-md md:max-w-lg
         transition-all duration-500 ease-out
         ${isExiting ? 'opacity-0 scale-95 translate-y-4' : 'opacity-100 scale-100 translate-y-0'}
         ${isMobile ? 'max-w-sm' : ''}
       `}>
-        {/* Glow effect autour de la carte */}
+        {/* Card glow effect */}
         <div className={`
           absolute -inset-4 rounded-3xl blur-2xl opacity-50
           ${theme === 'dark' 
@@ -243,7 +268,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           group/card
           overflow-hidden
         ">
-          {/* Barre de progression minimaliste */}
+          {/* Progress bar */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
               {steps.map((stepItem, index) => (
@@ -277,7 +302,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             </div>
           </div>
 
-          {/* En-tête */}
+          {/* Header */}
           <div className="text-center mb-8 space-y-3">
             <h1 className="
               text-2xl md:text-3xl font-bold
@@ -294,7 +319,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8">
-            {/* Étape 0: Langue */}
+            {/* Step 0: Language */}
             {step === 0 && (
               <div className="space-y-4 animate-fade-in">
                 <div className="grid grid-cols-1 gap-3">
@@ -349,7 +374,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               </div>
             )}
 
-            {/* Étape 1: Thème */}
+            {/* Step 1: Theme */}
             {step === 1 && (
               <div className="space-y-4 animate-fade-in">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -411,7 +436,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               </div>
             )}
 
-            {/* Étape 2: Nom */}
+            {/* Step 2: Name */}
             {step === 2 && (
               <div className="space-y-4 animate-fade-in">
                 <div className="relative">
@@ -427,6 +452,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                     minLength={2}
                     maxLength={50}
                     autoComplete="name"
+                    autoFocus
                     className={`
                       w-full px-4 py-3 md:py-4 pl-12
                       bg-white dark:bg-gray-800
@@ -461,7 +487,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               </div>
             )}
 
-            {/* Étape 3: Prévisualisation */}
+            {/* Step 3: Preview */}
             {step === 3 && (
               <div className="space-y-4 animate-fade-in">
                 <div className={`
@@ -576,7 +602,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         </div>
       </div>
 
-      {/* Écran de transition */}
+      {/* Transition screen */}
       {isExiting && (
         <div className="
           fixed inset-0 
