@@ -8,7 +8,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { ScrollToTop } from "@/components/ScrollToTop";
-import { lazy, Suspense, useEffect, useState, useMemo } from "react";
+import { lazy, Suspense, useEffect, useState, useMemo, useCallback } from "react";
 import Support from "./pages/Support";
 
 // ✅ Vercel Analytics + Speed Insights
@@ -82,6 +82,7 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const [isChecking, setIsChecking] = useState(true);
   const [isOnboarded, setIsOnboarded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkOnboarding = () => {
@@ -89,22 +90,38 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         const onboardingData = localStorage.getItem('app:onboarding');
         if (onboardingData) {
           const data = JSON.parse(onboardingData);
-          setIsOnboarded(!!data.onboarded);
-        } else {
-          setIsOnboarded(false);
+          const onboarded = !!data.onboarded;
+          setIsOnboarded(onboarded);
+          
+          // Apply theme immediately if data exists
+          if (data.theme === 'dark') {
+            document.documentElement.classList.add('dark');
+            document.documentElement.style.colorScheme = 'dark';
+          } else {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.style.colorScheme = 'light';
+          }
+          
+          // Apply language immediately
+          if (data.language) {
+            document.documentElement.lang = data.language;
+          }
         }
       } catch (error) {
         console.error('Error checking onboarding:', error);
         setIsOnboarded(false);
       } finally {
-        setTimeout(() => setIsChecking(false), 300);
+        setTimeout(() => {
+          setIsChecking(false);
+          setIsLoading(false);
+        }, 300);
       }
     };
 
     checkOnboarding();
   }, []);
 
-  if (isChecking) {
+  if (isChecking || isLoading) {
     return <AppLoader />;
   }
 
@@ -151,25 +168,13 @@ const App = () => {
   // Memoized query client
   const queryClient = useMemo(() => createQueryClient(), []);
 
-  // Initialize app state from localStorage
-  const initializeApp = () => {
+  // Initialize app state from localStorage - SIMPLIFIED
+  const initializeApp = useCallback(() => {
     try {
       const onboardingData = localStorage.getItem('app:onboarding');
       
       if (onboardingData) {
         const data: OnboardingData = JSON.parse(onboardingData);
-        
-        // Apply saved theme
-        if (data.theme === 'dark') {
-          document.documentElement.classList.add('dark');
-          document.documentElement.style.colorScheme = 'dark';
-        } else {
-          document.documentElement.classList.remove('dark');
-          document.documentElement.style.colorScheme = 'light';
-        }
-        
-        // Apply language to document
-        document.documentElement.lang = data.language || 'fr';
         
         // Update states
         setInitialTheme(data.theme || 'light');
@@ -182,41 +187,24 @@ const App = () => {
         
         setInitialTheme(systemIsDark ? 'dark' : 'light');
         setInitialLanguage(systemLanguage);
-        
-        // Apply system theme
-        if (systemIsDark) {
-          document.documentElement.classList.add('dark');
-          document.documentElement.style.colorScheme = 'dark';
-        }
       }
     } catch (error) {
       console.error('Error initializing app:', error);
       // Fallback to defaults
       setInitialTheme('light');
       setInitialLanguage('fr');
-      document.documentElement.lang = 'fr';
     } finally {
       setTimeout(() => setIsInitializing(false), 500);
     }
-  };
+  }, []);
 
   // Initialize app on mount
   useEffect(() => {
     initializeApp();
-    
-    // Listen for storage changes to update theme/language
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'app:onboarding') {
-        initializeApp();
-      }
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  }, [initializeApp]);
 
   // Handle onboarding completion
-  const handleOnboardingComplete = (data: OnboardingData) => {
+  const handleOnboardingComplete = useCallback((data: OnboardingData) => {
     try {
       // Save to localStorage
       localStorage.setItem('app:onboarding', JSON.stringify(data));
@@ -234,11 +222,13 @@ const App = () => {
       document.documentElement.lang = data.language;
       
       // Force reload to apply all changes properly
-      window.location.href = '/';
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 600);
     } catch (error) {
       console.error('Error saving onboarding data:', error);
     }
-  };
+  }, []);
 
   if (isInitializing) {
     return <AppLoader />;
@@ -247,11 +237,11 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider 
-        attribute="class" 
         defaultTheme={initialTheme}
-        enableSystem={false}
-        disableTransitionOnChange={false}
+        enableSystem={true}
         storageKey="eco-school-theme"
+        themes={["light", "dark"]}
+        forcedTheme={isInitializing ? initialTheme : undefined}
       >
         <LanguageProvider defaultLanguage={initialLanguage} userName={userName}>
           <TooltipProvider delayDuration={300}>
