@@ -2,10 +2,15 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
-import prerender from "vite-plugin-prerender"; // Added ts
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(async ({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
+
+  // Dynamically import prerender to avoid require() in ESM scope
+  const prerender =
+    mode === "production"
+      ? (await import("vite-plugin-prerender")).default
+      : undefined;
 
   return {
     server: {
@@ -24,7 +29,17 @@ export default defineConfig(({ mode }) => {
       mode === "development" ? componentTagger() : undefined,
       mode === "production"
         ? prerender({
-            routes: ["/", "/support", "resources", "/guide", "/activities", "/videos", "/posters", "/project", "/contact"], // pages for render (yeah i'm a genious, I know)
+            routes: [
+              "/",
+              "/support",
+              "/resources",
+              "/guide",
+              "/activities",
+              "/videos",
+              "/posters",
+              "/project",
+              "/contact",
+            ],
             rendererOptions: { headless: true },
           })
         : undefined,
