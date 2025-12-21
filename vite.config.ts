@@ -22,13 +22,14 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       mode === "development" ? componentTagger() : undefined,
+      // prerender only static routes without puppeteer
       mode === "production"
         ? prerender({
             staticDir: "dist",
             routes: [
               "/", "/support", "/resources", "/guide",
               "/activities", "/videos", "/posters",
-              "/project", "/contact",
+              "/project", "/contact"
             ],
           })
         : undefined,
