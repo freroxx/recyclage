@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { 
   Sun, 
   Moon, 
@@ -10,8 +9,7 @@ import {
   Palette,
   Languages,
   ArrowRight,
-  ChevronRight,
-  Loader2
+  ChevronRight
 } from 'lucide-react';
 import { useMediaQuery } from '@/hooks/use-media-query';
 
@@ -26,11 +24,10 @@ interface OnboardingData {
 }
 
 interface OnboardingProps {
-  onComplete: () => void;
+  onComplete: (data: OnboardingData) => void;
 }
 
 const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
-  const navigate = useNavigate();
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [theme, setTheme] = useState<Theme>('light');
   const [language, setLanguage] = useState<Language>('fr');
@@ -55,14 +52,25 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   // Auto-détection du thème système
   useEffect(() => {
     const detectSystemTheme = () => {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      const systemTheme: Theme = mediaQuery.matches ? 'dark' : 'light';
-      
-      // Petit délai pour l'animation d'entrée
-      setTimeout(() => {
-        setTheme(systemTheme);
-        setIsLoading(false);
-      }, 800);
+      try {
+        const savedData = localStorage.getItem('app:onboarding');
+        if (savedData) {
+          const data = JSON.parse(savedData);
+          if (data.theme) {
+            setTheme(data.theme);
+            if (data.language) setLanguage(data.language);
+            if (data.name) setName(data.name);
+          }
+        } else {
+          const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+          const systemTheme: Theme = mediaQuery.matches ? 'dark' : 'light';
+          setTheme(systemTheme);
+        }
+      } catch (error) {
+        console.error('Error detecting theme:', error);
+      } finally {
+        setTimeout(() => setIsLoading(false), 800);
+      }
     };
 
     detectSystemTheme();
@@ -97,14 +105,12 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       name: name.trim(),
       onboarded: true,
     };
-
-    localStorage.setItem('app:onboarding', JSON.stringify(onboardingData));
     
+    // Small delay for animation before calling onComplete
     setTimeout(() => {
-      onComplete();
-      navigate('/', { replace: true });
+      onComplete(onboardingData);
     }, 600);
-  }, [theme, language, name, navigate, onComplete]);
+  }, [theme, language, name, onComplete]);
 
   // Traductions
   const translations = useMemo(() => ({
@@ -311,7 +317,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                           : 'border-gray-200 dark:border-gray-700 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/50'
                         }
                         hover:scale-[1.02] active:scale-[0.98]
-                        focus-ring
+                        focus:outline-none focus:ring-2 focus:ring-eco-green/30
                       `}
                       aria-pressed={language === langOption}
                     >
@@ -366,7 +372,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                           : 'border-gray-200 dark:border-gray-700 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/50'
                         }
                         hover:scale-[1.02] active:scale-[0.98]
-                        focus-ring
+                        focus:outline-none focus:ring-2 focus:ring-eco-green/30
                       `}
                       aria-pressed={theme === themeOption}
                     >
@@ -510,6 +516,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                       hover:text-gray-900 dark:hover:text-white
                       transition-colors duration-300
                       flex items-center gap-2
+                      focus:outline-none focus:ring-2 focus:ring-eco-green/30 rounded-lg
                     "
                   >
                     <ChevronRight className="w-4 h-4 rotate-180" />
@@ -537,7 +544,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                       rounded-xl
                       transition-all duration-300
                       hover:scale-[1.02] active:scale-[0.98]
-                      focus-ring
+                      focus:outline-none focus:ring-2 focus:ring-eco-green/30
                       flex items-center gap-2
                     "
                   >
@@ -555,7 +562,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                       rounded-xl
                       transition-all duration-300
                       hover:scale-[1.02] active:scale-[0.98]
-                      focus-ring
+                      focus:outline-none focus:ring-2 focus:ring-eco-green/30
                       flex items-center gap-2
                     "
                   >
