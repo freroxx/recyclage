@@ -11,32 +11,46 @@ interface OnboardingData {
   onboarded: boolean;
 }
 
-const Onboarding: React.FC = () => {
+interface OnboardingProps {
+  onComplete: () => void;
+}
+
+const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const navigate = useNavigate();
   const [theme, setTheme] = useState<Theme>('light');
   const [language, setLanguage] = useState<Language>('en');
   const [name, setName] = useState<string>('');
   const [isExiting, setIsExiting] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [touched, setTouched] = useState({
     name: false,
     theme: false,
     language: false
   });
 
-  // Auto-détection du thème et langue système
+  // Auto-détection du thème et langue système avec délai pour animation
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const systemTheme: Theme = mediaQuery.matches ? 'dark' : 'light';
-    const browserLang = navigator.language.startsWith('fr') ? 'fr' : 'en';
-    
-    // Appliquer avec un léger délai pour l'animation
-    setTimeout(() => {
-      setTheme(systemTheme);
-      setLanguage(browserLang);
-    }, 300);
+    const detectPreferences = () => {
+      // Détecter le thème système
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const systemTheme: Theme = mediaQuery.matches ? 'dark' : 'light';
+      
+      // Détecter la langue navigateur
+      const browserLang = navigator.language.toLowerCase();
+      const systemLanguage: Language = browserLang.startsWith('fr') ? 'fr' : 'en';
+      
+      // Appliquer avec un délai pour l'animation d'entrée
+      setTimeout(() => {
+        setTheme(systemTheme);
+        setLanguage(systemLanguage);
+        setIsLoading(false);
+      }, 500);
+    };
+
+    detectPreferences();
   }, []);
 
-  // Appliquer le thème au document
+  // Appliquer le thème sélectionné au document
   useEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
@@ -64,13 +78,17 @@ const Onboarding: React.FC = () => {
       onboarded: true,
     };
 
+    // Sauvegarder avec une clé unique
     localStorage.setItem('app:onboarding', JSON.stringify(onboardingData));
     
+    // Notifier le parent et rediriger
     setTimeout(() => {
-      navigate('/app', { replace: true });
+      onComplete();
+      navigate('/', { replace: true });
     }, 500);
-  }, [theme, language, name, navigate]);
+  }, [theme, language, name, navigate, onComplete]);
 
+  // Traductions
   const translations = {
     en: {
       welcome: 'Welcome',
@@ -86,7 +104,8 @@ const Onboarding: React.FC = () => {
       french: 'Français',
       preview: 'Preview',
       englishInterface: 'English interface',
-      frenchInterface: 'Interface française'
+      frenchInterface: 'Interface française',
+      errorNameRequired: 'Please enter your name'
     },
     fr: {
       welcome: 'Bienvenue',
@@ -102,22 +121,42 @@ const Onboarding: React.FC = () => {
       french: 'Français',
       preview: 'Aperçu',
       englishInterface: 'Interface anglaise',
-      frenchInterface: 'Interface française'
+      frenchInterface: 'Interface française',
+      errorNameRequired: 'Veuillez entrer votre nom'
     }
   };
 
   const t = translations[language];
 
+  // État de chargement initial
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-blue-50/30 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900/20">
+        <div className="flex flex-col items-center gap-6">
+          <div className="relative">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-500 animate-pulse-slow flex items-center justify-center">
+              <span className="text-3xl text-white">✨</span>
+            </div>
+            <div className="absolute -inset-6 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-3xl blur-xl animate-pulse-slow" />
+          </div>
+          <p className="text-gray-600 dark:text-gray-300 font-medium text-lg animate-pulse">
+            {language === 'en' ? 'Loading your preferences...' : 'Chargement de vos préférences...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-50 via-white to-blue-50/30 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900/20 transition-colors duration-700 animate-gradient-flow">
-      {/* Arrière-plan décoratif avec animations */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-400/10 rounded-full blur-3xl animate-pulse-slow" />
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-50 via-white to-blue-50/30 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900/20 transition-colors duration-700 animate-gradient-flow overflow-hidden">
+      {/* Arrière-plan décoratif animé */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-400/10 rounded-full blur-3xl animate-float-slow" />
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-400/10 rounded-full blur-3xl animate-pulse-slow" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-blue-200/5 to-purple-200/5 rounded-full blur-3xl" />
       </div>
 
-      {/* Carte principale avec animation scale-in */}
+      {/* Carte principale */}
       <div className={`
         relative w-full max-w-md
         animate-scale-in
@@ -125,42 +164,35 @@ const Onboarding: React.FC = () => {
         ${isExiting ? 'opacity-0 scale-95 translate-y-4' : 'opacity-100 scale-100 translate-y-0'}
       `}>
         <div className="
-          backdrop-blur-xl backdrop-saturate-150
-          bg-white/85 dark:bg-gray-800/85
-          border border-white/40 dark:border-gray-700/40
-          rounded-3xl
-          shadow-2xl shadow-black/5 dark:shadow-black/20
+          onboarding-card
           p-6 sm:p-8
           transform-gpu
           transition-all duration-300
-          hover:shadow-3xl hover:shadow-black/10 dark:hover:shadow-black/30
-          hover:border-white/60 dark:hover:border-gray-600/60
           group/card
         ">
-          {/* En-tête avec animation fade-in-up */}
-          <div className="text-center mb-8 space-y-2 animate-fade-in-up">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 mb-2 group-hover/card:from-blue-500/15 group-hover/card:to-purple-500/15 transition-all duration-500 animate-float-slow">
-              <div className="text-3xl">✨</div>
+          {/* En-tête avec animations échelonnées */}
+          <div className="text-center mb-8 space-y-3">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 mb-3 group-hover/card:from-blue-500/15 group-hover/card:to-purple-500/15 transition-all duration-500 animate-float-slow">
+              <span className="text-3xl">✨</span>
             </div>
             <h1 className="
               text-4xl font-bold tracking-tight
-              bg-gradient-to-r from-blue-600 via-blue-700 to-purple-600 dark:from-blue-400 dark:via-blue-300 dark:to-purple-400
-              bg-clip-text text-transparent
-              animate-gradient-flow
+              gradient-text
+              animate-fade-in-up
             ">
               {t.welcome}
             </h1>
             <p className="
               text-gray-600 dark:text-gray-300
               text-lg font-medium
-              animate-fade-up
+              animate-fade-in-delay
             ">
               {t.subtitle}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Nom avec animation slide-in-left */}
+            {/* Champ Nom */}
             <div className="space-y-2 animate-slide-in-left">
               <label className="
                 block text-sm font-semibold 
@@ -182,10 +214,14 @@ const Onboarding: React.FC = () => {
                   required
                   minLength={2}
                   maxLength={50}
+                  autoComplete="name"
                   className={`
-                    w-full px-4 py-3.5
+                    w-full px-4 py-3.5 pl-12
                     bg-white/60 dark:bg-gray-700/60
-                    border ${touched.name && !name.trim() ? 'border-red-300 dark:border-red-400' : 'border-gray-300/60 dark:border-gray-600/60'}
+                    border ${touched.name && !name.trim() 
+                      ? 'border-red-300 dark:border-red-400 focus:border-red-500' 
+                      : 'border-gray-300/60 dark:border-gray-600/60'
+                    }
                     rounded-xl
                     focus:outline-none focus:ring-3 focus:ring-blue-500/30
                     focus:border-blue-400 dark:focus:border-blue-300
@@ -195,21 +231,29 @@ const Onboarding: React.FC = () => {
                     hover:border-gray-400 dark:hover:border-gray-500
                     hover:bg-white/80 dark:hover:bg-gray-700/80
                     peer
-                    pl-12
                   `}
                 />
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 peer-focus:text-blue-500 transition-colors">
+                <div className="
+                  absolute left-4 top-1/2 -translate-y-1/2 
+                  text-gray-500 dark:text-gray-400 
+                  peer-focus:text-blue-500 
+                  transition-colors duration-300
+                ">
                   👤
                 </div>
                 {touched.name && !name.trim() && (
-                  <p className="absolute -bottom-5 left-1 text-xs text-red-500 animate-fade-in">
-                    Please enter your name
+                  <p className="
+                    absolute -bottom-5 left-1 
+                    text-xs text-red-500 
+                    animate-fade-in
+                  ">
+                    {t.errorNameRequired}
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Sélecteur de thème avec animation slide-in-right */}
+            {/* Sélecteur de Thème */}
             <div className="space-y-3 animate-slide-in-right">
               <label className="
                 block text-sm font-semibold 
@@ -239,6 +283,7 @@ const Onboarding: React.FC = () => {
                       }
                       hover:scale-[1.02] active:scale-[0.98]
                       group/theme
+                      focus-ring
                     `}
                     aria-pressed={theme === themeOption}
                   >
@@ -269,7 +314,7 @@ const Onboarding: React.FC = () => {
               </div>
             </div>
 
-            {/* Sélecteur de langue avec animation slide-in-left */}
+            {/* Sélecteur de Langue */}
             <div className="space-y-3 animate-slide-in-left">
               <label className="
                 block text-sm font-semibold 
@@ -299,6 +344,7 @@ const Onboarding: React.FC = () => {
                       }
                       hover:scale-[1.02] active:scale-[0.98]
                       group/lang
+                      focus-ring
                     `}
                     aria-pressed={language === langOption}
                   >
@@ -322,8 +368,8 @@ const Onboarding: React.FC = () => {
               </div>
             </div>
 
-            {/* Bouton de soumission avec animation fade-in-up */}
-            <div className="animate-fade-up">
+            {/* Bouton de Soumission */}
+            <div className="pt-2 animate-fade-up">
               <button
                 type="submit"
                 disabled={!name.trim()}
@@ -345,7 +391,8 @@ const Onboarding: React.FC = () => {
                   disabled:opacity-50
                   group/button
                   overflow-hidden relative
-                  animate-shimmer
+                  focus-ring
+                  active-scale
                 "
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
@@ -368,11 +415,11 @@ const Onboarding: React.FC = () => {
             </div>
           </form>
 
-          {/* Aperçu avec animation fade-in */}
+          {/* Section Aperçu */}
           <div className="
             mt-8 pt-6
             border-t border-gray-300/40 dark:border-gray-600/40
-            animate-fade-in
+            animate-fade-in-delay-2
           ">
             <p className="
               text-sm font-medium text-gray-600 dark:text-gray-400
@@ -427,6 +474,28 @@ const Onboarding: React.FC = () => {
         <div className="absolute -z-10 -top-6 -left-6 w-48 h-48 bg-blue-400/10 rounded-full blur-3xl animate-float" />
         <div className="absolute -z-10 -bottom-6 -right-6 w-48 h-48 bg-purple-400/10 rounded-full blur-3xl animate-float-reverse" />
       </div>
+
+      {/* Indicateur de chargement pendant la sortie */}
+      {isExiting && (
+        <div className="
+          fixed inset-0 
+          bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800
+          flex items-center justify-center
+          animate-fade-in
+        ">
+          <div className="flex flex-col items-center gap-4">
+            <div className="relative">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-500 animate-spin-slow flex items-center justify-center">
+                <span className="text-2xl text-white">✨</span>
+              </div>
+              <div className="absolute -inset-4 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-3xl blur-xl" />
+            </div>
+            <p className="text-gray-600 dark:text-gray-300 font-medium">
+              {language === 'en' ? 'Preparing your experience...' : 'Préparation de votre expérience...'}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
