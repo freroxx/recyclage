@@ -22,7 +22,6 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       mode === "development" ? componentTagger() : undefined,
-      // prerender only static routes without puppeteer
       mode === "production"
         ? prerender({
             staticDir: "dist",
@@ -31,6 +30,8 @@ export default defineConfig(({ mode }) => {
               "/activities", "/videos", "/posters",
               "/project", "/contact"
             ],
+            // Disable Puppeteer
+            renderer: undefined
           })
         : undefined,
     ].filter(Boolean),
