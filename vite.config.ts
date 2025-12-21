@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import prerender from "@prerenderer/rollup-plugin";
+import StaticRenderer from "@prerenderer/renderer-static";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
@@ -28,10 +29,9 @@ export default defineConfig(({ mode }) => {
             routes: [
               "/", "/support", "/resources", "/guide",
               "/activities", "/videos", "/posters",
-              "/project", "/contact"
+              "/project", "/contact",
             ],
-            // Disable Puppeteer
-            renderer: undefined
+            renderer: new StaticRenderer(),
           })
         : undefined,
     ].filter(Boolean),
