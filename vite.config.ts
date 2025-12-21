@@ -2,8 +2,6 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
-import prerender from "@prerenderer/rollup-plugin";
-import StaticRenderer from "@prerenderer/renderer-static";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
@@ -13,27 +11,16 @@ export default defineConfig(({ mode }) => {
       host: "::",
       port: Number(env.VITE_PORT) || 8080,
       strictPort: true,
-      open: true,
+      open: true
     },
     resolve: {
       alias: {
-        "@": path.resolve(__dirname, "./src"),
-      },
+        "@": path.resolve(__dirname, "./src")
+      }
     },
     plugins: [
       react(),
-      mode === "development" ? componentTagger() : undefined,
-      mode === "production"
-        ? prerender({
-            staticDir: "dist",
-            routes: [
-              "/", "/support", "/resources", "/guide",
-              "/activities", "/videos", "/posters",
-              "/project", "/contact",
-            ],
-            renderer: new StaticRenderer(),
-          })
-        : undefined,
+      mode === "development" ? componentTagger() : undefined
     ].filter(Boolean),
     build: {
       target: "es2018",
@@ -43,13 +30,13 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks: {
             react: ["react", "react-dom"],
-            router: ["react-router-dom"],
-          },
-        },
-      },
+            router: ["react-router-dom"]
+          }
+        }
+      }
     },
     optimizeDeps: {
-      include: ["react", "react-dom"],
-    },
+      include: ["react", "react-dom"]
+    }
   };
 });
