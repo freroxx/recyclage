@@ -25,11 +25,8 @@ const Onboarding: React.FC = () => {
 
   // Auto-détection du thème et langue système
   useEffect(() => {
-    // Détecter le thème système
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const systemTheme: Theme = mediaQuery.matches ? 'dark' : 'light';
-    
-    // Détecter la langue navigateur
     const browserLang = navigator.language.startsWith('fr') ? 'fr' : 'en';
     
     // Appliquer avec un léger délai pour l'animation
@@ -50,7 +47,6 @@ const Onboarding: React.FC = () => {
     }
   }, [theme]);
 
-  // Sauvegarder les données et naviguer
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     
@@ -68,16 +64,13 @@ const Onboarding: React.FC = () => {
       onboarded: true,
     };
 
-    // Sauvegarder avec une clé unique
     localStorage.setItem('app:onboarding', JSON.stringify(onboardingData));
     
-    // Redirection avec délai pour l'animation
     setTimeout(() => {
       navigate('/app', { replace: true });
     }, 500);
   }, [theme, language, name, navigate]);
 
-  // Traductions
   const translations = {
     en: {
       welcome: 'Welcome',
@@ -116,19 +109,19 @@ const Onboarding: React.FC = () => {
   const t = translations[language];
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-50 via-white to-blue-50/30 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900/20 transition-colors duration-700">
-      {/* Arrière-plan décoratif */}
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-50 via-white to-blue-50/30 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900/20 transition-colors duration-700 animate-gradient-flow">
+      {/* Arrière-plan décoratif avec animations */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-400/10 rounded-full blur-3xl animate-pulse-slow" />
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-400/10 rounded-full blur-3xl animate-pulse-slow" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-blue-200/5 to-purple-200/5 rounded-full blur-3xl" />
       </div>
 
-      {/* Carte principale */}
+      {/* Carte principale avec animation scale-in */}
       <div className={`
         relative w-full max-w-md
-        animate-scale-in animate-fade-in
-        transition-all duration-500 ease-out
+        animate-scale-in
+        transition-all duration-500 ease-spring
         ${isExiting ? 'opacity-0 scale-95 translate-y-4' : 'opacity-100 scale-100 translate-y-0'}
       `}>
         <div className="
@@ -144,30 +137,31 @@ const Onboarding: React.FC = () => {
           hover:border-white/60 dark:hover:border-gray-600/60
           group/card
         ">
-          {/* En-tête */}
-          <div className="text-center mb-8 space-y-2">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 mb-2 group-hover/card:from-blue-500/15 group-hover/card:to-purple-500/15 transition-all duration-500">
+          {/* En-tête avec animation fade-in-up */}
+          <div className="text-center mb-8 space-y-2 animate-fade-in-up">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 mb-2 group-hover/card:from-blue-500/15 group-hover/card:to-purple-500/15 transition-all duration-500 animate-float-slow">
               <div className="text-3xl">✨</div>
             </div>
             <h1 className="
               text-4xl font-bold tracking-tight
               bg-gradient-to-r from-blue-600 via-blue-700 to-purple-600 dark:from-blue-400 dark:via-blue-300 dark:to-purple-400
               bg-clip-text text-transparent
+              animate-gradient-flow
             ">
               {t.welcome}
             </h1>
             <p className="
               text-gray-600 dark:text-gray-300
               text-lg font-medium
-              animate-fade-in-delay
+              animate-fade-up
             ">
               {t.subtitle}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Nom */}
-            <div className="space-y-2">
+            {/* Nom avec animation slide-in-left */}
+            <div className="space-y-2 animate-slide-in-left">
               <label className="
                 block text-sm font-semibold 
                 text-gray-700 dark:text-gray-200
@@ -197,7 +191,7 @@ const Onboarding: React.FC = () => {
                     focus:border-blue-400 dark:focus:border-blue-300
                     placeholder-gray-500/70 dark:placeholder-gray-400/70
                     text-gray-900 dark:text-white
-                    transition-all duration-200
+                    transition-all duration-300
                     hover:border-gray-400 dark:hover:border-gray-500
                     hover:bg-white/80 dark:hover:bg-gray-700/80
                     peer
@@ -215,8 +209,8 @@ const Onboarding: React.FC = () => {
               </div>
             </div>
 
-            {/* Sélecteur de thème */}
-            <div className="space-y-3">
+            {/* Sélecteur de thème avec animation slide-in-right */}
+            <div className="space-y-3 animate-slide-in-right">
               <label className="
                 block text-sm font-semibold 
                 text-gray-700 dark:text-gray-200
@@ -238,7 +232,7 @@ const Onboarding: React.FC = () => {
                       px-4 py-3.5
                       rounded-xl
                       border-2
-                      transition-all duration-200
+                      transition-all duration-300
                       ${theme === themeOption 
                         ? 'border-blue-500 shadow-lg shadow-blue-500/20 bg-gradient-to-r from-blue-50 to-blue-50/50 dark:from-blue-900/30 dark:to-blue-900/10' 
                         : 'border-transparent bg-white/50 dark:bg-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-700/80'
@@ -252,7 +246,7 @@ const Onboarding: React.FC = () => {
                       w-5 h-5 rounded-full flex items-center justify-center
                       transition-all duration-300
                       ${theme === themeOption 
-                        ? 'scale-110' 
+                        ? 'scale-110 animate-bounce-in' 
                         : 'scale-100 group-hover/theme:scale-110'
                       }
                     `}>
@@ -275,8 +269,8 @@ const Onboarding: React.FC = () => {
               </div>
             </div>
 
-            {/* Sélecteur de langue */}
-            <div className="space-y-3">
+            {/* Sélecteur de langue avec animation slide-in-left */}
+            <div className="space-y-3 animate-slide-in-left">
               <label className="
                 block text-sm font-semibold 
                 text-gray-700 dark:text-gray-200
@@ -298,7 +292,7 @@ const Onboarding: React.FC = () => {
                       px-4 py-3.5
                       rounded-xl
                       border-2
-                      transition-all duration-200
+                      transition-all duration-300
                       ${language === langOption 
                         ? 'border-purple-500 shadow-lg shadow-purple-500/20 bg-gradient-to-r from-purple-50 to-purple-50/50 dark:from-purple-900/30 dark:to-purple-900/10' 
                         : 'border-transparent bg-white/50 dark:bg-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-700/80'
@@ -311,7 +305,7 @@ const Onboarding: React.FC = () => {
                     <span className={`
                       text-xl transition-transform duration-300
                       ${language === langOption 
-                        ? 'scale-110' 
+                        ? 'scale-110 animate-bounce-in' 
                         : 'scale-100 group-hover/lang:scale-110'
                       }
                     `}>
@@ -328,54 +322,57 @@ const Onboarding: React.FC = () => {
               </div>
             </div>
 
-            {/* Bouton de soumission */}
-            <button
-              type="submit"
-              disabled={!name.trim()}
-              className="
-                w-full
-                py-3.5
-                bg-gradient-to-r from-blue-600 via-blue-500 to-purple-600
-                hover:from-blue-700 hover:via-blue-600 hover:to-purple-700
-                disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-500
-                disabled:cursor-not-allowed
-                text-white font-semibold
-                rounded-xl
-                shadow-lg shadow-blue-500/25
-                hover:shadow-xl hover:shadow-blue-500/35
-                transform-gpu
-                transition-all duration-300
-                hover:scale-[1.02] active:scale-[0.98]
-                disabled:hover:scale-100
-                disabled:opacity-50
-                group/button
-                overflow-hidden relative
-              "
-            >
-              <span className="relative z-10 flex items-center justify-center gap-2">
-                {t.getStarted}
-                <span className="
-                  transition-transform duration-300
-                  group-hover/button:translate-x-1
-                ">
-                  →
+            {/* Bouton de soumission avec animation fade-in-up */}
+            <div className="animate-fade-up">
+              <button
+                type="submit"
+                disabled={!name.trim()}
+                className="
+                  w-full
+                  py-3.5
+                  bg-gradient-to-r from-blue-600 via-blue-500 to-purple-600
+                  hover:from-blue-700 hover:via-blue-600 hover:to-purple-700
+                  disabled:from-gray-400 disabled:via-gray-400 disabled:to-gray-500
+                  disabled:cursor-not-allowed
+                  text-white font-semibold
+                  rounded-xl
+                  shadow-lg shadow-blue-500/25
+                  hover:shadow-xl hover:shadow-blue-500/35
+                  transform-gpu
+                  transition-all duration-300
+                  hover:scale-[1.02] active:scale-[0.98]
+                  disabled:hover:scale-100
+                  disabled:opacity-50
+                  group/button
+                  overflow-hidden relative
+                  animate-shimmer
+                "
+              >
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  {t.getStarted}
+                  <span className="
+                    transition-transform duration-300
+                    group-hover/button:translate-x-1
+                  ">
+                    →
+                  </span>
                 </span>
-              </span>
-              {/* Effet de brillance au survol */}
-              <span className="
-                absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent
-                -translate-x-full
-                group-hover/button:translate-x-full
-                transition-transform duration-700
-              " />
-            </button>
+                {/* Effet de brillance au survol */}
+                <span className="
+                  absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent
+                  -translate-x-full
+                  group-hover/button:translate-x-full
+                  transition-transform duration-700
+                " />
+              </button>
+            </div>
           </form>
 
-          {/* Aperçu */}
+          {/* Aperçu avec animation fade-in */}
           <div className="
             mt-8 pt-6
             border-t border-gray-300/40 dark:border-gray-600/40
-            animate-fade-in-delay-2
+            animate-fade-in
           ">
             <p className="
               text-sm font-medium text-gray-600 dark:text-gray-400
@@ -402,6 +399,7 @@ const Onboarding: React.FC = () => {
                   bg-gradient-to-r from-blue-500 to-purple-500
                   flex items-center justify-center text-white font-bold
                   shadow-md
+                  animate-float
                 ">
                   {name.trim() ? name.charAt(0).toUpperCase() : '?'}
                 </div>
@@ -416,8 +414,8 @@ const Onboarding: React.FC = () => {
                 <div className={`
                   w-3 h-3 rounded-full
                   ${theme === 'light' 
-                    ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]' 
-                    : 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]'
+                    ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)] animate-ping-slow' 
+                    : 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)] animate-ping-slow'
                   }
                 `} />
               </div>
@@ -426,8 +424,8 @@ const Onboarding: React.FC = () => {
         </div>
 
         {/* Éléments décoratifs flottants */}
-        <div className="absolute -z-10 -top-6 -left-6 w-48 h-48 bg-blue-400/10 rounded-full blur-3xl animate-float-slow" />
-        <div className="absolute -z-10 -bottom-6 -right-6 w-48 h-48 bg-purple-400/10 rounded-full blur-3xl animate-float-slow-reverse" />
+        <div className="absolute -z-10 -top-6 -left-6 w-48 h-48 bg-blue-400/10 rounded-full blur-3xl animate-float" />
+        <div className="absolute -z-10 -bottom-6 -right-6 w-48 h-48 bg-purple-400/10 rounded-full blur-3xl animate-float-reverse" />
       </div>
     </div>
   );
