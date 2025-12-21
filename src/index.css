@@ -29,17 +29,17 @@
     background: linear-gradient(
       135deg,
       hsl(var(--background)) 0%,
-      hsl(220, 20%, 97%) 50%,
-      hsl(210, 20%, 99%) 100%
+      hsl(145, 30%, 97%) 50%,
+      hsl(150, 30%, 99%) 100%
     );
   }
 
   .dark body {
     background: linear-gradient(
       135deg,
-      hsl(220, 15%, 10%) 0%,
-      hsl(220, 15%, 12%) 50%,
-      hsl(220, 15%, 8%) 100%
+      hsl(155, 35%, 8%) 0%,
+      hsl(155, 35%, 10%) 50%,
+      hsl(155, 35%, 6%) 100%
     );
   }
 
@@ -86,10 +86,10 @@
   }
 }
 
-/* Definition of the design system */
+/* Definition of the eco design system */
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 145 25% 95%;
     --foreground: 155 40% 15%;
 
     --card: 0 0% 100%;
@@ -98,31 +98,36 @@
     --popover: 0 0% 100%;
     --popover-foreground: 155 40% 15%;
 
-    --primary: 220 100% 60%;
+    --primary: 160 70% 45%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 145 25% 95%;
+    --secondary: 150 30% 90%;
     --secondary-foreground: 155 40% 15%;
 
-    --muted: 145 25% 95%;
+    --muted: 150 30% 90%;
     --muted-foreground: 155 20% 50%;
 
-    --accent: 280 90% 65%;
+    --accent: 155 65% 55%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 145 20% 88%;
-    --input: 145 20% 88%;
-    --ring: 220 100% 60%;
+    --border: 150 25% 85%;
+    --input: 150 25% 85%;
+    --ring: 160 70% 45%;
 
     --radius: 0.75rem;
     
-    --gradient-eco: linear-gradient(135deg, hsl(160 70% 45%), hsl(145 65% 55%));
-    --gradient-primary: linear-gradient(135deg, hsl(220 100% 60%), hsl(280 90% 65%));
-    --gradient-hero: linear-gradient(180deg, hsl(145 25% 98%), hsl(0 0% 100%));
-    --shadow-soft: 0 4px 12px -2px hsl(220 100% 60% / 0.1);
+    --gradient-eco: linear-gradient(135deg, hsl(160 70% 45%), hsl(155 65% 55%), hsl(170 60% 50%));
+    --gradient-eco-light: linear-gradient(135deg, hsl(145 25% 95%), hsl(150 30% 90%), hsl(155 35% 85%));
+    --gradient-eco-dark: linear-gradient(135deg, hsl(155 40% 15%), hsl(150 35% 20%), hsl(145 30% 25%));
+    --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0));
+    --gradient-glass-dark: linear-gradient(135deg, rgba(30, 30, 30, 0.1), rgba(30, 30, 30, 0.05), rgba(30, 30, 30, 0));
+    
+    --shadow-soft: 0 4px 12px -2px hsl(160 70% 45% / 0.1);
+    --shadow-eco-light: 0 10px 40px -10px rgba(34, 197, 94, 0.15);
+    --shadow-eco-dark: 0 10px 40px -10px rgba(34, 197, 94, 0.25);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     --sidebar-background: 0 0% 98%;
@@ -132,46 +137,46 @@
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 160 70% 45%;
   }
 
   .dark {
-    --background: 220 15% 10%;
-    --foreground: 0 0% 98%;
+    --background: 155 40% 15%;
+    --foreground: 145 25% 95%;
 
-    --card: 220 15% 12%;
-    --card-foreground: 0 0% 98%;
+    --card: 155 35% 12%;
+    --card-foreground: 145 25% 95%;
 
-    --popover: 220 15% 12%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 155 35% 12%;
+    --popover-foreground: 145 25% 95%;
 
-    --primary: 220 100% 70%;
+    --primary: 160 70% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 15% 20%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 155 35% 20%;
+    --secondary-foreground: 145 25% 95%;
 
-    --muted: 220 15% 20%;
-    --muted-foreground: 220 10% 70%;
+    --muted: 155 35% 20%;
+    --muted-foreground: 145 20% 65%;
 
-    --accent: 280 90% 70%;
+    --accent: 155 65% 60%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 25%;
-    --input: 220 15% 25%;
-    --ring: 220 100% 70%;
+    --border: 155 30% 25%;
+    --input: 155 30% 25%;
+    --ring: 160 70% 50%;
     
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary: 160 70% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 160 70% 50%;
   }
 }
 
@@ -275,7 +280,7 @@
 
   /* Better focus styles for accessibility */
   .focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
 
   /* Tap feedback for mobile */
@@ -318,52 +323,58 @@
     }
   }
 
-  /* Glassmorphism effects for Onboarding */
+  /* Eco-specific glassmorphism effects */
   .glass-effect {
     @apply backdrop-blur-xl backdrop-saturate-150;
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.2) 0%,
-      rgba(255, 255, 255, 0.1) 50%,
-      rgba(255, 255, 255, 0.05) 100%
-    );
+    background: var(--gradient-glass);
   }
 
   .dark .glass-effect {
-    background: linear-gradient(
-      135deg,
-      rgba(30, 30, 30, 0.2) 0%,
-      rgba(30, 30, 30, 0.1) 50%,
-      rgba(30, 30, 30, 0.05) 100%
-    );
+    background: var(--gradient-glass-dark);
   }
 
-  /* Onboarding specific utilities */
-  .onboarding-card {
+  /* Eco glass card with improved blur */
+  .glass-card {
     @apply glass-effect rounded-3xl border border-white/20 dark:border-gray-700/30 
-           shadow-2xl shadow-black/5 dark:shadow-black/20
-           transition-all duration-300 hover:shadow-3xl hover:shadow-black/10 dark:hover:shadow-black/30;
+           shadow-eco-light dark:shadow-eco-dark
+           transition-all duration-300 hover:shadow-3xl hover:shadow-green-500/20 dark:hover:shadow-green-900/30
+           hover:border-white/40 dark:hover:border-gray-600/40;
   }
 
-  .gradient-text {
+  /* Gradient text utilities */
+  .gradient-text-eco {
+    @apply bg-gradient-eco bg-clip-text text-transparent;
+  }
+
+  .gradient-text-primary {
     @apply bg-gradient-to-r from-primary via-primary/90 to-accent bg-clip-text text-transparent;
   }
 
+  /* Gradient border utilities */
   .gradient-border {
     position: relative;
     border: double 2px transparent;
     background-origin: border-box;
     background-clip: padding-box, border-box;
+    background-image: linear-gradient(var(--card), var(--card)), 
+                      var(--gradient-eco);
+  }
+
+  .gradient-border-light {
+    position: relative;
+    border: double 2px transparent;
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
     background-image: linear-gradient(white, white), 
-                      linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+                      var(--gradient-eco);
   }
 
-  .dark .gradient-border {
+  .dark .gradient-border-light {
     background-image: linear-gradient(hsl(var(--card)), hsl(var(--card))), 
-                      linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+                      var(--gradient-eco);
   }
 
-  /* Shimmer effect for buttons */
+  /* Shimmer effect for eco buttons */
   .shimmer-effect {
     position: relative;
     overflow: hidden;
@@ -386,18 +397,31 @@
     animation: shimmer 3s infinite;
   }
 
-  @keyframes shimmer {
-    0% { transform: translateX(-100%) rotate(30deg); }
-    100% { transform: translateX(100%) rotate(30deg); }
+  /* Eco pulse animation */
+  .eco-pulse {
+    animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* Leaf floating animation */
+  .leaf-float {
+    animation: leaf-float 4s ease-in-out infinite;
+  }
+
+  /* 3D transform utilities */
+  .transform-3d {
+    transform-style: preserve-3d;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
   }
 }
 
 /* Mobile-optimized animations */
 @layer utilities {
-  /* Onboarding specific animations */
+  /* Eco onboarding specific animations */
   .animate-fade-in {
     animation: fade-in 0.6s ease-out forwards;
-    animation-iteration-count: 1;
   }
   
   .animate-fade-in-delay {
@@ -407,6 +431,11 @@
 
   .animate-fade-in-delay-2 {
     animation: fade-in 1s ease-out 0.4s forwards;
+    opacity: 0;
+  }
+
+  .animate-fade-in-delay-3 {
+    animation: fade-in 1.2s ease-out 0.6s forwards;
     opacity: 0;
   }
 
@@ -427,7 +456,7 @@
   }
 
   .animate-float-reverse {
-    animation: float-reverse 6s ease-in-out infinite;
+    animation: float-reverse 7s ease-in-out infinite;
   }
 
   .animate-gradient-flow {
@@ -439,11 +468,32 @@
     animation: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
+  .animate-spin-slow {
+    animation: spin-slow 3s linear infinite;
+  }
+
+  .animate-recycle-spin {
+    animation: recycle-spin 2s ease-in-out infinite;
+  }
+
+  .animate-leaf-float {
+    animation: leaf-float 4s ease-in-out infinite;
+  }
+
+  .animate-bounce-in {
+    animation: bounce-in 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  }
+
+  .animate-glow-pulse {
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+
   /* Reduced motion alternatives */
   @media (prefers-reduced-motion: reduce) {
     .animate-fade-in,
     .animate-fade-in-delay,
     .animate-fade-in-delay-2,
+    .animate-fade-in-delay-3,
     .animate-fade-up,
     .animate-scale-in,
     .animate-float,
@@ -451,10 +501,15 @@
     .animate-float-reverse,
     .animate-gradient-flow,
     .animate-pulse-slow,
-    .animate-shimmer,
+    .animate-spin-slow,
+    .animate-recycle-spin,
+    .animate-leaf-float,
     .animate-bounce-in,
+    .animate-glow-pulse,
+    .animate-shimmer,
     .animate-slide-in-left,
-    .animate-slide-in-right {
+    .animate-slide-in-right,
+    .animate-slide-up {
       animation: none !important;
       transition: opacity 0.3s ease !important;
     }
@@ -545,19 +600,31 @@
 
   @keyframes float {
     0%, 100% {
-      transform: translateY(0) scale(1);
+      transform: translateY(0px) rotate(0deg);
     }
     50% {
-      transform: translateY(-12px) scale(1.02);
+      transform: translateY(-15px) rotate(5deg);
     }
   }
 
   @keyframes float-reverse {
     0%, 100% {
-      transform: translateY(0) scale(1);
+      transform: translateY(0px) rotate(0deg);
     }
     50% {
-      transform: translateY(12px) scale(0.98);
+      transform: translateY(15px) rotate(-5deg);
+    }
+  }
+
+  @keyframes leaf-float {
+    0%, 100% {
+      transform: translateY(0) rotate(0deg);
+    }
+    33% {
+      transform: translateY(-10px) rotate(10deg);
+    }
+    66% {
+      transform: translateY(-5px) rotate(-5deg);
     }
   }
 
@@ -576,9 +643,65 @@
   @keyframes pulse-slow {
     0%, 100% {
       opacity: 0.6;
+      transform: scale(1);
     }
     50% {
       opacity: 0.8;
+      transform: scale(1.02);
+    }
+  }
+
+  @keyframes spin-slow {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes recycle-spin {
+    0% {
+      transform: rotate(0deg) scale(1);
+    }
+    50% {
+      transform: rotate(180deg) scale(1.1);
+    }
+    100% {
+      transform: rotate(360deg) scale(1);
+    }
+  }
+
+  @keyframes bounce-in {
+    0% {
+      opacity: 0;
+      transform: scale(0.8) translateY(10px);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.05) translateY(-5px);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  @keyframes glow-pulse {
+    0%, 100% {
+      box-shadow: 0 0 20px 0 rgba(34, 197, 94, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 40px 10px rgba(34, 197, 94, 0.5);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%) rotate(30deg);
+    }
+    100% {
+      transform: translateX(100%) rotate(30deg);
     }
   }
 }
@@ -654,8 +777,38 @@
 
   /* Onboarding mobile optimizations */
   .onboarding-card {
-    @apply mx-4 p-6;
-    backdrop-filter: blur(20px);
+    @apply mx-4 p-6 backdrop-blur-xl;
+    background: rgba(255, 255, 255, 0.9) !important;
+  }
+
+  .dark .onboarding-card {
+    background: rgba(30, 30, 30, 0.9) !important;
+  }
+
+  /* Adjust font sizes for mobile */
+  h1 {
+    font-size: 2rem !important;
+  }
+  
+  h2 {
+    font-size: 1.75rem !important;
+  }
+  
+  h3 {
+    font-size: 1.5rem !important;
+  }
+
+  /* Improve touch targets */
+  .touch-target-lg {
+    min-height: 52px;
+    min-width: 52px;
+  }
+
+  /* Reduce animation complexity */
+  .animate-float,
+  .animate-float-slow,
+  .animate-float-reverse {
+    animation-duration: 10s;
   }
 }
 
@@ -671,6 +824,25 @@
   .animate-float-desktop {
     animation: float 6s ease-in-out infinite;
   }
+
+  /* Improved glass effect for desktop */
+  .glass-card-desktop {
+    backdrop-filter: blur(40px) saturate(180%);
+  }
+
+  /* Better text rendering on desktop */
+  body {
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Enhanced shadows for desktop */
+  .shadow-desktop {
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  }
+
+  .dark .shadow-desktop {
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  }
 }
 
 /* Performance optimizations for all devices */
@@ -679,12 +851,15 @@
   .animate-fade-in,
   .animate-fade-in-delay,
   .animate-fade-in-delay-2,
+  .animate-fade-in-delay-3,
   .animate-fade-up,
   .animate-scale-in,
   .scroll-reveal,
   .hover-lift,
   .hover-glow,
-  .shimmer-effect::after {
+  .shimmer-effect::after,
+  .eco-pulse,
+  .leaf-float {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
@@ -701,13 +876,36 @@
     background: white !important;
     color: black !important;
   }
+
+  /* Improve print readability */
+  h1, h2, h3, h4, h5, h6 {
+    color: black !important;
+  }
+
+  /* Remove backgrounds for print */
+  .glass-card,
+  .glass-effect,
+  .onboarding-card {
+    background: white !important;
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+  }
 }
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
   :root {
-    --primary: 220 100% 50%;
-    --accent: 280 100% 60%;
+    --primary: 160 100% 40%;
+    --accent: 155 100% 50%;
+  }
+
+  /* Increase border contrast */
+  .border,
+  .border-t,
+  .border-b,
+  .border-l,
+  .border-r {
+    border-color: currentColor !important;
   }
 }
 
@@ -715,6 +913,11 @@
 @media (prefers-color-scheme: dark) {
   img {
     filter: brightness(0.9) contrast(1.1);
+  }
+
+  /* Improve dark mode shadows */
+  .shadow-eco-dark {
+    box-shadow: 0 10px 40px -10px rgba(34, 197, 94, 0.3);
   }
 }
 
@@ -724,16 +927,22 @@
     padding-left: max(1rem, env(safe-area-inset-left));
     padding-right: max(1rem, env(safe-area-inset-right));
   }
+
+  .safe-area-inset-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
 }
 
 /* Support for backdrop-filter on older browsers */
 @supports not (backdrop-filter: blur(12px)) {
   .glass-effect,
+  .glass-card,
   .onboarding-card {
     background: rgba(255, 255, 255, 0.95) !important;
   }
   
   .dark .glass-effect,
+  .dark .glass-card,
   .dark .onboarding-card {
     background: rgba(30, 30, 30, 0.95) !important;
   }
@@ -749,4 +958,59 @@
   transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
               border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
               color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Eco-specific background patterns */
+.bg-pattern-eco {
+  background-image: 
+    radial-gradient(circle at 10% 20%, hsl(160 70% 45% / 0.05) 0%, transparent 20%),
+    radial-gradient(circle at 90% 80%, hsl(155 65% 55% / 0.05) 0%, transparent 20%),
+    radial-gradient(circle at 50% 50%, hsl(170 60% 50% / 0.05) 0%, transparent 20%);
+}
+
+.dark .bg-pattern-eco {
+  background-image: 
+    radial-gradient(circle at 10% 20%, hsl(160 70% 45% / 0.1) 0%, transparent 20%),
+    radial-gradient(circle at 90% 80%, hsl(155 65% 55% / 0.1) 0%, transparent 20%),
+    radial-gradient(circle at 50% 50%, hsl(170 60% 50% / 0.1) 0%, transparent 20%);
+}
+
+/* Grid background for eco theme */
+.bg-grid-eco {
+  background-image: var(--grid-eco-light);
+}
+
+.dark .bg-grid-eco {
+  background-image: var(--grid-eco-dark);
+}
+
+/* Responsive typography improvements */
+@media (min-width: 640px) {
+  .text-responsive {
+    font-size: calc(1rem + 0.3vw);
+  }
+}
+
+@media (min-width: 1024px) {
+  .text-responsive {
+    font-size: calc(1rem + 0.5vw);
+  }
+}
+
+/* Custom scrollbar for onboarding */
+.onboarding-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.onboarding-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.onboarding-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.3);
+  border-radius: 3px;
+}
+
+.onboarding-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.5);
 }
