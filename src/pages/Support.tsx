@@ -3,7 +3,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { 
   Heart, 
   Globe, 
@@ -67,13 +67,12 @@ const LoadingFallback = () => (
 
 export default function Support() {
   const { t, language } = useLanguage();
-  const { toast } = useToast();
   const [showAdBlockerWarning, setShowAdBlockerWarning] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
   const [adViews, setAdViews] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [domainProgress, setDomainProgress] = useState(0);
-  const [domainAmount, setDomainAmount] = useState(25); // $25 for a domain
+  const [domainAmount] = useState(25); // $25 for a domain
   const [currentAmount, setCurrentAmount] = useState(0);
   const adRef1 = useRef<HTMLDivElement>(null);
   const adRef2 = useRef<HTMLDivElement>(null);
@@ -172,13 +171,14 @@ export default function Support() {
           window.adsbygoogle.push({});
           window.adsbygoogle.push({});
           
-          toast({
-            title: language === 'fr' ? "Publicités chargées" : "Ads Loaded",
-            description: language === 'fr' 
-              ? "Les publicités sont prêtes à générer des revenus pour notre projet." 
-              : "Ads are ready to generate revenue for our project.",
-            variant: "default",
-          });
+          toast.success(
+            language === 'fr' ? "Publicités chargées" : "Ads Loaded",
+            {
+              description: language === 'fr' 
+                ? "Les publicités sont prêtes à générer des revenus pour notre projet." 
+                : "Ads are ready to generate revenue for our project.",
+            }
+          );
         }
       } catch (error) {
         console.error('Ad initialization error:', error);
@@ -221,21 +221,12 @@ export default function Support() {
     };
 
     const showAdErrorToast = (title: string, description: string) => {
-      toast({
-        title,
+      toast.error(title, {
         description,
-        variant: "destructive",
-        action: (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={retryAds}
-            className="ml-2"
-          >
-            <RefreshCw className="w-3 h-3 mr-1" />
-            {language === 'fr' ? "Réessayer" : "Retry"}
-          </Button>
-        ),
+        action: {
+          label: language === 'fr' ? "Réessayer" : "Retry",
+          onClick: retryAds,
+        },
       });
     };
 
@@ -248,27 +239,29 @@ export default function Support() {
     return () => {
       clearTimeout(timer);
     };
-  }, [toast, language]);
+  }, [language]);
 
   const retryAds = () => {
     if (window.adsbygoogle) {
       try {
         window.adsbygoogle.push({});
-        toast({
-          title: language === 'fr' ? "Réessayer" : "Retry",
-          description: language === 'fr' 
-            ? "Tentative de rechargement des publicités..." 
-            : "Attempting to reload ads...",
-          variant: "default",
-        });
+        toast.info(
+          language === 'fr' ? "Réessayer" : "Retry",
+          {
+            description: language === 'fr' 
+              ? "Tentative de rechargement des publicités..." 
+              : "Attempting to reload ads...",
+          }
+        );
       } catch (error) {
-        toast({
-          title: language === 'fr' ? "Échec" : "Failed",
-          description: language === 'fr' 
-            ? "Impossible de recharger les publicités." 
-            : "Unable to reload ads.",
-          variant: "destructive",
-        });
+        toast.error(
+          language === 'fr' ? "Échec" : "Failed",
+          {
+            description: language === 'fr' 
+              ? "Impossible de recharger les publicités." 
+              : "Unable to reload ads.",
+          }
+        );
       }
     }
   };
@@ -407,13 +400,14 @@ export default function Support() {
         });
       } else {
         await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
-        toast({
-          title: language === 'fr' ? "Lien copié !" : "Link copied!",
-          description: language === 'fr' 
-            ? "Le lien a été copié dans votre presse-papier." 
-            : "The link has been copied to your clipboard.",
-          variant: "default",
-        });
+        toast.success(
+          language === 'fr' ? "Lien copié !" : "Link copied!",
+          {
+            description: language === 'fr' 
+              ? "Le lien a été copié dans votre presse-papier." 
+              : "The link has been copied to your clipboard.",
+          }
+        );
       }
       setShowThankYou(true);
       setTimeout(() => setShowThankYou(false), 3000);
@@ -456,18 +450,6 @@ export default function Support() {
       }
     },
     tap: { scale: 0.97 }
-  };
-
-  const cardHoverVariants = {
-    rest: { y: 0 },
-    hover: { 
-      y: -8,
-      transition: {
-        type: "spring",
-        stiffness: 300,
-        damping: 15
-      }
-    }
   };
 
   // Format currency
@@ -554,16 +536,16 @@ export default function Support() {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="relative flex flex-col items-center justify-center text-center px-4 py-20 md:py-24 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-green-950/40 dark:via-emerald-950/40 dark:to-teal-950/40 border-b border-green-200 dark:border-green-800"
+        className="relative flex flex-col items-center justify-center text-center px-4 py-12 md:py-20 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-green-950/40 dark:via-emerald-950/40 dark:to-teal-950/40 border-b border-green-200 dark:border-green-800"
       >
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10 dark:opacity-5 bg-center" />
         
-        <div className="relative z-10 max-w-5xl mx-auto">
+        <div className="relative z-10 max-w-5xl mx-auto w-full">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.2, type: "spring" }}
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/40 dark:to-emerald-900/40 text-green-800 dark:text-green-300 px-5 py-2.5 rounded-full text-sm font-medium mb-6 border border-green-200 dark:border-green-800 shadow-lg"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/40 dark:to-emerald-900/40 text-green-800 dark:text-green-300 px-4 py-2 rounded-full text-sm font-medium mb-4 md:mb-6 border border-green-200 dark:border-green-800 shadow-lg"
           >
             <Heart className="w-4 h-4" />
             <span>{language === 'fr' ? "Objectif Principal" : "Primary Goal"}</span>
@@ -579,7 +561,7 @@ export default function Support() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
-            className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight"
+            className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 leading-tight px-2"
           >
             <span className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 dark:from-green-400 dark:via-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
               {language === 'fr' ? "Aidez-nous à acheter notre nom de domaine" : "Help Us Buy Our Domain Name"}
@@ -590,7 +572,7 @@ export default function Support() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="text-lg md:text-xl text-gray-700 dark:text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed"
+            className="text-base md:text-lg text-gray-700 dark:text-gray-300 mb-6 md:mb-8 max-w-3xl mx-auto leading-relaxed px-4"
           >
             {language === 'fr' 
               ? "Nous avons besoin de votre aide pour acheter un nom de domaine professionnel. Chaque publicité que vous visionnez sur cette page nous rapproche de notre objectif !"
@@ -602,23 +584,23 @@ export default function Support() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="mb-8 max-w-2xl mx-auto"
+            className="mb-6 md:mb-8 max-w-2xl mx-auto w-full px-4"
           >
             <Card className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border-2 border-green-200 dark:border-green-800 shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
+              <CardContent className="p-4 md:p-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                   <div className="flex items-center gap-3">
-                    <GlobeIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
-                    <div>
-                      <h3 className="font-bold text-lg">{fundingGoal.title}</h3>
-                      <p className="text-sm text-muted-foreground">{fundingGoal.description}</p>
+                    <GlobeIcon className="w-6 h-6 text-green-600 dark:text-green-400 flex-shrink-0" />
+                    <div className="text-left">
+                      <h3 className="font-bold text-base md:text-lg">{fundingGoal.title}</h3>
+                      <p className="text-xs md:text-sm text-muted-foreground">{fundingGoal.description}</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-green-700 dark:text-green-400">
+                  <div className="text-left md:text-right">
+                    <div className="text-xl md:text-2xl font-bold text-green-700 dark:text-green-400">
                       {formatCurrency(fundingGoal.current)}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-xs md:text-sm text-muted-foreground">
                       {language === 'fr' ? "sur" : "of"} {formatCurrency(fundingGoal.target)}
                     </div>
                   </div>
@@ -626,11 +608,11 @@ export default function Support() {
                 
                 {/* Progress bar */}
                 <div className="mb-4">
-                  <div className="flex justify-between text-sm mb-1">
+                  <div className="flex justify-between text-xs md:text-sm mb-1">
                     <span>{language === 'fr' ? "Progression" : "Progress"}</span>
                     <span className="font-bold">{fundingGoal.progress.toFixed(1)}%</span>
                   </div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+                  <div className="h-3 md:h-4 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${fundingGoal.progress}%` }}
@@ -640,11 +622,11 @@ export default function Support() {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-3 gap-2 text-center text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center text-xs">
                   {fundingGoal.details.map((detail, index) => (
                     <div key={index} className="flex items-center gap-1 justify-center">
-                      <CheckCircle2 className="w-3 h-3 text-green-600" />
-                      <span className="text-xs">{detail}</span>
+                      <CheckCircle2 className="w-3 h-3 text-green-600 flex-shrink-0" />
+                      <span className="text-xs truncate">{detail}</span>
                     </div>
                   ))}
                 </div>
@@ -657,12 +639,12 @@ export default function Support() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
-            className="mb-8"
+            className="mb-6"
           >
-            <div className="inline-flex items-center gap-3 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-full px-5 py-3 border border-green-200 dark:border-green-800">
+            <div className="inline-flex items-center gap-3 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-full px-4 py-2 border border-green-200 dark:border-green-800">
               <div className="flex items-center gap-2">
                 <Eye className="w-4 h-4 text-green-600 dark:text-green-400" />
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+                <span className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
                   {language === 'fr' ? "Publicités vues :" : "Ads viewed:"}
                 </span>
               </div>
@@ -676,18 +658,18 @@ export default function Support() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 }}
-            variants={containerVariants}
-            className="flex flex-wrap gap-3 justify-center"
+            className="flex flex-col sm:flex-row gap-3 justify-center px-4"
           >
             <motion.div
               variants={buttonHoverVariants}
               initial="rest"
               whileHover="hover"
               whileTap="tap"
+              className="w-full sm:w-auto"
             >
               <Button
                 size="lg"
-                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl gap-3 group relative overflow-hidden"
+                className="w-full sm:w-auto bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl gap-3 group relative overflow-hidden"
                 onClick={handleShare}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
@@ -704,11 +686,12 @@ export default function Support() {
               initial="rest"
               whileHover="hover"
               whileTap="tap"
+              className="w-full sm:w-auto"
             >
               <Button
                 variant="outline"
                 size="lg"
-                className="border-2 border-green-600 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 gap-3 group relative"
+                className="w-full sm:w-auto border-2 border-green-600 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 gap-3 group relative"
                 onClick={() => window.open('/project', '_blank')}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-green-50/0 via-green-100/20 to-green-50/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -725,7 +708,7 @@ export default function Support() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.9 }}
-            className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl mx-auto"
+            className="mt-8 md:mt-12 grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3 max-w-2xl mx-auto px-4"
           >
             {quickFacts.map((fact, index) => (
               <motion.div
@@ -733,13 +716,13 @@ export default function Support() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 1 + index * 0.1 }}
-                className="flex flex-col items-center text-center bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm rounded-xl px-4 py-3 border border-green-200 dark:border-green-800"
+                className="flex flex-col items-center text-center bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm rounded-lg px-3 py-2 border border-green-200 dark:border-green-800"
               >
-                <fact.icon className="w-5 h-5 text-green-600 dark:text-green-400 mb-2" />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <fact.icon className="w-4 h-4 md:w-5 md:h-5 text-green-600 dark:text-green-400 mb-1 md:mb-2" />
+                <span className="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 line-clamp-2">
                   {fact.text}
                 </span>
-                <span className="text-xs text-gray-600 dark:text-gray-400">
+                <span className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
                   {fact.desc}
                 </span>
               </motion.div>
@@ -749,46 +732,45 @@ export default function Support() {
       </motion.section>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-12 md:py-16 relative z-10 max-w-6xl">
+      <div className="container mx-auto px-4 py-8 md:py-12 relative z-10 max-w-6xl">
         {/* Impact Stats */}
         <motion.section
           initial="hidden"
           whileInView="visible"
           variants={containerVariants}
           viewport={{ once: true, amount: 0.1 }}
-          className="mb-16"
+          className="mb-12 md:mb-16"
         >
           <motion.h2
             variants={itemVariants}
-            className="text-3xl md:text-4xl font-bold text-center mb-10"
+            className="text-2xl md:text-3xl font-bold text-center mb-6 md:mb-10"
           >
             <span className="bg-gradient-to-r from-primary to-green-600 bg-clip-text text-transparent">
               {language === 'fr' ? "Notre Impact Éducatif" : "Our Educational Impact"}
             </span>
           </motion.h2>
           
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
             {impactStats.map((stat, index) => (
               <motion.div
                 key={index}
-                variants={itemVariants}
                 custom={index}
-                whileHover="hover"
-                variants={cardHoverVariants}
+                variants={itemVariants}
+                whileHover={{ y: -8, transition: { type: "spring", stiffness: 300, damping: 15 } }}
               >
                 <Card className="border-2 border-green-200 dark:border-green-800 hover:border-green-300 dark:hover:border-green-700 transition-all duration-300 hover:shadow-xl bg-gradient-to-br from-white/50 to-transparent dark:from-gray-900/50 backdrop-blur-sm h-full group">
-                  <CardContent className="p-6 text-center">
+                  <CardContent className="p-4 md:p-6 text-center">
                     <motion.div
                       whileHover={{ rotate: 360, scale: 1.1 }}
                       transition={{ duration: 0.6 }}
-                      className="w-14 h-14 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl"
+                      className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 flex items-center justify-center mx-auto mb-3 md:mb-4 shadow-lg group-hover:shadow-xl"
                     >
-                      <stat.icon className={`w-7 h-7 ${stat.color}`} />
+                      <stat.icon className={`w-6 h-6 md:w-7 md:h-7 ${stat.color}`} />
                     </motion.div>
-                    <div className="text-3xl font-bold text-green-700 dark:text-green-400 mb-2">
+                    <div className="text-xl md:text-3xl font-bold text-green-700 dark:text-green-400 mb-1 md:mb-2">
                       {stat.value}
                     </div>
-                    <p className="text-sm text-muted-foreground font-medium">
+                    <p className="text-xs md:text-sm text-muted-foreground font-medium line-clamp-2">
                       {stat.label}
                     </p>
                   </CardContent>
@@ -804,19 +786,19 @@ export default function Support() {
           whileInView={{ opacity: 1 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="space-y-12 mb-16"
+          className="space-y-8 md:space-y-12 mb-12 md:mb-16"
         >
           <motion.h2
             initial={{ x: -30, opacity: 0 }}
             whileInView={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-3xl font-bold text-center"
+            className="text-2xl md:text-3xl font-bold text-center"
           >
             {language === 'fr' ? "Comment fonctionne notre financement ?" : "How Our Funding Works"}
           </motion.h2>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {howItWorks.map((item, index) => (
               <motion.div
                 key={index}
@@ -824,23 +806,22 @@ export default function Support() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1, type: "spring" }}
                 viewport={{ once: true }}
-                whileHover="hover"
-                variants={cardHoverVariants}
+                whileHover={{ y: -8, transition: { type: "spring", stiffness: 300, damping: 15 } }}
               >
                 <Card className="h-full hover:shadow-2xl transition-all duration-300 border-2 border-green-200 dark:border-green-800 overflow-hidden group relative">
                   <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  <CardContent className="p-6 relative">
+                  <CardContent className="p-4 md:p-6 relative">
                     <motion.div
                       whileHover={{ rotate: 360 }}
                       transition={{ duration: 0.6 }}
-                      className="w-12 h-12 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg"
+                      className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 flex items-center justify-center mb-3 md:mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg"
                     >
-                      <item.icon className={`w-6 h-6 ${item.color}`} />
+                      <item.icon className={`w-5 h-5 md:w-6 md:h-6 ${item.color}`} />
                     </motion.div>
-                    <h3 className="font-bold text-xl mb-3 group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors duration-300">
+                    <h3 className="font-bold text-lg md:text-xl mb-2 md:mb-3 group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors duration-300">
                       {item.title}
                     </h3>
-                    <p className="text-muted-foreground">
+                    <p className="text-sm md:text-base text-muted-foreground">
                       {item.description}
                     </p>
                   </CardContent>
@@ -857,13 +838,13 @@ export default function Support() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true, amount: 0.3 }}
-          className="my-12"
+          className="my-8 md:my-12"
         >
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-2xl p-6 md:p-8 border-2 border-green-300 dark:border-green-700 shadow-lg">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <Coins className="w-5 h-5 text-green-600 dark:text-green-400" />
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 border-2 border-green-300 dark:border-green-700 shadow-lg">
+            <div className="flex items-center justify-between mb-3 md:mb-4">
+              <div className="flex items-center gap-2 md:gap-3">
+                <Coins className="w-4 h-4 md:w-5 md:h-5 text-green-600 dark:text-green-400" />
+                <p className="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300">
                   {language === 'fr' 
                     ? "Publicité 1/2 - Cette vue rapproche notre objectif" 
                     : "Ad 1/2 - This view brings us closer to our goal"} 💚
@@ -876,12 +857,12 @@ export default function Support() {
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
-                className="bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-950/30 dark:to-amber-950/30 border-2 border-yellow-300 dark:border-yellow-700 rounded-lg p-4 mb-4"
+                className="bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-950/30 dark:to-amber-950/30 border-2 border-yellow-300 dark:border-yellow-700 rounded-lg p-3 md:p-4 mb-3 md:mb-4"
               >
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-2 md:gap-3">
+                  <AlertCircle className="w-4 h-4 md:w-5 md:h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-sm font-bold text-yellow-800 dark:text-yellow-300 mb-1">
+                    <p className="text-xs md:text-sm font-bold text-yellow-800 dark:text-yellow-300 mb-1">
                       {language === 'fr' ? "Blocage de publicités détecté" : "Ad Blocker Detected"}
                     </p>
                     <p className="text-xs text-yellow-700 dark:text-yellow-400">
@@ -894,7 +875,7 @@ export default function Support() {
               </motion.div>
             )}
             
-            <div className="min-h-[280px] flex items-center justify-center bg-gradient-to-br from-white/50 to-transparent dark:from-gray-900/30 rounded-xl border-2 border-dashed border-green-300 dark:border-green-700">
+            <div className="min-h-[200px] md:min-h-[280px] flex items-center justify-center bg-gradient-to-br from-white/50 to-transparent dark:from-gray-900/30 rounded-lg md:rounded-xl border-2 border-dashed border-green-300 dark:border-green-700">
               {/* First Ad Slot */}
               <ins
                 className="adsbygoogle"
@@ -903,7 +884,8 @@ export default function Support() {
                   textAlign: 'center',
                   width: '100%',
                   maxWidth: '728px',
-                  minHeight: '250px'
+                  minHeight: '200px',
+                  margin: '0 auto'
                 }}
                 data-ad-layout="in-article"
                 data-ad-format="fluid"
@@ -912,7 +894,7 @@ export default function Support() {
               />
             </div>
             
-            <div className="mt-4 text-center">
+            <div className="mt-3 md:mt-4 text-center">
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {language === 'fr' 
                   ? "Conseil : Les publicités qui vous intéressent génèrent plus de revenus pour notre projet." 
@@ -928,13 +910,13 @@ export default function Support() {
           whileInView={{ opacity: 1 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
-          className="mb-16"
+          className="mb-12 md:mb-16"
         >
-          <h3 className="text-2xl font-bold text-center mb-8">
+          <h3 className="text-xl md:text-2xl font-bold text-center mb-6 md:mb-8">
             {language === 'fr' ? "Transparence et Confiance" : "Transparency & Trust"}
           </h3>
           
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
             {transparencyInfo.map((info, index) => (
               <motion.div
                 key={index}
@@ -943,13 +925,13 @@ export default function Support() {
                 transition={{ delay: index * 0.1 }}
                 viewport={{ once: true }}
               >
-                <Card className="border-2 border-green-200 dark:border-green-800 hover:border-green-300 dark:hover:border-green-700 transition-all duration-300">
-                  <CardContent className="p-6">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 flex items-center justify-center mb-4">
-                      <info.icon className="w-6 h-6 text-green-600 dark:text-green-400" />
+                <Card className="border-2 border-green-200 dark:border-green-800 hover:border-green-300 dark:hover:border-green-700 transition-all duration-300 h-full">
+                  <CardContent className="p-4 md:p-6">
+                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 flex items-center justify-center mb-3 md:mb-4">
+                      <info.icon className="w-5 h-5 md:w-6 md:h-6 text-green-600 dark:text-green-400" />
                     </div>
-                    <h4 className="font-bold text-lg mb-2">{info.title}</h4>
-                    <p className="text-sm text-muted-foreground">{info.description}</p>
+                    <h4 className="font-bold text-base md:text-lg mb-2">{info.title}</h4>
+                    <p className="text-xs md:text-sm text-muted-foreground">{info.description}</p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -958,22 +940,22 @@ export default function Support() {
 
           {/* Detailed explanation */}
           <Card className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-2 border-green-200 dark:border-green-800">
-            <CardContent className="p-8">
-              <h4 className="text-xl font-bold mb-6 text-center flex items-center justify-center gap-2">
-                <Lightbulb className="w-6 h-6 text-green-600" />
+            <CardContent className="p-4 md:p-6 lg:p-8">
+              <h4 className="text-lg md:text-xl font-bold mb-4 md:mb-6 text-center flex flex-col md:flex-row items-center justify-center gap-2">
+                <Lightbulb className="w-5 h-5 md:w-6 md:h-6 text-green-600" />
                 {language === 'fr' 
                   ? "Informations détaillées sur notre financement" 
                   : "Detailed Information About Our Funding"}
               </h4>
               
-              <div className="space-y-6">
+              <div className="space-y-4 md:space-y-6">
                 <div className="space-y-2">
-                  <h5 className="font-bold text-lg">
+                  <h5 className="font-bold text-base md:text-lg">
                     {language === 'fr' 
                       ? "Comment les publicités génèrent-elles de l'argent ?" 
                       : "How do ads generate money?"}
                   </h5>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-sm md:text-base text-gray-700 dark:text-gray-300">
                     {language === 'fr'
                       ? "Google AdSense affiche des publicités pertinentes basées sur le contenu de notre page. Chaque fois que vous voyez une publicité, Google nous paie une petite commission. Les clics sur les publicités génèrent des revenus supplémentaires. Ces micro-paiements s'accumulent pour financer notre projet éducatif."
                       : "Google AdSense displays relevant ads based on our page content. Each time you see an ad, Google pays us a small commission. Clicks on ads generate additional revenue. These micro-payments accumulate to fund our educational project."}
@@ -981,12 +963,12 @@ export default function Support() {
                 </div>
                 
                 <div className="space-y-2">
-                  <h5 className="font-bold text-lg">
+                  <h5 className="font-bold text-base md:text-lg">
                     {language === 'fr' 
                       ? "Pourquoi un nom de domaine est-il important ?" 
                       : "Why is a domain name important?"}
                   </h5>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-sm md:text-base text-gray-700 dark:text-gray-300">
                     {language === 'fr'
                       ? "Un nom de domaine professionnel (comme recyclagemaria.org) est essentiel pour :\n• Être facilement trouvable sur internet\n• Avoir une adresse email professionnelle\n• Gagner la confiance des écoles et enseignants\n• Protéger notre marque et notre contenu\n• Offrir une expérience utilisateur professionnelle"
                       : "A professional domain name (like recyclagemaria.org) is essential for:\n• Being easily found online\n• Having a professional email address\n• Gaining trust from schools and teachers\n• Protecting our brand and content\n• Providing a professional user experience"}
@@ -994,12 +976,12 @@ export default function Support() {
                 </div>
                 
                 <div className="space-y-2">
-                  <h5 className="font-bold text-lg">
+                  <h5 className="font-bold text-base md:text-lg">
                     {language === 'fr' 
                       ? "Comment suivre nos progrès ?" 
                       : "How to track our progress?"}
                   </h5>
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-sm md:text-base text-gray-700 dark:text-gray-300">
                     {language === 'fr'
                       ? "Nous mettrons à jour régulièrement notre progression vers l'objectif de 25$. Vous pouvez suivre nos avancées sur cette page et via nos communications. Une fois le domaine acheté, nous partagerons la facture et les détails avec notre communauté."
                       : "We will regularly update our progress toward the $25 goal. You can track our progress on this page and through our communications. Once the domain is purchased, we will share the receipt and details with our community."}
@@ -1017,24 +999,24 @@ export default function Support() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true, amount: 0.3 }}
-          className="my-12"
+          className="my-8 md:my-12"
         >
-          <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 rounded-2xl p-6 md:p-8 border-2 border-emerald-300 dark:border-emerald-700 shadow-lg">
-            <div className="text-center mb-6">
-              <Gift className="w-8 h-8 text-emerald-600 dark:text-emerald-400 mx-auto mb-2" />
-              <p className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-2">
+          <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 border-2 border-emerald-300 dark:border-emerald-700 shadow-lg">
+            <div className="text-center mb-4 md:mb-6">
+              <Gift className="w-6 h-6 md:w-8 md:h-8 text-emerald-600 dark:text-emerald-400 mx-auto mb-2" />
+              <p className="text-base md:text-lg font-bold text-gray-800 dark:text-gray-200 mb-2">
                 {language === 'fr' 
                   ? "Publicité 2/2 - Merci de votre soutien !" 
                   : "Ad 2/2 - Thank you for your support!"}
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs md:text-sm text-muted-foreground">
                 {language === 'fr'
                   ? "Cette publicité nous aide à atteindre notre objectif de domaine"
                   : "This ad helps us reach our domain goal"} 🌱
               </p>
             </div>
             
-            <div className="min-h-[250px] flex items-center justify-center bg-gradient-to-br from-white/50 to-transparent dark:from-gray-900/30 rounded-xl border-2 border-dashed border-emerald-300 dark:border-emerald-700">
+            <div className="min-h-[200px] md:min-h-[250px] flex items-center justify-center bg-gradient-to-br from-white/50 to-transparent dark:from-gray-900/30 rounded-lg md:rounded-xl border-2 border-dashed border-emerald-300 dark:border-emerald-700">
               {/* Second Ad Slot */}
               <ins
                 className="adsbygoogle"
@@ -1043,7 +1025,8 @@ export default function Support() {
                   textAlign: 'center',
                   width: '100%',
                   maxWidth: '728px',
-                  minHeight: '250px'
+                  minHeight: '200px',
+                  margin: '0 auto'
                 }}
                 data-ad-layout="in-article"
                 data-ad-format="fluid"
@@ -1052,7 +1035,7 @@ export default function Support() {
               />
             </div>
             
-            <div className="mt-4 text-center">
+            <div className="mt-3 md:mt-4 text-center">
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {language === 'fr' 
                   ? "Objectif : 25$ pour notre domaine | Actuel : " + formatCurrency(currentAmount)
@@ -1068,10 +1051,10 @@ export default function Support() {
           whileInView={{ opacity: 1, scale: 1 }}
           transition={{ type: "spring" }}
           viewport={{ once: true }}
-          className="mt-16"
+          className="mt-8 md:mt-12"
         >
-          <Card className="border-2 border-green-300 dark:border-green-700 bg-gradient-to-r from-green-50/80 via-emerald-50/80 to-teal-50/80 dark:from-green-950/40 dark:via-emerald-950/40 dark:to-teal-950/40 shadow-2xl overflow-hidden">
-            <CardContent className="p-8 md:p-12 text-center">
+          <Card className="border-2 border-green-300 dark:border-green-700 bg-gradient-to-r from-green-50/80 via-emerald-50/80 to-teal-50/80 dark:from-green-950/40 dark:via-emerald-950/40 dark:to-teal-950/40 shadow-xl md:shadow-2xl overflow-hidden">
+            <CardContent className="p-4 md:p-8 lg:p-12 text-center">
               <motion.div
                 animate={{ 
                   scale: [1, 1.1, 1],
@@ -1082,38 +1065,39 @@ export default function Support() {
                   rotate: { duration: 3, repeat: Infinity }
                 }}
               >
-                <Heart className="w-14 h-14 text-green-600 dark:text-green-400 mx-auto mb-6" />
+                <Heart className="w-10 h-10 md:w-14 md:h-14 text-green-600 dark:text-green-400 mx-auto mb-4 md:mb-6" />
               </motion.div>
               
-              <h3 className="text-3xl font-bold mb-4">
+              <h3 className="text-xl md:text-2xl lg:text-3xl font-bold mb-3 md:mb-4">
                 {language === 'fr' 
                   ? "Votre soutien fait la différence !" 
                   : "Your support makes a difference!"}
               </h3>
               
-              <p className="text-muted-foreground mb-8 max-w-2xl mx-auto text-lg">
+              <p className="text-sm md:text-base lg:text-lg text-muted-foreground mb-6 md:mb-8 max-w-2xl mx-auto">
                 {language === 'fr'
                   ? "Chaque vue de publicité, chaque partage, chaque visite nous rapproche de notre objectif. Merci de contribuer à l'éducation environnementale des générations futures."
                   : "Every ad view, every share, every visit brings us closer to our goal. Thank you for contributing to the environmental education of future generations."}
               </p>
               
-              <div className="flex flex-wrap gap-4 justify-center">
+              <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
                 <motion.div
                   whileHover="hover"
                   whileTap="tap"
                   variants={buttonHoverVariants}
+                  className="w-full sm:w-auto"
                 >
                   <Button
                     onClick={handleShare}
-                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-6 text-lg gap-3 group relative overflow-hidden"
+                    className="w-full sm:w-auto bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 md:px-8 py-3 md:py-6 text-sm md:text-lg gap-2 md:gap-3 group relative overflow-hidden"
                     size="lg"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                    <Share2 className="w-5 h-5 relative z-10" />
+                    <Share2 className="w-4 h-4 md:w-5 md:h-5 relative z-10" />
                     <span className="relative z-10">
                       {language === 'fr' ? "Partager avec vos amis" : "Share with your friends"}
                     </span>
-                    <ChevronRight className="w-5 h-5 relative z-10 transition-transform duration-300 group-hover:translate-x-2" />
+                    <ChevronRight className="w-4 h-4 md:w-5 md:h-5 relative z-10 transition-transform duration-300 group-hover:translate-x-1 md:group-hover:translate-x-2" />
                   </Button>
                 </motion.div>
                 
@@ -1121,14 +1105,15 @@ export default function Support() {
                   whileHover="hover"
                   whileTap="tap"
                   variants={buttonHoverVariants}
+                  className="w-full sm:w-auto"
                 >
                   <Button
                     variant="outline"
                     onClick={() => window.open('/contact', '_blank')}
-                    className="border-2 border-green-600 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 px-8 py-6 text-lg gap-3 group relative"
+                    className="w-full sm:w-auto border-2 border-green-600 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 px-4 md:px-8 py-3 md:py-6 text-sm md:text-lg gap-2 md:gap-3 group relative"
                     size="lg"
                   >
-                    <CreditCard className="w-5 h-5 relative z-10" />
+                    <CreditCard className="w-4 h-4 md:w-5 md:h-5 relative z-10" />
                     <span className="relative z-10">
                       {language === 'fr' ? "Autres moyens de nous aider" : "Other ways to help us"}
                     </span>
@@ -1136,11 +1121,11 @@ export default function Support() {
                 </motion.div>
               </div>
               
-              <p className="text-sm text-muted-foreground mt-8 pt-6 border-t border-green-200 dark:border-green-800">
+              <p className="text-xs md:text-sm text-muted-foreground mt-6 md:mt-8 pt-4 md:pt-6 border-t border-green-200 dark:border-green-800">
                 {language === 'fr' ? "Des questions ? Contactez-nous à" : "Questions? Contact us at"}{' '}
                 <a 
                   href="mailto:recyclagemaria@gmail.com" 
-                  className="text-green-600 dark:text-green-400 hover:underline font-medium"
+                  className="text-green-600 dark:text-green-400 hover:underline font-medium break-all"
                 >
                   recyclagemaria@gmail.com
                 </a>
