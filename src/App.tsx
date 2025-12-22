@@ -77,9 +77,10 @@ const AppLoader = () => (
 // Protected Route wrapper
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  skipOnboardingNoJS?: boolean;
 }
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ children, skipOnboardingNoJS = false }: ProtectedRouteProps) => {
   const [isChecking, setIsChecking] = useState(true);
   const [isOnboarded, setIsOnboarded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -118,8 +119,16 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       }
     };
 
+    // Skip onboarding check if skipOnboardingNoJS is true
+    if (skipOnboardingNoJS) {
+      setIsOnboarded(true);
+      setIsChecking(false);
+      setIsLoading(false);
+      return;
+    }
+
     checkOnboarding();
-  }, []);
+  }, [skipOnboardingNoJS]);
 
   if (isChecking || isLoading) {
     return <AppLoader />;
@@ -159,7 +168,12 @@ interface OnboardingData {
   onboarded: boolean;
 }
 
-const App = () => {
+// Interface for App props
+interface AppProps {
+  skipOnboardingNoJS?: boolean;
+}
+
+const App = ({ skipOnboardingNoJS = false }: AppProps) => {
   const [isInitializing, setIsInitializing] = useState(true);
   const [initialTheme, setInitialTheme] = useState<'light' | 'dark'>('light');
   const [initialLanguage, setInitialLanguage] = useState<'en' | 'fr'>('fr');
@@ -266,95 +280,164 @@ const App = () => {
             
             <BrowserRouter>
               <Routes>
-                {/* Onboarding Route (Public) */}
-                <Route 
-                  path="/onboarding" 
-                  element={
-                    <Onboarding onComplete={handleOnboardingComplete} />
-                  } 
-                />
-                
-                {/* Main App Routes (Protected) */}
-                <Route path="/" element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <Home />
-                    </MainLayout>
-                  </ProtectedRoute>
-                } />
-                
-                <Route path="/project" element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <Project />
-                    </MainLayout>
-                  </ProtectedRoute>
-                } />
-                
-                <Route path="/resources" element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <Resources />
-                    </MainLayout>
-                  </ProtectedRoute>
-                } />
-                
-                <Route path="/guide" element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <Guide />
-                    </MainLayout>
-                  </ProtectedRoute>
-                } />
-                
-                <Route path="/posters" element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <Posters />
-                    </MainLayout>
-                  </ProtectedRoute>
-                } />
-                
-                <Route path="/videos" element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <Videos />
-                    </MainLayout>
-                  </ProtectedRoute>
-                } />
-                
-                <Route path="/activities" element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <Activities />
-                    </MainLayout>
-                  </ProtectedRoute>
-                } />
-                
-                <Route path="/contact" element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <Contact />
-                    </MainLayout>
-                  </ProtectedRoute>
-                } />
-                
-                <Route path="/support" element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <Support />
-                    </MainLayout>
-                  </ProtectedRoute>
-                } />
-                
-                {/* Catch-all route for 404 */}
-                <Route path="*" element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <NotFound />
-                    </MainLayout>
-                  </ProtectedRoute>
-                } />
+                {skipOnboardingNoJS ? (
+                  // Skip onboarding completely - render all routes without protection
+                  <>
+                    <Route path="/" element={
+                      <MainLayout>
+                        <Home />
+                      </MainLayout>
+                    } />
+                    
+                    <Route path="/project" element={
+                      <MainLayout>
+                        <Project />
+                      </MainLayout>
+                    } />
+                    
+                    <Route path="/resources" element={
+                      <MainLayout>
+                        <Resources />
+                      </MainLayout>
+                    } />
+                    
+                    <Route path="/guide" element={
+                      <MainLayout>
+                        <Guide />
+                      </MainLayout>
+                    } />
+                    
+                    <Route path="/posters" element={
+                      <MainLayout>
+                        <Posters />
+                      </MainLayout>
+                    } />
+                    
+                    <Route path="/videos" element={
+                      <MainLayout>
+                        <Videos />
+                      </MainLayout>
+                    } />
+                    
+                    <Route path="/activities" element={
+                      <MainLayout>
+                        <Activities />
+                      </MainLayout>
+                    } />
+                    
+                    <Route path="/contact" element={
+                      <MainLayout>
+                        <Contact />
+                      </MainLayout>
+                    } />
+                    
+                    <Route path="/support" element={
+                      <MainLayout>
+                        <Support />
+                      </MainLayout>
+                    } />
+                    
+                    {/* Catch-all route for 404 */}
+                    <Route path="*" element={
+                      <MainLayout>
+                        <NotFound />
+                      </MainLayout>
+                    } />
+                  </>
+                ) : (
+                  // Normal flow with onboarding
+                  <>
+                    {/* Onboarding Route (Public) */}
+                    <Route 
+                      path="/onboarding" 
+                      element={
+                        <Onboarding onComplete={handleOnboardingComplete} />
+                      } 
+                    />
+                    
+                    {/* Main App Routes (Protected) */}
+                    <Route path="/" element={
+                      <ProtectedRoute skipOnboardingNoJS={skipOnboardingNoJS}>
+                        <MainLayout>
+                          <Home />
+                        </MainLayout>
+                      </ProtectedRoute>
+                    } />
+                    
+                    <Route path="/project" element={
+                      <ProtectedRoute skipOnboardingNoJS={skipOnboardingNoJS}>
+                        <MainLayout>
+                          <Project />
+                        </MainLayout>
+                      </ProtectedRoute>
+                    } />
+                    
+                    <Route path="/resources" element={
+                      <ProtectedRoute skipOnboardingNoJS={skipOnboardingNoJS}>
+                        <MainLayout>
+                          <Resources />
+                        </MainLayout>
+                      </ProtectedRoute>
+                    } />
+                    
+                    <Route path="/guide" element={
+                      <ProtectedRoute skipOnboardingNoJS={skipOnboardingNoJS}>
+                        <MainLayout>
+                          <Guide />
+                        </MainLayout>
+                      </ProtectedRoute>
+                    } />
+                    
+                    <Route path="/posters" element={
+                      <ProtectedRoute skipOnboardingNoJS={skipOnboardingNoJS}>
+                        <MainLayout>
+                          <Posters />
+                        </MainLayout>
+                      </ProtectedRoute>
+                    } />
+                    
+                    <Route path="/videos" element={
+                      <ProtectedRoute skipOnboardingNoJS={skipOnboardingNoJS}>
+                        <MainLayout>
+                          <Videos />
+                        </MainLayout>
+                      </ProtectedRoute>
+                    } />
+                    
+                    <Route path="/activities" element={
+                      <ProtectedRoute skipOnboardingNoJS={skipOnboardingNoJS}>
+                        <MainLayout>
+                          <Activities />
+                        </MainLayout>
+                      </ProtectedRoute>
+                    } />
+                    
+                    <Route path="/contact" element={
+                      <ProtectedRoute skipOnboardingNoJS={skipOnboardingNoJS}>
+                        <MainLayout>
+                          <Contact />
+                        </MainLayout>
+                      </ProtectedRoute>
+                    } />
+                    
+                    <Route path="/support" element={
+                      <ProtectedRoute skipOnboardingNoJS={skipOnboardingNoJS}>
+                        <MainLayout>
+                          <Support />
+                        </MainLayout>
+                      </ProtectedRoute>
+                    } />
+                    
+                    {/* Catch-all route for 404 */}
+                    <Route path="*" element={
+                      <ProtectedRoute skipOnboardingNoJS={skipOnboardingNoJS}>
+                        <MainLayout>
+                          <NotFound />
+                        </MainLayout>
+                      </ProtectedRoute>
+                    } />
+                  </>
+                )}
               </Routes>
             </BrowserRouter>
           </TooltipProvider>
