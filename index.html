@@ -135,6 +135,17 @@
     </div>
   </noscript>
 
-  <script type="module" src="/src/main.tsx"></script>
+  <!-- Script principal : React et Onboarding -->
+  <script type="module">
+    import { createRoot } from 'react-dom/client';
+    import App from '/src/App.tsx';
+
+    // Onboarding sera rendu seulement si JS est activé
+    const container = document.getElementById('root');
+    if(container) {
+      const root = createRoot(container);
+      root.render(<App skipOnboardingNoJS={true} />);
+    }
+  </script>
 </body>
 </html>
