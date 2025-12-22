@@ -2,25 +2,33 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
-// 🤖 Détection bot (Googlebot, Bingbot, etc.)
+// Détecter les bots de manière conservatrice
 const isBot = () => {
+  // Si pas de navigator, on est côté serveur (Vite dev/server)
   if (typeof navigator === "undefined") return true;
 
-  const ua = navigator.userAgent.toLowerCase();
-  return (
-    ua.includes("googlebot") ||
-    ua.includes("bingbot") ||
-    ua.includes("yandex") ||
-    ua.includes("duckduckbot") ||
-    ua.includes("baiduspider") ||
-    ua.includes("slurp") || // Yahoo
-    ua.includes("facebookexternalhit") ||
-    ua.includes("twitterbot")
-  );
+  const ua = navigator.userAgent?.toLowerCase() || "";
+
+  // Liste complète de bots connus
+  const bots = [
+    "googlebot",
+    "bingbot",
+    "yandex",
+    "duckduckbot",
+    "baiduspider",
+    "slurp",
+    "facebookexternalhit",
+    "twitterbot",
+    "adsbot-google"
+  ];
+
+  return bots.some(bot => ua.includes(bot));
 };
 
+// On force le skip onboarding si c’est un bot
 const skipOnboarding = isBot();
 
+// Rend directement l’app avec skipOnboardingNoJS
 createRoot(document.getElementById("root")!).render(
   <App skipOnboardingNoJS={skipOnboarding} />
 );
