@@ -51,15 +51,13 @@ export default function Contact() {
   const [isMobile, setIsMobile] = useState(false);
   const [buttonState, setButtonState] = useState<"idle" | "hover" | "active" | "submitting">("idle");
   const [mounted, setMounted] = useState(false);
+  const rippleTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Mobile detection and component mount
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth <= 768;
       setIsMobile(mobile);
-      if (mobile) {
-        document.documentElement.classList.add('mobile-device');
-      }
     };
     
     checkMobile();
@@ -75,7 +73,9 @@ export default function Contact() {
     
     return () => {
       window.removeEventListener("resize", checkMobile);
-      document.documentElement.classList.remove('mobile-device');
+      if (rippleTimeoutRef.current) {
+        clearTimeout(rippleTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -118,51 +118,53 @@ export default function Contact() {
     },
   ];
 
-  // Load or update Turnstile widget when language changes
+  // Load Turnstile widget - optimized to prevent duplication
   useEffect(() => {
     if (!mounted) return;
 
-    const loadTurnstile = () => {
-      // Remove existing widget if present
+    const initializeTurnstile = () => {
+      // Clean up any existing instance
       if (turnstileInstanceRef.current && (window as any).turnstile) {
-        (window as any).turnstile.remove(turnstileInstanceRef.current);
+        try {
+          (window as any).turnstile.remove(turnstileInstanceRef.current);
+        } catch (e) {
+          console.log("Cleanup error:", e);
+        }
         turnstileInstanceRef.current = null;
       }
 
-      // Clear the container
+      // Clear container
       if (turnstileRef.current) {
         turnstileRef.current.innerHTML = '';
       }
 
-      // Load Turnstile script if not already loaded
+      // Load script if needed
       if (!document.querySelector('script[src*="turnstile"]')) {
         const script = document.createElement("script");
         script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
         script.async = true;
         script.defer = true;
         
-        script.onload = () => {
-          renderTurnstile();
-        };
-        
+        script.onload = renderTurnstile;
         script.onerror = () => {
-          toast.error(
-            language === "fr"
-              ? "❌ Échec du chargement du vérificateur de sécurité"
-              : "❌ Security checker failed to load",
-            { position: "top-center" }
-          );
+          console.error("Failed to load Turnstile");
+          setTurnstileLoaded(true); // Set to true to show error state
         };
         
-        document.body.appendChild(script);
+        document.head.appendChild(script);
       } else {
-        // Script already loaded, just render the widget
+        // Script already loaded
         setTimeout(renderTurnstile, 100);
       }
     };
 
     const renderTurnstile = () => {
-      if ((window as any).turnstile && turnstileRef.current) {
+      if (!turnstileRef.current || !(window as any).turnstile) {
+        setTurnstileLoaded(true);
+        return;
+      }
+
+      try {
         turnstileInstanceRef.current = (window as any).turnstile.render(turnstileRef.current, {
           sitekey: "0x4AAAAAACIP-ezbrfMoU0rB",
           callback: (token: string) => {
@@ -175,7 +177,6 @@ export default function Contact() {
               { 
                 duration: 2000,
                 position: "top-center",
-                className: "success-toast"
               }
             );
           },
@@ -183,19 +184,26 @@ export default function Contact() {
           "retry": "auto",
           "appearance": "always",
           "theme": "light",
-          "language": language, // Set language for Turnstile
+          "language": language,
           "size": isMobile ? "compact" : "normal"
         });
+        setTurnstileLoaded(true);
+      } catch (error) {
+        console.error("Turnstile render error:", error);
         setTurnstileLoaded(true);
       }
     };
 
-    loadTurnstile();
+    const timer = setTimeout(initializeTurnstile, 300);
 
     return () => {
-      // Cleanup on unmount
+      clearTimeout(timer);
       if (turnstileInstanceRef.current && (window as any).turnstile) {
-        (window as any).turnstile.remove(turnstileInstanceRef.current);
+        try {
+          (window as any).turnstile.remove(turnstileInstanceRef.current);
+        } catch (e) {
+          // Ignore cleanup errors
+        }
       }
     };
   }, [language, isMobile, mounted, playSuccessSound]);
@@ -210,14 +218,13 @@ export default function Contact() {
       playErrorSound();
       setButtonState("idle");
       toast.error(
-        language === "fr" ? "❌ Champs requis manquants" : "❌ Missing required fields",
+        language === "fr" ? "❌ Champs manquants" : "❌ Missing fields",
         {
           description: language === "fr"
-            ? "Veuillez remplir tous les champs obligatoires"
-            : "Please fill in all required fields",
+            ? "Veuillez remplir tous les champs"
+            : "Please fill in all fields",
           position: "top-center",
           duration: 3000,
-          className: "error-toast"
         }
       );
       setIsSubmitting(false);
@@ -236,7 +243,6 @@ export default function Contact() {
             : "Please enter a valid email address",
           position: "top-center",
           duration: 3000,
-          className: "error-toast"
         }
       );
       setIsSubmitting(false);
@@ -247,18 +253,13 @@ export default function Contact() {
       playErrorSound();
       setButtonState("idle");
       toast.error(
-        language === "fr" ? "🔒 Vérification de sécurité requise" : "🔒 Security verification required",
+        language === "fr" ? "🔒 Sécurité requise" : "🔒 Security required",
         {
           description: language === "fr"
             ? "Veuillez compléter la vérification de sécurité"
             : "Please complete the security verification",
           position: "top-center",
           duration: 3000,
-          className: "warning-toast",
-          action: {
-            label: language === "fr" ? "OK" : "OK",
-            onClick: () => {},
-          },
         }
       );
       setIsSubmitting(false);
@@ -266,14 +267,14 @@ export default function Contact() {
     }
 
     const loadingToast = toast.custom((t) => (
-      <div className="bg-card/95 backdrop-blur-sm border border-primary/20 rounded-lg p-4 shadow-xl animate-slide-in-toast">
+      <div className="bg-white/95 dark:bg-gray-900/95 border border-primary/20 rounded-lg p-4 shadow-xl animate-slide-in-toast">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
             <Loader2 className="w-4 h-4 text-primary animate-spin" />
           </div>
           <div>
             <p className="font-medium">
-              {language === "fr" ? "📨 Envoi en cours..." : "📨 Sending message..."}
+              {language === "fr" ? "📨 Envoi en cours..." : "📨 Sending..."}
             </p>
             <p className="text-sm text-muted-foreground">
               {language === "fr" ? "Veuillez patienter..." : "Please wait..."}
@@ -303,7 +304,7 @@ export default function Contact() {
         }),
       });
 
-      if (!response.ok) throw new Error("Formspree submission failed");
+      if (!response.ok) throw new Error("Submission failed");
 
       playLevelCompleteSound();
       toast.dismiss(loadingToast);
@@ -314,30 +315,26 @@ export default function Contact() {
         setHasSubmitted(true);
         
         toast.custom((t) => (
-          <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-green-500/5 backdrop-blur-sm border border-primary/20 rounded-xl p-6 shadow-2xl animate-slide-in-toast">
-            <div className="absolute -top-3 -right-3 w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-400 rounded-full flex items-center justify-center shadow-lg animate-pulse">
-              <CheckCircle2 className="w-5 h-5 text-white" />
-            </div>
+          <div className="relative bg-white/95 dark:bg-gray-900/95 border border-green-200 dark:border-green-800 rounded-xl p-6 shadow-2xl animate-slide-in-toast">
             <div className="flex flex-col items-center text-center space-y-4">
-              <div className="w-20 h-20 bg-gradient-to-br from-green-500/20 to-emerald-400/20 rounded-full flex items-center justify-center border-2 border-green-500/30 animate-float-gentle">
-                <Sparkles className="w-10 h-10 text-green-500" />
+              <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center border-2 border-green-200 dark:border-green-800">
+                <Sparkles className="w-10 h-10 text-green-600 dark:text-green-400" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent animate-gradient-flow">
-                  {language === "fr" ? "🎉 Merci pour votre retour !" : "🎉 Thanks for your feedback!"}
+                <h3 className="text-2xl font-bold text-green-700 dark:text-green-400">
+                  {language === "fr" ? "🎉 Merci !" : "🎉 Thank You!"}
                 </h3>
                 <p className="text-muted-foreground">
                   {language === "fr" 
-                    ? "Nous apprécions grandement votre message et nous vous répondrons dans les plus brefs délais."
-                    : "We greatly appreciate your message and we'll get back to you as soon as possible."}
+                    ? "Nous apprécions votre message et vous répondrons bientôt."
+                    : "We appreciate your message and will respond soon."}
                 </p>
               </div>
               <Button
                 onClick={() => toast.dismiss(t)}
-                className="bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 transition-all duration-300 hover:scale-105 group"
+                className="bg-green-600 hover:bg-green-700 text-white"
               >
                 {language === "fr" ? "Continuer" : "Continue"}
-                <ChevronRight className="w-4 h-4 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
               </Button>
             </div>
           </div>
@@ -346,29 +343,16 @@ export default function Contact() {
           position: "top-center",
         });
       } else {
-        // Regular success message for returning users
-        toast.custom((t) => (
-          <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-blue-500/5 backdrop-blur-sm border border-primary/20 rounded-xl p-4 shadow-xl animate-slide-in-toast">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <CheckCircle2 className="w-5 h-5 text-primary" />
-              </div>
-              <div className="space-y-1">
-                <p className="font-medium">
-                  {language === "fr" ? "✅ Message envoyé avec succès" : "✅ Message sent successfully"}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {language === "fr"
-                    ? "Merci pour votre message. Nous vous répondrons bientôt."
-                    : "Thank you for your message. We'll respond soon."}
-                </p>
-              </div>
-            </div>
-          </div>
-        ), {
-          duration: 5000,
-          position: "top-center",
-        });
+        toast.success(
+          language === "fr" ? "✅ Message envoyé" : "✅ Message sent",
+          {
+            description: language === "fr"
+              ? "Merci pour votre message."
+              : "Thank you for your message.",
+            position: "top-center",
+            duration: 5000,
+          }
+        );
       }
 
       // Reset form
@@ -384,18 +368,13 @@ export default function Contact() {
       playErrorSound();
       toast.dismiss(loadingToast);
       toast.error(
-        language === "fr" ? "❌ Échec de l'envoi" : "❌ Failed to send",
+        language === "fr" ? "❌ Échec" : "❌ Failed",
         {
           description: language === "fr"
-            ? "Une erreur est survenue. Veuillez réessayer."
-            : "An error occurred. Please try again.",
+            ? "Une erreur est survenue."
+            : "An error occurred.",
           position: "top-center",
           duration: 5000,
-          className: "error-toast",
-          action: {
-            label: language === "fr" ? "Réessayer" : "Retry",
-            onClick: () => handleSubmit(e),
-          },
         }
       );
     } finally {
@@ -429,41 +408,23 @@ export default function Contact() {
     }
   }, [isSubmitting, buttonState]);
 
-  // Input focus animation
+  // Simplified input focus animation
   const handleInputFocus = useCallback((e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const input = e.target;
-    const parent = input.parentElement;
+    input.parentElement?.classList.add('input-focused');
     
-    if (parent) {
-      parent.classList.add('input-focused');
-      
-      // Add ripple effect
-      const ripple = document.createElement('div');
-      ripple.className = 'input-ripple';
-      parent.appendChild(ripple);
-      
-      setTimeout(() => {
-        ripple.remove();
-      }, 600);
+    // Add subtle animation
+    if (input.parentElement) {
+      input.parentElement.style.transform = 'translateY(-2px)';
     }
   }, []);
 
   const handleInputBlur = useCallback((e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const parent = e.target.parentElement;
-    if (parent) {
-      parent.classList.remove('input-focused');
-    }
-  }, []);
-
-  // Select animation handler
-  const handleSelectOpenChange = useCallback((open: boolean) => {
-    const selectTrigger = document.querySelector('[data-state="open"]');
-    if (selectTrigger) {
-      if (open) {
-        selectTrigger.classList.add('select-open');
-      } else {
-        selectTrigger.classList.remove('select-open');
-      }
+    const input = e.target;
+    input.parentElement?.classList.remove('input-focused');
+    
+    if (input.parentElement) {
+      input.parentElement.style.transform = '';
     }
   }, []);
 
@@ -477,23 +438,17 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 relative overflow-hidden">
-      {/* Enhanced Animated Background */}
+      {/* Simplified Background - Performance Optimized */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        {/* Dynamic gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.015] via-transparent to-blue-500/[0.015]" />
+        {/* Static gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-blue-500/5" />
         
-        {/* Animated floating orbs - reduced for mobile */}
+        {/* Minimal animated orbs - only on desktop */}
         {!isMobile && (
           <>
-            <div className="absolute top-20 left-10 w-72 h-72 bg-primary/[0.02] rounded-full blur-3xl animate-orb-float-1" />
+            <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-float-slow" />
             <div 
-              className="absolute bottom-40 right-20 w-96 h-96 bg-blue-500/[0.02] rounded-full blur-3xl animate-orb-float-2" 
-            />
-            <div 
-              className="absolute top-1/3 right-1/4 w-56 h-56 bg-green-400/[0.02] rounded-full blur-2xl animate-orb-float-3" 
-            />
-            <div 
-              className="absolute bottom-1/4 left-1/3 w-64 h-64 bg-purple-400/[0.02] rounded-full blur-2xl animate-orb-float-1" 
+              className="absolute bottom-40 right-20 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-float-medium" 
             />
           </>
         )}
@@ -501,38 +456,36 @@ export default function Contact() {
 
       <div className="container mx-auto px-4 py-8 md:py-12 relative z-10">
         <div className="max-w-3xl mx-auto">
-          {/* Enhanced Header */}
-          <div className="text-center mb-8 md:mb-12 animate-fade-in-up">
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-4 md:mb-6 border border-primary/20 hover:scale-105 hover:bg-primary/15 transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 animate-pulse-gentle">
+          {/* Simplified Header */}
+          <div className="text-center mb-8 md:mb-12">
+            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-4 md:mb-6 border border-primary/20 hover:scale-105 transition-all duration-300">
               <MessageCircle className="w-4 h-4" />
               <span>{language === "fr" ? "Contactez-nous" : "Contact Us"}</span>
             </div>
 
-            <div className="relative w-16 h-16 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mx-auto mb-4 md:mb-6 shadow-xl border border-primary/10 hover:scale-110 hover:shadow-2xl transition-all duration-500 group">
-              <Mail className="w-8 h-8 md:w-12 md:h-12 text-primary transition-transform duration-500 group-hover:rotate-12" />
-              <div className="absolute inset-0 rounded-full border-2 border-primary/0 group-hover:border-primary/20 transition-all duration-500" />
+            <div className="relative w-16 h-16 md:w-24 md:h-24 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4 md:mb-6 shadow-lg hover:scale-110 transition-all duration-300">
+              <Mail className="w-8 h-8 md:w-12 md:h-12 text-primary" />
             </div>
 
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4 animate-fade-in-up delay-100">
-              <span className="bg-gradient-to-r from-primary via-green-600 to-emerald-500 bg-clip-text text-transparent animate-gradient-flow">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4">
+              <span className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
                 {t("contact.title")}
               </span>
             </h1>
 
-            <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto animate-fade-in-up delay-200">
+            <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto">
               {t("contact.subtitle")}
             </p>
           </div>
 
-          {/* Enhanced Form Card */}
-          <Card className="border-2 border-primary/20 shadow-xl md:shadow-2xl overflow-hidden bg-card/95 backdrop-blur-sm animate-fade-in-up delay-300">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-green-500/5" />
-            <CardContent className="p-4 md:p-6 lg:p-8 relative">
+          {/* Form Card */}
+          <Card className="border border-primary/10 shadow-lg md:shadow-xl overflow-hidden bg-card/95 animate-fade-in">
+            <CardContent className="p-4 md:p-6 lg:p-8">
               <form ref={formRef} onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
                 {/* Name Field */}
-                <div className="space-y-2 animate-slide-in-left">
-                  <Label htmlFor="name" className="flex items-center gap-2 text-base font-medium group cursor-text">
-                    <User className="w-4 h-4 text-primary transition-all duration-300 group-hover:scale-125" />
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="flex items-center gap-2 text-base font-medium">
+                    <User className="w-4 h-4 text-primary" />
                     {t("contact.name")}
                   </Label>
                   <div className="relative">
@@ -545,18 +498,17 @@ export default function Contact() {
                       onFocus={handleInputFocus}
                       onBlur={handleInputBlur}
                       placeholder={language === "fr" ? "Votre nom" : "Your name"}
-                      className="h-12 border-2 border-primary/20 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300 hover:border-primary/40 pl-10"
+                      className="h-12 border-2 border-input focus:border-primary transition-colors duration-200"
                       required
                       disabled={isSubmitting}
                     />
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-primary/50 pointer-events-none" />
                   </div>
                 </div>
 
                 {/* Email Field */}
-                <div className="space-y-2 animate-slide-in-left delay-75">
-                  <Label htmlFor="email" className="flex items-center gap-2 text-base font-medium group cursor-text">
-                    <AtSign className="w-4 h-4 text-primary transition-all duration-300 group-hover:scale-125" />
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="flex items-center gap-2 text-base font-medium">
+                    <AtSign className="w-4 h-4 text-primary" />
                     {t("contact.email")}
                   </Label>
                   <div className="relative">
@@ -569,48 +521,41 @@ export default function Contact() {
                       onFocus={handleInputFocus}
                       onBlur={handleInputBlur}
                       placeholder={language === "fr" ? "votre@email.com" : "your@email.com"}
-                      className="h-12 border-2 border-primary/20 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300 hover:border-primary/40 pl-10"
+                      className="h-12 border-2 border-input focus:border-primary transition-colors duration-200"
                       required
                       disabled={isSubmitting}
                     />
-                    <AtSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-primary/50 pointer-events-none" />
                   </div>
                 </div>
 
                 {/* Subject Field */}
-                <div className="space-y-2 animate-slide-in-left delay-100">
-                  <Label htmlFor="subject" className="flex items-center gap-2 text-base font-medium group cursor-text">
-                    <AlertCircle className="w-4 h-4 text-primary transition-all duration-300 group-hover:scale-125" />
+                <div className="space-y-2">
+                  <Label htmlFor="subject" className="flex items-center gap-2 text-base font-medium">
+                    <AlertCircle className="w-4 h-4 text-primary" />
                     {language === "fr" ? "Sujet" : "Subject"}
                   </Label>
                   <Select
                     value={formData.subject}
                     onValueChange={(value) => setFormData({ ...formData, subject: value })}
-                    onOpenChange={handleSelectOpenChange}
                     disabled={isSubmitting}
                   >
-                    <SelectTrigger className="h-12 border-2 border-primary/20 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300 hover:border-primary/40 group/select">
+                    <SelectTrigger className="h-12 border-2 border-input focus:border-primary transition-colors duration-200">
                       <SelectValue 
                         placeholder={language === "fr" ? "Sélectionnez un sujet" : "Select a subject"} 
                       />
                     </SelectTrigger>
-                    <SelectContent className="animate-slide-in-select border-primary/20 backdrop-blur-sm">
+                    <SelectContent>
                       {subjectOptions.map((option) => {
                         const Icon = option.icon;
                         return (
                           <SelectItem 
                             key={option.value} 
                             value={option.value}
-                            className="flex items-center gap-3 py-3 transition-all duration-200 hover:bg-primary/5 cursor-pointer group/item"
+                            className="flex items-center gap-2"
                           >
-                            <div className="flex items-center gap-3">
-                              <div className={`p-2 rounded-lg bg-primary/5 group-hover/item:bg-primary/10 transition-colors ${option.color}`}>
-                                <Icon className="w-4 h-4" />
-                              </div>
-                              <div className="text-left">
-                                <div className="font-medium">{option.label}</div>
-                                <div className="text-xs text-muted-foreground">{option.description}</div>
-                              </div>
+                            <div className="flex items-center gap-2">
+                              <Icon className={`w-4 h-4 ${option.color}`} />
+                              <span>{option.label}</span>
                             </div>
                           </SelectItem>
                         );
@@ -625,9 +570,9 @@ export default function Contact() {
                 </div>
 
                 {/* Message Field */}
-                <div className="space-y-2 animate-slide-in-right">
-                  <Label htmlFor="message" className="flex items-center gap-2 text-base font-medium group cursor-text">
-                    <MessageCircle className="w-4 h-4 text-primary transition-all duration-300 group-hover:scale-125" />
+                <div className="space-y-2">
+                  <Label htmlFor="message" className="flex items-center gap-2 text-base font-medium">
+                    <MessageCircle className="w-4 h-4 text-primary" />
                     {t("contact.message")}
                   </Label>
                   <div className="relative">
@@ -640,43 +585,47 @@ export default function Contact() {
                       onBlur={handleInputBlur}
                       placeholder={language === "fr" ? "Votre message ici..." : "Your message here..."}
                       rows={isMobile ? 4 : 5}
-                      className="border-2 border-primary/20 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300 hover:border-primary/40 resize-none min-h-[100px] md:min-h-[120px]"
+                      className="border-2 border-input focus:border-primary transition-colors duration-200 resize-none min-h-[100px] md:min-h-[120px]"
                       required
                       disabled={isSubmitting}
                     />
-                    <MessageCircle className="absolute left-3 top-3 w-4 h-4 text-primary/50 pointer-events-none" />
                   </div>
                 </div>
 
                 {/* Security Notice */}
-                <div className="flex items-start gap-3 text-sm text-muted-foreground animate-fade-in bg-primary/5 p-3 rounded-lg border border-primary/10">
-                  <Shield className="w-5 h-5 text-primary mt-0.5 flex-shrink-0 animate-pulse-slow" />
+                <div className="flex items-start gap-2 text-sm text-muted-foreground bg-primary/5 p-3 rounded-lg border border-primary/10">
+                  <Shield className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                   <p>
                     {language === "fr"
-                      ? "🔒 Ce formulaire est sécurisé avec Cloudflare. Les faux e-mails sont détectés et considérés comme spam."
-                      : "🔒 This contact form is secured with Cloudflare. Fake e-mails are detected and considered spam."}
+                      ? "Sécurisé avec Cloudflare. Les faux e-mails sont détectés."
+                      : "Secured with Cloudflare. Fake emails are detected."}
                   </p>
                 </div>
 
-                {/* Enhanced Cloudflare Widget */}
-                <div className="flex flex-col items-center justify-center my-4 md:my-6 animate-fade-in">
-                  <div className="relative group w-full max-w-xs md:max-w-sm">
+                {/* Cloudflare Widget - Fixed Sizing */}
+                <div className="flex justify-center my-4 md:my-6">
+                  <div className={cn(
+                    "relative w-full max-w-[300px] md:max-w-[350px] mx-auto",
+                    "transition-all duration-300 hover:scale-[1.02]"
+                  )}>
                     <div
                       ref={turnstileRef}
                       className={cn(
-                        "turnstile-widget relative z-10 transition-all duration-500 w-full",
-                        turnstileLoaded && "scale-100 opacity-100",
-                        !turnstileLoaded && "scale-95 opacity-0"
+                        "turnstile-container w-full",
+                        turnstileLoaded ? "opacity-100" : "opacity-0 h-[78px]"
                       )}
+                      style={{
+                        minHeight: isMobile ? "78px" : "65px",
+                      }}
                     />
                     {!turnstileLoaded && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-white/90 dark:bg-gray-900/90 rounded-lg z-20 backdrop-blur-sm">
+                      <div className="absolute inset-0 flex items-center justify-center bg-white/90 dark:bg-gray-900/90 rounded-lg">
                         <div className="flex flex-col items-center gap-2">
-                          <Loader2 className="w-6 h-6 text-primary animate-spin" />
-                          <p className="text-sm text-muted-foreground animate-pulse">
+                          <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                          <p className="text-sm text-muted-foreground">
                             {language === "fr" 
-                              ? "Chargement de la sécurité..." 
-                              : "Loading security..."}
+                              ? "Chargement..." 
+                              : "Loading..."}
                           </p>
                         </div>
                       </div>
@@ -690,12 +639,12 @@ export default function Contact() {
                   type="submit"
                   size={isMobile ? "default" : "lg"}
                   className={cn(
-                    "w-full py-4 md:py-6 text-base md:text-lg font-medium transition-all duration-500 relative overflow-hidden group",
-                    buttonState === "idle" && "bg-gradient-to-r from-primary to-primary/90 shadow-lg",
-                    buttonState === "hover" && "bg-gradient-to-r from-primary to-primary shadow-xl scale-[1.02]",
-                    buttonState === "active" && "bg-gradient-to-r from-primary/90 to-primary/80 shadow-inner scale-[0.98]",
-                    buttonState === "submitting" && "bg-gradient-to-r from-primary/80 to-primary/70 shadow-lg",
-                    "disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    "w-full py-4 md:py-6 text-base md:text-lg font-medium transition-all duration-300 relative overflow-hidden group",
+                    "bg-primary hover:bg-primary/90 text-primary-foreground",
+                    "shadow-lg hover:shadow-xl",
+                    buttonState === "hover" && "transform -translate-y-0.5",
+                    buttonState === "active" && "transform scale-[0.98]",
+                    "disabled:opacity-50 disabled:cursor-not-allowed"
                   )}
                   disabled={isSubmitting || !turnstileToken}
                   onMouseEnter={handleButtonMouseEnter}
@@ -703,70 +652,59 @@ export default function Contact() {
                   onMouseDown={handleButtonMouseDown}
                   onMouseUp={handleButtonMouseUp}
                 >
-                  {/* Button background effects */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                  <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  {/* Hover effect overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                   
                   {/* Button content */}
-                  <div className="relative flex items-center justify-center gap-3">
+                  <div className="relative flex items-center justify-center gap-2 md:gap-3">
                     {isSubmitting ? (
                       <>
-                        <div className="w-5 h-5 md:w-6 md:h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span className="animate-pulse">
-                          {language === "fr" ? "Envoi en cours..." : "Sending..."}
+                        <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" />
+                        <span className="font-medium">
+                          {language === "fr" ? "Envoi..." : "Sending..."}
                         </span>
                       </>
                     ) : (
                       <>
-                        <Send className="w-4 h-4 md:w-5 md:h-5 transition-all duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" />
-                        <span className="transition-all duration-300 group-hover:tracking-wider">
+                        <Send className="w-4 h-4 md:w-5 md:h-5 transition-transform duration-300 group-hover:translate-x-1" />
+                        <span className="font-medium transition-all duration-300 group-hover:tracking-wide">
                           {t("contact.send")}
                         </span>
-                        <Sparkles className="w-3 h-3 md:w-4 md:h-4 opacity-0 group-hover:opacity-100 transition-all duration-500 group-hover:animate-sparkle" />
+                        <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-x-2 group-hover:translate-x-0" />
                       </>
                     )}
                   </div>
-                  
-                  {/* Success checkmark animation */}
-                  {!isSubmitting && (
-                    <div className="absolute right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <ChevronRight className="w-4 h-4 transform transition-transform duration-300 group-hover:translate-x-1" />
-                    </div>
-                  )}
                 </Button>
               </form>
             </CardContent>
           </Card>
 
-          {/* Enhanced Contact Info */}
-          <div className="mt-6 md:mt-8 text-center animate-fade-in-up delay-400">
-            <Card className="border border-muted/50 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:border-primary/20 hover:shadow-lg group">
+          {/* Contact Info */}
+          <div className="mt-6 md:mt-8 text-center">
+            <Card className="border border-muted/50 bg-card/50 hover:border-primary/20 transition-colors duration-300">
               <CardContent className="p-4 md:p-6">
                 <p className="text-sm md:text-base text-muted-foreground">
                   {language === "fr"
-                    ? "Vous pouvez aussi nous contacter directement à"
-                    : "You can also contact us directly at"}{" "}
+                    ? "Contactez-nous directement :"
+                    : "Contact us directly:"}{" "}
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
+                    onClick={() => {
                       navigator.clipboard.writeText('recyclagemaria@gmail.com');
                       playSuccessSound();
                       toast.success(
                         language === "fr" 
-                          ? "📧 Email copié dans le presse-papier" 
-                          : "📧 Email copied to clipboard",
+                          ? "📧 Email copié" 
+                          : "📧 Email copied",
                         { 
                           duration: 2000,
                           position: "top-center",
-                          className: "success-toast"
                         }
                       );
                     }}
-                    className="text-primary font-medium hover:underline transition-all duration-300 hover:text-primary/80 inline-flex items-center gap-1 group/link"
+                    className="text-primary font-medium hover:underline transition-colors duration-200"
                   >
                     recyclagemaria@gmail.com
-                    <span className="inline-block transition-all duration-300 group-hover/link:translate-x-1 group-hover/link:-translate-y-1">↗</span>
                   </button>
                 </p>
               </CardContent>
@@ -775,51 +713,30 @@ export default function Contact() {
         </div>
       </div>
 
-      {/* Global Animations CSS */}
+      {/* Global Styles */}
       <style jsx global>{`
-        @keyframes orb-float-1 {
+        @keyframes float-slow {
           0%, 100% { 
-            transform: translate(0, 0) scale(1) rotate(0deg); 
-          }
-          33% { 
-            transform: translate(30px, -20px) scale(1.05) rotate(120deg); 
-          }
-          66% { 
-            transform: translate(-20px, 25px) scale(0.95) rotate(240deg); 
-          }
-        }
-        
-        @keyframes orb-float-2 {
-          0%, 100% { 
-            transform: translate(0, 0) scale(1) rotate(0deg); 
-          }
-          33% { 
-            transform: translate(-35px, 15px) scale(1.03) rotate(-120deg); 
-          }
-          66% { 
-            transform: translate(25px, -30px) scale(0.97) rotate(-240deg); 
-          }
-        }
-        
-        @keyframes orb-float-3 {
-          0%, 100% { 
-            transform: translate(0, 0) scale(1); 
-          }
-          25% { 
-            transform: translate(15px, -10px) scale(1.02); 
+            transform: translate(0, 0); 
           }
           50% { 
-            transform: translate(-10px, 20px) scale(0.98); 
-          }
-          75% { 
-            transform: translate(-20px, -15px) scale(1.01); 
+            transform: translate(20px, -20px); 
           }
         }
         
-        @keyframes fade-in-up {
+        @keyframes float-medium {
+          0%, 100% { 
+            transform: translate(0, 0); 
+          }
+          50% { 
+            transform: translate(-30px, 10px); 
+          }
+        }
+        
+        @keyframes fade-in {
           from { 
             opacity: 0; 
-            transform: translateY(20px); 
+            transform: translateY(10px); 
           }
           to { 
             opacity: 1; 
@@ -827,29 +744,7 @@ export default function Contact() {
           }
         }
         
-        @keyframes slide-in-left {
-          from { 
-            opacity: 0; 
-            transform: translateX(-15px); 
-          }
-          to { 
-            opacity: 1; 
-            transform: translateX(0); 
-          }
-        }
-        
-        @keyframes slide-in-right {
-          from { 
-            opacity: 0; 
-            transform: translateX(15px); 
-          }
-          to { 
-            opacity: 1; 
-            transform: translateX(0); 
-          }
-        }
-        
-        @keyframes slide-in-select {
+        @keyframes slide-in-toast {
           from { 
             opacity: 0; 
             transform: translateY(-10px) scale(0.95); 
@@ -860,297 +755,77 @@ export default function Contact() {
           }
         }
         
-        @keyframes slide-in-toast {
-          from { 
-            opacity: 0; 
-            transform: translateY(-20px) scale(0.95); 
-          }
-          to { 
-            opacity: 1; 
-            transform: translateY(0) scale(1); 
-          }
+        .animate-float-slow {
+          animation: float-slow 20s ease-in-out infinite;
         }
         
-        @keyframes gradient-flow {
-          0%, 100% { 
-            background-position: 0% 50%; 
-          }
-          50% { 
-            background-position: 100% 50%; 
-          }
+        .animate-float-medium {
+          animation: float-medium 25s ease-in-out infinite;
+          animation-delay: 2s;
         }
         
-        @keyframes pulse-gentle {
-          0%, 100% { 
-            transform: scale(1); 
-          }
-          50% { 
-            transform: scale(1.02); 
-          }
-        }
-        
-        @keyframes pulse-slow {
-          0%, 100% { 
-            opacity: 1; 
-          }
-          50% { 
-            opacity: 0.7; 
-          }
-        }
-        
-        @keyframes float-gentle {
-          0%, 100% { 
-            transform: translateY(0px); 
-          }
-          50% { 
-            transform: translateY(-5px); 
-          }
-        }
-        
-        @keyframes sparkle {
-          0%, 100% { 
-            opacity: 0.3; 
-            transform: scale(1); 
-          }
-          50% { 
-            opacity: 1; 
-            transform: scale(1.2); 
-          }
-        }
-        
-        @keyframes turnstile-pulse {
-          0%, 100% { 
-            box-shadow: 0 0 0 0 rgba(255, 165, 0, 0.3); 
-          }
-          70% { 
-            box-shadow: 0 0 0 8px rgba(255, 165, 0, 0); 
-          }
-        }
-        
-        @keyframes turnstile-glow {
-          0%, 100% { 
-            filter: drop-shadow(0 0 5px rgba(255, 165, 0, 0.2));
-          }
-          50% { 
-            filter: drop-shadow(0 0 12px rgba(255, 165, 0, 0.4));
-          }
-        }
-        
-        @keyframes input-ripple {
-          0% {
-            transform: scale(0);
-            opacity: 1;
-          }
-          100% {
-            transform: scale(4);
-            opacity: 0;
-          }
-        }
-        
-        /* Animation classes */
-        .animate-orb-float-1 {
-          animation: orb-float-1 30s ease-in-out infinite;
-        }
-        
-        .animate-orb-float-2 {
-          animation: orb-float-2 25s ease-in-out infinite;
-          animation-delay: 5s;
-        }
-        
-        .animate-orb-float-3 {
-          animation: orb-float-3 20s ease-in-out infinite;
-          animation-delay: 10s;
-        }
-        
-        .animate-fade-in-up {
-          animation: fade-in-up 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
-        }
-        
-        .animate-slide-in-left {
-          animation: slide-in-left 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
-        }
-        
-        .animate-slide-in-right {
-          animation: slide-in-right 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
-        }
-        
-        .animate-slide-in-select {
-          animation: slide-in-select 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+        .animate-fade-in {
+          animation: fade-in 0.5s ease-out;
         }
         
         .animate-slide-in-toast {
-          animation: slide-in-toast 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
+          animation: slide-in-toast 0.3s ease-out;
         }
         
-        .animate-gradient-flow {
-          background-size: 200% auto;
-          animation: gradient-flow 4s ease-in-out infinite;
-        }
-        
-        .animate-pulse-gentle {
-          animation: pulse-gentle 3s ease-in-out infinite;
-        }
-        
-        .animate-pulse-slow {
-          animation: pulse-slow 3s ease-in-out infinite;
-        }
-        
-        .animate-float-gentle {
-          animation: float-gentle 3s ease-in-out infinite;
-        }
-        
-        .animate-sparkle {
-          animation: sparkle 1.5s ease-in-out infinite;
-        }
-        
-        .delay-75 {
-          animation-delay: 75ms;
-        }
-        
-        .delay-100 {
-          animation-delay: 100ms;
-        }
-        
-        .delay-200 {
-          animation-delay: 200ms;
-        }
-        
-        .delay-300 {
-          animation-delay: 300ms;
-        }
-        
-        .delay-400 {
-          animation-delay: 400ms;
-        }
-        
-        /* Cloudflare Widget Enhanced Styling */
-        .turnstile-widget {
-          position: relative;
+        /* Cloudflare widget styling */
+        .turnstile-container {
+          border-radius: 8px;
           overflow: hidden;
-          border-radius: 10px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          transition: all 0.3s ease;
+        }
+        
+        .turnstile-container:hover {
           box-shadow: 
-            0 0 0 1px rgba(255, 165, 0, 0.15),
-            0 2px 12px rgba(0, 0, 0, 0.08);
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            0 4px 12px rgba(0, 0, 0, 0.15),
+            0 0 0 1px rgba(255, 165, 0, 0.3);
         }
         
-        .turnstile-widget::before {
-          content: '';
-          position: absolute;
-          inset: -2px;
-          background: linear-gradient(45deg, 
-            rgba(255, 165, 0, 0.2),
-            rgba(255, 140, 0, 0.1),
-            rgba(255, 165, 0, 0.2)
-          );
-          border-radius: inherit;
-          z-index: -1;
-          opacity: 0;
-          transition: opacity 0.4s ease;
-        }
-        
-        .turnstile-widget:hover {
-          transform: translateY(-2px) scale(1.01);
-        }
-        
-        .turnstile-widget:hover::before {
-          opacity: 1;
-          animation: turnstile-pulse 2s ease-in-out infinite, turnstile-glow 1.5s ease-in-out infinite;
-        }
-        
-        /* Input focus animation */
-        .input-ripple {
-          position: absolute;
-          border-radius: 50%;
-          background: rgba(255, 165, 0, 0.1);
-          animation: input-ripple 0.6s linear;
-          pointer-events: none;
-          width: 20px;
-          height: 20px;
-          top: 50%;
-          left: 10px;
-          transform: translateY(-50%);
-        }
-        
+        /* Input focus effect */
         .input-focused {
           position: relative;
         }
         
-        .input-focused .absolute.left-3 {
-          color: rgba(255, 165, 0, 0.8);
-        }
-        
-        /* Toast customizations */
-        .success-toast {
-          background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));
-          border: 1px solid rgba(34, 197, 94, 0.2);
-          backdrop-filter: blur(10px);
-        }
-        
-        .error-toast {
-          background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
-          border: 1px solid rgba(239, 68, 68, 0.2);
-          backdrop-filter: blur(10px);
-        }
-        
-        .warning-toast {
-          background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05));
-          border: 1px solid rgba(245, 158, 11, 0.2);
-          backdrop-filter: blur(10px);
-        }
-        
-        /* Select open state */
-        .select-open {
-          border-color: rgba(255, 165, 0, 0.5) !important;
-          box-shadow: 0 0 0 3px rgba(255, 165, 0, 0.1) !important;
+        .input-focused input,
+        .input-focused textarea {
+          border-color: hsl(var(--primary)) !important;
+          box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
         }
         
         /* Mobile optimizations */
         @media (max-width: 768px) {
-          .animate-orb-float-1,
-          .animate-orb-float-2,
-          .animate-orb-float-3 {
+          .animate-float-slow,
+          .animate-float-medium {
             animation: none;
           }
           
-          .turnstile-widget:hover {
+          .turnstile-container {
+            max-width: 280px !important;
+          }
+          
+          .turnstile-container:hover {
             transform: none;
-          }
-          
-          .turnstile-widget:hover::before {
-            animation: none;
-            opacity: 0.5;
-          }
-          
-          .success-toast,
-          .error-toast,
-          .warning-toast {
-            backdrop-filter: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
           }
         }
         
         /* Reduced motion preferences */
         @media (prefers-reduced-motion: reduce) {
-          .animate-orb-float-1,
-          .animate-orb-float-2,
-          .animate-orb-float-3,
-          .animate-fade-in-up,
-          .animate-slide-in-left,
-          .animate-slide-in-right,
-          .animate-slide-in-select,
-          .animate-slide-in-toast,
-          .animate-gradient-flow,
-          .animate-pulse-gentle,
-          .animate-pulse-slow,
-          .animate-float-gentle,
-          .animate-sparkle,
-          .turnstile-widget:hover::before,
-          .input-ripple {
-            animation: none !important;
+          .animate-float-slow,
+          .animate-float-medium,
+          .animate-fade-in,
+          .animate-slide-in-toast {
+            animation: none;
           }
           
-          .turnstile-widget:hover {
-            transform: none !important;
+          .turnstile-container:hover,
+          button:hover {
+            transform: none;
           }
         }
       `}</style>
