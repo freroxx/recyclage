@@ -13,6 +13,7 @@ export default function Contact() {
   const { t, language } = useLanguage();
   const { toast } = useToast();
   useScrollReveal();
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -46,16 +47,27 @@ export default function Contact() {
     }
 
     try {
-      const subject = encodeURIComponent(`Contact from ${formData.name}`);
-      const body = encodeURIComponent(
-        `Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`
-      );
-      const mailtoLink = `mailto:recyclagemaria@gmail.com?subject=${subject}&body=${body}`;
-      window.location.href = mailtoLink;
+      const response = await fetch("https://formspree.io/f/mkowrblv", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          message: formData.message,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Formspree error");
 
       toast({
         title: t("contact.success"),
-        description: "Your email client has been opened",
+        description:
+          language === "fr"
+            ? "Message envoyé avec succès"
+            : "Message sent successfully",
       });
 
       setFormData({ name: "", email: "", message: "" });
@@ -75,7 +87,10 @@ export default function Contact() {
       {/* Background decorations */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-40 right-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div
+          className="absolute bottom-40 right-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "1s" }}
+        />
       </div>
 
       <div className="container mx-auto px-4 py-12 relative z-10">
@@ -86,15 +101,20 @@ export default function Contact() {
               <MessageCircle className="w-4 h-4" />
               <span>{language === "fr" ? "Contactez-nous" : "Contact Us"}</span>
             </div>
+
             <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6 shadow-xl">
               <Mail className="w-10 h-10 text-primary" />
             </div>
+
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
               <span className="bg-gradient-to-r from-primary via-green-600 to-emerald-500 bg-clip-text text-transparent">
                 {t("contact.title")}
               </span>
             </h1>
-            <p className="text-lg text-muted-foreground max-w-xl mx-auto">{t("contact.subtitle")}</p>
+
+            <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+              {t("contact.subtitle")}
+            </p>
           </div>
 
           {/* Contact Form */}
@@ -109,9 +129,12 @@ export default function Contact() {
                   </Label>
                   <Input
                     id="name"
+                    name="name"
                     type="text"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
                     placeholder={t("contact.name")}
                     className="h-12 border-2 focus:border-primary transition-colors"
                     required
@@ -125,9 +148,12 @@ export default function Contact() {
                   </Label>
                   <Input
                     id="email"
+                    name="email"
                     type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
                     placeholder={t("contact.email")}
                     className="h-12 border-2 focus:border-primary transition-colors"
                     required
@@ -141,8 +167,11 @@ export default function Contact() {
                   </Label>
                   <Textarea
                     id="message"
+                    name="message"
                     value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, message: e.target.value })
+                    }
                     placeholder={t("contact.message")}
                     rows={6}
                     className="border-2 focus:border-primary transition-colors resize-none"
@@ -177,11 +206,13 @@ export default function Contact() {
             <Card className="border border-muted">
               <CardContent className="p-6">
                 <p className="text-muted-foreground">
-                  {language === "fr" 
+                  {language === "fr"
                     ? "Vous pouvez aussi nous contacter directement à"
-                    : "You can also contact us directly at"}
-                  {" "}
-                  <a href="mailto:recyclagemaria@gmail.com" className="text-primary font-medium hover:underline">
+                    : "You can also contact us directly at"}{" "}
+                  <a
+                    href="mailto:recyclagemaria@gmail.com"
+                    className="text-primary font-medium hover:underline"
+                  >
                     recyclagemaria@gmail.com
                   </a>
                 </p>
