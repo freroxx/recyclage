@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,28 +14,67 @@ export default function Contact() {
   const { toast } = useToast();
   useScrollReveal();
 
+  const turnstileRef = useRef<HTMLDivElement>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string>("");
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     message: "",
-    company: "", // honeypot anti-bot
   });
+
+  // Load Turnstile
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+    script.async = true;
+    document.body.appendChild(script);
+
+    script.onload = () => {
+      if ((window as any).turnstile && turnstileRef.current) {
+        (window as any).turnstile.render(turnstileRef.current, {
+          sitekey: "0x4AAAAAACIP-ezbrfMoU0rB",
+          callback: (token: string) => setTurnstileToken(token),
+        });
+      }
+    };
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
-
-    // Anti-bot
-    if (formData.company) return;
-
     setIsSubmitting(true);
 
-    if (!formData.name || !formData.email || !formData.message) {
+    if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
       toast({
         variant: "destructive",
-        title: t("contact.error"),
-        description: t("contact.fillAll"),
+        title: "Error",
+        description: t("contact.fillAllFields") || "Please fill in all fields",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: t("contact.validEmail") || "Please enter a valid email address",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!turnstileToken) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please complete the CAPTCHA",
       });
       setIsSubmitting(false);
       return;
@@ -44,34 +83,40 @@ export default function Contact() {
     try {
       const response = await fetch("https://formspree.io/f/mkowrblv", {
         method: "POST",
-        headers: {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
           message: formData.message,
+          "cf-turnstile-response": turnstileToken,
         }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data?.error || "Server error");
-      }
+      if (!response.ok) throw new Error("Formspree submission failed");
 
       toast({
         title: t("contact.success"),
-        description: t("contact.sent"),
+        description:
+          language === "fr"
+            ? "Message envoyé avec succès"
+            : "Message sent successfully",
       });
 
-      setFormData({ name: "", email: "", message: "", company: "" });
-    } catch (err) {
+      setFormData({ name: "", email: "", message: "" });
+      setTurnstileToken("");
+
+      // Reset Turnstile
+      if ((window as any).turnstile && turnstileRef.current) {
+        (window as any).turnstile.reset(turnstileRef.current);
+      }
+    } catch (error) {
       toast({
         variant: "destructive",
         title: t("contact.error"),
-        description: t("contact.retry"),
+        description:
+          language === "fr"
+            ? "Une erreur est survenue, réessayez plus tard"
+            : "An error occurred, please try again later",
       });
     } finally {
       setIsSubmitting(false);
@@ -79,123 +124,141 @@ export default function Contact() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-background via-background to-primary/10">
-      {/* Animated background (restored & improved) */}
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-20 -left-20 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-0 right-0 w-[32rem] h-[32rem] bg-emerald-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 relative overflow-hidden">
+      {/* Animated background */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse-slow" />
+        <div
+          className="absolute bottom-40 right-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse-slow"
+          style={{ animationDelay: "1s" }}
+        />
+        <div className="absolute top-1/3 right-1/4 w-56 h-56 bg-green-400/10 rounded-full blur-2xl animate-rotate-slow" />
+        <div className="absolute bottom-1/4 left-1/3 w-64 h-64 bg-purple-400/10 rounded-full blur-2xl animate-rotate-slow" />
       </div>
 
-      <div className="container relative z-10 mx-auto px-4 py-16">
-        <div className="mx-auto max-w-3xl">
+      <div className="container mx-auto px-4 py-12 relative z-10">
+        <div className="max-w-3xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-14 animate-fade-in">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-6 py-2 text-sm font-medium text-primary mb-6">
+          <div className="text-center mb-12 animate-fade-in">
+            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-5 py-2.5 rounded-full text-sm font-medium mb-6 border border-primary/20 animate-bounce-slow">
               <MessageCircle className="w-4 h-4" />
-              {language === "fr" ? "Contactez-nous" : "Contact Us"}
+              <span>{language === "fr" ? "Contactez-nous" : "Contact Us"}</span>
             </div>
 
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/20 shadow-xl">
-              <Mail className="h-10 w-10 text-primary" />
+            <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6 shadow-xl animate-bounce">
+              <Mail className="w-10 h-10 text-primary" />
             </div>
 
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 animate-fade-in">
               <span className="bg-gradient-to-r from-primary via-green-600 to-emerald-500 bg-clip-text text-transparent">
                 {t("contact.title")}
               </span>
             </h1>
 
-            <p className="mx-auto max-w-xl text-lg text-muted-foreground">
+            <p className="text-lg text-muted-foreground max-w-xl mx-auto animate-fade-in">
               {t("contact.subtitle")}
             </p>
           </div>
 
           {/* Form */}
-          <Card className="relative overflow-hidden border-2 border-primary/20 shadow-2xl scroll-reveal">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-green-500/5" />
-            <CardContent className="relative p-8 md:p-10">
+          <Card className="scroll-reveal border-2 border-primary/20 shadow-xl overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-green-500/5 opacity-50 animate-pulse-slow" />
+            <CardContent className="p-8 md:p-10 relative">
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Honeypot */}
-                <input
-                  type="text"
-                  name="company"
-                  tabIndex={-1}
-                  autoComplete="off"
-                  className="hidden"
-                  value={formData.company}
-                  onChange={(e) =>
-                    setFormData({ ...formData, company: e.target.value })
-                  }
-                />
-
                 <div className="space-y-2">
-                  <Label htmlFor="name">
-                    <User className="inline w-4 h-4 mr-2 text-primary" />
+                  <Label htmlFor="name" className="flex items-center gap-2 text-base">
+                    <User className="w-4 h-4 text-primary" />
                     {t("contact.name")}
                   </Label>
                   <Input
                     id="name"
                     name="name"
+                    type="text"
                     value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder={t("contact.name")}
+                    className="h-12 border-2 focus:border-primary transition-colors"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">
-                    <AtSign className="inline w-4 h-4 mr-2 text-primary" />
+                  <Label htmlFor="email" className="flex items-center gap-2 text-base">
+                    <AtSign className="w-4 h-4 text-primary" />
                     {t("contact.email")}
                   </Label>
                   <Input
                     id="email"
-                    type="email"
                     name="email"
+                    type="email"
                     value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder={t("contact.email")}
+                    className="h-12 border-2 focus:border-primary transition-colors"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="message">
-                    <MessageCircle className="inline w-4 h-4 mr-2 text-primary" />
+                  <Label htmlFor="message" className="flex items-center gap-2 text-base">
+                    <MessageCircle className="w-4 h-4 text-primary" />
                     {t("contact.message")}
                   </Label>
                   <Textarea
                     id="message"
                     name="message"
-                    rows={6}
                     value={formData.message}
-                    onChange={(e) =>
-                      setFormData({ ...formData, message: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                    placeholder={t("contact.message")}
+                    rows={6}
+                    className="border-2 focus:border-primary transition-colors resize-none"
                     required
                   />
                 </div>
 
+                {/* Turnstile CAPTCHA */}
+                <div ref={turnstileRef} className="turnstile my-4"></div>
+
                 <Button
                   type="submit"
-                  disabled={isSubmitting}
                   size="lg"
-                  className="w-full py-6 text-lg transition-all hover:scale-[1.02]"
+                  className="w-full py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                  disabled={isSubmitting}
                 >
                   {isSubmitting ? (
-                    <span>{language === "fr" ? "Envoi..." : "Sending..."}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                      <span>{language === "fr" ? "Envoi..." : "Sending..."}</span>
+                    </div>
                   ) : (
-                    <>
-                      <Send className="w-5 h-5 mr-2" />
-                      {t("contact.send")}
-                    </>
+                    <div className="flex items-center gap-2">
+                      <Send className="w-5 h-5" />
+                      <span>{t("contact.send")}</span>
+                    </div>
                   )}
                 </Button>
               </form>
             </CardContent>
           </Card>
+
+          {/* Additional Info */}
+          <div className="mt-8 text-center scroll-reveal">
+            <Card className="border border-muted">
+              <CardContent className="p-6">
+                <p className="text-muted-foreground">
+                  {language === "fr"
+                    ? "Vous pouvez aussi nous contacter directement à"
+                    : "You can also contact us directly at"}{" "}
+                  <a
+                    href="mailto:recyclagemaria@gmail.com"
+                    className="text-primary font-medium hover:underline"
+                  >
+                    recyclagemaria@gmail.com
+                  </a>
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>
