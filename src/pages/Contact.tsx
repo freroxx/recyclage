@@ -16,15 +16,13 @@ export default function Contact() {
 
   const turnstileRef = useRef<HTMLDivElement>(null);
   const [turnstileToken, setTurnstileToken] = useState<string>("");
-
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    message: "",
-  });
+  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
 
-  // Load Turnstile
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => setIsMobile(window.innerWidth <= 768), []);
+
+  // Load Cloudflare Turnstile
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
@@ -40,9 +38,7 @@ export default function Contact() {
       }
     };
 
-    return () => {
-      document.body.removeChild(script);
-    };
+    return () => document.body.removeChild(script);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,32 +46,20 @@ export default function Contact() {
     setIsSubmitting(true);
 
     if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: t("contact.fillAllFields") || "Please fill in all fields",
-      });
+      toast({ variant: "destructive", title: t("contact.error"), description: t("contact.fillAllFields") });
       setIsSubmitting(false);
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: t("contact.validEmail") || "Please enter a valid email address",
-      });
+      toast({ variant: "destructive", title: t("contact.error"), description: t("contact.validEmail") });
       setIsSubmitting(false);
       return;
     }
 
     if (!turnstileToken) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please complete the CAPTCHA",
-      });
+      toast({ variant: "destructive", title: t("contact.error"), description: t("contact.completeCaptcha") });
       setIsSubmitting(false);
       return;
     }
@@ -94,30 +78,13 @@ export default function Contact() {
 
       if (!response.ok) throw new Error("Formspree submission failed");
 
-      toast({
-        title: t("contact.success"),
-        description:
-          language === "fr"
-            ? "Message envoyé avec succès"
-            : "Message sent successfully",
-      });
+      toast({ title: t("contact.success"), description: t("contact.sentSuccessfully") });
 
       setFormData({ name: "", email: "", message: "" });
       setTurnstileToken("");
-
-      // Reset Turnstile
-      if ((window as any).turnstile && turnstileRef.current) {
-        (window as any).turnstile.reset(turnstileRef.current);
-      }
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: t("contact.error"),
-        description:
-          language === "fr"
-            ? "Une erreur est survenue, réessayez plus tard"
-            : "An error occurred, please try again later",
-      });
+      if ((window as any).turnstile && turnstileRef.current) (window as any).turnstile.reset(turnstileRef.current);
+    } catch {
+      toast({ variant: "destructive", title: t("contact.error"), description: t("contact.tryLater") });
     } finally {
       setIsSubmitting(false);
     }
@@ -126,45 +93,43 @@ export default function Contact() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 relative overflow-hidden">
       {/* Animated background */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse-slow" />
-        <div
-          className="absolute bottom-40 right-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse-slow"
-          style={{ animationDelay: "1s" }}
-        />
-        <div className="absolute top-1/3 right-1/4 w-56 h-56 bg-green-400/10 rounded-full blur-2xl animate-rotate-slow" />
-        <div className="absolute bottom-1/4 left-1/3 w-64 h-64 bg-purple-400/10 rounded-full blur-2xl animate-rotate-slow" />
-      </div>
+      {!isMobile && (
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl transition-transform hover:scale-105" />
+          <div className="absolute bottom-40 right-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl transition-transform hover:scale-105" />
+          <div className="absolute top-1/3 right-1/4 w-56 h-56 bg-green-400/10 rounded-full blur-2xl transition-transform hover:scale-105" />
+          <div className="absolute bottom-1/4 left-1/3 w-64 h-64 bg-purple-400/10 rounded-full blur-2xl transition-transform hover:scale-105" />
+        </div>
+      )}
 
       <div className="container mx-auto px-4 py-12 relative z-10">
         <div className="max-w-3xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-12 animate-fade-in">
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-5 py-2.5 rounded-full text-sm font-medium mb-6 border border-primary/20 animate-bounce-slow">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-5 py-2.5 rounded-full text-sm font-medium mb-6 border border-primary/20 transition-transform hover:scale-105">
               <MessageCircle className="w-4 h-4" />
               <span>{language === "fr" ? "Contactez-nous" : "Contact Us"}</span>
             </div>
 
-            <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6 shadow-xl animate-bounce">
+            <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6 shadow-xl transition-transform hover:scale-110">
               <Mail className="w-10 h-10 text-primary" />
             </div>
 
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 animate-fade-in">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">
               <span className="bg-gradient-to-r from-primary via-green-600 to-emerald-500 bg-clip-text text-transparent">
                 {t("contact.title")}
               </span>
             </h1>
 
-            <p className="text-lg text-muted-foreground max-w-xl mx-auto animate-fade-in">
-              {t("contact.subtitle")}
-            </p>
+            <p className="text-lg text-muted-foreground max-w-xl mx-auto">{t("contact.subtitle")}</p>
           </div>
 
           {/* Form */}
-          <Card className="scroll-reveal border-2 border-primary/20 shadow-xl overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-green-500/5 opacity-50 animate-pulse-slow" />
+          <Card className="border-2 border-primary/20 shadow-xl overflow-hidden transition-transform hover:shadow-2xl hover:scale-[1.02]">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-green-500/5 opacity-50" />
             <CardContent className="p-8 md:p-10 relative">
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Name */}
                 <div className="space-y-2">
                   <Label htmlFor="name" className="flex items-center gap-2 text-base">
                     <User className="w-4 h-4 text-primary" />
@@ -182,6 +147,7 @@ export default function Contact() {
                   />
                 </div>
 
+                {/* Email */}
                 <div className="space-y-2">
                   <Label htmlFor="email" className="flex items-center gap-2 text-base">
                     <AtSign className="w-4 h-4 text-primary" />
@@ -199,6 +165,7 @@ export default function Contact() {
                   />
                 </div>
 
+                {/* Message */}
                 <div className="space-y-2">
                   <Label htmlFor="message" className="flex items-center gap-2 text-base">
                     <MessageCircle className="w-4 h-4 text-primary" />
@@ -216,9 +183,19 @@ export default function Contact() {
                   />
                 </div>
 
-                {/* Turnstile CAPTCHA */}
-                <div ref={turnstileRef} className="turnstile my-4"></div>
+                {/* Turnstile */}
+                <div className="flex justify-center my-4">
+                  <div
+                    ref={turnstileRef}
+                    className="turnstile p-2 rounded-md shadow-lg hover:shadow-2xl transition-all"
+                    style={{
+                      boxShadow: "0 0 15px rgba(255,165,0,0.5)",
+                      background: "white",
+                    }}
+                  ></div>
+                </div>
 
+                {/* Submit */}
                 <Button
                   type="submit"
                   size="lg"
@@ -241,9 +218,9 @@ export default function Contact() {
             </CardContent>
           </Card>
 
-          {/* Additional Info */}
-          <div className="mt-8 text-center scroll-reveal">
-            <Card className="border border-muted">
+          {/* Direct Contact Info */}
+          <div className="mt-8 text-center">
+            <Card className="border border-muted hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <p className="text-muted-foreground">
                   {language === "fr"
