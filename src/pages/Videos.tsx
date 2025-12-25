@@ -34,7 +34,10 @@ import {
   RefreshCw,
   Heart,
   RotateCw,
-  ChevronRight
+  ChevronRight,
+  Globe,
+  Filter,
+  ChevronLeft
 } from "lucide-react";
 
 interface Video {
@@ -57,373 +60,8 @@ interface Character {
   imageUrl: string;
   role: string;
   color: string;
+  description?: { fr: string; en: string };
 }
-
-// Extracted Modal Component for better organization
-const VideoModal = memo(({
-  isOpen,
-  selectedVideo,
-  onClose,
-  isMobile,
-  isRotated,
-  isLoading,
-  videoError,
-  errorMessage,
-  showInterface,
-  showControls,
-  isMuted,
-  isFullscreen,
-  language,
-  onMouseMove,
-  onToggleInterface,
-  onToggleMute,
-  onToggleFullscreen,
-  onOpenYouTube,
-  onRetry,
-  onToggleRotation,
-  getLocalizedText,
-  formatDate,
-  getAspectRatio,
-  onVideoLoad,
-  onVideoError,
-  style
-}: {
-  isOpen: boolean;
-  selectedVideo: Video | null;
-  onClose: () => void;
-  isMobile: boolean;
-  isRotated: boolean;
-  isLoading: boolean;
-  videoError: boolean;
-  errorMessage: string;
-  showInterface: boolean;
-  showControls: boolean;
-  isMuted: boolean;
-  isFullscreen: boolean;
-  language: string;
-  onMouseMove: () => void;
-  onToggleInterface: () => void;
-  onToggleMute: () => void;
-  onToggleFullscreen: () => void;
-  onOpenYouTube: (youtubeId: string) => void;
-  onRetry: () => void;
-  onToggleRotation: () => void;
-  getLocalizedText: (text: { fr: string; en: string } | string) => string;
-  formatDate: (dateString: string) => string;
-  getAspectRatio: (video: Video) => '16:9' | '9:16';
-  onVideoLoad: () => void;
-  onVideoError: (error?: string) => void;
-  style: React.CSSProperties;
-}) => {
-  const modalRef = useRef<HTMLDivElement>(null);
-
-  if (!isOpen || !selectedVideo) return null;
-
-  return (
-    <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent 
-          ref={modalRef}
-          className="fixed border-none bg-black shadow-2xl overflow-hidden p-0 transition-all duration-300 ease-out z-50"
-          style={style}
-          onMouseMove={onMouseMove}
-          onTouchMove={onMouseMove}
-          onTouchStart={() => showControls && onMouseMove()}
-        >
-          {/* Loading Overlay */}
-          {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm z-50 animate-fade-in">
-              <div className="relative">
-                <div className="w-16 h-16 border-3 border-transparent border-t-emerald-500 rounded-full animate-spin-slow"></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Play className="w-8 h-8 text-emerald-500 animate-pulse-slow" />
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Error Overlay */}
-          {videoError && !isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm z-50 animate-fade-in">
-              <div className="text-center p-6 max-w-sm">
-                <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4 animate-bounce" />
-                <h3 className="text-xl font-semibold text-white mb-2">
-                  {language === 'fr' ? 'Erreur de chargement' : 'Loading Error'}
-                </h3>
-                <p className="text-white/80 mb-6">
-                  {errorMessage || (language === 'fr' 
-                    ? 'Impossible de charger la vidéo. Veuillez réessayer.'
-                    : 'Unable to load video. Please try again.')}
-                </p>
-                <div className="flex gap-4 justify-center">
-                  <Button
-                    onClick={onRetry}
-                    className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                    {language === 'fr' ? 'Réessayer' : 'Retry'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={onClose}
-                    className="border-white/30 text-white hover:bg-white/10"
-                  >
-                    {language === 'fr' ? 'Fermer' : 'Close'}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Top Controls Bar */}
-          {showInterface && !videoError && (
-            <div 
-              className={`absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/95 via-black/85 to-transparent p-4 transition-all duration-300 ease-out ${
-                showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`${isMobile ? 'h-10 w-10' : 'h-9 w-9'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 transition-all duration-300`}
-                    onClick={onClose}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                  
-                  <div className="ml-1 max-w-[calc(100%-180px)]">
-                    <h3 className="text-sm font-semibold text-white/95 truncate animate-fade-in">
-                      {getLocalizedText(selectedVideo.title)}
-                    </h3>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`${isMobile ? 'h-10 w-10' : 'h-9 w-9'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 transition-all duration-300`}
-                    onClick={onToggleInterface}
-                  >
-                    {showInterface ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                  </Button>
-                  
-                  {isMobile && selectedVideo?.aspect === 'landscape' && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={`h-10 w-10 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 transition-all duration-300`}
-                      onClick={onToggleRotation}
-                    >
-                      <RotateCw className={`w-4 h-4 transition-transform duration-500 ${isRotated ? 'rotate-180' : ''}`} />
-                    </Button>
-                  )}
-                  
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`${isMobile ? 'h-10 w-10' : 'h-9 w-9'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 transition-all duration-300`}
-                    onClick={() => selectedVideo && onOpenYouTube(selectedVideo.youtubeId)}
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`${isMobile ? 'h-10 w-10' : 'h-9 w-9'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 transition-all duration-300`}
-                    onClick={onToggleFullscreen}
-                  >
-                    {isFullscreen ? (
-                      <Minimize2 className="w-4 h-4" />
-                    ) : (
-                      <Maximize2 className="w-4 h-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Video Player */}
-          <div className={`relative w-full h-full flex items-center justify-center bg-black`}>
-            {!videoError && (
-              <div className="w-full h-full flex items-center justify-center animate-scale-in">
-                <LazyVideoPlayer
-                  youtubeId={selectedVideo.youtubeId}
-                  title={getLocalizedText(selectedVideo.title)}
-                  autoplay={true}
-                  muted={isMuted}
-                  loop={selectedVideo.isShort}
-                  showControls={false}
-                  aspectRatio={getAspectRatio(selectedVideo)}
-                  className="w-full h-full"
-                  onLoad={onVideoLoad}
-                  onError={() => onVideoError()}
-                  onPlay={onVideoLoad}
-                />
-              </div>
-            )}
-            
-            {/* Floating Controls */}
-            {!showInterface && showControls && !videoError && (
-              <div className="absolute top-4 right-4 z-50 flex flex-col gap-2 animate-fade-in">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 transition-all duration-300`}
-                  onClick={onToggleInterface}
-                >
-                  <Eye className="w-4 h-4" />
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 transition-all duration-300`}
-                  onClick={onToggleMute}
-                >
-                  {isMuted ? (
-                    <VolumeX className="w-4 h-4" />
-                  ) : (
-                    <Volume2 className="w-4 h-4" />
-                  )}
-                </Button>
-              </div>
-            )}
-          </div>
-
-          {/* Bottom Controls Bar */}
-          {showInterface && !videoError && (
-            <div 
-              className={`absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/95 via-black/85 to-transparent p-4 transition-all duration-300 ease-out ${
-                showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full pointer-events-none'
-              }`}
-            >
-              <div className="space-y-3 animate-fade-in">
-                <div>
-                  <h3 className="text-base font-semibold text-white line-clamp-1">
-                    {getLocalizedText(selectedVideo.title)}
-                  </h3>
-                  <p className="text-sm text-white/80 line-clamp-2 mt-1">
-                    {getLocalizedText(selectedVideo.description)}
-                  </p>
-                </div>
-                
-                <div className="flex items-center justify-between pt-2 border-t border-white/20">
-                  <div className="flex items-center gap-4 text-sm text-white/70">
-                    {selectedVideo.publishDate && (
-                      <span className="flex items-center gap-1.5 animate-fade-in hover:text-white transition-colors duration-200">
-                        <Calendar className="w-4 h-4" />
-                        <span>{formatDate(selectedVideo.publishDate)}</span>
-                      </span>
-                    )}
-                    {selectedVideo.duration && (
-                      <span className="flex items-center gap-1.5 animate-fade-in hover:text-white transition-colors duration-200">
-                        <Clock className="w-4 h-4" />
-                        <span>{selectedVideo.duration}</span>
-                      </span>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-9 w-9 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 transition-all duration-300"
-                      onClick={onToggleMute}
-                    >
-                      {isMuted ? (
-                        <VolumeX className="w-4 h-4" />
-                      ) : (
-                        <Volume2 className="w-4 h-4" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-      
-      {/* Modal Backdrop */}
-      <div 
-        className="fixed inset-0 bg-black/90 backdrop-blur-sm z-40 transition-all duration-500 animate-fade-in"
-        onClick={onClose}
-      />
-    </>
-  );
-});
-
-VideoModal.displayName = 'VideoModal';
-
-// Extracted Search Bar Component
-const SearchBar = memo(({
-  searchQuery,
-  setSearchQuery,
-  debouncedSearchQuery,
-  language,
-  isMobile,
-  getTotalResults,
-  onKeyDown,
-  onClearSearch,
-  searchInputRef
-}: {
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
-  debouncedSearchQuery: string;
-  language: string;
-  isMobile: boolean;
-  getTotalResults: () => number;
-  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-  onClearSearch: () => void;
-  searchInputRef: React.RefObject<HTMLInputElement>;
-}) => (
-  <div className="mb-10">
-    <div className="relative max-w-2xl mx-auto">
-      <div className="relative flex items-center group">
-        <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
-          <Search className="w-5 h-5 text-muted-foreground group-focus-within:text-emerald-500 transition-colors duration-300" />
-        </div>
-        <Input
-          ref={searchInputRef}
-          type="text"
-          placeholder={language === 'fr' ? 'Rechercher des vidéos...' : 'Search videos...'}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyDown={onKeyDown}
-          className={`pl-12 ${isMobile ? 'pr-10 py-4 text-sm' : 'pr-10 py-6 text-base'} rounded-xl border-border/50 bg-background/80 backdrop-blur-sm shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-black/10 focus:shadow-2xl focus:shadow-emerald-500/10 transition-all duration-300 hover:border-emerald-500/30 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20`}
-        />
-        {searchQuery && (
-          <button
-            onClick={onClearSearch}
-            className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${
-              isMobile ? 'h-8 w-8' : 'h-10 w-10'
-            } text-muted-foreground hover:text-foreground hover:bg-emerald-500/10 rounded-full transition-all duration-200 hover:scale-110 flex items-center justify-center`}
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
-      </div>
-      {debouncedSearchQuery && (
-        <div className="mt-3 text-center animate-fade-in">
-          <span className="text-emerald-600 dark:text-emerald-400 font-medium text-sm">
-            {getTotalResults()} {language === 'fr' ? 'résultats' : 'results'}
-          </span>
-        </div>
-      )}
-    </div>
-  </div>
-));
-
-SearchBar.displayName = 'SearchBar';
 
 export default function Videos() {
   const { language } = useLanguage();
@@ -446,9 +84,11 @@ export default function Videos() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isRotated, setIsRotated] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout>();
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const lastScrollY = useRef(0);
   
   useScrollReveal();
 
@@ -459,21 +99,33 @@ export default function Videos() {
       name: "Meow",
       imageUrl: "https://i.ibb.co/d06DQqBR/Meow-png.jpg",
       role: language === 'fr' ? "Mascotte" : "Mascot",
-      color: "from-blue-500 to-cyan-500"
+      color: "from-blue-500 to-cyan-500",
+      description: {
+        fr: "La mascotte amicale qui guide à travers les aventures écologiques",
+        en: "The friendly mascot who guides through ecological adventures"
+      }
     },
     {
       id: "basma",
       name: "Basma",
       imageUrl: "https://i.ibb.co/4npFCFPd/Basma-png.jpg",
       role: language === 'fr' ? "Artiste Écologique" : "Ecological Artist",
-      color: "from-emerald-500 to-green-500"
+      color: "from-emerald-500 to-green-500",
+      description: {
+        fr: "Artiste passionnée qui transforme les déchets en œuvres d'art",
+        en: "Passionate artist who transforms waste into works of art"
+      }
     },
     {
       id: "cat",
       name: "Cat",
       imageUrl: "https://i.ibb.co/Kzp4Rg9s/CAT-png.jpg",
       role: language === 'fr' ? "Super-héros Écologique" : "Ecological Superhero",
-      color: "from-purple-500 to-pink-500"
+      color: "from-purple-500 to-pink-500",
+      description: {
+        fr: "Super-héros qui protège l'environnement et enseigne le recyclage",
+        en: "Superhero who protects the environment and teaches recycling"
+      }
     }
   ], [language]);
 
@@ -493,7 +145,7 @@ export default function Videos() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Memoized videos data
+  // Memoized videos data - ALL VIDEOS INCLUDED
   const videos: Video[] = useMemo(() => [
     {
       id: "channel-showcase",
@@ -513,7 +165,203 @@ export default function Videos() {
       aspect: "landscape",
       creator: { name: "Yahia", role: language === 'fr' ? "Développeur" : "Developer" }
     },
-    // ... rest of the videos array (keep the same as original)
+    {
+      id: "reuse-cat-4",
+      title: {
+        fr: "Réutiliser avec Cat - Épisode 4",
+        en: "Reuse with Cat - Episode 4"
+      },
+      description: {
+        fr: "Créé par Salsabile - Apprenez à réutiliser avec Cat",
+        en: "Made by Salsabile - Learn to reuse with Cat"
+      },
+      youtubeId: "aEnA1z-G7qE",
+      duration: "0:57",
+      publishDate: "2025-12-11",
+      category: { fr: "Communauté", en: "Community" },
+      type: "community",
+      aspect: "portrait",
+      creator: { name: "Salsabile", role: language === 'fr' ? "Artiste" : "Artist" },
+      isShort: true
+    },
+    {
+      id: "laundry-cat",
+      title: {
+        fr: "Laundry cat",
+        en: "Laundry cat"
+      },
+      description: {
+        fr: "Créé par Salsabile",
+        en: "Made by Salsabile"
+      },
+      youtubeId: "c7akmKesIq4",
+      duration: "0:45",
+      publishDate: "2025-12-10",
+      category: { fr: "Communauté", en: "Community" },
+      type: "community",
+      aspect: "portrait",
+      creator: { name: "Salsabile", role: language === 'fr' ? "Artiste" : "Artist" },
+      isShort: true
+    },
+    {
+      id: "community-short",
+      title: {
+        fr: "Ne jetez pas vos bouteilles - Épisode 2",
+        en: "Don't throw your bottles - Episode 2"
+      },
+      description: {
+        fr: "Créé par Salsabile",
+        en: "Made by Salsabile"
+      },
+      youtubeId: "TeS8QfpPHic",
+      duration: "0:53",
+      publishDate: "2025-12-08",
+      category: { fr: "Communauté", en: "Community" },
+      type: "community",
+      aspect: "portrait",
+      creator: { name: "Salsabile", role: language === 'fr' ? "Artiste" : "Artist" },
+      isShort: true
+    },
+    {
+      id: "community1",
+      title: {
+        fr: "Avenir plus propre avec Chat",
+        en: "Cleaner Future with Cat - Trailer"
+      },
+      description: {
+        fr: "Créé par Salsabile - Un avenir durable avec Chat",
+        en: "Created by Salsabile - A sustainable future with Cat"
+      },
+      youtubeId: "CtcgvPj1vGk",
+      duration: "0:36",
+      publishDate: "2025-12-06",
+      category: { fr: "Communauté", en: "Community" },
+      type: "community",
+      aspect: "portrait",
+      creator: { name: "Salsabile", role: language === 'fr' ? "Artiste" : "Artist" },
+      isShort: true
+    },
+    {
+      id: "community2",
+      title: {
+        fr: "Artisanat et recyclage - Épisode 1",
+        en: "Crafting and recycling - Episode 1"
+      },
+      description: {
+        fr: "Créé par Salsabile - Astuces simples pour recycler",
+        en: "Created by Salsabile - Simple tips for recycling"
+      },
+      youtubeId: "g8MBdRd99LU",
+      duration: "1:12",
+      publishDate: "2025-12-07",
+      category: { fr: "Communauté", en: "Community" },
+      type: "community",
+      aspect: "portrait",
+      creator: { name: "Salsabile", role: language === 'fr' ? "Artiste" : "Artist" },
+      isShort: true
+    },
+    {
+      id: "tutorial1",
+      title: {
+        fr: "Introduction au Recyclage",
+        en: "Recycling Introduction"
+      },
+      description: {
+        fr: "Découvrez les bases du recyclage et son importance pour l'environnement",
+        en: "Discover the basics of recycling and its importance for the environment"
+      },
+      youtubeId: "c5sPRL0YKUw",
+      duration: "7:03",
+      publishDate: "2024-01-15",
+      category: { fr: "Éducation", en: "Education" },
+      type: "tutorial",
+      aspect: "landscape",
+    },
+    {
+      id: "tutorial2",
+      title: {
+        fr: "Recyclage du Papier et Carton",
+        en: "Paper and Cardboard Recycling"
+      },
+      description: {
+        fr: "Processus complet du recyclage du papier et du carton",
+        en: "Complete process of paper and cardboard recycling"
+      },
+      youtubeId: "s003IbGz-rA",
+      duration: "3:01",
+      publishDate: "2024-02-10",
+      category: { fr: "Processus", en: "Process" },
+      type: "tutorial",
+      aspect: "landscape"
+    },
+    {
+      id: "tutorial3",
+      title: {
+        fr: "Voyage au cœur du tri",
+        en: "Journey to the Heart of Sorting"
+      },
+      description: {
+        fr: "Parcours des déchets recyclables depuis le tri jusqu'à la transformation",
+        en: "Journey of recyclable waste from sorting to transformation"
+      },
+      youtubeId: "p67EWIamCIw",
+      duration: "5:33",
+      publishDate: "2024-03-05",
+      category: { fr: "Documentaire", en: "Documentary" },
+      type: "tutorial",
+      aspect: "landscape"
+    },
+    {
+      id: "tutorial4",
+      title: {
+        fr: "Recyclage du Plastique",
+        en: "Plastic Recycling"
+      },
+      description: {
+        fr: "Comprendre le recyclage des différents types de plastique",
+        en: "Understanding the recycling of different types of plastic"
+      },
+      youtubeId: "dQw4w9WgXcQ",
+      duration: "4:15",
+      publishDate: "2024-04-20",
+      category: { fr: "Éducation", en: "Education" },
+      type: "tutorial",
+      aspect: "landscape"
+    },
+    {
+      id: "tutorial5",
+      title: {
+        fr: "Compostage à la maison",
+        en: "Composting at Home"
+      },
+      description: {
+        fr: "Guide complet pour commencer le compostage domestique",
+        en: "Complete guide to start home composting"
+      },
+      youtubeId: "eBGIQ7ZuuiU",
+      duration: "6:45",
+      publishDate: "2024-05-12",
+      category: { fr: "Guide Pratique", en: "Practical Guide" },
+      type: "tutorial",
+      aspect: "landscape"
+    },
+    {
+      id: "channel-highlights",
+      title: {
+        fr: "Meilleurs Moments de la Chaîne",
+        en: "Channel Highlights"
+      },
+      description: {
+        fr: "Compilation des meilleurs moments de notre chaîne YouTube",
+        en: "Compilation of the best moments from our YouTube channel"
+      },
+      youtubeId: "fKopy74weus",
+      duration: "2:30",
+      publishDate: "2025-12-05",
+      category: { fr: "Compilation", en: "Compilation" },
+      type: "channel",
+      aspect: "landscape"
+    }
   ], [language]);
 
   // Filter videos by type
@@ -521,13 +369,17 @@ export default function Videos() {
   const communityVideos = useMemo(() => videos.filter(v => v.type === "community"), [videos]);
   const channelVideos = useMemo(() => videos.filter(v => v.type === "channel"), [videos]);
 
-  // Auto search with debounce - FIXED: Clear timeout on unmount
+  // Auto search with debounce - FIXED
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
+    searchTimeoutRef.current = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
     }, 300);
     
-    return () => clearTimeout(timeoutId);
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
   }, [searchQuery]);
 
   // Optimized search function
@@ -579,7 +431,7 @@ export default function Videos() {
     }
   }, [activeSection, filteredTutorialVideos.length, filteredCommunityVideos.length, filteredChannelVideos.length]);
 
-  // Handle video modal - FIXED: Proper cleanup
+  // Handle video modal - FIXED
   useEffect(() => {
     if (selectedVideo) {
       setIsModalOpen(true);
@@ -599,16 +451,31 @@ export default function Videos() {
     } else {
       setIsModalOpen(false);
     }
+    
+    return () => {
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+    };
   }, [selectedVideo]);
 
-  // Fullscreen handling - FIXED: Add error handling
+  // Fullscreen handling - FIXED
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
   }, []);
 
   // Thumbnail URL helper
@@ -651,22 +518,30 @@ export default function Videos() {
     handleVideoSelect(video);
   }, [handleVideoSelect]);
 
-  // Fullscreen toggle - FIXED: Better error handling
+  // Fullscreen toggle - FIXED
   const toggleFullscreen = useCallback(() => {
-    const iframe = document.querySelector('iframe');
+    const modal = modalRef.current;
     
-    if (!iframe) return;
-
     if (!document.fullscreenElement) {
-      iframe.requestFullscreen?.().catch(console.error);
-      setIsFullscreen(true);
+      if (modal?.requestFullscreen) {
+        modal.requestFullscreen().catch(console.error);
+      } else if ((modal as any)?.webkitRequestFullscreen) {
+        (modal as any).webkitRequestFullscreen();
+      } else if ((modal as any)?.mozRequestFullScreen) {
+        (modal as any).mozRequestFullScreen();
+      }
     } else {
-      document.exitFullscreen?.().catch(console.error);
-      setIsFullscreen(false);
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(console.error);
+      } else if ((document as any).webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen();
+      } else if ((document as any).mozCancelFullScreen) {
+        (document as any).mozCancelFullScreen();
+      }
     }
   }, []);
 
-  // Controls visibility
+  // Controls visibility - FIXED
   const handleMouseMove = useCallback(() => {
     setShowControls(true);
     
@@ -679,10 +554,9 @@ export default function Videos() {
     }, 3000);
   }, []);
 
-  // Modal close handler - FIXED: Proper cleanup
+  // Modal close handler - FIXED
   const handleModalClose = useCallback(() => {
     setSelectedVideo(null);
-    setIsModalOpen(false);
     setIsFullscreen(false);
     setShowInterface(true);
     setIsLoading(false);
@@ -719,6 +593,7 @@ export default function Videos() {
   // Search handlers
   const handleClearSearch = useCallback(() => {
     setSearchQuery("");
+    setDebouncedSearchQuery("");
     searchInputRef.current?.focus();
   }, []);
 
@@ -728,14 +603,16 @@ export default function Videos() {
     }
   }, [handleClearSearch]);
 
-  // Keyboard shortcuts - FIXED: Only listen when modal is open
+  // Keyboard shortcuts - FIXED
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if (!isModalOpen || !selectedVideo) return;
+      if (!isModalOpen) return;
       
       switch(e.key) {
         case 'Escape':
-          handleModalClose();
+          if (!showCharacterSelection && !showCharacterDetail) {
+            handleModalClose();
+          }
           break;
         case 'f':
         case 'F':
@@ -746,7 +623,10 @@ export default function Videos() {
           break;
         case 'm':
         case 'M':
-          toggleMute();
+          if (!e.ctrlKey && !e.metaKey && e.target === document.body) {
+            e.preventDefault();
+            toggleMute();
+          }
           break;
         case ' ':
           if (e.target === document.body) {
@@ -759,7 +639,7 @@ export default function Videos() {
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [isModalOpen, selectedVideo, handleModalClose, toggleFullscreen, toggleMute, toggleInterface]);
+  }, [isModalOpen, handleModalClose, toggleFullscreen, toggleMute, toggleInterface, showCharacterSelection, showCharacterDetail]);
 
   // Cleanup timeouts
   useEffect(() => {
@@ -775,12 +655,14 @@ export default function Videos() {
 
   // Section change with smooth transition
   const handleSectionChange = useCallback((section: 'tutorials' | 'community' | 'channel') => {
+    if (section === activeSection) return;
+    
     setIsTransitioning(true);
     setActiveSection(section);
     
     const timer = setTimeout(() => setIsTransitioning(false), 300);
     return () => clearTimeout(timer);
-  }, []);
+  }, [activeSection]);
 
   // Aspect ratio helper
   const getAspectRatio = useCallback((video: Video): '16:9' | '9:16' => {
@@ -803,82 +685,12 @@ export default function Videos() {
     ));
   }, [language]);
 
-  // Get modal style - FIXED: Simplified centering logic
-  const getModalStyle = useCallback((): React.CSSProperties => {
-    if (!selectedVideo) return {};
-    
-    const isPortrait = selectedVideo.aspect === 'portrait';
-    
-    if (isMobile) {
-      if (isPortrait) {
-        return {
-          width: '100vw',
-          height: '100vh',
-          maxWidth: '100vw',
-          maxHeight: '100vh',
-          borderRadius: 0,
-          margin: 0,
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-        };
-      } else {
-        return {
-          width: '100vw',
-          height: '100vh',
-          maxWidth: '100vw',
-          maxHeight: '100vh',
-          borderRadius: 0,
-          margin: 0,
-          top: '50%',
-          left: '50%',
-          transform: `translate(-50%, -50%) ${isRotated ? 'rotate(90deg)' : ''}`,
-        };
-      }
-    } else {
-      if (isPortrait) {
-        return {
-          width: '400px',
-          height: '710px',
-          maxWidth: '400px',
-          maxHeight: '710px',
-          borderRadius: '24px',
-          margin: 0,
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-        };
-      } else {
-        return {
-          width: 'min(1200px, 90vw)',
-          height: 'min(675px, 90vh)',
-          maxWidth: 'min(1200px, 90vw)',
-          maxHeight: 'min(675px, 90vh)',
-          borderRadius: '24px',
-          margin: 0,
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-        };
-      }
-    }
-  }, [selectedVideo, isMobile, isRotated]);
-
-  // Retry video loading
-  const handleRetryVideo = useCallback(() => {
-    if (selectedVideo) {
-      setVideoError(false);
-      setErrorMessage("");
-      setIsLoading(true);
-    }
-  }, [selectedVideo]);
-
-  // Toggle rotation for mobile
-  const toggleRotation = useCallback(() => {
-    setIsRotated(prev => !prev);
+  // Image error handler
+  const handleImageError = useCallback(() => {
+    setImageError(true);
   }, []);
 
-  // Character handlers
+  // Character handlers with smooth transitions
   const handleCharacterSelectionOpen = useCallback(() => {
     setShowCharacterSelection(true);
     setSelectedCharacter(null);
@@ -901,6 +713,90 @@ export default function Videos() {
     setTimeout(() => setSelectedCharacter(null), 300);
   }, []);
 
+  // Retry video loading
+  const handleRetryVideo = useCallback(() => {
+    if (selectedVideo) {
+      setVideoError(false);
+      setErrorMessage("");
+      setIsLoading(true);
+    }
+  }, [selectedVideo]);
+
+  // Toggle rotation for mobile
+  const toggleRotation = useCallback(() => {
+    setIsRotated(prev => !prev);
+  }, []);
+
+  // Get modal style - FIXED CENTERING AND SIZING
+  const getModalStyle = useCallback((): React.CSSProperties => {
+    if (!selectedVideo) return {};
+    
+    const isPortrait = selectedVideo.aspect === 'portrait';
+    const isShort = selectedVideo.isShort;
+    
+    // Base styles
+    const baseStyles: React.CSSProperties = {
+      position: 'fixed',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      margin: 0,
+      border: 'none',
+      backgroundColor: 'black',
+      overflow: 'hidden',
+      zIndex: 50,
+    };
+
+    if (isMobile) {
+      // Mobile styles
+      if (isPortrait || isShort) {
+        // Vertical videos on mobile
+        return {
+          ...baseStyles,
+          width: '100vw',
+          height: '100vh',
+          maxWidth: '100vw',
+          maxHeight: '100vh',
+          borderRadius: 0,
+        };
+      } else {
+        // Horizontal videos on mobile
+        return {
+          ...baseStyles,
+          width: '100vw',
+          height: '100vh',
+          maxWidth: '100vw',
+          maxHeight: '100vh',
+          borderRadius: 0,
+          transform: `translate(-50%, -50%) ${isRotated ? 'rotate(90deg)' : ''}`,
+        };
+      }
+    } else {
+      // Desktop styles
+      if (isPortrait || isShort) {
+        // Vertical videos on desktop
+        return {
+          ...baseStyles,
+          width: 'min(400px, 90vw)',
+          height: 'min(710px, 90vh)',
+          maxWidth: 'min(400px, 90vw)',
+          maxHeight: 'min(710px, 90vh)',
+          borderRadius: '24px',
+        };
+      } else {
+        // Horizontal videos on desktop
+        return {
+          ...baseStyles,
+          width: 'min(1200px, 90vw)',
+          height: 'min(675px, 90vh)',
+          maxWidth: 'min(1200px, 90vw)',
+          maxHeight: 'min(675px, 90vh)',
+          borderRadius: '24px',
+        };
+      }
+    }
+  }, [selectedVideo, isMobile, isRotated]);
+
   // Render sections based on active section
   const renderVideoSection = useCallback(() => {
     const noResultsText = debouncedSearchQuery 
@@ -911,18 +807,31 @@ export default function Videos() {
       ? (language === 'fr' ? 'Essayez avec d\'autres termes de recherche' : 'Try different search terms')
       : (language === 'fr' ? 'De nouvelles vidéos seront bientôt disponibles' : 'New videos will be available soon');
 
-    const videosToRender = activeSection === 'tutorials' ? filteredTutorialVideos :
-                          activeSection === 'community' ? filteredCommunityVideos :
-                          filteredChannelVideos;
+    let videosToRender: Video[];
+    let IconComponent: React.ElementType;
+    
+    switch (activeSection) {
+      case 'tutorials':
+        videosToRender = filteredTutorialVideos;
+        IconComponent = Video;
+        break;
+      case 'community':
+        videosToRender = filteredCommunityVideos;
+        IconComponent = Users;
+        break;
+      case 'channel':
+        videosToRender = filteredChannelVideos;
+        IconComponent = Youtube;
+        break;
+      default:
+        videosToRender = [];
+        IconComponent = Video;
+    }
 
     if (videosToRender.length === 0) {
-      const icon = activeSection === 'tutorials' ? <Video className="w-10 h-10" /> :
-                   activeSection === 'community' ? <Users className="w-10 h-10" /> :
-                   <Youtube className="w-10 h-10" />;
-      
       return (
         <NoResults 
-          icon={icon}
+          icon={<IconComponent className="w-10 h-10" />}
           title={noResultsText}
           description={noResultsDescription}
         />
@@ -971,6 +880,172 @@ export default function Videos() {
     handleCharacterSelectionOpen
   ]);
 
+  // Character Dialog Component
+  const CharacterDialog = useCallback(() => {
+    if (!showCharacterSelection && !showCharacterDetail) return null;
+
+    if (showCharacterSelection) {
+      return (
+        <Dialog open={showCharacterSelection} onOpenChange={handleCharacterSelectionClose}>
+          <DialogContent 
+            className="fixed max-w-[95vw] sm:max-w-md p-0 border-0 overflow-hidden bg-transparent"
+            style={{
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              margin: 0,
+            }}
+          >
+            <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-950 rounded-2xl overflow-hidden border border-emerald-500/20 shadow-2xl animate-scale-in">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+                      {language === 'fr' ? 'Personnages' : 'Characters'}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {language === 'fr' ? 'Choisissez un personnage' : 'Choose a character'}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 active:scale-95 transition-all duration-200"
+                    onClick={handleCharacterSelectionClose}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-4">
+                  {characters.map((character) => (
+                    <button
+                      key={character.id}
+                      onClick={() => handleCharacterSelect(character)}
+                      className="group relative flex flex-col items-center p-4 rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-2xl active:scale-95 bg-gradient-to-b from-white/50 to-transparent dark:from-gray-800/50 border border-emerald-500/10 hover:border-emerald-500/30"
+                    >
+                      <div className="relative mb-3">
+                        <div className={`absolute inset-0 bg-gradient-to-r ${character.color} rounded-full blur-lg opacity-60 group-hover:opacity-80 transition-opacity duration-300`} />
+                        <div className="relative w-20 h-20 rounded-full border-4 border-white/20 overflow-hidden">
+                          <img
+                            src={character.imageUrl}
+                            alt={character.name}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            onError={handleImageError}
+                            loading="lazy"
+                          />
+                        </div>
+                      </div>
+                      <h4 className="font-bold text-lg text-gray-800 dark:text-gray-200 mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                        {character.name}
+                      </h4>
+                      <p className="text-xs text-muted-foreground group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                        {character.role}
+                      </p>
+                      <ChevronRight className="absolute top-2 right-2 w-4 h-4 text-emerald-500 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-0.5" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      );
+    }
+
+    if (showCharacterDetail && selectedCharacter) {
+      return (
+        <Dialog open={showCharacterDetail} onOpenChange={handleCharacterDetailClose}>
+          <DialogContent 
+            className="fixed max-w-[95vw] sm:max-w-md p-0 border-0 overflow-hidden bg-transparent"
+            style={{
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              margin: 0,
+            }}
+          >
+            <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-950 rounded-2xl overflow-hidden border border-emerald-500/20 shadow-2xl animate-scale-in">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${selectedCharacter.color} flex items-center justify-center text-white font-bold text-lg shadow-lg`}>
+                      {selectedCharacter.name.charAt(0)}
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+                        {selectedCharacter.name}
+                      </h3>
+                      <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
+                        {selectedCharacter.role}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 active:scale-95 transition-all duration-200"
+                    onClick={handleCharacterDetailClose}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+                
+                <div className="relative aspect-square rounded-xl overflow-hidden mb-6 border border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-green-500/5 group">
+                  {imageError ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+                      <AlertCircle className="w-16 h-16 text-emerald-500/50 mb-2" />
+                      <p className="text-center text-sm text-emerald-500/70">
+                        {language === 'fr' ? 'Image non disponible' : 'Image not available'}
+                      </p>
+                    </div>
+                  ) : (
+                    <img
+                      src={selectedCharacter.imageUrl}
+                      alt={selectedCharacter.name}
+                      className="w-full h-full object-contain p-4 transition-transform duration-700 group-hover:scale-110"
+                      onError={handleImageError}
+                      loading="lazy"
+                    />
+                  )}
+                </div>
+                
+                {selectedCharacter.description && (
+                  <p className="text-sm text-muted-foreground mb-4 text-center">
+                    {getLocalizedText(selectedCharacter.description)}
+                  </p>
+                )}
+                
+                <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Heart className="w-4 h-4 text-pink-500" />
+                    <span>{language === 'fr' ? 'Créé par Salsabile' : 'Created by Salsabile'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      );
+    }
+
+    return null;
+  }, [
+    showCharacterSelection, 
+    showCharacterDetail, 
+    selectedCharacter, 
+    language, 
+    characters, 
+    imageError, 
+    handleCharacterSelectionClose, 
+    handleCharacterSelect, 
+    handleCharacterDetailClose, 
+    handleImageError, 
+    getLocalizedText
+  ]);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-emerald-50/5 dark:to-emerald-950/5">
       <div className="container mx-auto px-4 py-12 md:py-16 lg:py-20">
@@ -999,18 +1074,42 @@ export default function Videos() {
             </p>
           </div>
 
-          {/* Search Bar */}
-          <SearchBar
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            debouncedSearchQuery={debouncedSearchQuery}
-            language={language}
-            isMobile={isMobile}
-            getTotalResults={getTotalResults}
-            onKeyDown={handleKeyDown}
-            onClearSearch={handleClearSearch}
-            searchInputRef={searchInputRef}
-          />
+          {/* Auto Search Bar */}
+          <div className="mb-10">
+            <div className="relative max-w-2xl mx-auto">
+              <div className="relative flex items-center group">
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+                  <Search className="w-5 h-5 text-muted-foreground group-focus-within:text-emerald-500 transition-colors duration-300" />
+                </div>
+                <Input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder={language === 'fr' ? 'Rechercher des vidéos...' : 'Search videos...'}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className={`pl-12 ${isMobile ? 'pr-10 py-4 text-sm' : 'pr-10 py-6 text-base'} rounded-xl border-border/50 bg-background/80 backdrop-blur-sm shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-black/10 focus:shadow-2xl focus:shadow-emerald-500/10 transition-all duration-300 hover:border-emerald-500/30 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20`}
+                />
+                {searchQuery && (
+                  <button
+                    onClick={handleClearSearch}
+                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${
+                      isMobile ? 'h-8 w-8' : 'h-10 w-10'
+                    } text-muted-foreground hover:text-foreground hover:bg-emerald-500/10 rounded-full transition-all duration-200 hover:scale-110 flex items-center justify-center`}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              {debouncedSearchQuery && (
+                <div className="mt-3 text-center animate-fade-in">
+                  <span className="text-emerald-600 dark:text-emerald-400 font-medium text-sm">
+                    {getTotalResults()} {language === 'fr' ? 'résultats' : 'results'}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Navigation */}
           <div className="mb-10">
@@ -1084,59 +1183,480 @@ export default function Videos() {
         </div>
       </div>
 
-      {/* Video Modal */}
-      <VideoModal
-        isOpen={isModalOpen}
-        selectedVideo={selectedVideo}
-        onClose={handleModalClose}
-        isMobile={isMobile}
-        isRotated={isRotated}
-        isLoading={isLoading}
-        videoError={videoError}
-        errorMessage={errorMessage}
-        showInterface={showInterface}
-        showControls={showControls}
-        isMuted={isMuted}
-        isFullscreen={isFullscreen}
-        language={language}
-        onMouseMove={handleMouseMove}
-        onToggleInterface={toggleInterface}
-        onToggleMute={toggleMute}
-        onToggleFullscreen={toggleFullscreen}
-        onOpenYouTube={openInYouTube}
-        onRetry={handleRetryVideo}
-        onToggleRotation={toggleRotation}
-        getLocalizedText={getLocalizedText}
-        formatDate={formatDate}
-        getAspectRatio={getAspectRatio}
-        onVideoLoad={handleVideoLoad}
-        onVideoError={handleVideoError}
-        style={getModalStyle()}
-      />
+      {/* Enhanced Video Modal */}
+      {selectedVideo && (
+        <Dialog open={isModalOpen} onOpenChange={(open) => !open && handleModalClose()}>
+          <DialogContent 
+            ref={modalRef}
+            className="fixed border-none bg-black shadow-2xl overflow-hidden p-0 transition-all duration-300 ease-out z-50"
+            style={getModalStyle()}
+            onMouseMove={handleMouseMove}
+            onTouchMove={handleMouseMove}
+            onTouchStart={() => setShowControls(true)}
+          >
+            {/* Loading Overlay */}
+            {isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm z-50 animate-fade-in">
+                <div className="relative">
+                  <div className="w-16 h-16 border-3 border-transparent border-t-emerald-500 rounded-full animate-spin-slow"></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Play className="w-8 h-8 text-emerald-500 animate-pulse-slow" />
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Error Overlay */}
+            {videoError && !isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm z-50 animate-fade-in">
+                <div className="text-center p-6 max-w-sm">
+                  <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4 animate-bounce" />
+                  <h3 className="text-xl font-semibold text-white mb-2">
+                    {language === 'fr' ? 'Erreur de chargement' : 'Loading Error'}
+                  </h3>
+                  <p className="text-white/80 mb-6">
+                    {errorMessage || (language === 'fr' 
+                      ? 'Impossible de charger la vidéo. Veuillez réessayer.'
+                      : 'Unable to load video. Please try again.')}
+                  </p>
+                  <div className="flex gap-4 justify-center">
+                    <Button
+                      onClick={handleRetryVideo}
+                      className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      {language === 'fr' ? 'Réessayer' : 'Retry'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={handleModalClose}
+                      className="border-white/30 text-white hover:bg-white/10"
+                    >
+                      {language === 'fr' ? 'Fermer' : 'Close'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Top Controls Bar */}
+            {showInterface && !videoError && (
+              <div 
+                className={`absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/95 via-black/85 to-transparent p-4 transition-all duration-300 ease-out ${
+                  showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`${isMobile ? 'h-10 w-10' : 'h-9 w-9'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 transition-all duration-300`}
+                      onClick={handleModalClose}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                    
+                    <div className="ml-1 max-w-[calc(100%-180px)]">
+                      <h3 className="text-sm font-semibold text-white/95 truncate animate-fade-in">
+                        {getLocalizedText(selectedVideo.title)}
+                      </h3>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`${isMobile ? 'h-10 w-10' : 'h-9 w-9'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 transition-all duration-300`}
+                      onClick={toggleInterface}
+                    >
+                      {showInterface ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </Button>
+                    
+                    {isMobile && selectedVideo?.aspect === 'landscape' && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={`h-10 w-10 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 transition-all duration-300`}
+                        onClick={toggleRotation}
+                      >
+                        <RotateCw className={`w-4 h-4 transition-transform duration-500 ${isRotated ? 'rotate-180' : ''}`} />
+                      </Button>
+                    )}
+                    
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`${isMobile ? 'h-10 w-10' : 'h-9 w-9'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 transition-all duration-300`}
+                      onClick={() => selectedVideo && openInYouTube(selectedVideo.youtubeId)}
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </Button>
+                    
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`${isMobile ? 'h-10 w-10' : 'h-9 w-9'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 transition-all duration-300`}
+                      onClick={toggleFullscreen}
+                    >
+                      {isFullscreen ? (
+                        <Minimize2 className="w-4 h-4" />
+                      ) : (
+                        <Maximize2 className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
 
-      {/* Character Selection Dialog */}
-      <Dialog open={showCharacterSelection} onOpenChange={handleCharacterSelectionClose}>
-        <DialogContent className="max-w-md p-0 border-0 overflow-hidden">
-          {/* Character dialog content */}
-        </DialogContent>
-      </Dialog>
+            {/* Video Player */}
+            <div className={`relative w-full h-full flex items-center justify-center bg-black`}>
+              {!videoError && (
+                <div className="w-full h-full flex items-center justify-center animate-scale-in">
+                  <LazyVideoPlayer
+                    youtubeId={selectedVideo.youtubeId}
+                    title={getLocalizedText(selectedVideo.title)}
+                    autoplay={true}
+                    muted={isMuted}
+                    loop={selectedVideo.isShort}
+                    showControls={false}
+                    aspectRatio={getAspectRatio(selectedVideo)}
+                    className="w-full h-full"
+                    onLoad={handleVideoLoad}
+                    onError={() => handleVideoError()}
+                    onPlay={handleVideoLoad}
+                  />
+                </div>
+              )}
+              
+              {/* Floating Controls for when interface is hidden */}
+              {!showInterface && showControls && !videoError && (
+                <div className="absolute top-4 right-4 z-50 flex flex-col gap-2 animate-fade-in">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 transition-all duration-300`}
+                    onClick={toggleInterface}
+                  >
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`${isMobile ? 'h-12 w-12' : 'h-10 w-10'} bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 transition-all duration-300`}
+                    onClick={toggleMute}
+                  >
+                    {isMuted ? (
+                      <VolumeX className="w-4 h-4" />
+                    ) : (
+                      <Volume2 className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
 
-      {/* Character Detail Dialog */}
-      <Dialog open={showCharacterDetail} onOpenChange={handleCharacterDetailClose}>
-        <DialogContent className="max-w-md p-0 border-0 overflow-hidden">
-          {/* Character detail content */}
-        </DialogContent>
-      </Dialog>
+            {/* Bottom Controls Bar */}
+            {showInterface && !videoError && (
+              <div 
+                className={`absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/95 via-black/85 to-transparent p-4 transition-all duration-300 ease-out ${
+                  showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full pointer-events-none'
+                }`}
+              >
+                <div className="space-y-3 animate-fade-in">
+                  <div>
+                    <h3 className="text-base font-semibold text-white line-clamp-1">
+                      {getLocalizedText(selectedVideo.title)}
+                    </h3>
+                    <p className="text-sm text-white/80 line-clamp-2 mt-1">
+                      {getLocalizedText(selectedVideo.description)}
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-center justify-between pt-2 border-t border-white/20">
+                    <div className="flex items-center gap-4 text-sm text-white/70">
+                      {selectedVideo.publishDate && (
+                        <span className="flex items-center gap-1.5 animate-fade-in hover:text-white transition-colors duration-200">
+                          <Calendar className="w-4 h-4" />
+                          <span>{formatDate(selectedVideo.publishDate)}</span>
+                        </span>
+                      )}
+                      {selectedVideo.duration && (
+                        <span className="flex items-center gap-1.5 animate-fade-in hover:text-white transition-colors duration-200">
+                          <Clock className="w-4 h-4" />
+                          <span>{selectedVideo.duration}</span>
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white border border-white/20 hover:scale-105 hover:border-emerald-500/50 transition-all duration-300"
+                        onClick={toggleMute}
+                      >
+                        {isMuted ? (
+                          <VolumeX className="w-4 h-4" />
+                        ) : (
+                          <Volume2 className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Modal Backdrop */}
+      {isModalOpen && (
+        <div 
+          className="fixed inset-0 bg-black/90 backdrop-blur-sm z-40 transition-all duration-500 animate-fade-in"
+          onClick={handleModalClose}
+        />
+      )}
+
+      {/* Character Dialogs */}
+      <CharacterDialog />
 
       {/* Animations CSS */}
       <style>{`
-        /* Animation styles remain the same */}
+        @keyframes fade-up {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes pulse-slow {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.5;
+          }
+        }
+        
+        @keyframes float-slow {
+          0%, 100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-15px);
+          }
+        }
+        
+        @keyframes spin-slow {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+        
+        @keyframes bounce {
+          0%, 100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-10px);
+          }
+        }
+        
+        @keyframes glow {
+          0%, 100% {
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+          }
+          50% {
+            box-shadow: 0 0 40px rgba(16, 185, 129, 0.6);
+          }
+        }
+        
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        
+        @keyframes scale-in {
+          from {
+            transform: scale(0.9);
+            opacity: 0;
+          }
+          to {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+        
+        @keyframes slide-up {
+          from {
+            transform: translateY(30px);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+        
+        .animate-fade-up {
+          animation: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        
+        .animate-pulse-slow {
+          animation: pulse-slow 3s ease-in-out infinite;
+        }
+        
+        .animate-float-slow {
+          animation: float-slow 6s ease-in-out infinite;
+        }
+        
+        .animate-spin-slow {
+          animation: spin-slow 2s linear infinite;
+        }
+        
+        .animate-bounce {
+          animation: bounce 1s ease-in-out infinite;
+        }
+        
+        .animate-glow {
+          animation: glow 3s ease-in-out infinite;
+        }
+        
+        .animate-fade-in {
+          animation: fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        
+        .animate-scale-in {
+          animation: scale-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        
+        .animate-slide-up {
+          animation: slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        
+        /* Smooth scroll behavior */
+        html {
+          scroll-behavior: smooth;
+        }
+        
+        /* Enhanced hover effects */
+        .hover-lift {
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .hover-lift:hover {
+          transform: translateY(-8px);
+        }
+        
+        .hover-glow {
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .hover-glow:hover {
+          box-shadow: 0 20px 40px rgba(16, 185, 129, 0.15);
+        }
+        
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+          .animate-pulse-slow,
+          .animate-float-slow,
+          .animate-spin-slow,
+          .animate-bounce,
+          .animate-glow,
+          .animate-fade-up,
+          .animate-fade-in,
+          .animate-scale-in,
+          .animate-slide-up,
+          .scroll-reveal,
+          .transition-all,
+          .transition-transform,
+          .transition-colors,
+          .hover-lift,
+          .hover-glow {
+            animation: none !important;
+            opacity: 1 !important;
+            transform: none !important;
+            transition: none !important;
+          }
+          
+          html {
+            scroll-behavior: auto;
+          }
+        }
+        
+        /* Scroll reveal */
+        .scroll-reveal {
+          opacity: 0;
+          transform: translateY(30px);
+          transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), 
+                      transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .scroll-reveal.visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+          /* Better touch targets */
+          button, 
+          [role="button"] {
+            min-height: 44px;
+            min-width: 44px;
+          }
+          
+          /* Modal touch improvements */
+          [data-radix-dialog-content] {
+            touch-action: pan-y;
+          }
+        }
+        
+        /* Performance optimizations */
+        .will-change-transform {
+          will-change: transform;
+        }
+        
+        .backface-hidden {
+          backface-visibility: hidden;
+        }
+        
+        /* Fix for fullscreen video */
+        video:-webkit-full-screen {
+          width: 100% !important;
+          height: 100% !important;
+        }
+        
+        /* Prevent body scroll when modal is open */
+        body:has(.fixed.inset-0.bg-black) {
+          overflow: hidden;
+        }
       `}</style>
     </div>
   );
 }
 
-// No Results Component remains the same
+// No Results Component
 const NoResults = memo(({ 
   icon, 
   title, 
@@ -1161,4 +1681,164 @@ const NoResults = memo(({
 
 NoResults.displayName = 'NoResults';
 
-// EnhancedVideoCard Component remains the same
+// Memoized Enhanced Video Card Component WITH INFO BUTTON
+const EnhancedVideoCard = memo(({
+  video,
+  getLocalizedText,
+  getThumbnailUrl,
+  formatDate,
+  openInYouTube,
+  handleVideoSelect,
+  handleThumbnailClick,
+  language,
+  isMobile,
+  showCharacterInfo = false,
+  onCharacterInfoClick
+}: {
+  video: Video;
+  getLocalizedText: (text: { fr: string; en: string } | string) => string;
+  getThumbnailUrl: (youtubeId: string, isShort?: boolean) => string;
+  formatDate: (dateString: string) => string;
+  openInYouTube: (youtubeId: string) => void;
+  handleVideoSelect: (video: Video) => void;
+  handleThumbnailClick: (e: React.MouseEvent, video: Video) => void;
+  language: string;
+  isMobile: boolean;
+  showCharacterInfo?: boolean;
+  onCharacterInfoClick?: () => void;
+}) => (
+  <Card className="group relative h-full border-border/40 hover:border-emerald-500/50 overflow-hidden bg-gradient-to-b from-card to-card/50 backdrop-blur-sm cursor-pointer transition-all duration-500 hover-lift hover-glow">
+    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+    
+    <CardContent className="p-0">
+      <div className={`relative ${video.aspect === 'portrait' ? 'aspect-[9/16]' : 'aspect-video'} overflow-hidden bg-gradient-to-br from-emerald-500/5 via-green-500/5 to-teal-500/5`}>
+        <img
+          src={getThumbnailUrl(video.youtubeId, video.isShort)}
+          alt={getLocalizedText(video.title)}
+          className="absolute inset-0 w-full h-full object-cover z-10 transition-all duration-700 group-hover:scale-110 group-hover:brightness-110"
+          loading="lazy"
+          decoding="async"
+          onError={(e) => {
+            e.currentTarget.src = `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg`;
+          }}
+        />
+        
+        <div 
+          className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 cursor-pointer"
+          onClick={(e) => handleThumbnailClick(e, video)}
+        >
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="relative">
+              <div className="relative w-20 h-20 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-xl shadow-emerald-500/40 transition-all duration-500 group-hover:scale-110 group-hover:shadow-2xl group-hover:shadow-emerald-500/60">
+                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-inner shadow-black/20 group-hover:scale-110 transition-transform duration-300">
+                  <Play className="w-6 h-6 text-emerald-600 ml-0.5" fill="currentColor" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="absolute top-3 left-3 z-30">
+          {video.isShort ? (
+            <Badge className="bg-gradient-to-r from-emerald-600 to-green-500 text-white border-0 text-xs px-2.5 py-1 animate-pulse-slow">
+              <Zap className="w-3 h-3 mr-1.5" />
+              SHORT
+            </Badge>
+          ) : (
+            video.category && (
+              <Badge className="bg-black/80 backdrop-blur-sm text-white border-0 text-xs px-2.5 py-1">
+                {getLocalizedText(video.category)}
+              </Badge>
+            )
+          )}
+        </div>
+
+        {video.duration && (
+          <div className="absolute bottom-3 right-3 z-30 bg-black/80 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-md">
+            {video.duration}
+          </div>
+        )}
+      </div>
+
+      <div className="p-5 relative z-20">
+        <div className="space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="font-bold text-lg line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300 flex-1">
+              {getLocalizedText(video.title)}
+            </h3>
+          </div>
+          
+          {video.creator && (
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 group relative">
+                <div className="relative">
+                  <div className="w-8 h-8 bg-gradient-to-br from-emerald-500/20 to-green-500/20 rounded-full flex items-center justify-center group-hover:from-emerald-500/30 group-hover:to-green-500/30 transition-all duration-300 group-hover:scale-110">
+                    <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  {/* INFO BUTTON FOR SALSABILE'S VIDEOS */}
+                  {showCharacterInfo && onCharacterInfoClick && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        onCharacterInfoClick();
+                      }}
+                      className="absolute -right-1 -top-1 h-5 w-5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white p-0.5 rounded-full border-2 border-background transition-all duration-300 hover:scale-125 active:scale-95 shadow-lg flex items-center justify-center z-40"
+                      aria-label={language === 'fr' ? 'Voir les personnages' : 'View characters'}
+                      title={language === 'fr' ? 'Voir les personnages' : 'View characters'}
+                    >
+                      <Info className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+                <div>
+                  <span className="text-sm font-medium group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                    {video.creator.name}
+                  </span>
+                  <p className="text-xs text-muted-foreground">{video.creator.role}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <p className="text-sm text-muted-foreground line-clamp-2 group-hover:text-foreground/80 transition-colors duration-300">
+            {getLocalizedText(video.description)}
+          </p>
+          
+          <div className="flex items-center justify-between pt-4 border-t border-border/50">
+            <div className="flex items-center gap-3 text-xs text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300">
+              {video.publishDate && (
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="w-3 h-3" />
+                  <span>{formatDate(video.publishDate)}</span>
+                </span>
+              )}
+              {video.duration && (
+                <span className="flex items-center gap-1.5">
+                  <Clock className="w-3 h-3" />
+                  <span>{video.duration}</span>
+                </span>
+              )}
+            </div>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-3 text-xs hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-300 hover:scale-105 group"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleVideoSelect(video);
+              }}
+              aria-label={language === 'fr' ? 'Regarder la vidéo' : 'Watch video'}
+            >
+              <Play className="w-3 h-3 mr-1.5 group-hover:scale-125 transition-transform duration-300" />
+              {language === 'fr' ? 'Regarder' : 'Watch'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+));
+
+EnhancedVideoCard.displayName = 'EnhancedVideoCard';
