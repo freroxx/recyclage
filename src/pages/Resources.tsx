@@ -107,7 +107,7 @@ export default function Resources() {
   ];
 
   const featuredStats = [
-    { icon: Users, label: language === "fr" ? "Utilisateurs" : "Users", value: "161" },
+    { icon: Users, label: language === "fr" ? "Utilisateurs" : "Users", value: "176" },
     { icon: Star, label: language === "fr" ? "Évaluations" : "Ratings", value: "4/5" },
     { icon: TrendingUp, label: language === "fr" ? "Engagement" : "Engagement", value: "100%" },
   ];
