@@ -241,8 +241,8 @@ export default function Videos() {
     {
       id: "laundry-cat",
       title: {
-        fr: "Chat et Lessive Écologique",
-        en: "Laundry Cat"
+        fr: "Chat et Lessive Écologique - Épisode 3",
+        en: "Laundry Cat - Episode 3"
       },
       description: {
         fr: "Apprenez des astuces écologiques pour votre lessive avec Cat. Créé par Salsabile",
