@@ -1,19 +1,23 @@
 import { Instagram, Mail, Globe, Heart, MessageCircle, RefreshCw, Info, X, Github } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import logo from "@/assets/logo.png";
+import { useTheme } from "@/contexts/ThemeContext"; // Assuming you have a ThemeContext
 
 export function Footer() {
   const { t } = useLanguage();
+  const { theme } = useTheme(); // Get current theme
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [showCredits, setShowCredits] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [logoError, setLogoError] = useState(false);
+  const [logoLoaded, setLogoLoaded] = useState(false);
+  const logoRef = useRef<HTMLImageElement>(null);
 
   // Handle initial undefined state from useIsMobile
   const [isMobileFinal, setIsMobileFinal] = useState(false);
@@ -29,6 +33,14 @@ export function Footer() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Preload logo and handle errors
+  useEffect(() => {
+    const img = new Image();
+    img.src = logo;
+    img.onload = () => setLogoLoaded(true);
+    img.onerror = () => setLogoError(true);
+  }, []);
+
   const handleRefresh = () => {
     window.location.reload();
   };
@@ -41,48 +53,74 @@ export function Footer() {
     navigate("/contact");
   };
 
+  // Theme-based color classes
+  const themeClasses = {
+    footer: {
+      bg: theme === 'dark' ? 'bg-[#0e1b15]' : 'bg-gray-50',
+      border: theme === 'dark' ? 'border-gray-800' : 'border-gray-200',
+      text: {
+        primary: theme === 'dark' ? 'text-white' : 'text-gray-900',
+        secondary: theme === 'dark' ? 'text-gray-300' : 'text-gray-600',
+        muted: theme === 'dark' ? 'text-gray-400' : 'text-gray-500',
+      },
+      button: {
+        bg: theme === 'dark' ? 'bg-gray-900/30' : 'bg-white/50',
+        border: theme === 'dark' ? 'border-gray-700' : 'border-gray-300',
+        hover: {
+          bg: theme === 'dark' ? 'hover:bg-black/40' : 'hover:bg-gray-100/80',
+          border: theme === 'dark' ? 'hover:border-transparent' : 'hover:border-gray-400',
+        }
+      },
+      modal: {
+        bg: theme === 'dark' ? 'from-gray-900 to-[#0a1511]' : 'from-white to-gray-100',
+        border: theme === 'dark' ? 'border-gray-800' : 'border-gray-200',
+        text: theme === 'dark' ? 'text-white' : 'text-gray-900',
+      }
+    }
+  };
+
   // Action buttons configuration with enhanced animations
   const actionButtons = [
     {
       icon: Instagram,
       label: "Instagram",
       color: "#E4405F",
-      gradient: "from-pink-500/20 to-rose-600/20",
+      gradient: theme === 'dark' ? "from-pink-500/20 to-rose-600/20" : "from-pink-400/20 to-rose-500/20",
       onClick: () => window.open("https://instagram.com/recyclage_projet", "_blank"),
     },
     {
       icon: Globe,
       label: t("footer.website", "Website"),
       color: "#2563EB",
-      gradient: "from-blue-500/20 to-indigo-600/20",
+      gradient: theme === 'dark' ? "from-blue-500/20 to-indigo-600/20" : "from-blue-400/20 to-indigo-500/20",
       onClick: () => window.open("https://ecolemaria.com", "_blank"),
     },
     {
       icon: Mail,
       label: "Email",
       color: "#EA4335",
-      gradient: "from-red-500/20 to-orange-600/20",
+      gradient: theme === 'dark' ? "from-red-500/20 to-orange-600/20" : "from-red-400/20 to-orange-500/20",
       onClick: () => window.location.href = "mailto:recyclagemaria@gmail.com",
     },
     {
       icon: Heart,
       label: t("footer.support", "Support"),
       color: "#10B981",
-      gradient: "from-emerald-500/20 to-green-600/20",
+      gradient: theme === 'dark' ? "from-emerald-500/20 to-green-600/20" : "from-emerald-400/20 to-green-500/20",
       onClick: handleSupport,
     },
     {
       icon: MessageCircle,
       label: t("footer.contact", "Contact"),
       color: "#8B5CF6",
-      gradient: "from-purple-500/20 to-violet-600/20",
+      gradient: theme === 'dark' ? "from-purple-500/20 to-violet-600/20" : "from-purple-400/20 to-violet-500/20",
       onClick: handleContact,
     },
     {
       icon: RefreshCw,
       label: t("footer.refresh", "Refresh"),
       color: "#F97316",
-      gradient: "from-orange-500/20 to-amber-600/20",
+      gradient: theme === 'dark' ? "from-orange-500/20 to-amber-600/20" : "from-orange-400/20 to-amber-500/20",
       onClick: handleRefresh,
     },
   ];
@@ -132,10 +170,10 @@ export function Footer() {
         animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
         transition={{ 
           duration: 0.6, 
-          ease: [0.22, 1, 0.36, 1], // Custom easing for smoothness
+          ease: [0.22, 1, 0.36, 1],
           delay: 0.1 
         }}
-        className="mt-16 border-t border-gray-800 bg-[#0e1b15]"
+        className={`mt-16 border-t ${themeClasses.footer.border} ${themeClasses.footer.bg}`}
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Logo and Description */}
@@ -157,13 +195,28 @@ export function Footer() {
                     <span className="text-white font-bold text-lg">RM</span>
                   </div>
                 ) : (
-            <img 
-              src={logo} 
-              alt="Recyclage Maria Logo"
-              className="w-10 h-10 object-contain transition-transform duration-300 group-hover:scale-110"
-              onError={() => setLogoError(true)}
-              onLoad={() => setLogoError(false)}
-            />
+                  <img 
+                    ref={logoRef}
+                    src={logo}
+                    alt="Recyclage Maria Logo"
+                    className={`w-10 h-10 object-contain transition-transform duration-300 group-hover:scale-110 ${
+                      logoLoaded ? 'opacity-100' : 'opacity-0'
+                    }`}
+                    onError={() => {
+                      setLogoError(true);
+                      setLogoLoaded(false);
+                    }}
+                    onLoad={() => {
+                      setLogoLoaded(true);
+                      setLogoError(false);
+                    }}
+                    loading="eager"
+                    decoding="async"
+                  />
+                )}
+                {/* Loading skeleton */}
+                {!logoLoaded && !logoError && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-green-600 animate-pulse" />
                 )}
               </div>
               {/* Animated ring effect */}
@@ -174,7 +227,7 @@ export function Footer() {
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.3 }}
-              className="text-2xl font-bold text-white mb-2 text-center bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent"
+              className="text-2xl font-bold mb-2 text-center bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent"
             >
               {t("footer.projectName", "Recyclage Maria")}
             </motion.h3>
@@ -183,7 +236,7 @@ export function Footer() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.4 }}
-              className="text-gray-300 text-center max-w-md mx-auto"
+              className={`text-center max-w-md mx-auto ${themeClasses.footer.text.secondary}`}
             >
               {t("footer.tagline", "Promoting sustainable practices at Maria School, Agadir")}
             </motion.p>
@@ -214,8 +267,8 @@ export function Footer() {
                   className={`
                     group relative flex flex-col items-center justify-center
                     h-20 sm:h-24 w-full p-3 gap-2 sm:gap-3
-                    border border-gray-700 bg-gray-900/30
-                    hover:border-transparent hover:bg-black/40
+                    border ${themeClasses.footer.button.border} ${themeClasses.footer.button.bg}
+                    ${themeClasses.footer.button.hover.bg} ${themeClasses.footer.button.hover.border}
                     transition-all duration-300 ease-out
                     overflow-hidden
                     before:absolute before:inset-0 before:bg-gradient-to-br ${button.gradient}
@@ -252,7 +305,7 @@ export function Footer() {
                   />
                   
                   {/* Label */}
-                  <span className="relative z-10 text-xs sm:text-sm font-semibold text-white whitespace-nowrap">
+                  <span className={`relative z-10 text-xs sm:text-sm font-semibold whitespace-nowrap ${themeClasses.footer.text.primary}`}>
                     {button.label}
                   </span>
                   
@@ -274,10 +327,10 @@ export function Footer() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.6 }}
-            className="pt-6 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4"
+            className={`pt-6 border-t ${themeClasses.footer.border} flex flex-col sm:flex-row items-center justify-between gap-4`}
           >
             {/* Copyright */}
-            <div className="text-sm text-gray-400 text-center sm:text-left">
+            <div className={`text-sm text-center sm:text-left ${themeClasses.footer.text.muted}`}>
               © {new Date().getFullYear()} Maria School, Agadir • {t("footer.rights", "All rights reserved")}
             </div>
 
@@ -292,7 +345,7 @@ export function Footer() {
               <Button
                 variant="ghost"
                 size={isMobileFinal ? "sm" : "default"}
-                className="group relative text-gray-300 hover:text-white bg-gray-900/50 hover:bg-emerald-900/30 border border-gray-700 hover:border-emerald-500/50 transition-all duration-300 overflow-hidden"
+                className={`group relative ${themeClasses.footer.text.secondary} hover:${themeClasses.footer.text.primary} ${themeClasses.footer.button.bg} hover:bg-emerald-900/30 border ${themeClasses.footer.button.border} hover:border-emerald-500/50 transition-all duration-300 overflow-hidden`}
                 onClick={() => setShowCredits(true)}
               >
                 {/* Animated background */}
@@ -340,18 +393,20 @@ export function Footer() {
                 mass: 0.8
               }}
               className={`
-                relative bg-gradient-to-b from-gray-900 to-[#0a1511] border border-gray-800 
+                relative bg-gradient-to-b ${themeClasses.footer.modal.bg} border ${themeClasses.footer.modal.border} 
                 rounded-2xl shadow-2xl w-full max-h-[90vh] overflow-hidden
                 ${isMobileFinal ? 'max-w-sm mx-4' : 'max-w-2xl'}
                 transform-gpu
               `}
               onClick={(e) => e.stopPropagation()}
               style={{
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(16, 185, 129, 0.1)'
+                boxShadow: theme === 'dark' 
+                  ? '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(16, 185, 129, 0.1)'
+                  : '0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(16, 185, 129, 0.1)'
               }}
             >
               {/* Header with gradient */}
-              <div className="sticky top-0 bg-gradient-to-r from-emerald-900/40 to-green-900/40 p-5 border-b border-gray-800 backdrop-blur-sm z-10">
+              <div className={`sticky top-0 bg-gradient-to-r from-emerald-900/40 to-green-900/40 p-5 border-b ${themeClasses.footer.border} backdrop-blur-sm z-10`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <motion.div
@@ -369,15 +424,17 @@ export function Footer() {
                         <span className="text-white font-bold">RM</span>
                       ) : (
                         <img 
-                          src="/logo.png" 
+                          src={logo}
                           alt="Logo"
                           className="w-6 h-6 object-contain"
                           onError={() => setLogoError(true)}
+                          onLoad={() => setLogoLoaded(true)}
+                          loading="lazy"
                         />
                       )}
                     </motion.div>
                     <div>
-                      <h3 className="text-lg sm:text-xl font-bold text-white">
+                      <h3 className={`text-lg sm:text-xl font-bold ${themeClasses.footer.modal.text}`}>
                         {t("footer.projectCredits", "Project Credits")}
                       </h3>
                       <motion.p 
@@ -404,7 +461,7 @@ export function Footer() {
                     className="p-2 rounded-full hover:bg-white/10 transition-all duration-200"
                     aria-label={t("common.close", "Close")}
                   >
-                    <X className="w-5 h-5 text-gray-300" />
+                    <X className={`w-5 h-5 ${themeClasses.footer.text.secondary}`} />
                   </motion.button>
                 </div>
               </div>
@@ -429,149 +486,149 @@ export function Footer() {
                           y: -2,
                           transition: { type: "spring", stiffness: 400 }
                         } : {}}
-                        className="group relative bg-gray-800/30 rounded-xl p-4 border border-gray-700 hover:border-emerald-500/40 transition-all duration-300 overflow-hidden"
+                        className={`group relative ${theme === 'dark' ? 'bg-gray-800/30' : 'bg-gray-100/50'} rounded-xl p-4 border ${themeClasses.footer.border} hover:border-emerald-500/40 transition-all duration-300 overflow-hidden`}
                       >
                         {/* Hover effect background */}
                         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                         
                         <div className="relative flex items-center gap-3 mb-2">
                           <div className="w-2 h-2 rounded-full bg-emerald-500 group-hover:scale-150 transition-transform duration-300" />
-                          <span className="text-xs font-medium text-gray-400 group-hover:text-gray-300 transition-colors">
+                          <span className={`text-xs font-medium group-hover:${themeClasses.footer.text.primary} transition-colors ${themeClasses.footer.text.secondary}`}>
                             {item.label}
                           </span>
                         </div>
-                        <span className="relative text-white font-semibold block text-base group-hover:text-emerald-300 transition-colors">
+                        <span className={`relative font-semibold block text-base group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors ${themeClasses.footer.modal.text}`}>
                           {item.value}
                         </span>
                       </motion.div>
                     ))}
                   </div>
 
-{/* Source Code Link - Enhanced */}
-<motion.div
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ 
-    delay: 0.6,
-    type: "spring",
-    stiffness: 300,
-    damping: 20
-  }}
-  whileHover={!isMobileFinal ? { 
-    scale: 1.02,
-    y: -2,
-    transition: { type: "spring", stiffness: 400, damping: 10 }
-  } : {}}
-  className="mt-8"
->
-  <Button
-    variant="outline"
-    className="group relative w-full bg-gradient-to-br from-gray-900 to-[#0a1511] border border-gray-700 hover:border-emerald-500/60 hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 overflow-hidden"
-    onClick={() => window.open("https://github.com/freroxx/recyclage", "_blank")}
-  >
-    {/* Animated gradient background */}
-    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-    
-    {/* Glow effect */}
-    <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-transparent blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-    
-    {/* Content */}
-    <div className="relative z-10 flex items-center justify-center gap-3">
-      {/* Animated GitHub icon */}
-      <motion.div
-        animate={!isMobileFinal ? {
-          rotate: [0, 5, -5, 0],
-        } : {}}
-        transition={{
-          rotate: {
-            duration: 4,
-            repeat: Infinity,
-            repeatType: "reverse",
-            ease: "easeInOut"
-          }
-        }}
-        className="relative"
-      >
-        <Github className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
-        {/* Pulse effect */}
-        <div className="absolute inset-0 rounded-full bg-emerald-500/30 animate-ping opacity-0 group-hover:opacity-100" />
-      </motion.div>
-      
-      {/* Text with gradient */}
-      <span className="font-medium bg-gradient-to-r from-gray-200 to-emerald-200 bg-clip-text text-transparent group-hover:from-emerald-300 group-hover:to-green-300 transition-all duration-300">
-        {t("footer.viewSourceCode", "View Source Code on GitHub")}
-      </span>
-      
-      {/* Animated arrow */}
-      <motion.span
-        initial={{ x: 0, opacity: 0.6 }}
-        animate={!isMobileFinal ? {
-          x: [0, 5, 0],
-          opacity: [0.6, 1, 0.6],
-        } : {}}
-        transition={{
-          x: {
-            duration: 1.5,
-            repeat: Infinity,
-            ease: "easeInOut"
-          },
-          opacity: {
-            duration: 1.5,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }
-        }}
-        className="text-emerald-400 group-hover:text-emerald-300 transition-colors"
-      >
-        ✔️
-      </motion.span>
-    </div>
-    
-    {/* Bottom border animation */}
-    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-500 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
-    
-    {/* Star particles on hover */}
-    {!isMobileFinal && (
-      <>
-        <motion.span
-          initial={{ opacity: 0, scale: 0 }}
-          whileHover={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
-          className="absolute top-2 left-4 text-emerald-400 text-xs"
-        >
-          ★
-        </motion.span>
-        <motion.span
-          initial={{ opacity: 0, scale: 0 }}
-          whileHover={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
-          className="absolute top-3 right-6 text-emerald-400 text-xs"
-        >
-          ✨
-        </motion.span>
-      </>
-    )}
-  </Button>
-  
-  {/* Info text */}
-  <motion.p
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    transition={{ delay: 0.7 }}
-    className="mt-3 text-center text-xs text-gray-500"
-  >
-    {t("footer.openSource", "Open source project • Contributions welcome")}
-  </motion.p>
-</motion.div>
+                  {/* Source Code Link - Enhanced */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ 
+                      delay: 0.6,
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 20
+                    }}
+                    whileHover={!isMobileFinal ? { 
+                      scale: 1.02,
+                      y: -2,
+                      transition: { type: "spring", stiffness: 400, damping: 10 }
+                    } : {}}
+                    className="mt-8"
+                  >
+                    <Button
+                      variant="outline"
+                      className={`group relative w-full bg-gradient-to-br ${themeClasses.footer.modal.bg} border ${themeClasses.footer.border} hover:border-emerald-500/60 hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 overflow-hidden`}
+                      onClick={() => window.open("https://github.com/freroxx/recyclage", "_blank")}
+                    >
+                      {/* Animated gradient background */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                      
+                      {/* Glow effect */}
+                      <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-transparent blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      
+                      {/* Content */}
+                      <div className="relative z-10 flex items-center justify-center gap-3">
+                        {/* Animated GitHub icon */}
+                        <motion.div
+                          animate={!isMobileFinal ? {
+                            rotate: [0, 5, -5, 0],
+                          } : {}}
+                          transition={{
+                            rotate: {
+                              duration: 4,
+                              repeat: Infinity,
+                              repeatType: "reverse",
+                              ease: "easeInOut"
+                            }
+                          }}
+                          className="relative"
+                        >
+                          <Github className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
+                          {/* Pulse effect */}
+                          <div className="absolute inset-0 rounded-full bg-emerald-500/30 animate-ping opacity-0 group-hover:opacity-100" />
+                        </motion.div>
+                        
+                        {/* Text with gradient */}
+                        <span className="font-medium bg-gradient-to-r from-gray-700 to-emerald-700 dark:from-gray-200 dark:to-emerald-200 bg-clip-text text-transparent group-hover:from-emerald-600 group-hover:to-green-600 dark:group-hover:from-emerald-300 dark:group-hover:to-green-300 transition-all duration-300">
+                          {t("footer.viewSourceCode", "View Source Code on GitHub")}
+                        </span>
+                        
+                        {/* Animated arrow */}
+                        <motion.span
+                          initial={{ x: 0, opacity: 0.6 }}
+                          animate={!isMobileFinal ? {
+                            x: [0, 5, 0],
+                            opacity: [0.6, 1, 0.6],
+                          } : {}}
+                          transition={{
+                            x: {
+                              duration: 1.5,
+                              repeat: Infinity,
+                              ease: "easeInOut"
+                            },
+                            opacity: {
+                              duration: 1.5,
+                              repeat: Infinity,
+                              ease: "easeInOut"
+                            }
+                          }}
+                          className="text-emerald-600 dark:text-emerald-400 group-hover:text-emerald-500 dark:group-hover:text-emerald-300 transition-colors"
+                        >
+                          ✔️
+                        </motion.span>
+                      </div>
+                      
+                      {/* Bottom border animation */}
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-500 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
+                      
+                      {/* Star particles on hover */}
+                      {!isMobileFinal && (
+                        <>
+                          <motion.span
+                            initial={{ opacity: 0, scale: 0 }}
+                            whileHover={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.3 }}
+                            className="absolute top-2 left-4 text-emerald-600 dark:text-emerald-400 text-xs"
+                          >
+                            ★
+                          </motion.span>
+                          <motion.span
+                            initial={{ opacity: 0, scale: 0 }}
+                            whileHover={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.3, delay: 0.1 }}
+                            className="absolute top-3 right-6 text-emerald-600 dark:text-emerald-400 text-xs"
+                          >
+                            ✨
+                          </motion.span>
+                        </>
+                      )}
+                    </Button>
+                    
+                    {/* Info text */}
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.7 }}
+                      className="mt-3 text-center text-xs text-gray-500 dark:text-gray-400"
+                    >
+                      {t("footer.openSource", "Open source project • Contributions welcome")}
+                    </motion.p>
+                  </motion.div>
 
                   {/* Tech Stack */}
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.7 }}
-                    className="mt-6 pt-5 border-t border-gray-800"
+                    className={`mt-6 pt-5 border-t ${themeClasses.footer.border}`}
                   >
-                    <h4 className="text-sm font-semibold text-gray-400 flex items-center gap-2 mb-3">
+                    <h4 className={`text-sm font-semibold flex items-center gap-2 mb-3 ${themeClasses.footer.text.secondary}`}>
                       <span>⚡</span>
                       {t("footer.credits.builtWith", "Built With")}
                     </h4>
@@ -587,7 +644,7 @@ export function Footer() {
                             y: -2,
                             transition: { type: "spring", stiffness: 400 }
                           } : {}}
-                          className="px-3 py-2 text-xs rounded-lg bg-gray-800/50 text-gray-300 border border-gray-700 hover:border-emerald-500/30 hover:bg-emerald-900/20 hover:text-emerald-300 transition-all duration-300 flex items-center gap-2"
+                          className={`px-3 py-2 text-xs rounded-lg ${theme === 'dark' ? 'bg-gray-800/50' : 'bg-gray-100'} ${themeClasses.footer.text.secondary} border ${themeClasses.footer.border} hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-700 dark:hover:text-emerald-300 transition-all duration-300 flex items-center gap-2`}
                         >
                           <span>{tech.icon}</span>
                           <span>{tech.name}</span>
@@ -601,7 +658,7 @@ export function Footer() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.9 }}
-                    className="mt-6 p-4 rounded-xl bg-gradient-to-r from-emerald-900/10 to-green-900/10 border border-emerald-800/20"
+                    className="mt-6 p-4 rounded-xl bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/10 dark:to-green-900/10 border border-emerald-200 dark:border-emerald-800/20"
                   >
                     <div className="flex items-center gap-3">
                       <motion.div
@@ -619,7 +676,7 @@ export function Footer() {
                       >
                         ♻️
                       </motion.div>
-                      <p className="text-sm text-gray-300">
+                      <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                         {t("footer.thankYou", "Thank you for supporting sustainable education!")}
                       </p>
                     </div>
@@ -628,13 +685,13 @@ export function Footer() {
               </div>
 
               {/* Footer with version */}
-              <div className="sticky bottom-0 p-4 border-t border-gray-800 bg-gray-900/90 backdrop-blur-sm">
+              <div className={`sticky bottom-0 p-4 border-t ${themeClasses.footer.border} ${theme === 'dark' ? 'bg-gray-900/90' : 'bg-white/90'} backdrop-blur-sm`}>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-500">
+                  <span className={`text-xs ${themeClasses.footer.text.muted}`}>
                     {t("footer.credits.lastUpdated", "Updated")}: 20 Dec 2025
                   </span>
-                  <span className="text-xs text-emerald-400 px-2 py-1 rounded-full bg-emerald-900/20">
-                    v2.1
+                  <span className="text-xs text-emerald-600 dark:text-emerald-400 px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/20">
+                    v2.2
                   </span>
                 </div>
               </div>
