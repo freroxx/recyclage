@@ -6,17 +6,18 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import logo from "@/assets/logo.png";
-import { useTheme } from "@/contexts/ThemeContext"; // Assuming you have a ThemeContext
+import { useTheme } from "next-themes"; // Import from next-themes
 
 export function Footer() {
   const { t } = useLanguage();
-  const { theme } = useTheme(); // Get current theme
+  const { theme, resolvedTheme } = useTheme(); // Use next-themes hook
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [showCredits, setShowCredits] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [logoError, setLogoError] = useState(false);
   const [logoLoaded, setLogoLoaded] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const logoRef = useRef<HTMLImageElement>(null);
 
   // Handle initial undefined state from useIsMobile
@@ -29,6 +30,7 @@ export function Footer() {
   }, [isMobile]);
 
   useEffect(() => {
+    setMounted(true);
     const timer = setTimeout(() => setIsVisible(true), 100);
     return () => clearTimeout(timer);
   }, []);
@@ -53,74 +55,87 @@ export function Footer() {
     navigate("/contact");
   };
 
-  // Theme-based color classes
-  const themeClasses = {
-    footer: {
-      bg: theme === 'dark' ? 'bg-[#0e1b15]' : 'bg-gray-50',
-      border: theme === 'dark' ? 'border-gray-800' : 'border-gray-200',
+  // Determine current theme (use resolvedTheme which accounts for system preference)
+  const currentTheme = mounted ? (resolvedTheme || theme) : 'light';
+  
+  // Theme-based color classes - using CSS variables for better theming
+  const getThemeClasses = () => {
+    const isDark = currentTheme === 'dark';
+    return {
+      // Background colors
+      bg: isDark ? 'bg-[#0e1b15]' : 'bg-gray-50',
+      border: isDark ? 'border-gray-800' : 'border-gray-200',
+      
+      // Text colors
       text: {
-        primary: theme === 'dark' ? 'text-white' : 'text-gray-900',
-        secondary: theme === 'dark' ? 'text-gray-300' : 'text-gray-600',
-        muted: theme === 'dark' ? 'text-gray-400' : 'text-gray-500',
+        primary: isDark ? 'text-white' : 'text-gray-900',
+        secondary: isDark ? 'text-gray-300' : 'text-gray-600',
+        muted: isDark ? 'text-gray-400' : 'text-gray-500',
       },
+      
+      // Button styles
       button: {
-        bg: theme === 'dark' ? 'bg-gray-900/30' : 'bg-white/50',
-        border: theme === 'dark' ? 'border-gray-700' : 'border-gray-300',
+        bg: isDark ? 'bg-gray-900/30' : 'bg-white/50',
+        border: isDark ? 'border-gray-700' : 'border-gray-300',
         hover: {
-          bg: theme === 'dark' ? 'hover:bg-black/40' : 'hover:bg-gray-100/80',
-          border: theme === 'dark' ? 'hover:border-transparent' : 'hover:border-gray-400',
+          bg: isDark ? 'hover:bg-black/40' : 'hover:bg-gray-100/80',
+          border: isDark ? 'hover:border-transparent' : 'hover:border-gray-400',
         }
       },
+      
+      // Modal styles
       modal: {
-        bg: theme === 'dark' ? 'from-gray-900 to-[#0a1511]' : 'from-white to-gray-100',
-        border: theme === 'dark' ? 'border-gray-800' : 'border-gray-200',
-        text: theme === 'dark' ? 'text-white' : 'text-gray-900',
+        bg: isDark ? 'from-gray-900 to-[#0a1511]' : 'from-white to-gray-100',
+        border: isDark ? 'border-gray-800' : 'border-gray-200',
+        text: isDark ? 'text-white' : 'text-gray-900',
       }
-    }
+    };
   };
 
-  // Action buttons configuration with enhanced animations
+  const themeClasses = getThemeClasses();
+
+  // Action buttons configuration with theme-aware gradients
   const actionButtons = [
     {
       icon: Instagram,
       label: "Instagram",
       color: "#E4405F",
-      gradient: theme === 'dark' ? "from-pink-500/20 to-rose-600/20" : "from-pink-400/20 to-rose-500/20",
+      gradient: currentTheme === 'dark' ? "from-pink-500/20 to-rose-600/20" : "from-pink-400/10 to-rose-500/10",
       onClick: () => window.open("https://instagram.com/recyclage_projet", "_blank"),
     },
     {
       icon: Globe,
       label: t("footer.website", "Website"),
       color: "#2563EB",
-      gradient: theme === 'dark' ? "from-blue-500/20 to-indigo-600/20" : "from-blue-400/20 to-indigo-500/20",
+      gradient: currentTheme === 'dark' ? "from-blue-500/20 to-indigo-600/20" : "from-blue-400/10 to-indigo-500/10",
       onClick: () => window.open("https://ecolemaria.com", "_blank"),
     },
     {
       icon: Mail,
       label: "Email",
       color: "#EA4335",
-      gradient: theme === 'dark' ? "from-red-500/20 to-orange-600/20" : "from-red-400/20 to-orange-500/20",
+      gradient: currentTheme === 'dark' ? "from-red-500/20 to-orange-600/20" : "from-red-400/10 to-orange-500/10",
       onClick: () => window.location.href = "mailto:recyclagemaria@gmail.com",
     },
     {
       icon: Heart,
       label: t("footer.support", "Support"),
       color: "#10B981",
-      gradient: theme === 'dark' ? "from-emerald-500/20 to-green-600/20" : "from-emerald-400/20 to-green-500/20",
+      gradient: currentTheme === 'dark' ? "from-emerald-500/20 to-green-600/20" : "from-emerald-400/10 to-green-500/10",
       onClick: handleSupport,
     },
     {
       icon: MessageCircle,
       label: t("footer.contact", "Contact"),
       color: "#8B5CF6",
-      gradient: theme === 'dark' ? "from-purple-500/20 to-violet-600/20" : "from-purple-400/20 to-violet-500/20",
+      gradient: currentTheme === 'dark' ? "from-purple-500/20 to-violet-600/20" : "from-purple-400/10 to-violet-500/10",
       onClick: handleContact,
     },
     {
       icon: RefreshCw,
       label: t("footer.refresh", "Refresh"),
       color: "#F97316",
-      gradient: theme === 'dark' ? "from-orange-500/20 to-amber-600/20" : "from-orange-400/20 to-amber-500/20",
+      gradient: currentTheme === 'dark' ? "from-orange-500/20 to-amber-600/20" : "from-orange-400/10 to-amber-500/10",
       onClick: handleRefresh,
     },
   ];
@@ -162,6 +177,21 @@ export function Footer() {
     { name: "Framer", icon: "✨" },
   ];
 
+  // Don't render theme-dependent content until mounted
+  if (!mounted) {
+    return (
+      <footer className="mt-16 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#0e1b15] h-96 animate-pulse">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex flex-col items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 mb-4" />
+            <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
+            <div className="h-4 w-64 bg-gray-200 dark:bg-gray-700 rounded" />
+          </div>
+        </div>
+      </footer>
+    );
+  }
+
   return (
     <>
       {/* Footer */}
@@ -173,7 +203,7 @@ export function Footer() {
           ease: [0.22, 1, 0.36, 1],
           delay: 0.1 
         }}
-        className={`mt-16 border-t ${themeClasses.footer.border} ${themeClasses.footer.bg}`}
+        className={`mt-16 border-t ${themeClasses.border} ${themeClasses.bg} transition-colors duration-300`}
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Logo and Description */}
@@ -236,7 +266,7 @@ export function Footer() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.4 }}
-              className={`text-center max-w-md mx-auto ${themeClasses.footer.text.secondary}`}
+              className={`text-center max-w-md mx-auto ${themeClasses.text.secondary}`}
             >
               {t("footer.tagline", "Promoting sustainable practices at Maria School, Agadir")}
             </motion.p>
@@ -267,8 +297,8 @@ export function Footer() {
                   className={`
                     group relative flex flex-col items-center justify-center
                     h-20 sm:h-24 w-full p-3 gap-2 sm:gap-3
-                    border ${themeClasses.footer.button.border} ${themeClasses.footer.button.bg}
-                    ${themeClasses.footer.button.hover.bg} ${themeClasses.footer.button.hover.border}
+                    border ${themeClasses.button.border} ${themeClasses.button.bg}
+                    ${themeClasses.button.hover.bg} ${themeClasses.button.hover.border}
                     transition-all duration-300 ease-out
                     overflow-hidden
                     before:absolute before:inset-0 before:bg-gradient-to-br ${button.gradient}
@@ -283,7 +313,7 @@ export function Footer() {
                   <div 
                     className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-500"
                     style={{
-                      background: `radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), ${button.color}20 0%, transparent 50%)`,
+                      background: `radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), ${button.color}15 0%, transparent 50%)`,
                     }}
                     onMouseMove={(e) => {
                       const rect = e.currentTarget.getBoundingClientRect();
@@ -305,7 +335,7 @@ export function Footer() {
                   />
                   
                   {/* Label */}
-                  <span className={`relative z-10 text-xs sm:text-sm font-semibold whitespace-nowrap ${themeClasses.footer.text.primary}`}>
+                  <span className={`relative z-10 text-xs sm:text-sm font-semibold whitespace-nowrap ${themeClasses.text.primary}`}>
                     {button.label}
                   </span>
                   
@@ -314,7 +344,7 @@ export function Footer() {
                     className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 h-0.5 group-hover:w-16 transition-all duration-300 ease-out"
                     style={{ 
                       background: `linear-gradient(90deg, transparent, ${button.color}, transparent)`,
-                      boxShadow: `0 0 8px ${button.color}`
+                      boxShadow: `0 0 8px ${button.color}80`
                     }}
                   />
                 </Button>
@@ -327,10 +357,10 @@ export function Footer() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.6 }}
-            className={`pt-6 border-t ${themeClasses.footer.border} flex flex-col sm:flex-row items-center justify-between gap-4`}
+            className={`pt-6 border-t ${themeClasses.border} flex flex-col sm:flex-row items-center justify-between gap-4`}
           >
             {/* Copyright */}
-            <div className={`text-sm text-center sm:text-left ${themeClasses.footer.text.muted}`}>
+            <div className={`text-sm text-center sm:text-left ${themeClasses.text.muted}`}>
               © {new Date().getFullYear()} Maria School, Agadir • {t("footer.rights", "All rights reserved")}
             </div>
 
@@ -345,7 +375,7 @@ export function Footer() {
               <Button
                 variant="ghost"
                 size={isMobileFinal ? "sm" : "default"}
-                className={`group relative ${themeClasses.footer.text.secondary} hover:${themeClasses.footer.text.primary} ${themeClasses.footer.button.bg} hover:bg-emerald-900/30 border ${themeClasses.footer.button.border} hover:border-emerald-500/50 transition-all duration-300 overflow-hidden`}
+                className={`group relative ${themeClasses.text.secondary} hover:${themeClasses.text.primary} ${themeClasses.button.bg} hover:bg-emerald-900/30 border ${themeClasses.button.border} hover:border-emerald-500/50 transition-all duration-300 overflow-hidden`}
                 onClick={() => setShowCredits(true)}
               >
                 {/* Animated background */}
@@ -393,20 +423,20 @@ export function Footer() {
                 mass: 0.8
               }}
               className={`
-                relative bg-gradient-to-b ${themeClasses.footer.modal.bg} border ${themeClasses.footer.modal.border} 
+                relative bg-gradient-to-b ${themeClasses.modal.bg} border ${themeClasses.modal.border} 
                 rounded-2xl shadow-2xl w-full max-h-[90vh] overflow-hidden
                 ${isMobileFinal ? 'max-w-sm mx-4' : 'max-w-2xl'}
-                transform-gpu
+                transform-gpu transition-colors duration-300
               `}
               onClick={(e) => e.stopPropagation()}
               style={{
-                boxShadow: theme === 'dark' 
+                boxShadow: currentTheme === 'dark'
                   ? '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(16, 185, 129, 0.1)'
                   : '0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(16, 185, 129, 0.1)'
               }}
             >
               {/* Header with gradient */}
-              <div className={`sticky top-0 bg-gradient-to-r from-emerald-900/40 to-green-900/40 p-5 border-b ${themeClasses.footer.border} backdrop-blur-sm z-10`}>
+              <div className={`sticky top-0 bg-gradient-to-r from-emerald-900/40 to-green-900/40 p-5 border-b ${themeClasses.border} backdrop-blur-sm z-10`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <motion.div
@@ -434,7 +464,7 @@ export function Footer() {
                       )}
                     </motion.div>
                     <div>
-                      <h3 className={`text-lg sm:text-xl font-bold ${themeClasses.footer.modal.text}`}>
+                      <h3 className={`text-lg sm:text-xl font-bold ${themeClasses.modal.text}`}>
                         {t("footer.projectCredits", "Project Credits")}
                       </h3>
                       <motion.p 
@@ -454,14 +484,14 @@ export function Footer() {
                     whileHover={!isMobileFinal ? { 
                       scale: 1.1, 
                       rotate: 90,
-                      backgroundColor: "rgba(255,255,255,0.1)"
+                      backgroundColor: currentTheme === 'dark' ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"
                     } : {}}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setShowCredits(false)}
-                    className="p-2 rounded-full hover:bg-white/10 transition-all duration-200"
+                    className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-all duration-200"
                     aria-label={t("common.close", "Close")}
                   >
-                    <X className={`w-5 h-5 ${themeClasses.footer.text.secondary}`} />
+                    <X className={`w-5 h-5 ${themeClasses.text.secondary}`} />
                   </motion.button>
                 </div>
               </div>
@@ -486,18 +516,18 @@ export function Footer() {
                           y: -2,
                           transition: { type: "spring", stiffness: 400 }
                         } : {}}
-                        className={`group relative ${theme === 'dark' ? 'bg-gray-800/30' : 'bg-gray-100/50'} rounded-xl p-4 border ${themeClasses.footer.border} hover:border-emerald-500/40 transition-all duration-300 overflow-hidden`}
+                        className={`group relative ${currentTheme === 'dark' ? 'bg-gray-800/30' : 'bg-gray-100/50'} rounded-xl p-4 border ${themeClasses.border} hover:border-emerald-500/40 transition-all duration-300 overflow-hidden`}
                       >
                         {/* Hover effect background */}
                         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                         
                         <div className="relative flex items-center gap-3 mb-2">
                           <div className="w-2 h-2 rounded-full bg-emerald-500 group-hover:scale-150 transition-transform duration-300" />
-                          <span className={`text-xs font-medium group-hover:${themeClasses.footer.text.primary} transition-colors ${themeClasses.footer.text.secondary}`}>
+                          <span className={`text-xs font-medium ${themeClasses.text.secondary} transition-colors`}>
                             {item.label}
                           </span>
                         </div>
-                        <span className={`relative font-semibold block text-base group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors ${themeClasses.footer.modal.text}`}>
+                        <span className={`relative font-semibold block text-base group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors ${themeClasses.modal.text}`}>
                           {item.value}
                         </span>
                       </motion.div>
@@ -523,7 +553,7 @@ export function Footer() {
                   >
                     <Button
                       variant="outline"
-                      className={`group relative w-full bg-gradient-to-br ${themeClasses.footer.modal.bg} border ${themeClasses.footer.border} hover:border-emerald-500/60 hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 overflow-hidden`}
+                      className={`group relative w-full bg-gradient-to-br ${themeClasses.modal.bg} border ${themeClasses.border} hover:border-emerald-500/60 hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 overflow-hidden`}
                       onClick={() => window.open("https://github.com/freroxx/recyclage", "_blank")}
                     >
                       {/* Animated gradient background */}
@@ -580,7 +610,7 @@ export function Footer() {
                           }}
                           className="text-emerald-600 dark:text-emerald-400 group-hover:text-emerald-500 dark:group-hover:text-emerald-300 transition-colors"
                         >
-                          ✔️
+                          →
                         </motion.span>
                       </div>
                       
@@ -626,9 +656,9 @@ export function Footer() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.7 }}
-                    className={`mt-6 pt-5 border-t ${themeClasses.footer.border}`}
+                    className={`mt-6 pt-5 border-t ${themeClasses.border}`}
                   >
-                    <h4 className={`text-sm font-semibold flex items-center gap-2 mb-3 ${themeClasses.footer.text.secondary}`}>
+                    <h4 className={`text-sm font-semibold flex items-center gap-2 mb-3 ${themeClasses.text.secondary}`}>
                       <span>⚡</span>
                       {t("footer.credits.builtWith", "Built With")}
                     </h4>
@@ -644,7 +674,7 @@ export function Footer() {
                             y: -2,
                             transition: { type: "spring", stiffness: 400 }
                           } : {}}
-                          className={`px-3 py-2 text-xs rounded-lg ${theme === 'dark' ? 'bg-gray-800/50' : 'bg-gray-100'} ${themeClasses.footer.text.secondary} border ${themeClasses.footer.border} hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-700 dark:hover:text-emerald-300 transition-all duration-300 flex items-center gap-2`}
+                          className={`px-3 py-2 text-xs rounded-lg ${currentTheme === 'dark' ? 'bg-gray-800/50' : 'bg-gray-100'} ${themeClasses.text.secondary} border ${themeClasses.border} hover:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-700 dark:hover:text-emerald-300 transition-all duration-300 flex items-center gap-2`}
                         >
                           <span>{tech.icon}</span>
                           <span>{tech.name}</span>
@@ -658,7 +688,11 @@ export function Footer() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.9 }}
-                    className="mt-6 p-4 rounded-xl bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/10 dark:to-green-900/10 border border-emerald-200 dark:border-emerald-800/20"
+                    className={`mt-6 p-4 rounded-xl bg-gradient-to-r ${
+                      currentTheme === 'dark' 
+                        ? 'from-emerald-900/10 to-green-900/10 border border-emerald-800/20' 
+                        : 'from-emerald-50 to-green-50 border border-emerald-200'
+                    }`}
                   >
                     <div className="flex items-center gap-3">
                       <motion.div
@@ -676,7 +710,7 @@ export function Footer() {
                       >
                         ♻️
                       </motion.div>
-                      <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                      <p className={`text-sm ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                         {t("footer.thankYou", "Thank you for supporting sustainable education!")}
                       </p>
                     </div>
@@ -685,13 +719,15 @@ export function Footer() {
               </div>
 
               {/* Footer with version */}
-              <div className={`sticky bottom-0 p-4 border-t ${themeClasses.footer.border} ${theme === 'dark' ? 'bg-gray-900/90' : 'bg-white/90'} backdrop-blur-sm`}>
+              <div className={`sticky bottom-0 p-4 border-t ${themeClasses.border} ${
+                currentTheme === 'dark' ? 'bg-gray-900/90' : 'bg-white/90'
+              } backdrop-blur-sm`}>
                 <div className="flex justify-between items-center">
-                  <span className={`text-xs ${themeClasses.footer.text.muted}`}>
+                  <span className={`text-xs ${themeClasses.text.muted}`}>
                     {t("footer.credits.lastUpdated", "Updated")}: 20 Dec 2025
                   </span>
                   <span className="text-xs text-emerald-600 dark:text-emerald-400 px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/20">
-                    v2.2
+                    v2.3
                   </span>
                 </div>
               </div>
