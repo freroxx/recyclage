@@ -32,9 +32,6 @@ import {
   Heart,
   RotateCw,
   ChevronRight,
-  ThumbsUp,
-  MessageCircle,
-  Eye as EyeIcon,
   Filter,
   Grid,
   List,
@@ -58,9 +55,6 @@ interface Video {
   aspect?: 'landscape' | 'portrait';
   creator?: { name: string; role: string };
   isShort?: boolean;
-  views?: number;
-  likes?: number;
-  comments?: number;
   tags?: string[];
 }
 
@@ -78,7 +72,6 @@ interface VideoCardProps {
   getLocalizedText: (text: { fr: string; en: string } | string) => string;
   getThumbnailUrl: (youtubeId: string, isShort?: boolean) => string;
   formatDate: (dateString: string) => string;
-  formatNumber: (num?: number) => string;
   onVideoSelect: (video: Video) => void;
   onCharacterInfoClick?: () => void;
   onThumbnailClick: (e: React.MouseEvent, video: Video) => void;
@@ -167,7 +160,7 @@ export default function Videos() {
     }
   ], [language]);
 
-  // Videos data - COMPLETE AND CORRECT
+  // Videos data - REMOVED THE "CHANNEL HIGHLIGHTS" VIDEO
   const videos: Video[] = useMemo(() => [
     // Channel Videos
     {
@@ -187,31 +180,7 @@ export default function Videos() {
       type: "channel",
       aspect: "landscape",
       creator: { name: "Yahia", role: language === 'fr' ? "Développeur Principal" : "Lead Developer" },
-      views: 1250,
-      likes: 98,
-      comments: 23,
       tags: ["showcase", "website", "présentation"]
-    },
-    {
-      id: "channel-highlights",
-      title: {
-        fr: "Meilleurs Moments de la Chaîne",
-        en: "Channel Highlights"
-      },
-      description: {
-        fr: "Compilation des meilleurs moments de notre chaîne YouTube éducative",
-        en: "Compilation of the best moments from our educational YouTube channel"
-      },
-      youtubeId: "fKopy74weus",
-      duration: "2:30",
-      publishDate: "2025-12-05",
-      category: { fr: "Compilation", en: "Compilation" },
-      type: "channel",
-      aspect: "landscape",
-      views: 890,
-      likes: 67,
-      comments: 15,
-      tags: ["highlights", "compilation", "best moments"]
     },
     
     // Community Shorts
@@ -233,9 +202,6 @@ export default function Videos() {
       aspect: "portrait",
       creator: { name: "Salsabile", role: language === 'fr' ? "Artiste & Créatrice" : "Artist & Creator" },
       isShort: true,
-      views: 2150,
-      likes: 156,
-      comments: 42,
       tags: ["reuse", "cat", "salsabile", "short"]
     },
     {
@@ -256,9 +222,6 @@ export default function Videos() {
       aspect: "portrait",
       creator: { name: "Salsabile", role: language === 'fr' ? "Artiste & Créatrice" : "Artist & Creator" },
       isShort: true,
-      views: 1890,
-      likes: 143,
-      comments: 37,
       tags: ["laundry", "eco-friendly", "salsabile", "short"]
     },
     {
@@ -279,9 +242,6 @@ export default function Videos() {
       aspect: "portrait",
       creator: { name: "Salsabile", role: language === 'fr' ? "Artiste & Créatrice" : "Artist & Creator" },
       isShort: true,
-      views: 2450,
-      likes: 198,
-      comments: 56,
       tags: ["bottles", "recycling", "salsabile", "short"]
     },
     {
@@ -302,9 +262,6 @@ export default function Videos() {
       aspect: "portrait",
       creator: { name: "Salsabile", role: language === 'fr' ? "Artiste & Créatrice" : "Artist & Creator" },
       isShort: true,
-      views: 1780,
-      likes: 134,
-      comments: 31,
       tags: ["trailer", "future", "salsabile", "short"]
     },
     {
@@ -325,9 +282,6 @@ export default function Videos() {
       aspect: "portrait",
       creator: { name: "Salsabile", role: language === 'fr' ? "Artiste & Créatrice" : "Artist & Creator" },
       isShort: true,
-      views: 2010,
-      likes: 167,
-      comments: 45,
       tags: ["crafting", "recycling", "salsabile", "short"]
     },
     
@@ -348,9 +302,6 @@ export default function Videos() {
       category: { fr: "Éducation", en: "Education" },
       type: "tutorial",
       aspect: "landscape",
-      views: 5420,
-      likes: 432,
-      comments: 89,
       tags: ["recycling", "introduction", "education", "tutorial"]
     },
     {
@@ -369,9 +320,6 @@ export default function Videos() {
       category: { fr: "Processus", en: "Process" },
       type: "tutorial",
       aspect: "landscape",
-      views: 3890,
-      likes: 321,
-      comments: 67,
       tags: ["paper", "cardboard", "recycling", "process"]
     },
     {
@@ -390,9 +338,6 @@ export default function Videos() {
       category: { fr: "Documentaire", en: "Documentary" },
       type: "tutorial",
       aspect: "landscape",
-      views: 4560,
-      likes: 398,
-      comments: 78,
       tags: ["sorting", "journey", "documentary", "waste"]
     },
     {
@@ -411,9 +356,6 @@ export default function Videos() {
       category: { fr: "Éducation", en: "Education" },
       type: "tutorial",
       aspect: "landscape",
-      views: 5120,
-      likes: 445,
-      comments: 92,
       tags: ["plastic", "recycling", "environment", "education"]
     },
     {
@@ -432,9 +374,6 @@ export default function Videos() {
       category: { fr: "Guide Pratique", en: "Practical Guide" },
       type: "tutorial",
       aspect: "landscape",
-      views: 4780,
-      likes: 412,
-      comments: 85,
       tags: ["composting", "home", "gardening", "organic"]
     }
   ], [language]);
@@ -500,13 +439,6 @@ export default function Videos() {
     });
   }, [language]);
 
-  const formatNumber = useCallback((num?: number) => {
-    if (!num) return '0';
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-    return num.toString();
-  }, []);
-
   // Video selection
   const handleVideoSelect = useCallback((video: Video) => {
     setIsLoading(true);
@@ -518,7 +450,6 @@ export default function Videos() {
     setShowInterface(true);
     setShowControls(true);
     
-    // Clear any existing timeout
     if (controlsTimeoutRef.current) {
       clearTimeout(controlsTimeoutRef.current);
     }
@@ -680,7 +611,6 @@ export default function Videos() {
     const isShort = selectedVideo.isShort;
     
     if (isMobile) {
-      // Mobile - full screen
       return {
         position: 'fixed',
         top: '50%',
@@ -695,7 +625,6 @@ export default function Videos() {
         zIndex: 50,
       };
     } else {
-      // Desktop - centered modal
       if (isPortrait || isShort) {
         return {
           position: 'fixed',
@@ -830,14 +759,13 @@ export default function Videos() {
     if (viewMode === 'grid') {
       return (
         <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'} gap-6`}>
-          {filteredVideos.map((video, index) => (
+          {filteredVideos.map((video) => (
             <VideoCard
               key={video.id}
               video={video}
               getLocalizedText={getLocalizedText}
               getThumbnailUrl={getThumbnailUrl}
               formatDate={formatDate}
-              formatNumber={formatNumber}
               onVideoSelect={handleVideoSelect}
               onCharacterInfoClick={handleCharacterSelectionOpen}
               onThumbnailClick={handleThumbnailClick}
@@ -854,14 +782,13 @@ export default function Videos() {
     } else {
       return (
         <div className="space-y-4 max-w-4xl mx-auto">
-          {filteredVideos.map((video, index) => (
+          {filteredVideos.map((video) => (
             <ListViewVideoCard
               key={video.id}
               video={video}
               getLocalizedText={getLocalizedText}
               getThumbnailUrl={getThumbnailUrl}
               formatDate={formatDate}
-              formatNumber={formatNumber}
               onVideoSelect={handleVideoSelect}
               onCharacterInfoClick={handleCharacterSelectionOpen}
               language={language}
@@ -1207,12 +1134,6 @@ export default function Videos() {
                             {selectedVideo.duration}
                           </span>
                         )}
-                        {selectedVideo.views && (
-                          <span className="flex items-center gap-1.5">
-                            <EyeIcon className="w-4 h-4" />
-                            {formatNumber(selectedVideo.views)}
-                          </span>
-                        )}
                       </div>
                       
                       <Button
@@ -1356,7 +1277,6 @@ const VideoCard = memo(({
   getLocalizedText,
   getThumbnailUrl,
   formatDate,
-  formatNumber,
   onVideoSelect,
   onCharacterInfoClick,
   onThumbnailClick,
@@ -1492,30 +1412,6 @@ const VideoCard = memo(({
               )}
             </div>
             
-            {/* Stats */}
-            {(video.views || video.likes || video.comments) && (
-              <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2 border-t">
-                {video.views && (
-                  <span className="flex items-center gap-1">
-                    <EyeIcon className="w-3 h-3" />
-                    {formatNumber(video.views)}
-                  </span>
-                )}
-                {video.likes && (
-                  <span className="flex items-center gap-1">
-                    <ThumbsUp className="w-3 h-3" />
-                    {formatNumber(video.likes)}
-                  </span>
-                )}
-                {video.comments && (
-                  <span className="flex items-center gap-1">
-                    <MessageCircle className="w-3 h-3" />
-                    {formatNumber(video.comments)}
-                  </span>
-                )}
-              </div>
-            )}
-            
             {/* Footer */}
             <div className="flex items-center justify-between pt-3 border-t">
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -1555,7 +1451,6 @@ const ListViewVideoCard = memo(({
   getLocalizedText,
   getThumbnailUrl,
   formatDate,
-  formatNumber,
   onVideoSelect,
   onCharacterInfoClick,
   language,
@@ -1678,24 +1573,12 @@ const ListViewVideoCard = memo(({
               )}
             </div>
             
-            {/* Stats and Metadata */}
+            {/* Metadata */}
             <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground pt-3 border-t">
               {video.publishDate && (
                 <span className="flex items-center gap-1.5">
                   <Calendar className="w-4 h-4" />
                   {formatDate(video.publishDate)}
-                </span>
-              )}
-              {video.views && (
-                <span className="flex items-center gap-1.5">
-                  <EyeIcon className="w-4 h-4" />
-                  {formatNumber(video.views)} {language === 'fr' ? 'vues' : 'views'}
-                </span>
-              )}
-              {video.likes && (
-                <span className="flex items-center gap-1.5">
-                  <ThumbsUp className="w-4 h-4" />
-                  {formatNumber(video.likes)} {language === 'fr' ? 'j\'aime' : 'likes'}
                 </span>
               )}
             </div>
