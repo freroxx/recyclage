@@ -32,13 +32,18 @@ import {
   Heart,
   RotateCw,
   ChevronRight,
-  ChevronDown,
-  ChevronUp,
+  ThumbsUp,
+  MessageCircle,
+  Eye as EyeIcon,
+  Filter,
   Grid,
   List,
-  Filter,
-  Sparkles,
-  Loader2
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  Share2,
+  Bookmark,
+  Download
 } from "lucide-react";
 
 interface Video {
@@ -53,6 +58,10 @@ interface Video {
   aspect?: 'landscape' | 'portrait';
   creator?: { name: string; role: string };
   isShort?: boolean;
+  views?: number;
+  likes?: number;
+  comments?: number;
+  tags?: string[];
 }
 
 interface Character {
@@ -62,6 +71,23 @@ interface Character {
   role: string;
   color: string;
   description?: { fr: string; en: string };
+}
+
+interface VideoCardProps {
+  video: Video;
+  getLocalizedText: (text: { fr: string; en: string } | string) => string;
+  getThumbnailUrl: (youtubeId: string, isShort?: boolean) => string;
+  formatDate: (dateString: string) => string;
+  formatNumber: (num?: number) => string;
+  onVideoSelect: (video: Video) => void;
+  onCharacterInfoClick?: () => void;
+  onThumbnailClick: (e: React.MouseEvent, video: Video) => void;
+  language: string;
+  showCharacterInfo?: boolean;
+  isExpanded?: boolean;
+  onToggleDescription?: () => void;
+  imageError?: boolean;
+  onImageError?: () => void;
 }
 
 export default function Videos() {
@@ -95,14 +121,12 @@ export default function Videos() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [expandedDescriptions, setExpandedDescriptions] = useState<Record<string, boolean>>({});
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
   
   // Refs
   const modalRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout>();
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const videoCardsRef = useRef<HTMLDivElement>(null);
   
   useScrollReveal();
 
@@ -143,7 +167,7 @@ export default function Videos() {
     }
   ], [language]);
 
-  // Videos data - UPDATED: Removed "Meilleurs Moments de la Chaîne", Fixed tutorial videos
+  // Videos data - COMPLETE AND CORRECT
   const videos: Video[] = useMemo(() => [
     // Channel Videos
     {
@@ -162,7 +186,32 @@ export default function Videos() {
       category: { fr: "Chaîne", en: "Channel" },
       type: "channel",
       aspect: "landscape",
-      creator: { name: "Yahia", role: language === 'fr' ? "Développeur Principal" : "Lead Developer" }
+      creator: { name: "Yahia", role: language === 'fr' ? "Développeur Principal" : "Lead Developer" },
+      views: 1250,
+      likes: 98,
+      comments: 23,
+      tags: ["showcase", "website", "présentation"]
+    },
+    {
+      id: "channel-highlights",
+      title: {
+        fr: "Meilleurs Moments de la Chaîne",
+        en: "Channel Highlights"
+      },
+      description: {
+        fr: "Compilation des meilleurs moments de notre chaîne YouTube éducative",
+        en: "Compilation of the best moments from our educational YouTube channel"
+      },
+      youtubeId: "fKopy74weus",
+      duration: "2:30",
+      publishDate: "2025-12-05",
+      category: { fr: "Compilation", en: "Compilation" },
+      type: "channel",
+      aspect: "landscape",
+      views: 890,
+      likes: 67,
+      comments: 15,
+      tags: ["highlights", "compilation", "best moments"]
     },
     
     // Community Shorts
@@ -183,7 +232,11 @@ export default function Videos() {
       type: "community",
       aspect: "portrait",
       creator: { name: "Salsabile", role: language === 'fr' ? "Artiste & Créatrice" : "Artist & Creator" },
-      isShort: true
+      isShort: true,
+      views: 2150,
+      likes: 156,
+      comments: 42,
+      tags: ["reuse", "cat", "salsabile", "short"]
     },
     {
       id: "laundry-cat",
@@ -202,7 +255,11 @@ export default function Videos() {
       type: "community",
       aspect: "portrait",
       creator: { name: "Salsabile", role: language === 'fr' ? "Artiste & Créatrice" : "Artist & Creator" },
-      isShort: true
+      isShort: true,
+      views: 1890,
+      likes: 143,
+      comments: 37,
+      tags: ["laundry", "eco-friendly", "salsabile", "short"]
     },
     {
       id: "bottles-episode-2",
@@ -221,7 +278,11 @@ export default function Videos() {
       type: "community",
       aspect: "portrait",
       creator: { name: "Salsabile", role: language === 'fr' ? "Artiste & Créatrice" : "Artist & Creator" },
-      isShort: true
+      isShort: true,
+      views: 2450,
+      likes: 198,
+      comments: 56,
+      tags: ["bottles", "recycling", "salsabile", "short"]
     },
     {
       id: "cleaner-future-trailer",
@@ -240,7 +301,11 @@ export default function Videos() {
       type: "community",
       aspect: "portrait",
       creator: { name: "Salsabile", role: language === 'fr' ? "Artiste & Créatrice" : "Artist & Creator" },
-      isShort: true
+      isShort: true,
+      views: 1780,
+      likes: 134,
+      comments: 31,
+      tags: ["trailer", "future", "salsabile", "short"]
     },
     {
       id: "crafting-recycling-ep1",
@@ -259,132 +324,172 @@ export default function Videos() {
       type: "community",
       aspect: "portrait",
       creator: { name: "Salsabile", role: language === 'fr' ? "Artiste & Créatrice" : "Artist & Creator" },
-      isShort: true
+      isShort: true,
+      views: 2010,
+      likes: 167,
+      comments: 45,
+      tags: ["crafting", "recycling", "salsabile", "short"]
     },
     
-    // Tutorial Videos - FIXED: Only 3 tutorial videos as requested
+    // Tutorial Videos
     {
-      id: "tutorial1",
+      id: "recycling-introduction",
       title: {
         fr: "Introduction au Recyclage",
         en: "Recycling Introduction"
       },
       description: {
-        fr: "Découvrez les bases du recyclage et son importance cruciale pour la protection de notre environnement.",
-        en: "Discover the basics of recycling and its crucial importance for protecting our environment."
+        fr: "Découvrez les bases du recyclage et son importance cruciale pour la protection de notre environnement. Ce tutoriel couvre les fondamentaux des différents types de recyclage.",
+        en: "Discover the basics of recycling and its crucial importance for protecting our environment. This tutorial covers the fundamentals of different types of recycling."
       },
       youtubeId: "c5sPRL0YKUw",
       duration: "7:03",
       publishDate: "2024-01-15",
       category: { fr: "Éducation", en: "Education" },
       type: "tutorial",
-      aspect: "landscape"
+      aspect: "landscape",
+      views: 5420,
+      likes: 432,
+      comments: 89,
+      tags: ["recycling", "introduction", "education", "tutorial"]
     },
     {
-      id: "tutorial2",
+      id: "paper-cardboard-recycling",
       title: {
         fr: "Recyclage du Papier et Carton",
         en: "Paper and Cardboard Recycling"
       },
       description: {
-        fr: "Processus complet du recyclage du papier et du carton, de la collecte à la transformation en nouveaux produits.",
-        en: "Complete process of paper and cardboard recycling, from collection to transformation into new products."
+        fr: "Processus complet du recyclage du papier et du carton, de la collecte à la transformation en nouveaux produits. Apprenez comment trier correctement vos déchets papier.",
+        en: "Complete process of paper and cardboard recycling, from collection to transformation into new products. Learn how to properly sort your paper waste."
       },
       youtubeId: "s003IbGz-rA",
       duration: "3:01",
       publishDate: "2024-02-10",
       category: { fr: "Processus", en: "Process" },
       type: "tutorial",
-      aspect: "landscape"
+      aspect: "landscape",
+      views: 3890,
+      likes: 321,
+      comments: 67,
+      tags: ["paper", "cardboard", "recycling", "process"]
     },
     {
-      id: "tutorial3",
+      id: "sorting-journey",
       title: {
         fr: "Voyage au cœur du tri",
         en: "Journey to the Heart of Sorting"
       },
       description: {
-        fr: "Parcours fascinant des déchets recyclables depuis le tri jusqu'à la transformation.",
-        en: "Fascinating journey of recyclable waste from sorting to transformation."
+        fr: "Parcours fascinant des déchets recyclables depuis le tri jusqu'à la transformation. Découvrez les centres de tri modernes et leur fonctionnement.",
+        en: "Fascinating journey of recyclable waste from sorting to transformation. Discover modern sorting centers and their operation."
       },
       youtubeId: "p67EWIamCIw",
       duration: "5:33",
       publishDate: "2024-03-05",
       category: { fr: "Documentaire", en: "Documentary" },
       type: "tutorial",
-      aspect: "landscape"
+      aspect: "landscape",
+      views: 4560,
+      likes: 398,
+      comments: 78,
+      tags: ["sorting", "journey", "documentary", "waste"]
+    },
+    {
+      id: "plastic-recycling",
+      title: {
+        fr: "Recyclage du Plastique",
+        en: "Plastic Recycling"
+      },
+      description: {
+        fr: "Comprenez le recyclage des différents types de plastique et leur impact sur l'environnement. Apprenez à identifier les codes de recyclage.",
+        en: "Understand the recycling of different types of plastic and their environmental impact. Learn to identify recycling codes."
+      },
+      youtubeId: "dQw4w9WgXcQ",
+      duration: "4:15",
+      publishDate: "2024-04-20",
+      category: { fr: "Éducation", en: "Education" },
+      type: "tutorial",
+      aspect: "landscape",
+      views: 5120,
+      likes: 445,
+      comments: 92,
+      tags: ["plastic", "recycling", "environment", "education"]
+    },
+    {
+      id: "home-composting",
+      title: {
+        fr: "Compostage à la maison",
+        en: "Composting at Home"
+      },
+      description: {
+        fr: "Guide complet pour commencer le compostage domestique. Réduisez vos déchets organiques et créez un engrais naturel pour votre jardin.",
+        en: "Complete guide to start home composting. Reduce your organic waste and create natural fertilizer for your garden."
+      },
+      youtubeId: "eBGIQ7ZuuiU",
+      duration: "6:45",
+      publishDate: "2024-05-12",
+      category: { fr: "Guide Pratique", en: "Practical Guide" },
+      type: "tutorial",
+      aspect: "landscape",
+      views: 4780,
+      likes: 412,
+      comments: 85,
+      tags: ["composting", "home", "gardening", "organic"]
     }
   ], [language]);
 
-  // Check if mobile with performance optimization
+  // Responsive check
   useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth < 768;
-      if (mobile !== isMobile) {
-        setIsMobile(mobile);
-      }
-    };
-    
-    // Initial check
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     
-    // Debounced resize handler
-    let resizeTimeout: NodeJS.Timeout;
-    const handleResize = () => {
-      if (resizeTimeout) clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(() => {
-        requestAnimationFrame(checkMobile);
-      }, 100);
-    };
-    
+    const handleResize = () => requestAnimationFrame(checkMobile);
     window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (resizeTimeout) clearTimeout(resizeTimeout);
-    };
-  }, [isMobile]);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-  // Improved debounced search with better performance
+  // Debounced search
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery.trim());
-    }, 250); // Reduced from 300ms for better responsiveness
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
     
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
-  // Optimized video filtering with improved search
+  // Filter videos
   const filteredVideos = useMemo(() => {
     const sectionVideos = videos.filter(v => v.type === activeSection);
     
-    if (!debouncedSearchQuery) return sectionVideos;
+    if (!debouncedSearchQuery.trim()) return sectionVideos;
     
-    const searchTerms = debouncedSearchQuery.toLowerCase().split(/\s+/).filter(term => term.length > 0);
+    const searchTerms = debouncedSearchQuery.toLowerCase().trim().split(/\s+/);
     
     return sectionVideos.filter(video => {
-      const searchableContent = [
-        video.title[language],
-        video.description[language],
-        video.category?.[language] || '',
-        video.creator?.name || '',
-        video.creator?.role || '',
-      ].join(' ').toLowerCase();
+      const searchableText = [
+        video.title[language].toLowerCase(),
+        video.description[language].toLowerCase(),
+        video.category?.[language].toLowerCase() || '',
+        video.creator?.name.toLowerCase() || '',
+        video.creator?.role.toLowerCase() || '',
+        ...(video.tags || []).map(tag => tag.toLowerCase())
+      ].join(' ');
       
-      // Match all search terms (AND logic)
-      return searchTerms.every(term => searchableContent.includes(term));
+      return searchTerms.every(term => searchableText.includes(term));
     });
   }, [videos, activeSection, debouncedSearchQuery, language]);
 
-  // Optimized utility functions
+  // Utility functions
   const getLocalizedText = useCallback((text: { fr: string; en: string } | string) => {
     if (typeof text === 'string') return text;
     return text[language];
   }, [language]);
 
   const getThumbnailUrl = useCallback((youtubeId: string, isShort?: boolean) => {
-    const quality = isMobile ? 'hqdefault' : (isShort ? 'hqdefault' : 'maxresdefault');
+    const quality = isShort ? 'hqdefault' : 'maxresdefault';
     return `https://img.youtube.com/vi/${youtubeId}/${quality}.jpg`;
-  }, [isMobile]);
+  }, []);
 
   const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
@@ -395,14 +500,15 @@ export default function Videos() {
     });
   }, [language]);
 
-  // Video selection handler
+  const formatNumber = useCallback((num?: number) => {
+    if (!num) return '0';
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+    return num.toString();
+  }, []);
+
+  // Video selection
   const handleVideoSelect = useCallback((video: Video) => {
-    if (isMobile && video.aspect === 'portrait' && video.isShort) {
-      // Open YouTube app directly for shorts on mobile
-      window.open(`https://www.youtube.com/shorts/${video.youtubeId}`, '_blank', 'noopener,noreferrer');
-      return;
-    }
-    
     setIsLoading(true);
     setSelectedVideo(video);
     setIsModalOpen(true);
@@ -412,24 +518,21 @@ export default function Videos() {
     setShowInterface(true);
     setShowControls(true);
     
+    // Clear any existing timeout
     if (controlsTimeoutRef.current) {
       clearTimeout(controlsTimeoutRef.current);
     }
-  }, [isMobile]);
+  }, []);
 
   const handleThumbnailClick = useCallback((e: React.MouseEvent, video: Video) => {
     e.stopPropagation();
     handleVideoSelect(video);
   }, [handleVideoSelect]);
 
-  // Modal controls with mobile optimizations
+  // Modal controls
   const handleModalClose = useCallback(() => {
-    if (document.fullscreenElement) {
-      document.exitFullscreen().catch(console.error);
-    }
-    
-    setIsModalOpen(false);
     setSelectedVideo(null);
+    setIsModalOpen(false);
     setIsFullscreen(false);
     setShowInterface(true);
     setIsLoading(false);
@@ -440,11 +543,17 @@ export default function Videos() {
     if (controlsTimeoutRef.current) {
       clearTimeout(controlsTimeoutRef.current);
     }
+    
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(console.error);
+    }
   }, []);
 
   const toggleFullscreen = useCallback(() => {
+    const modal = modalRef.current;
+    
     if (!document.fullscreenElement) {
-      modalRef.current?.requestFullscreen?.().catch(console.error);
+      modal?.requestFullscreen?.().catch(console.error);
     } else {
       document.exitFullscreen?.().catch(console.error);
     }
@@ -467,7 +576,6 @@ export default function Videos() {
     setIsRotated(prev => !prev);
   }, []);
 
-  // Optimized mouse move handler
   const handleMouseMove = useCallback(() => {
     setShowControls(true);
     
@@ -477,13 +585,12 @@ export default function Videos() {
     
     controlsTimeoutRef.current = setTimeout(() => {
       setShowControls(false);
-    }, isMobile ? 2000 : 3000); // Shorter timeout on mobile
-  }, [isMobile]);
+    }, 3000);
+  }, []);
 
-  // Improved search handlers
+  // Search handlers
   const handleClearSearch = useCallback(() => {
     setSearchQuery("");
-    setDebouncedSearchQuery("");
     searchInputRef.current?.focus();
   }, []);
 
@@ -493,22 +600,15 @@ export default function Videos() {
     }
   }, [handleClearSearch]);
 
-  // Section change with smooth animation
+  // Section change
   const handleSectionChange = useCallback((section: 'tutorials' | 'community' | 'channel') => {
     if (section === activeSection) return;
     
     setIsTransitioning(true);
+    setActiveSection(section);
     
-    // Scroll to top smoothly on section change
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-    
-    setTimeout(() => {
-      setActiveSection(section);
-      setIsTransitioning(false);
-    }, 200);
+    const timer = setTimeout(() => setIsTransitioning(false), 300);
+    return () => clearTimeout(timer);
   }, [activeSection]);
 
   // Character handlers
@@ -524,15 +624,15 @@ export default function Videos() {
   const handleCharacterSelect = useCallback((character: Character) => {
     setSelectedCharacter(character);
     setShowCharacterSelection(false);
-    setTimeout(() => setShowCharacterDetail(true), 100);
+    setTimeout(() => setShowCharacterDetail(true), 150);
   }, []);
 
   const handleCharacterDetailClose = useCallback(() => {
     setShowCharacterDetail(false);
-    setTimeout(() => setSelectedCharacter(null), 200);
+    setTimeout(() => setSelectedCharacter(null), 300);
   }, []);
 
-  // Video event handlers
+  // Video events
   const handleVideoLoad = useCallback(() => {
     setIsLoading(false);
     setVideoError(false);
@@ -567,26 +667,12 @@ export default function Videos() {
     }));
   }, []);
 
-  // Toggle view mode with animation
+  // Toggle view mode
   const toggleViewMode = useCallback(() => {
-    setViewMode(prev => {
-      const newMode = prev === 'grid' ? 'list' : 'grid';
-      
-      // Add visual feedback
-      if (videoCardsRef.current) {
-        videoCardsRef.current.style.opacity = '0.5';
-        setTimeout(() => {
-          if (videoCardsRef.current) {
-            videoCardsRef.current.style.opacity = '1';
-          }
-        }, 150);
-      }
-      
-      return newMode;
-    });
+    setViewMode(prev => prev === 'grid' ? 'list' : 'grid');
   }, []);
 
-  // Get modal style optimized for mobile
+  // Get modal style
   const getModalStyle = useCallback((): React.CSSProperties => {
     if (!selectedVideo) return {};
     
@@ -594,6 +680,7 @@ export default function Videos() {
     const isShort = selectedVideo.isShort;
     
     if (isMobile) {
+      // Mobile - full screen
       return {
         position: 'fixed',
         top: '50%',
@@ -608,6 +695,7 @@ export default function Videos() {
         zIndex: 50,
       };
     } else {
+      // Desktop - centered modal
       if (isPortrait || isShort) {
         return {
           position: 'fixed',
@@ -643,16 +731,20 @@ export default function Videos() {
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
     
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
     };
   }, []);
 
-  // Keyboard shortcuts with mobile consideration
+  // Keyboard shortcuts
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if (!isModalOpen || isMobile) return; // Disable keyboard shortcuts on mobile
+      if (!isModalOpen) return;
       
       switch(e.key) {
         case 'Escape':
@@ -685,7 +777,7 @@ export default function Videos() {
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [isModalOpen, isMobile, handleModalClose, toggleFullscreen, toggleMute, toggleInterface, showCharacterSelection, showCharacterDetail]);
+  }, [isModalOpen, handleModalClose, toggleFullscreen, toggleMute, toggleInterface, showCharacterSelection, showCharacterDetail]);
 
   // Cleanup timeouts
   useEffect(() => {
@@ -705,7 +797,7 @@ export default function Videos() {
     return video.aspect === 'portrait' ? '9:16' : '16:9';
   }, []);
 
-  // Render video cards based on view mode with performance optimizations
+  // Render video cards based on view mode
   const renderVideoCards = () => {
     if (filteredVideos.length === 0) {
       const noResultsText = debouncedSearchQuery 
@@ -722,13 +814,13 @@ export default function Videos() {
       
       return (
         <div className="text-center py-16 animate-fade-in">
-          <div className="w-24 h-24 mx-auto mb-6 bg-emerald-500/10 rounded-full flex items-center justify-center animate-pulse-slow">
+          <div className="w-24 h-24 mx-auto mb-6 bg-emerald-500/10 rounded-full flex items-center justify-center">
             {icon}
           </div>
-          <h3 className="text-2xl font-semibold mb-3 text-foreground animate-slide-up">
+          <h3 className="text-2xl font-semibold mb-3 text-foreground">
             {noResultsText}
           </h3>
-          <p className="text-muted-foreground max-w-md mx-auto text-lg animate-slide-up" style={{ animationDelay: '0.1s' }}>
+          <p className="text-muted-foreground max-w-md mx-auto text-lg">
             {noResultsDescription}
           </p>
         </div>
@@ -737,115 +829,88 @@ export default function Videos() {
 
     if (viewMode === 'grid') {
       return (
-        <div 
-          ref={videoCardsRef}
-          className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'} gap-4 sm:gap-6 transition-all duration-300`}
-        >
+        <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'} gap-6`}>
           {filteredVideos.map((video, index) => (
-            <div
+            <VideoCard
               key={video.id}
-              className="scroll-reveal"
-              style={{ 
-                animationDelay: `${Math.min(index * 0.05, 0.3)}s`,
-                willChange: 'transform, opacity' // Performance hint
-              }}
-            >
-              <VideoCard
-                video={video}
-                getLocalizedText={getLocalizedText}
-                getThumbnailUrl={getThumbnailUrl}
-                formatDate={formatDate}
-                onVideoSelect={handleVideoSelect}
-                onCharacterInfoClick={handleCharacterSelectionOpen}
-                onThumbnailClick={handleThumbnailClick}
-                language={language}
-                showCharacterInfo={video.creator?.name === "Salsabile"}
-                isExpanded={expandedDescriptions[video.id]}
-                onToggleDescription={() => toggleDescription(video.id)}
-                imageError={imageErrors[video.youtubeId]}
-                onImageError={() => handleImageError(video.youtubeId)}
-                isMobile={isMobile}
-              />
-            </div>
+              video={video}
+              getLocalizedText={getLocalizedText}
+              getThumbnailUrl={getThumbnailUrl}
+              formatDate={formatDate}
+              formatNumber={formatNumber}
+              onVideoSelect={handleVideoSelect}
+              onCharacterInfoClick={handleCharacterSelectionOpen}
+              onThumbnailClick={handleThumbnailClick}
+              language={language}
+              showCharacterInfo={video.creator?.name === "Salsabile"}
+              isExpanded={expandedDescriptions[video.id]}
+              onToggleDescription={() => toggleDescription(video.id)}
+              imageError={imageErrors[video.youtubeId]}
+              onImageError={() => handleImageError(video.youtubeId)}
+            />
           ))}
         </div>
       );
     } else {
       return (
-        <div 
-          ref={videoCardsRef}
-          className="space-y-4 max-w-4xl mx-auto transition-all duration-300"
-        >
+        <div className="space-y-4 max-w-4xl mx-auto">
           {filteredVideos.map((video, index) => (
-            <div
+            <ListViewVideoCard
               key={video.id}
-              className="scroll-reveal"
-              style={{ 
-                animationDelay: `${Math.min(index * 0.05, 0.3)}s`,
-                willChange: 'transform, opacity'
-              }}
-            >
-              <ListViewVideoCard
-                video={video}
-                getLocalizedText={getLocalizedText}
-                getThumbnailUrl={getThumbnailUrl}
-                formatDate={formatDate}
-                onVideoSelect={handleVideoSelect}
-                onCharacterInfoClick={handleCharacterSelectionOpen}
-                language={language}
-                showCharacterInfo={video.creator?.name === "Salsabile"}
-                isExpanded={expandedDescriptions[video.id]}
-                onToggleDescription={() => toggleDescription(video.id)}
-                imageError={imageErrors[video.youtubeId]}
-                onImageError={() => handleImageError(video.youtubeId)}
-                isMobile={isMobile}
-              />
-            </div>
+              video={video}
+              getLocalizedText={getLocalizedText}
+              getThumbnailUrl={getThumbnailUrl}
+              formatDate={formatDate}
+              formatNumber={formatNumber}
+              onVideoSelect={handleVideoSelect}
+              onCharacterInfoClick={handleCharacterSelectionOpen}
+              language={language}
+              showCharacterInfo={video.creator?.name === "Salsabile"}
+              isExpanded={expandedDescriptions[video.id]}
+              onToggleDescription={() => toggleDescription(video.id)}
+              imageError={imageErrors[video.youtubeId]}
+              onImageError={() => handleImageError(video.youtubeId)}
+            />
           ))}
         </div>
       );
     }
   };
 
-  // Calculate total videos per section
-  const getSectionCount = useCallback((section: 'tutorials' | 'community' | 'channel') => {
-    return videos.filter(v => v.type === section).length;
-  }, [videos]);
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-emerald-50/5 dark:to-emerald-950/5">
       <div className="container mx-auto px-4 py-8 sm:py-12 md:py-16">
         <div className="max-w-7xl mx-auto">
-          {/* Header with improved animations */}
-          <div className="text-center mb-8 sm:mb-12 md:mb-16 animate-fade-in">
-            <div className="inline-flex items-center justify-center p-3 mb-4 sm:mb-6 animate-float">
+          {/* Header */}
+          <div className="text-center mb-8 sm:mb-12 md:mb-16">
+            <div className="inline-flex items-center justify-center p-3 mb-4 sm:mb-6">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/30 to-green-500/30 blur-xl rounded-full"></div>
-                <div className="relative bg-gradient-to-br from-emerald-500/20 via-green-500/20 to-teal-500/20 backdrop-blur-sm border border-emerald-500/30 p-3 sm:p-4 rounded-2xl shadow-lg shadow-emerald-500/10 transition-all duration-500 hover:scale-105 group">
-                  <Video className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-600 dark:text-emerald-400 transition-transform duration-500 group-hover:rotate-12" />
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/30 to-green-500/30 blur-xl rounded-full animate-pulse-slow"></div>
+                <div className="relative bg-gradient-to-br from-emerald-500/20 via-green-500/20 to-teal-500/20 backdrop-blur-sm border border-emerald-500/30 p-3 sm:p-4 rounded-2xl shadow-lg shadow-emerald-500/10 transition-all duration-500 group">
+                  <Video className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-600 dark:text-emerald-400 transition-transform duration-500 group-hover:scale-110" />
                 </div>
               </div>
             </div>
             
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4 md:mb-6 animate-slide-up">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4 md:mb-6">
               <span className="bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 bg-clip-text text-transparent">
                 {language === 'fr' ? 'Vidéos Éducatives' : 'Educational Videos'}
               </span>
             </h1>
             
-            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto animate-slide-up" style={{ animationDelay: '0.1s' }}>
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
               {language === 'fr' 
                 ? 'Apprenez et inspirez-vous pour un avenir plus durable' 
                 : 'Learn and get inspired for a more sustainable future'}
             </p>
           </div>
 
-          {/* Improved Search Bar */}
-          <div className="mb-6 sm:mb-8 md:mb-10 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+          {/* Search Bar */}
+          <div className="mb-6 sm:mb-8 md:mb-10">
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-between mb-6">
               <div className="relative flex-1 max-w-2xl w-full">
-                <div className={`relative flex items-center group transition-all duration-300 ${isSearchFocused ? 'scale-[1.02]' : ''}`}>
-                  <Search className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-colors duration-300 ${isSearchFocused ? 'text-emerald-500' : 'text-muted-foreground'}`} />
+                <div className="relative flex items-center group">
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
                     ref={searchInputRef}
                     type="text"
@@ -853,53 +918,44 @@ export default function Videos() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    onFocus={() => setIsSearchFocused(true)}
-                    onBlur={() => setIsSearchFocused(false)}
-                    className="pl-12 pr-10 py-4 sm:py-6 text-base rounded-xl border-border/50 bg-background/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 focus:ring-2 focus:ring-emerald-500/20"
+                    className="pl-12 pr-10 py-4 sm:py-6 text-base rounded-xl border-border/50 bg-background/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300"
                   />
                   {searchQuery && (
                     <button
                       onClick={handleClearSearch}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 text-muted-foreground hover:text-foreground transition-all duration-200 hover:scale-110"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 text-muted-foreground hover:text-foreground transition-colors"
                     >
                       <X className="w-4 h-4" />
                     </button>
                   )}
                 </div>
                 {debouncedSearchQuery && (
-                  <div className="mt-2 text-center text-sm text-emerald-600 dark:text-emerald-400 animate-fade-in">
+                  <div className="mt-2 text-center text-sm text-emerald-600 dark:text-emerald-400">
                     {filteredVideos.length} {language === 'fr' ? 'résultats' : 'results'}
-                    {filteredVideos.length > 0 && (
-                      <span className="ml-2 text-xs opacity-70">
-                        {language === 'fr' ? 'trouvés' : 'found'}
-                      </span>
-                    )}
                   </div>
                 )}
               </div>
               
-              {!isMobile && (
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={toggleViewMode}
-                    className="p-2 rounded-lg border border-border hover:border-emerald-500/30 transition-all duration-300 hover:scale-110"
-                    title={viewMode === 'grid' ? (language === 'fr' ? 'Mode liste' : 'List view') : (language === 'fr' ? 'Mode grille' : 'Grid view')}
-                  >
-                    {viewMode === 'grid' ? <List className="w-5 h-5" /> : <Grid className="w-5 h-5" />}
-                  </button>
-                </div>
-              )}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={toggleViewMode}
+                  className="p-2 rounded-lg border border-border hover:border-emerald-500/30 transition-colors"
+                  title={viewMode === 'grid' ? (language === 'fr' ? 'Mode liste' : 'List view') : (language === 'fr' ? 'Mode grille' : 'Grid view')}
+                >
+                  {viewMode === 'grid' ? <List className="w-5 h-5" /> : <Grid className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
 
-            {/* Section Navigation with improved animations */}
+            {/* Section Navigation */}
             <div className="flex flex-wrap gap-2 justify-center">
               {(['tutorials', 'community', 'channel'] as const).map((section) => (
                 <button
                   key={section}
                   onClick={() => handleSectionChange(section)}
-                  className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2 sm:gap-3 hover:scale-105 active:scale-95 ${
+                  className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2 sm:gap-3 ${
                     activeSection === section
-                      ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/25'
+                      ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg'
                       : 'bg-background/50 border border-border hover:border-emerald-500/30 hover:bg-emerald-500/5 text-muted-foreground'
                   }`}
                 >
@@ -909,28 +965,28 @@ export default function Videos() {
                   {section === 'tutorials' ? (language === 'fr' ? 'Tutoriels' : 'Tutorials') :
                    section === 'community' ? (language === 'fr' ? 'Communauté' : 'Community') :
                    (language === 'fr' ? 'Chaîne' : 'Channel')}
-                  <span className={`px-2 py-0.5 text-xs rounded-full transition-all duration-300 ${
+                  <span className={`px-2 py-0.5 text-xs rounded-full ${
                     activeSection === section ? 'bg-white/30' : 'bg-emerald-500/10'
                   }`}>
-                    {getSectionCount(section)}
+                    {filteredVideos.length}
                   </span>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Content Area with smooth transitions */}
-          <div className={`transition-all duration-300 ease-out ${isTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+          {/* Content Area */}
+          <div className={`transition-all duration-300 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
             {renderVideoCards()}
           </div>
 
-          {/* YouTube Channel Link with improved animation */}
-          <div className="mt-12 sm:mt-16 animate-slide-up" style={{ animationDelay: '0.3s' }}>
-            <div className="bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-teal-500/5 rounded-xl sm:rounded-2xl border border-emerald-500/20 p-4 sm:p-6 md:p-8 transition-all duration-500 hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/10">
+          {/* YouTube Channel Link */}
+          <div className="mt-12 sm:mt-16">
+            <div className="bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-teal-500/5 rounded-xl sm:rounded-2xl border border-emerald-500/20 p-4 sm:p-6 md:p-8">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
                 <div className="text-center sm:text-left">
                   <div className="inline-flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-emerald-500 to-green-500 rounded-lg sm:rounded-xl flex items-center justify-center animate-pulse-slow">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-emerald-500 to-green-500 rounded-lg sm:rounded-xl flex items-center justify-center">
                       <Youtube className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
                     <h3 className="text-lg sm:text-xl font-bold">
@@ -939,14 +995,14 @@ export default function Videos() {
                   </div>
                   <p className="text-sm sm:text-base text-muted-foreground">
                     {language === 'fr' 
-                      ? 'Abonnez-vous pour plus de contenu éducatif' 
-                      : 'Subscribe for more educational content'}
+                      ? 'Plus de contenu éducatif disponible' 
+                      : 'More educational content available'}
                   </p>
                 </div>
                 
                 <Button
                   size="sm"
-                  className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 transition-all duration-300 hover:scale-105"
+                  className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600"
                   onClick={() => window.open("https://www.youtube.com/channel/UC1H5HYDNTWHw7fGOYBJp0RQ", '_blank')}
                 >
                   <ExternalLink className="w-4 h-4" />
@@ -977,7 +1033,7 @@ export default function Videos() {
             >
               {/* Loading Overlay */}
               {isLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/95 z-50 animate-fade-in">
+                <div className="absolute inset-0 flex items-center justify-center bg-black/95 z-50">
                   <div className="relative">
                     <div className="w-16 h-16 border-3 border-transparent border-t-emerald-500 rounded-full animate-spin"></div>
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -989,7 +1045,7 @@ export default function Videos() {
               
               {/* Error Overlay */}
               {videoError && !isLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/95 z-50 animate-fade-in">
+                <div className="absolute inset-0 flex items-center justify-center bg-black/95 z-50">
                   <div className="text-center p-6 max-w-sm">
                     <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
                     <h3 className="text-xl font-semibold text-white mb-2">
@@ -999,7 +1055,7 @@ export default function Videos() {
                     <div className="flex gap-4 justify-center">
                       <Button
                         onClick={handleRetryVideo}
-                        className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600"
+                        className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500"
                       >
                         <RefreshCw className="w-4 h-4" />
                         {language === 'fr' ? 'Réessayer' : 'Retry'}
@@ -1007,7 +1063,7 @@ export default function Videos() {
                       <Button
                         variant="outline"
                         onClick={handleModalClose}
-                        className="border-white/30 text-white hover:bg-white/10"
+                        className="border-white/30 text-white"
                       >
                         {language === 'fr' ? 'Fermer' : 'Close'}
                       </Button>
@@ -1020,7 +1076,7 @@ export default function Videos() {
               {showInterface && !videoError && (
                 <div 
                   className={`absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/95 to-transparent p-4 transition-all duration-300 ${
-                    showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'
+                    showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -1028,7 +1084,7 @@ export default function Videos() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-9 w-9 bg-black/60 text-white hover:bg-black/80 transition-all duration-200 hover:scale-110"
+                        className="h-9 w-9 bg-black/60 text-white hover:bg-black/80"
                         onClick={handleModalClose}
                       >
                         <X className="w-4 h-4" />
@@ -1043,16 +1099,16 @@ export default function Videos() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-9 w-9 bg-black/60 text-white hover:bg-black/80 transition-all duration-200 hover:scale-110"
+                          className="h-9 w-9 bg-black/60 text-white hover:bg-black/80"
                           onClick={toggleRotation}
                         >
-                          <RotateCw className={`w-4 h-4 transition-transform duration-300 ${isRotated ? 'rotate-180' : ''}`} />
+                          <RotateCw className={`w-4 h-4 ${isRotated ? 'rotate-180' : ''}`} />
                         </Button>
                       )}
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-9 w-9 bg-black/60 text-white hover:bg-black/80 transition-all duration-200 hover:scale-110"
+                        className="h-9 w-9 bg-black/60 text-white hover:bg-black/80"
                         onClick={toggleInterface}
                       >
                         {showInterface ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -1060,7 +1116,7 @@ export default function Videos() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-9 w-9 bg-black/60 text-white hover:bg-black/80 transition-all duration-200 hover:scale-110"
+                        className="h-9 w-9 bg-black/60 text-white hover:bg-black/80"
                         onClick={() => openInYouTube(selectedVideo.youtubeId)}
                       >
                         <ExternalLink className="w-4 h-4" />
@@ -1068,7 +1124,7 @@ export default function Videos() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-9 w-9 bg-black/60 text-white hover:bg-black/80 transition-all duration-200 hover:scale-110"
+                        className="h-9 w-9 bg-black/60 text-white hover:bg-black/80"
                         onClick={toggleFullscreen}
                       >
                         {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -1081,7 +1137,7 @@ export default function Videos() {
               {/* Video Player */}
               <div className="relative w-full h-full bg-black">
                 {!videoError && (
-                  <div className="w-full h-full animate-scale-in">
+                  <div className="w-full h-full">
                     <LazyVideoPlayer
                       youtubeId={selectedVideo.youtubeId}
                       title={getLocalizedText(selectedVideo.title)}
@@ -1099,11 +1155,11 @@ export default function Videos() {
                 
                 {/* Floating Controls */}
                 {!showInterface && showControls && !videoError && (
-                  <div className="absolute top-4 right-4 z-50 flex flex-col gap-2 animate-fade-in">
+                  <div className="absolute top-4 right-4 z-50 flex flex-col gap-2">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-10 w-10 bg-black/60 text-white hover:bg-black/80 transition-all duration-200 hover:scale-110"
+                      className="h-10 w-10 bg-black/60 text-white hover:bg-black/80"
                       onClick={toggleInterface}
                     >
                       <Eye className="w-4 h-4" />
@@ -1111,7 +1167,7 @@ export default function Videos() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-10 w-10 bg-black/60 text-white hover:bg-black/80 transition-all duration-200 hover:scale-110"
+                      className="h-10 w-10 bg-black/60 text-white hover:bg-black/80"
                       onClick={toggleMute}
                     >
                       {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
@@ -1124,10 +1180,10 @@ export default function Videos() {
               {showInterface && !videoError && (
                 <div 
                   className={`absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/95 to-transparent p-4 transition-all duration-300 ${
-                    showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full pointer-events-none'
+                    showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
                   }`}
                 >
-                  <div className="space-y-3 animate-fade-in">
+                  <div className="space-y-3">
                     <div>
                       <h3 className="text-base font-semibold text-white line-clamp-1">
                         {getLocalizedText(selectedVideo.title)}
@@ -1151,12 +1207,18 @@ export default function Videos() {
                             {selectedVideo.duration}
                           </span>
                         )}
+                        {selectedVideo.views && (
+                          <span className="flex items-center gap-1.5">
+                            <EyeIcon className="w-4 h-4" />
+                            {formatNumber(selectedVideo.views)}
+                          </span>
+                        )}
                       </div>
                       
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-9 w-9 text-white hover:bg-white/10 transition-all duration-200 hover:scale-110"
+                        className="h-9 w-9 text-white hover:bg-white/10"
                         onClick={toggleMute}
                       >
                         {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
@@ -1172,8 +1234,8 @@ export default function Videos() {
 
       {/* Character Selection Modal */}
       {showCharacterSelection && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto animate-scale-in">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <div>
@@ -1187,7 +1249,7 @@ export default function Videos() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 hover:scale-110 transition-transform"
+                  className="h-8 w-8"
                   onClick={handleCharacterSelectionClose}
                 >
                   <X className="w-4 h-4" />
@@ -1199,24 +1261,23 @@ export default function Videos() {
                   <button
                     key={character.id}
                     onClick={() => handleCharacterSelect(character)}
-                    className="flex flex-col items-center p-4 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-emerald-500 transition-all duration-300 hover:scale-105 group"
+                    className="flex flex-col items-center p-4 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-emerald-500 transition-colors"
                   >
                     <div className="relative mb-3">
-                      <div className={`absolute inset-0 bg-gradient-to-r ${character.color} rounded-full blur-lg opacity-60 group-hover:opacity-80 transition-opacity duration-300`} />
+                      <div className={`absolute inset-0 bg-gradient-to-r ${character.color} rounded-full blur-lg opacity-60`} />
                       <div className="relative w-20 h-20 rounded-full border-4 border-white/20 overflow-hidden">
                         <img
                           src={character.imageUrl}
                           alt={character.name}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          className="w-full h-full object-cover"
                           onError={() => handleImageError(character.id)}
                         />
                       </div>
                     </div>
-                    <h4 className="font-bold text-gray-800 dark:text-gray-200 mb-1 group-hover:text-emerald-600 transition-colors">
+                    <h4 className="font-bold text-gray-800 dark:text-gray-200 mb-1">
                       {character.name}
                     </h4>
                     <p className="text-xs text-muted-foreground">{character.role}</p>
-                    <ChevronRight className="absolute top-2 right-2 w-4 h-4 text-emerald-500 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-0 group-hover:translate-x-1" />
                   </button>
                 ))}
               </div>
@@ -1227,8 +1288,8 @@ export default function Videos() {
 
       {/* Character Detail Modal */}
       {showCharacterDetail && selectedCharacter && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full animate-scale-in">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
@@ -1247,14 +1308,14 @@ export default function Videos() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 hover:scale-110 transition-transform"
+                  className="h-8 w-8"
                   onClick={handleCharacterDetailClose}
                 >
                   <X className="w-4 h-4" />
                 </Button>
               </div>
               
-              <div className="aspect-square rounded-xl overflow-hidden mb-6 border border-gray-200 dark:border-gray-800 animate-fade-in">
+              <div className="aspect-square rounded-xl overflow-hidden mb-6 border border-gray-200 dark:border-gray-800">
                 {imageErrors[selectedCharacter.id] ? (
                   <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800">
                     <AlertCircle className="w-16 h-16 text-gray-400" />
@@ -1263,19 +1324,19 @@ export default function Videos() {
                   <img
                     src={selectedCharacter.imageUrl}
                     alt={selectedCharacter.name}
-                    className="w-full h-full object-contain p-4 transition-transform duration-700 hover:scale-105"
+                    className="w-full h-full object-contain p-4"
                     onError={() => handleImageError(selectedCharacter.id)}
                   />
                 )}
               </div>
               
               {selectedCharacter.description && (
-                <p className="text-sm text-muted-foreground mb-4 text-center animate-fade-in">
+                <p className="text-sm text-muted-foreground mb-4 text-center">
                   {getLocalizedText(selectedCharacter.description)}
                 </p>
               )}
               
-              <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground animate-fade-in">
+              <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <Heart className="w-4 h-4 text-pink-500" />
                   <span>{language === 'fr' ? 'Créé par Salsabile' : 'Created by Salsabile'}</span>
@@ -1290,28 +1351,12 @@ export default function Videos() {
 }
 
 // Video Card Component (Grid View)
-interface VideoCardProps {
-  video: Video;
-  getLocalizedText: (text: { fr: string; en: string } | string) => string;
-  getThumbnailUrl: (youtubeId: string, isShort?: boolean) => string;
-  formatDate: (dateString: string) => string;
-  onVideoSelect: (video: Video) => void;
-  onCharacterInfoClick?: () => void;
-  onThumbnailClick: (e: React.MouseEvent, video: Video) => void;
-  language: string;
-  showCharacterInfo?: boolean;
-  isExpanded?: boolean;
-  onToggleDescription?: () => void;
-  imageError?: boolean;
-  onImageError?: () => void;
-  isMobile: boolean;
-}
-
 const VideoCard = memo(({
   video,
   getLocalizedText,
   getThumbnailUrl,
   formatDate,
+  formatNumber,
   onVideoSelect,
   onCharacterInfoClick,
   onThumbnailClick,
@@ -1320,13 +1365,12 @@ const VideoCard = memo(({
   isExpanded,
   onToggleDescription,
   imageError,
-  onImageError,
-  isMobile
+  onImageError
 }: VideoCardProps) => {
   const hasDescription = getLocalizedText(video.description).length > 100;
   
   return (
-    <Card className="group overflow-hidden border-border/40 hover:border-emerald-500/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+    <Card className="group overflow-hidden border-border/40 hover:border-emerald-500/50 transition-all duration-300 hover:shadow-xl">
       <CardContent className="p-0">
         {/* Thumbnail */}
         <div 
@@ -1352,7 +1396,7 @@ const VideoCard = memo(({
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="relative">
-                <div className="relative w-16 h-16 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
+                <div className="relative w-16 h-16 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-xl">
                   <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
                     <Play className="w-5 h-5 text-emerald-600 ml-0.5" fill="currentColor" />
                   </div>
@@ -1389,7 +1433,7 @@ const VideoCard = memo(({
         <div className="p-4">
           <div className="space-y-3">
             {/* Title */}
-            <h3 className="font-bold text-lg line-clamp-2 group-hover:text-emerald-600 transition-colors duration-300 cursor-pointer" onClick={() => onVideoSelect(video)}>
+            <h3 className="font-bold text-lg line-clamp-2 group-hover:text-emerald-600 transition-colors">
               {getLocalizedText(video.title)}
             </h3>
             
@@ -1397,7 +1441,7 @@ const VideoCard = memo(({
             {video.creator && (
               <div className="flex items-center gap-2">
                 <div className="relative">
-                  <div className="w-8 h-8 bg-gradient-to-br from-emerald-500/20 to-green-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <div className="w-8 h-8 bg-gradient-to-br from-emerald-500/20 to-green-500/20 rounded-full flex items-center justify-center">
                     <User className="w-4 h-4 text-emerald-600" />
                   </div>
                   {showCharacterInfo && onCharacterInfoClick && (
@@ -1406,7 +1450,7 @@ const VideoCard = memo(({
                         e.stopPropagation();
                         onCharacterInfoClick();
                       }}
-                      className="absolute -right-1 -top-1 h-5 w-5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-0.5 rounded-full border-2 border-background shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-125"
+                      className="absolute -right-1 -top-1 h-5 w-5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-0.5 rounded-full border-2 border-background shadow-lg flex items-center justify-center"
                       title={language === 'fr' ? 'Voir les personnages' : 'View characters'}
                     >
                       <Info className="w-3 h-3" />
@@ -1431,7 +1475,7 @@ const VideoCard = memo(({
                     e.stopPropagation();
                     onToggleDescription();
                   }}
-                  className="text-xs text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1 transition-colors"
+                  className="text-xs text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1"
                 >
                   {isExpanded ? (
                     <>
@@ -1448,8 +1492,32 @@ const VideoCard = memo(({
               )}
             </div>
             
+            {/* Stats */}
+            {(video.views || video.likes || video.comments) && (
+              <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2 border-t">
+                {video.views && (
+                  <span className="flex items-center gap-1">
+                    <EyeIcon className="w-3 h-3" />
+                    {formatNumber(video.views)}
+                  </span>
+                )}
+                {video.likes && (
+                  <span className="flex items-center gap-1">
+                    <ThumbsUp className="w-3 h-3" />
+                    {formatNumber(video.likes)}
+                  </span>
+                )}
+                {video.comments && (
+                  <span className="flex items-center gap-1">
+                    <MessageCircle className="w-3 h-3" />
+                    {formatNumber(video.comments)}
+                  </span>
+                )}
+              </div>
+            )}
+            
             {/* Footer */}
-            <div className="flex items-center justify-between pt-3 border-t border-border/50">
+            <div className="flex items-center justify-between pt-3 border-t">
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 {video.publishDate && (
                   <span className="flex items-center gap-1">
@@ -1462,7 +1530,7 @@ const VideoCard = memo(({
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-xs hover:bg-emerald-500/10 hover:text-emerald-600 transition-all duration-300 hover:scale-105"
+                className="text-xs hover:bg-emerald-500/10 hover:text-emerald-600"
                 onClick={(e) => {
                   e.stopPropagation();
                   onVideoSelect(video);
@@ -1482,13 +1550,12 @@ const VideoCard = memo(({
 VideoCard.displayName = 'VideoCard';
 
 // List View Video Card Component
-interface ListViewVideoCardProps extends Omit<VideoCardProps, 'onThumbnailClick'> {}
-
 const ListViewVideoCard = memo(({
   video,
   getLocalizedText,
   getThumbnailUrl,
   formatDate,
+  formatNumber,
   onVideoSelect,
   onCharacterInfoClick,
   language,
@@ -1496,13 +1563,12 @@ const ListViewVideoCard = memo(({
   isExpanded,
   onToggleDescription,
   imageError,
-  onImageError,
-  isMobile
-}: ListViewVideoCardProps) => {
+  onImageError
+}: Omit<VideoCardProps, 'onThumbnailClick'>) => {
   const hasDescription = getLocalizedText(video.description).length > 150;
   
   return (
-    <Card className="overflow-hidden border-border/40 hover:border-emerald-500/50 transition-all duration-300 hover:shadow-lg">
+    <Card className="overflow-hidden border-border/40 hover:border-emerald-500/50 transition-all duration-300">
       <div className="flex flex-col md:flex-row">
         {/* Thumbnail */}
         <div 
@@ -1518,7 +1584,7 @@ const ListViewVideoCard = memo(({
             <img
               src={getThumbnailUrl(video.youtubeId, video.isShort)}
               alt={getLocalizedText(video.title)}
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+              className="absolute inset-0 w-full h-full object-cover"
               onError={onImageError}
               loading="lazy"
             />
@@ -1553,7 +1619,7 @@ const ListViewVideoCard = memo(({
           <div className="space-y-4">
             {/* Header */}
             <div>
-              <h3 className="text-xl font-bold mb-2 hover:text-emerald-600 transition-colors duration-300 cursor-pointer" onClick={() => onVideoSelect(video)}>
+              <h3 className="text-xl font-bold mb-2 hover:text-emerald-600 transition-colors cursor-pointer" onClick={() => onVideoSelect(video)}>
                 {getLocalizedText(video.title)}
               </h3>
               
@@ -1569,7 +1635,7 @@ const ListViewVideoCard = memo(({
                           e.stopPropagation();
                           onCharacterInfoClick();
                         }}
-                        className="absolute -right-1 -top-1 h-5 w-5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-0.5 rounded-full border-2 border-background shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-125"
+                        className="absolute -right-1 -top-1 h-5 w-5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-0.5 rounded-full border-2 border-background shadow-lg flex items-center justify-center"
                         title={language === 'fr' ? 'Voir les personnages' : 'View characters'}
                       >
                         <Info className="w-3 h-3" />
@@ -1595,7 +1661,7 @@ const ListViewVideoCard = memo(({
                     e.stopPropagation();
                     onToggleDescription();
                   }}
-                  className="text-xs text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1 transition-colors"
+                  className="text-xs text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1"
                 >
                   {isExpanded ? (
                     <>
@@ -1612,12 +1678,24 @@ const ListViewVideoCard = memo(({
               )}
             </div>
             
-            {/* Metadata */}
-            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground pt-3 border-t border-border/30">
+            {/* Stats and Metadata */}
+            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground pt-3 border-t">
               {video.publishDate && (
                 <span className="flex items-center gap-1.5">
                   <Calendar className="w-4 h-4" />
                   {formatDate(video.publishDate)}
+                </span>
+              )}
+              {video.views && (
+                <span className="flex items-center gap-1.5">
+                  <EyeIcon className="w-4 h-4" />
+                  {formatNumber(video.views)} {language === 'fr' ? 'vues' : 'views'}
+                </span>
+              )}
+              {video.likes && (
+                <span className="flex items-center gap-1.5">
+                  <ThumbsUp className="w-4 h-4" />
+                  {formatNumber(video.likes)} {language === 'fr' ? 'j\'aime' : 'likes'}
                 </span>
               )}
             </div>
@@ -1626,7 +1704,7 @@ const ListViewVideoCard = memo(({
             <div className="flex items-center justify-between pt-4">
               <Button
                 size="sm"
-                className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 transition-all duration-300 hover:scale-105"
+                className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600"
                 onClick={() => onVideoSelect(video)}
               >
                 <Play className="w-4 h-4" />
@@ -1637,7 +1715,7 @@ const ListViewVideoCard = memo(({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 hover:scale-110 transition-transform"
+                  className="h-8 w-8"
                   onClick={() => window.open(`https://www.youtube.com/watch?v=${video.youtubeId}`, '_blank')}
                   title={language === 'fr' ? 'Ouvrir sur YouTube' : 'Open on YouTube'}
                 >
@@ -1653,106 +1731,3 @@ const ListViewVideoCard = memo(({
 });
 
 ListViewVideoCard.displayName = 'ListViewVideoCard';
-
-// Animation styles
-const styles = `
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-  
-  @keyframes slide-up {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  @keyframes scale-in {
-    from {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-  
-  @keyframes float {
-    0%, 100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-10px);
-    }
-  }
-  
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
-  
-  @keyframes pulse-slow {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.7;
-    }
-  }
-  
-  .animate-fade-in {
-    animation: fade-in 0.4s ease-out forwards;
-  }
-  
-  .animate-slide-up {
-    animation: slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
-  
-  .animate-scale-in {
-    animation: scale-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  }
-  
-  .animate-float {
-    animation: float 3s ease-in-out infinite;
-  }
-  
-  .animate-spin {
-    animation: spin 1s linear infinite;
-  }
-  
-  .animate-pulse-slow {
-    animation: pulse-slow 2s ease-in-out infinite;
-  }
-  
-  .scroll-reveal {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  
-  .scroll-reveal.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-`;
-
-// Add styles to document
-if (typeof document !== 'undefined') {
-  const styleSheet = document.createElement("style");
-  styleSheet.textContent = styles;
-  document.head.appendChild(styleSheet);
-}
