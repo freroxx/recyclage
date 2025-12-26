@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo, useCallback, useRef, memo, ReactNode } from "react";
 import { 
-  Trash2, FileText, Apple, Package, Target, Users, Leaf, Recycle, 
-  CheckCircle2, ArrowRight, Sparkles, Award, BookOpen, Calendar, 
-  Home, X, Share2, Rocket, Zap, Heart, Star, Cloud, Sun, Moon, 
-  Droplets, Clock, Infinity, ChevronRight, Pause, Play, LucideIcon 
+  Trash2, FileText, Apple, Package, Target, Users, Recycle, 
+  ArrowRight, Sparkles, Award, BookOpen, Calendar, Gamepad2, 
+  Home, X, Share2, Rocket, Zap, Heart, Star, Sun, Moon, 
+  Pause, Play, LucideIcon, Video, Image, Trophy
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "../contexts/LanguageContext";
@@ -146,13 +146,13 @@ const BoutonAnime = memo(({
   
   // Tailles adaptées pour mobile
   const sizeClasses: Record<string, string> = isMobile ? {
-    sm: "px-4 py-2 text-sm",
+    sm: "px-4 py-2.5 text-sm",
     default: "px-5 py-3 text-base",
     lg: "px-6 py-4 text-lg",
   } : {
     sm: "px-5 py-2.5 text-sm",
-    default: "px-7 py-3.5 text-base",
-    lg: "px-9 py-4 text-lg",
+    default: "px-6 py-3.5 text-base",
+    lg: "px-8 py-4 text-lg",
   };
   
   // Classes variant pour thème clair/sombre avec meilleur contraste
@@ -443,13 +443,13 @@ const WidgetFlottant = memo(({
 
 WidgetFlottant.displayName = 'WidgetFlottant';
 
-// Arrière-plan animé optimisé pour mobile et PC
+// Arrière-plan animé optimisé
 const FondAnime = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
   const particlesRef = useRef<Array<{
     x: number; y: number; size: number; speedX: number; speedY: number;
-    color: string; alpha: number; pulseSpeed: number; type: 'dot' | 'sparkle';
+    color: string; alpha: number; pulseSpeed: number;
   }>>([]);
   const timeRef = useRef(0);
   const isMobile = useIsMobile();
@@ -473,16 +473,12 @@ const FondAnime = memo(() => {
     
     const initParticles = () => {
       particlesRef.current = [];
-      // Réduire légèrement le nombre de particules sur mobile pour maintenir les 60 FPS
-      const particleCount = isMobile 
-        ? Math.min(Math.floor((window.innerWidth * window.innerHeight) / 40000), 60)
-        : Math.min(Math.floor((window.innerWidth * window.innerHeight) / 30000), 80);
-      
+      const particleCount = isMobile ? 40 : 60;
       const isDark = document.documentElement.classList.contains('dark');
       
       const colors = isDark 
-        ? ['#60a5fa', '#34d399', '#22d3ee', '#c084fc']
-        : ['#3b82f6', '#10b981', '#06b6d4', '#8b5cf6'];
+        ? ['#60a5fa', '#34d399', '#22d3ee']
+        : ['#3b82f6', '#10b981', '#06b6d4'];
       
       for (let i = 0; i < particleCount; i++) {
         particlesRef.current.push({
@@ -494,51 +490,8 @@ const FondAnime = memo(() => {
           color: colors[Math.floor(Math.random() * colors.length)],
           alpha: Math.random() * 0.2 + 0.1,
           pulseSpeed: Math.random() * 0.02 + 0.005,
-          type: Math.random() > 0.9 ? 'sparkle' : 'dot'
         });
       }
-    };
-    
-    const drawParticle = (particle: typeof particlesRef.current[0], ctx: CanvasRenderingContext2D) => {
-      ctx.save();
-      ctx.globalAlpha = particle.alpha;
-      
-      if (particle.type === 'sparkle') {
-        ctx.fillStyle = '#ffffff';
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = particle.color;
-        
-        ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.size * 1.2, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Rayons simplifiés pour mobile
-        const rayCount = isMobile ? 4 : 6;
-        for (let i = 0; i < rayCount; i++) {
-          const angle = (i * Math.PI * 2) / rayCount;
-          const x1 = particle.x + Math.cos(angle) * particle.size;
-          const y1 = particle.y + Math.sin(angle) * particle.size;
-          const x2 = particle.x + Math.cos(angle) * particle.size * 3;
-          const y2 = particle.y + Math.sin(angle) * particle.size * 3;
-          
-          ctx.beginPath();
-          ctx.moveTo(x1, y1);
-          ctx.lineTo(x2, y2);
-          ctx.lineWidth = 0.3;
-          ctx.strokeStyle = '#ffffff';
-          ctx.stroke();
-        }
-      } else {
-        ctx.fillStyle = particle.color;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = particle.color;
-        
-        ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      
-      ctx.restore();
     };
     
     const animate = () => {
@@ -564,7 +517,7 @@ const FondAnime = memo(() => {
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      // Mettre à jour et dessiner les particules
+      // Dessiner les particules
       particlesRef.current.forEach(particle => {
         particle.x += particle.speedX;
         particle.y += particle.speedY;
@@ -578,7 +531,16 @@ const FondAnime = memo(() => {
         // Animation de pulsation
         particle.alpha = 0.15 + Math.sin(timeRef.current * particle.pulseSpeed) * 0.1;
         
-        drawParticle(particle, ctx);
+        ctx.save();
+        ctx.globalAlpha = particle.alpha;
+        ctx.fillStyle = particle.color;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = particle.color;
+        
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
       });
       
       animationRef.current = requestAnimationFrame(animate);
@@ -603,27 +565,11 @@ const FondAnime = memo(() => {
       />
       
       <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-        {/* Gradients animés */}
         <div className={`
           absolute inset-0
           dark:bg-gradient-to-br dark:from-blue-900/5 dark:via-transparent dark:to-emerald-900/5
           bg-gradient-to-br from-blue-50/10 via-transparent to-emerald-50/10
           animate-gradient-flow
-        `} />
-        
-        {/* Effets de lumière */}
-        <div className={`
-          absolute top-0 left-0 right-0 h-64
-          dark:bg-gradient-to-b dark:from-blue-500/5 dark:to-transparent
-          bg-gradient-to-b from-blue-400/5 to-transparent
-          animate-float-gentle
-        `} />
-        
-        <div className={`
-          absolute bottom-0 left-0 right-0 h-64
-          dark:bg-gradient-to-t dark:from-emerald-500/5 dark:to-transparent
-          bg-gradient-to-t from-emerald-400/5 to-transparent
-          animate-float-gentle-reverse
         `} />
       </div>
     </>
@@ -731,16 +677,18 @@ const CarteInteractive = memo(({
                 </span>
               </motion.h3>
               
-              <motion.p
-                className={`${isMobile ? 'text-xs mb-2' : 'text-sm mb-3'} flex-grow`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: isVisible ? 1 : 0 }}
-                transition={{ duration: 0.3, delay: (delay + 200) / 1000 }}
-              >
-                <span className="dark:text-gray-300 text-gray-600">
-                  {description}
-                </span>
-              </motion.p>
+              {description && (
+                <motion.p
+                  className={`${isMobile ? 'text-xs mb-2' : 'text-sm mb-3'} flex-grow`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: isVisible ? 1 : 0 }}
+                  transition={{ duration: 0.3, delay: (delay + 200) / 1000 }}
+                >
+                  <span className="dark:text-gray-300 text-gray-600">
+                    {description}
+                  </span>
+                </motion.p>
+              )}
             </CardContent>
           </Card>
         </motion.div>
@@ -763,7 +711,7 @@ interface BinModalProps {
   bg?: string;
 }
 
-// Modal optimisé pour mobile et PC
+// Modal optimisé
 const BinModal = memo(({ 
   isOpen,
   onClose,
@@ -841,7 +789,6 @@ const BinModal = memo(({
                 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]
               `}>
                 <CardContent className={`${isMobile ? 'p-4' : 'p-6'}`}>
-                  {/* Header */}
                   <div className={`flex items-start justify-between ${isMobile ? 'mb-4' : 'mb-6'}`}>
                     <motion.div 
                       className="flex items-center gap-3"
@@ -888,7 +835,6 @@ const BinModal = memo(({
                     </motion.button>
                   </div>
                   
-                  {/* Details */}
                   <div className={`${isMobile ? 'space-y-3' : 'space-y-4'}`}>
                     <motion.div
                       initial={{ y: 20, opacity: 0 }}
@@ -927,20 +873,13 @@ const BinModal = memo(({
                         CONSEILS DE TRI
                       </h4>
                       <ul className="text-xs space-y-1">
-                        <li className={`
-                          dark:text-gray-300 text-gray-700
-                        `}>• Bien nettoyer les contenants</li>
-                        <li className={`
-                          dark:text-gray-300 text-gray-700
-                        `}>• Retirer les couvercles non-recyclables</li>
-                        <li className={`
-                          dark:text-gray-300 text-gray-700
-                        `}>• Compacter pour gagner de l'espace</li>
+                        <li className="dark:text-gray-300 text-gray-700">• Bien nettoyer les contenants</li>
+                        <li className="dark:text-gray-300 text-gray-700">• Retirer les couvercles non-recyclables</li>
+                        <li className="dark:text-gray-300 text-gray-700">• Compacter pour gagner de l'espace</li>
                       </ul>
                     </motion.div>
                   </div>
                   
-                  {/* Actions */}
                   <motion.div 
                     className={`
                       flex gap-3 mt-6 pt-4 border-t
@@ -1039,7 +978,7 @@ export default function ProjectEco() {
       color: "dark:text-amber-600 text-amber-500", 
       bg: "dark:bg-gradient-to-br dark:from-amber-500/20 dark:to-amber-600/10 bg-gradient-to-br from-amber-400/20 to-amber-500/10", 
       label: t("project.bins.paper", "Papier & Carton"),
-      description: t("project.bins.text", "Journaux, magazines, cartons"),
+      description: "",
       details: t("project.bins.paperDetails", "Le papier et le carton représentent environ 25% de nos déchets ménagers. Leur recyclage permet de sauver des arbres et réduire la consommation d'eau et d'énergie.")
     },
     { 
@@ -1099,38 +1038,39 @@ export default function ProjectEco() {
     }
   ], [t]);
   
-  const actions = useMemo(() => [
+  // Activités Éducatives section cards - Updated as requested
+  const activities = useMemo(() => [
     {
-      icon: Calendar,
-      title: t("nav.events", "Événements"),
-      description: t("activities.title", "Activités et événements communautaires"),
+      icon: Gamepad2,
+      title: t("activities.games", "Jeux"),
+      description: t("activities.games.desc", "Jouez et apprenez avec nos jeux interactifs"),
       color: "dark:text-blue-600 text-blue-500",
       bg: "dark:bg-gradient-to-br dark:from-blue-500/20 dark:to-cyan-600/10 bg-gradient-to-br from-blue-400/20 to-cyan-500/10",
       href: "/activities"
     },
     {
-      icon: BookOpen,
-      title: t("resources.guides", "Ressources"),
-      description: t("resources.subtitle", "Guides et documents pédagogiques"),
+      icon: Video,
+      title: t("videos.title", "Vidéos"),
+      description: t("videos.subtitle", "Découvrez nos vidéos éducatives"),
       color: "dark:text-green-600 text-green-500",
       bg: "dark:bg-gradient-to-br dark:from-green-500/20 dark:to-emerald-600/10 bg-gradient-to-br from-green-400/20 to-emerald-500/10",
-      href: "/resources"
+      href: "/videos"
     },
     {
-      icon: Home,
-      title: t("guide.title", "Guides"),
-      description: t("guide.subtitle", "Conseils pour un foyer écologique"),
+      icon: Image,
+      title: t("posters.title", "Posters"),
+      description: t("posters.subtitle", "Affiches éducatives sur le recyclage"),
       color: "dark:text-purple-600 text-purple-500",
       bg: "dark:bg-gradient-to-br dark:from-purple-500/20 dark:to-pink-600/10 bg-gradient-to-br from-purple-400/20 to-pink-500/10",
-      href: "/guide"
+      href: "/posters"
     },
     {
-      icon: Share2,
-      title: t("nav.project", "Projets"),
-      description: t("project.title", "Découvrez nos initiatives en cours"),
+      icon: BookOpen,
+      title: t("guide.title", "Guide"),
+      description: t("guide.subtitle", "Apprenez à trier correctement vos déchets"),
       color: "dark:text-amber-600 text-amber-500",
       bg: "dark:bg-gradient-to-br dark:from-amber-500/20 dark:to-orange-600/10 bg-gradient-to-br from-amber-400/20 to-orange-500/10",
-      href: "/project"
+      href: "/guide"
     }
   ], [t]);
   
@@ -1171,7 +1111,6 @@ export default function ProjectEco() {
       clearInterval(autoRotationInterval.current);
     }
     
-    // Ralentir légèrement sur mobile
     const interval = isMobile ? 5000 : 4000;
     autoRotationInterval.current = setInterval(rotateBins, interval);
     
@@ -1252,7 +1191,7 @@ export default function ProjectEco() {
             `}
           >
             <Sparkles className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
-            <span>{t("hero.subtitle", "Initiative Écologique 2025")}</span>
+            <span>{t("hero.badge", "Our project explained")}</span>
           </motion.div>
           
           <motion.div
@@ -1288,9 +1227,7 @@ export default function ProjectEco() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
             >
-              <span className={`
-                dark:text-white text-gray-900
-              `}>
+              <span className="dark:text-white text-gray-900">
                 {t("project.title", "Notre Planète, Notre Avenir")}
               </span>
             </motion.h2>
@@ -1480,7 +1417,7 @@ export default function ProjectEco() {
                   `}
                   whileHover={!isMobile ? { scale: 1.5 } : {}}
                   whileTap={{ scale: 0.8 }}
-                  aria-label={t("common.view", "Voir") + ` ${bins[index].label}`}
+                  aria-label={`${t("common.view", "Voir")} ${bins[index].label}`}
                 >
                   {index === activeBinIndex && (
                     <motion.div
@@ -1512,7 +1449,7 @@ export default function ProjectEco() {
           </motion.div>
         </motion.section>
         
-        {/* Section Actions */}
+        {/* Section Activités Éducatives */}
         <motion.section
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -1530,7 +1467,7 @@ export default function ProjectEco() {
               animate={!isMobile ? { scale: [1, 1.05, 1] } : {}}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              <Zap className={`
+              <Trophy className={`
                 ${isMobile ? 'w-10 h-10' : 'w-12 h-12'} mx-auto mb-3
                 dark:text-yellow-500 text-yellow-500
               `} />
@@ -1539,20 +1476,20 @@ export default function ProjectEco() {
               ${isMobile ? 'text-2xl' : 'text-3xl md:text-4xl'} font-bold mb-3
               dark:text-white text-gray-900
             `}>
-              {t("activities.title", "Passez à l'Action")}
+              {t("activities.title", "Activités Éducatives")}
             </h2>
             <p className={`
               ${isMobile ? 'text-base' : 'text-lg'}
               dark:text-gray-300 text-gray-600
             `}>
-              {t("activities.subtitle", "Des initiatives concrètes pour s'engager")}
+              {t("activities.subtitle", "Explorez nos ressources interactives")}
             </p>
           </motion.div>
           
           <div className={`grid grid-cols-1 ${isMobile ? 'gap-4' : 'md:grid-cols-2 lg:grid-cols-4 gap-5'}`}>
-            {actions.map((action, index) => (
+            {activities.map((activity, index) => (
               <motion.div
-                key={action.title}
+                key={activity.title}
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
@@ -1560,12 +1497,12 @@ export default function ProjectEco() {
                 className="h-full"
               >
                 <CarteInteractive
-                  icon={action.icon}
-                  title={action.title}
-                  description={action.description}
-                  color={action.color}
-                  bg={action.bg}
-                  onClick={() => window.history.pushState({}, '', action.href)}
+                  icon={activity.icon}
+                  title={activity.title}
+                  description={activity.description}
+                  color={activity.color}
+                  bg={activity.bg}
+                  onClick={() => window.history.pushState({}, '', activity.href)}
                   delay={index * 100}
                 />
               </motion.div>
@@ -1618,10 +1555,10 @@ export default function ProjectEco() {
                     <BoutonAnime
                       variant="outline"
                       size={isMobile ? "default" : "default"}
-                      icon={<Calendar className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />}
+                      icon={<Gamepad2 className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />}
                       href="/activities"
                     >
-                      {t("nav.events", "Voir les Activités")}
+                      {t("activities.games", "Jeux")}
                     </BoutonAnime>
                   </div>
                 </CardContent>
@@ -1638,7 +1575,7 @@ export default function ProjectEco() {
           onClose={handleCloseModal}
           icon={bins[openModalIndex].icon}
           title={bins[openModalIndex].label}
-          description={bins[openModalIndex].description}
+          description={bins[openModalIndex].description || bins[openModalIndex].label}
           details={bins[openModalIndex].details}
           color={bins[openModalIndex].color}
           bg={bins[openModalIndex].bg}
@@ -1668,11 +1605,6 @@ export default function ProjectEco() {
           50% { transform: translateY(-8px); }
         }
         
-        @keyframes float-gentle-reverse {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(8px); }
-        }
-        
         .animate-spin {
           animation: spin 0.8s linear infinite;
         }
@@ -1688,10 +1620,6 @@ export default function ProjectEco() {
         
         .animate-float-gentle {
           animation: float-gentle 8s ease-in-out infinite;
-        }
-        
-        .animate-float-gentle-reverse {
-          animation: float-gentle-reverse 10s ease-in-out infinite;
         }
         
         * {
