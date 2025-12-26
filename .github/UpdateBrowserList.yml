@@ -1,12 +1,19 @@
-- name: Update browserslist DB
-  run: npx update-browserslist-db@latest
+- name: Update Browserslist DB
+  run: |
+    npx update-browserslist-db@latest
+    npm install --package-lock-only
 
 - name: Commit & push changes
   run: |
-    git config user.name "github-actions"
-    git config user.email "github-actions@github.com"
+    git config user.name "github-actions[bot]"
+    git config user.email "github-actions[bot]@users.noreply.github.com"
+
     git status
-    git diff --quiet && echo "No changes" && exit 0
+    if git diff --quiet; then
+      echo "No changes to commit"
+      exit 0
+    fi
+
     git add package-lock.json
-    git commit -m "chore: update browserslist DB"
+    git commit -m "chore: update browserslist db"
     git push
