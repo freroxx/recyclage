@@ -1,1808 +1,1859 @@
-import { useState, useMemo, useEffect, useCallback, useRef, memo } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { useScrollReveal } from "@/hooks/useScrollReveal";
-import { useSoundEffects } from "@/hooks/useSoundEffects";
-import { toast } from "sonner";
-import LazyVideoPlayer from "@/components/LazyVideoPlayer";
+import { useState, useEffect, useMemo, useCallback, useRef, memo, ReactNode } from "react";
 import { 
-  Play, 
-  ExternalLink, 
-  Calendar, 
-  Clock, 
-  Users, 
-  Recycle,
-  Zap,
-  X,
-  Maximize2,
-  Minimize2,
-  Eye,
-  EyeOff,
-  Volume2,
-  VolumeX,
-  Search,
-  Video,
-  Youtube,
-  User,
-  Info,
-  AlertCircle,
-  RefreshCw,
-  Heart,
-  RotateCw,
-  ChevronDown,
-  ChevronUp,
-  Grid,
-  List,
-  Sparkles,
-  Loader2
+  Trash2, FileText, Apple, Package, Target, Users, Recycle, 
+  ArrowRight, Sparkles, Award, BookOpen, Calendar, Gamepad2, 
+  Home, X, Share2, Rocket, Zap, Heart, Star, Sun, Moon, 
+  Pause, Play, LucideIcon, Video, Image, Trophy, ExternalLink
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useLanguage } from "../contexts/LanguageContext";
+import { useIsMobile } from "../hooks/use-mobile";
 
-interface Video {
-  id: string;
-  title: { fr: string; en: string };
-  description: { fr: string; en: string };
-  youtubeId: string;
-  duration?: string;
-  publishDate?: string;
-  category?: { fr: string; en: string };
-  type: 'tutorial' | 'community' | 'channel';
-  aspect?: 'landscape' | 'portrait';
-  creator?: { name: string; role: string };
-  isShort?: boolean;
-  tags?: string[];
-}
-
-interface Character {
-  id: string;
-  name: string;
-  imageUrl: string;
-  role: string;
-  color: string;
-  description?: { fr: string; en: string };
-}
-
-interface VideoCardProps {
-  video: Video;
-  getLocalizedText: (text: { fr: string; en: string } | string) => string;
-  getThumbnailUrl: (youtubeId: string, isShort?: boolean) => string;
-  formatDate: (dateString: string) => string;
-  onVideoSelect: (video: Video) => void;
-  onCharacterInfoClick?: () => void;
-  onThumbnailClick: (e: React.MouseEvent, video: Video) => void;
-  language: string;
-  showCharacterInfo?: boolean;
-  isExpanded?: boolean;
-  onToggleDescription?: () => void;
-  imageError?: boolean;
-  onImageError?: () => void;
-}
-
-// Character data
-const getCharacters = (language: string): Character[] => [
-  {
-    id: "meow",
-    name: "Meow",
-    imageUrl: "https://i.ibb.co/d06DQqBR/Meow-png.jpg",
-    role: language === 'fr' ? "Mascotte" : "Mascot",
-    color: "from-blue-500 to-cyan-500",
-    description: {
-      fr: "La mascotte amicale qui guide à travers les aventures écologiques",
-      en: "The friendly mascot who guides through ecological adventures"
-    }
-  },
-  {
-    id: "basma",
-    name: "Basma",
-    imageUrl: "https://i.ibb.co/4npFCFPd/Basma-png.jpg",
-    role: language === 'fr' ? "Artiste Écologique" : "Ecological Artist",
-    color: "from-emerald-500 to-green-500",
-    description: {
-      fr: "Artiste passionnée qui transforme les déchets en œuvres d'art",
-      en: "Passionate artist who transforms waste into works of art"
-    }
-  },
-  {
-    id: "cat",
-    name: "Cat",
-    imageUrl: "https://i.ibb.co/Kzp4Rg9s/CAT-png.jpg",
-    role: language === 'fr' ? "Super-héros Écologique" : "Ecological Superhero",
-    color: "from-purple-500 to-pink-500",
-    description: {
-      fr: "Super-héros qui protège l'environnement et enseigne le recyclage",
-      en: "Superhero who protects the environment and teaches recycling"
-    }
-  }
-];
-
-// Video data
-const getVideos = (language: string): Video[] => [
-  // Tutorial Videos
-  {
-    id: "tutorial1",
-    title: {
-      fr: "Introduction au Recyclage",
-      en: "Recycling Introduction"
-    },
-    description: {
-      fr: "Découvrez les bases du recyclage et son importance pour l'environnement",
-      en: "Discover the basics of recycling and its importance for the environment"
-    },
-    youtubeId: "c5sPRL0YKUw",
-    duration: "7:03",
-    publishDate: "2024-01-15",
-    category: { fr: "Éducation", en: "Education" },
-    type: "tutorial",
-    aspect: "landscape",
-  },
-  {
-    id: "tutorial2",
-    title: {
-      fr: "Recyclage du Papier et Carton",
-      en: "Paper and Cardboard Recycling"
-    },
-    description: {
-      fr: "Processus complet du recyclage du papier et du carton",
-      en: "Complete process of paper and cardboard recycling"
-    },
-    youtubeId: "s003IbGz-rA",
-    duration: "3:01",
-    publishDate: "2024-02-10",
-    category: { fr: "Processus", en: "Process" },
-    type: "tutorial",
-    aspect: "landscape"
-  },
-  {
-    id: "tutorial3",
-    title: {
-      fr: "Voyage au cœur du tri",
-      en: "Journey to the Heart of Sorting"
-    },
-    description: {
-      fr: "Parcours des déchets recyclables depuis le tri jusqu'à la transformation",
-      en: "Journey of recyclable waste from sorting to transformation"
-    },
-    youtubeId: "p67EWIamCIw",
-    duration: "5:33",
-    publishDate: "2024-03-05",
-    category: { fr: "Documentaire", en: "Documentary" },
-    type: "tutorial",
-    aspect: "landscape"
-  },
-  
-  // Community Shorts
-  {
-    id: "reuse-cat-4",
-    title: {
-      fr: "Réutiliser avec Cat - Épisode 4",
-      en: "Reuse with Cat - Episode 4"
-    },
-    description: {
-      fr: "Découvrez comment réutiliser les objets du quotidien avec Cat. Créé par Salsabile",
-      en: "Discover how to reuse everyday objects with Cat. Made by Salsabile"
-    },
-    youtubeId: "aEnA1z-G7qE",
-    duration: "0:57",
-    publishDate: "2025-12-11",
-    category: { fr: "Communauté", en: "Community" },
-    type: "community",
-    aspect: "portrait",
-    creator: { name: "Salsabile", role: language === 'fr' ? "Artiste & Créatrice" : "Artist & Creator" },
-    isShort: true,
-    tags: ["reuse", "cat", "salsabile", "short"]
-  },
-  {
-    id: "laundry-cat",
-    title: {
-      fr: "Chat et Lessive Écologique",
-      en: "Laundry Cat"
-    },
-    description: {
-      fr: "Apprenez des astuces écologiques pour votre lessive avec Cat. Créé par Salsabile",
-      en: "Learn ecological tips for your laundry with Cat. Made by Salsabile"
-    },
-    youtubeId: "c7akmKesIq4",
-    duration: "0:45",
-    publishDate: "2025-12-10",
-    category: { fr: "Communauté", en: "Community" },
-    type: "community",
-    aspect: "portrait",
-    creator: { name: "Salsabile", role: language === 'fr' ? "Artiste & Créatrice" : "Artist & Creator" },
-    isShort: true,
-    tags: ["laundry", "eco-friendly", "salsabile", "short"]
-  },
-  {
-    id: "bottles-episode-2",
-    title: {
-      fr: "Ne jetez pas vos bouteilles - Épisode 2",
-      en: "Don't throw your bottles - Episode 2"
-    },
-    description: {
-      fr: "Transformez vos bouteilles en plastique en objets utiles. Créé par Salsabile",
-      en: "Transform your plastic bottles into useful objects. Made by Salsabile"
-    },
-    youtubeId: "TeS8QfpPHic",
-    duration: "0:53",
-    publishDate: "2025-12-08",
-    category: { fr: "Communauté", en: "Community" },
-    type: "community",
-    aspect: "portrait",
-    creator: { name: "Salsabile", role: language === 'fr' ? "Artiste & Créatrice" : "Artist & Creator" },
-    isShort: true,
-    tags: ["bottles", "recycling", "salsabile", "short"]
-  },
-  {
-    id: "cleaner-future-trailer",
-    title: {
-      fr: "Un Avenir Plus Propre avec Chat - Bande-annonce",
-      en: "Cleaner Future with Cat - Trailer"
-    },
-    description: {
-      fr: "Bande-annonce de notre série sur un avenir durable. Créé par Salsabile",
-      en: "Trailer for our series on a sustainable future. Created by Salsabile"
-    },
-    youtubeId: "CtcgvPj1vGk",
-    duration: "0:36",
-    publishDate: "2025-12-06",
-    category: { fr: "Communauté", en: "Community" },
-    type: "community",
-    aspect: "portrait",
-    creator: { name: "Salsabile", role: language === 'fr' ? "Artiste & Créatrice" : "Artist & Creator" },
-    isShort: true,
-    tags: ["trailer", "future", "salsabile", "short"]
-  },
-  {
-    id: "crafting-recycling-ep1",
-    title: {
-      fr: "Artisanat et Recyclage - Épisode 1",
-      en: "Crafting and Recycling - Episode 1"
-    },
-    description: {
-      fr: "Premier épisode de notre série sur l'artisanat écologique. Créé par Salsabile",
-      en: "First episode of our series on ecological crafting. Created by Salsabile"
-    },
-    youtubeId: "g8MBdRd99LU",
-    duration: "1:12",
-    publishDate: "2025-12-07",
-    category: { fr: "Communauté", en: "Community" },
-    type: "community",
-    aspect: "portrait",
-    creator: { name: "Salsabile", role: language === 'fr' ? "Artiste & Créatrice" : "Artist & Creator" },
-    isShort: true,
-    tags: ["crafting", "recycling", "salsabile", "short"]
-  },
-  
-  // Channel Videos
-  {
-    id: "channel-showcase",
-    title: {
-      fr: "Présentation du Site Web",
-      en: "Website Showcase"
-    },
-    description: {
-      fr: "Présentation complète de notre site web et de ses fonctionnalités écologiques",
-      en: "Complete overview of our website and its ecological features"
-    },
-    youtubeId: "v_EyngbVFb8",
-    duration: "1:28",
-    publishDate: "2025-12-09",
-    category: { fr: "Chaîne", en: "Channel" },
-    type: "channel",
-    aspect: "landscape",
-    creator: { name: "Yahia", role: language === 'fr' ? "Développeur Principal" : "Lead Developer" },
-    tags: ["showcase", "website", "présentation"]
-  }
-];
-
-export default function Videos() {
-  const { language } = useLanguage();
-  const { playSuccessSound, playErrorSound } = useSoundEffects();
-  
-  // Core states
-  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
-  const [activeSection, setActiveSection] = useState<'tutorial' | 'community' | 'channel'>('tutorial');
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
-  
-  // Modal states
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showControls, setShowControls] = useState(true);
-  const [showInterface, setShowInterface] = useState(true);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isRotated, setIsRotated] = useState(false);
-  const [videoError, setVideoError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  
-  // Character states
-  const [showCharacterSelection, setShowCharacterSelection] = useState(false);
-  const [showCharacterDetail, setShowCharacterDetail] = useState(false);
-  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
-  
-  // UI states
-  const [isMobile, setIsMobile] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [expandedDescriptions, setExpandedDescriptions] = useState<Record<string, boolean>>({});
-  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  
-  // Refs
-  const modalRef = useRef<HTMLDivElement>(null);
-  const controlsTimeoutRef = useRef<NodeJS.Timeout>();
-  const searchTimeoutRef = useRef<NodeJS.Timeout>();
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const prevSearchQueryRef = useRef("");
-  const prevViewModeRef = useRef(viewMode);
-  
-  useScrollReveal();
-
-  // Memoized data
-  const characters = useMemo(() => getCharacters(language), [language]);
-  const videos = useMemo(() => getVideos(language), [language]);
-
-  // Get section counts
-  const sectionCounts = useMemo(() => {
-    const tutorialCount = videos.filter(v => v.type === 'tutorial').length;
-    const communityCount = videos.filter(v => v.type === 'community').length;
-    const channelCount = videos.filter(v => v.type === 'channel').length;
+// Hook de navigation SPA amélioré
+const useNavigate = () => {
+  const navigate = useCallback((path: string) => {
+    // Stocker l'état actuel de scroll
+    const scrollY = window.scrollY;
+    sessionStorage.setItem('scrollY', scrollY.toString());
     
-    return { tutorialCount, communityCount, channelCount };
-  }, [videos]);
-
-  // Responsive check
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
+    window.history.pushState({}, '', path);
     
-    const handleResize = () => {
-      requestAnimationFrame(checkMobile);
-    };
+    // Créer un événement personnalisé pour la navigation
+    const navEvent = new CustomEvent('spa:navigate', { 
+      detail: { path, timestamp: Date.now() }
+    });
+    window.dispatchEvent(navEvent);
     
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    // Forcer le re-rendu de l'application
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    
+    // Scroll doux vers le haut pour les nouvelles pages
+    if (path !== window.location.pathname) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }, []);
 
-  // Debounced search with sound and toast
+  return navigate;
+};
+
+// Hook de gestion du thème
+const useTheme = () => {
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-      
-      if (searchQuery !== prevSearchQueryRef.current) {
-        if (searchQuery.trim()) {
-          const sectionVideos = videos.filter(v => v.type === activeSection);
-          const filtered = sectionVideos.filter(video => {
-            const searchableText = [
-              video.title[language].toLowerCase(),
-              video.description[language].toLowerCase(),
-              video.category?.[language].toLowerCase() || '',
-              video.creator?.name.toLowerCase() || '',
-              video.creator?.role.toLowerCase() || '',
-              ...(video.tags || []).map(tag => tag.toLowerCase())
-            ].join(' ');
-            
-            const query = searchQuery.toLowerCase().trim();
-            return searchableText.includes(query);
-          });
-          
-          if (filtered.length > 0) {
-            playSuccessSound();
-            toast.success(
-              language === 'fr' 
-                ? `${filtered.length} résultat${filtered.length > 1 ? 's' : ''} trouvé${filtered.length > 1 ? 's' : ''}`
-                : `${filtered.length} result${filtered.length > 1 ? 's' : ''} found`,
-              {
-                duration: 2000,
-                position: 'top-center',
-              }
-            );
-          } else if (searchQuery.trim().length >= 2) {
-            playErrorSound();
-            toast.error(
-              language === 'fr'
-                ? "Aucun résultat trouvé"
-                : "No results found",
-              {
-                duration: 2000,
-                position: 'top-center',
-              }
-            );
-          }
-        }
-        prevSearchQueryRef.current = searchQuery;
-      }
-    }, 400);
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
-    return () => clearTimeout(timeoutId);
-  }, [searchQuery, videos, activeSection, language, playSuccessSound, playErrorSound]);
-
-  // Filter videos
-  const filteredVideos = useMemo(() => {
-    const sectionVideos = videos.filter(v => v.type === activeSection);
-    
-    if (!debouncedSearchQuery.trim()) return sectionVideos;
-    
-    const query = debouncedSearchQuery.toLowerCase().trim();
-    
-    return sectionVideos.filter(video => {
-      const searchableText = [
-        video.title[language].toLowerCase(),
-        video.description[language].toLowerCase(),
-        video.category?.[language].toLowerCase() || '',
-        video.creator?.name.toLowerCase() || '',
-        video.creator?.role.toLowerCase() || '',
-        ...(video.tags || []).map(tag => tag.toLowerCase())
-      ].join(' ');
-      
-      return searchableText.includes(query);
-    });
-  }, [videos, activeSection, debouncedSearchQuery, language]);
-
-  // Utility functions
-  const getLocalizedText = useCallback((text: { fr: string; en: string } | string) => {
-    if (typeof text === 'string') return text;
-    return text[language];
-  }, [language]);
-
-  const getThumbnailUrl = useCallback((youtubeId: string, isShort?: boolean) => {
-    const quality = isShort ? 'hqdefault' : 'maxresdefault';
-    return `https://img.youtube.com/vi/${youtubeId}/${quality}.jpg`;
-  }, []);
-
-  const formatDate = useCallback((dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  }, [language]);
-
-  // Video selection
-  const handleVideoSelect = useCallback((video: Video) => {
-    setIsLoading(true);
-    setSelectedVideo(video);
-    setIsModalOpen(true);
-    setVideoError(false);
-    setErrorMessage("");
-    setIsRotated(false);
-    setShowInterface(true);
-    setShowControls(true);
-    
-    playSuccessSound();
-    
-    if (controlsTimeoutRef.current) {
-      clearTimeout(controlsTimeoutRef.current);
+    if (savedTheme) {
+      setTheme(savedTheme);
+    } else if (prefersDark) {
+      setTheme('dark');
     }
-  }, [playSuccessSound]);
+  }, []);
+  
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove('light', 'dark');
+    root.classList.add(theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+  
+  const toggleTheme = useCallback(() => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  }, []);
+  
+  return { theme, toggleTheme };
+};
 
-  const handleThumbnailClick = useCallback((e: React.MouseEvent, video: Video) => {
+// Composants de base
+const Card = ({ children, className = "", style }: { children: ReactNode; className?: string; style?: React.CSSProperties }) => (
+  <div className={`rounded-lg border bg-card text-card-foreground shadow-sm ${className}`} style={style}>
+    {children}
+  </div>
+);
+
+const CardContent = ({ children, className = "" }: { children: ReactNode; className?: string }) => (
+  <div className={`p-6 ${className}`}>
+    {children}
+  </div>
+);
+
+// Composant Link optimisé pour SPA avec meilleure gestion des événements
+const Link = ({ to, children, className = "", onClick, ...props }: { 
+  to: string; 
+  children: ReactNode; 
+  className?: string;
+  onClick?: (e: React.MouseEvent) => void;
+  [key: string]: any;
+}) => {
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
-    handleVideoSelect(video);
-  }, [handleVideoSelect]);
+    
+    // Exécuter le callback onClick si fourni
+    onClick?.(e);
+    
+    // Ajouter un effet visuel pour le feedback
+    const target = e.currentTarget as HTMLElement;
+    target.style.transform = 'scale(0.98)';
+    target.style.transition = 'transform 0.2s ease';
+    
+    setTimeout(() => {
+      target.style.transform = '';
+      
+      // Naviguer après l'animation
+      setTimeout(() => {
+        navigate(to);
+      }, isMobile ? 50 : 100);
+    }, 150);
+  }, [to, navigate, onClick, isMobile]);
+  
+  return (
+    <a 
+      href={to} 
+      className={className}
+      onClick={handleClick}
+      {...props}
+    >
+      {children}
+    </a>
+  );
+};
 
-  // Modal controls
-  const handleModalClose = useCallback(() => {
-    setSelectedVideo(null);
-    setIsModalOpen(false);
-    setIsFullscreen(false);
-    setShowInterface(true);
-    setIsLoading(false);
-    setVideoError(false);
-    setErrorMessage("");
-    setIsRotated(false);
-    
-    if (controlsTimeoutRef.current) {
-      clearTimeout(controlsTimeoutRef.current);
-    }
-    
-    if (document.fullscreenElement) {
-      document.exitFullscreen().catch(console.error);
-    }
+// Types pour le bouton
+interface BoutonAnimeProps {
+  children: ReactNode;
+  variant?: "default" | "outline" | "gradient" | "eco";
+  size?: "sm" | "default" | "lg";
+  className?: string;
+  onClick?: (e: React.MouseEvent) => void;
+  icon?: ReactNode;
+  href?: string;
+  disabled?: boolean;
+  loading?: boolean;
+  fullWidth?: boolean;
+  glow?: boolean;
+  pulse?: boolean;
+}
+
+// Composant Bouton avec support thème amélioré
+const BoutonAnime = memo(({ 
+  children, 
+  variant = "default",
+  size = "default",
+  className = "",
+  onClick,
+  icon,
+  href,
+  disabled = false,
+  loading = false,
+  fullWidth = false,
+  glow = true,
+  pulse = false,
+}: BoutonAnimeProps) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
+  const isMobile = useIsMobile();
+  
+  const handleMouseEnter = useCallback(() => {
+    if (!disabled && !loading) setIsHovered(true);
+  }, [disabled, loading]);
+  
+  const handleMouseLeave = useCallback(() => {
+    setIsHovered(false);
+    setIsPressed(false);
   }, []);
-
-  const toggleFullscreen = useCallback(() => {
-    const modal = modalRef.current;
-    
-    if (!document.fullscreenElement) {
-      modal?.requestFullscreen?.().catch(console.error);
-    } else {
-      document.exitFullscreen?.().catch(console.error);
-    }
+  
+  const handleMouseDown = useCallback(() => {
+    if (!disabled && !loading) setIsPressed(true);
+  }, [disabled, loading]);
+  
+  const handleMouseUp = useCallback(() => {
+    setIsPressed(false);
   }, []);
-
-  const toggleMute = useCallback(() => {
-    setIsMuted(prev => !prev);
-    playSuccessSound();
-  }, [playSuccessSound]);
-
-  const toggleInterface = useCallback(() => {
-    setShowInterface(prev => !prev);
-    setShowControls(true);
+  
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    if (disabled || loading) return;
+    e.preventDefault();
+    e.stopPropagation();
     
-    if (controlsTimeoutRef.current) {
-      clearTimeout(controlsTimeoutRef.current);
-    }
-  }, []);
-
-  const toggleRotation = useCallback(() => {
-    setIsRotated(prev => !prev);
-  }, []);
-
-  const handleMouseMove = useCallback(() => {
-    setShowControls(true);
-    
-    if (controlsTimeoutRef.current) {
-      clearTimeout(controlsTimeoutRef.current);
+    // Effet de feedback tactile
+    if (isMobile) {
+      const button = e.currentTarget as HTMLButtonElement;
+      button.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        button.style.transform = '';
+      }, 150);
     }
     
-    controlsTimeoutRef.current = setTimeout(() => {
-      setShowControls(false);
-    }, 3000);
-  }, []);
+    onClick?.(e);
+  }, [disabled, loading, onClick, isMobile]);
+  
+  // Tailles adaptées pour mobile
+  const sizeClasses: Record<string, string> = isMobile ? {
+    sm: "px-4 py-2.5 text-sm",
+    default: "px-5 py-3 text-base",
+    lg: "px-6 py-4 text-lg",
+  } : {
+    sm: "px-5 py-2.5 text-sm",
+    default: "px-6 py-3.5 text-base",
+    lg: "px-8 py-4 text-lg",
+  };
+  
+  // Classes variant pour thème clair/sombre avec meilleur contraste
+  const variantClasses: Record<string, string> = {
+    default: `
+      dark:bg-gradient-to-r dark:from-blue-600 dark:to-blue-500 
+      dark:hover:from-blue-500 dark:hover:to-blue-600 
+      dark:shadow-xl dark:hover:shadow-blue-500/40
+      bg-gradient-to-r from-blue-500 to-blue-400
+      hover:from-blue-400 hover:to-blue-500 
+      shadow-xl hover:shadow-blue-500/30
+      text-white
+    `,
+    outline: `
+      dark:border-2 dark:border-blue-400/40 dark:bg-slate-900/90 
+      dark:hover:border-blue-400/80 dark:hover:bg-blue-500/15 
+      dark:hover:shadow-blue-500/30
+      border-2 border-blue-500/60 bg-white/90
+      hover:border-blue-500/80 hover:bg-blue-50 
+      hover:shadow-blue-500/20
+      dark:text-white text-blue-900
+    `,
+    gradient: `
+      dark:bg-gradient-to-r dark:from-blue-600 dark:via-emerald-600 dark:to-cyan-600 
+      dark:hover:from-blue-500 dark:hover:via-emerald-700 dark:hover:to-cyan-700 
+      dark:shadow-xl dark:hover:shadow-blue-500/40
+      bg-gradient-to-r from-blue-500 via-emerald-500 to-cyan-500
+      hover:from-blue-400 hover:via-emerald-600 hover:to-cyan-600 
+      shadow-xl hover:shadow-blue-500/30
+      text-white
+    `,
+    eco: `
+      dark:bg-gradient-to-r dark:from-emerald-500 dark:via-green-500 dark:to-teal-500 
+      dark:hover:from-emerald-600 dark:hover:via-green-600 dark:hover:to-teal-600 
+      dark:shadow-xl dark:hover:shadow-emerald-500/40
+      bg-gradient-to-r from-emerald-400 via-green-400 to-teal-400
+      hover:from-emerald-500 hover:via-green-500 hover:to-teal-500 
+      shadow-xl hover:shadow-emerald-500/30
+      text-white
+    `,
+  };
+  
+  const buttonClasses = `
+    relative overflow-hidden rounded-xl font-bold
+    transition-all duration-200 ease-out
+    disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
+    focus:outline-none focus:ring-3 dark:focus:ring-blue-500/40 focus:ring-blue-500/30
+    ${fullWidth ? 'w-full' : ''}
+    group ${sizeClasses[size]} ${variantClasses[variant]} ${className}
+    ${!isMobile && isHovered ? 'shadow-2xl scale-[1.02]' : 'shadow-xl'}
+    ${!isMobile && isPressed ? 'scale-95 shadow-lg' : ''}
+    ${isMobile ? 'active:scale-95 touch-manipulation' : ''}
+  `;
+  
+  const ButtonContent = (
+    <>
+      {!isMobile && glow && (
+        <motion.span
+          className={`
+            absolute -inset-1 rounded-xl blur-xl
+            dark:bg-gradient-to-r dark:from-blue-500/30 dark:via-emerald-500/20 dark:to-cyan-500/30
+            bg-gradient-to-r from-blue-400/20 via-emerald-400/15 to-cyan-400/20
+          `}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isHovered ? 0.3 : 0 }}
+          transition={{ duration: 0.3 }}
+        />
+      )}
+      
+      {!isMobile && pulse && (
+        <span className={`
+          absolute -inset-1 rounded-xl
+          dark:bg-gradient-to-r dark:from-blue-500/40 dark:via-emerald-500/30 dark:to-cyan-500/40
+          bg-gradient-to-r from-blue-400/30 via-emerald-400/20 to-cyan-400/30
+        `} style={{ animation: 'pulse 3s ease-in-out infinite' }} />
+      )}
+      
+      {loading && (
+        <motion.span 
+          className="absolute inset-0 flex items-center justify-center dark:bg-black/20 bg-white/20 backdrop-blur-sm rounded-xl"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
+        >
+          <span className="rounded-full h-6 w-6 border-t-2 border-b-2 dark:border-white border-blue-600 animate-spin" />
+        </motion.span>
+      )}
+      
+      <motion.span 
+        className={`relative flex items-center justify-center gap-3 ${isPressed ? 'scale-95' : ''}`}
+        whileTap={{ scale: 0.95 }}
+        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+      >
+        {icon && !loading && (
+          <motion.span
+            initial={false}
+            animate={{ scale: !isMobile && isHovered ? 1.1 : 1 }}
+            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+          >
+            {icon}
+          </motion.span>
+        )}
+        {loading ? (
+          <span className="opacity-0">{children}</span>
+        ) : (
+          <motion.span 
+            className="relative"
+            initial={false}
+            animate={{ scale: !isMobile && isHovered ? 1.05 : 1 }}
+            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+          >
+            {children}
+          </motion.span>
+        )}
+        {!loading && variant !== 'outline' && !isMobile && (
+          <motion.div
+            initial={false}
+            animate={{ x: isHovered ? 2 : 0 }}
+            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+          >
+            <ArrowRight className="w-4 h-4" />
+          </motion.div>
+        )}
+      </motion.span>
+    </>
+  );
+  
+  if (href && !disabled && !loading) {
+    return (
+      <Link 
+        to={href} 
+        className={`inline-block ${fullWidth ? 'w-full' : ''}`}
+        onClick={onClick}
+      >
+        <button
+          className={buttonClasses}
+          onMouseEnter={!isMobile ? handleMouseEnter : undefined}
+          onMouseLeave={!isMobile ? handleMouseLeave : undefined}
+          onMouseDown={!isMobile ? handleMouseDown : undefined}
+          onMouseUp={!isMobile ? handleMouseUp : undefined}
+          disabled={disabled || loading}
+        >
+          {ButtonContent}
+        </button>
+      </Link>
+    );
+  }
+  
+  return (
+    <button
+      className={buttonClasses}
+      onMouseEnter={!isMobile ? handleMouseEnter : undefined}
+      onMouseLeave={!isMobile ? handleMouseLeave : undefined}
+      onMouseDown={!isMobile ? handleMouseDown : undefined}
+      onMouseUp={!isMobile ? handleMouseUp : undefined}
+      onClick={handleClick}
+      disabled={disabled || loading}
+    >
+      {ButtonContent}
+    </button>
+  );
+});
 
-  // Search handlers
-  const handleClearSearch = useCallback(() => {
-    setSearchQuery("");
-    searchInputRef.current?.focus();
-    playSuccessSound();
-  }, [playSuccessSound]);
+BoutonAnime.displayName = 'BoutonAnime';
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Escape') {
-      handleClearSearch();
-    }
-  }, [handleClearSearch]);
+// Types pour le widget
+interface WidgetFlottantProps {
+  children: ReactNode;
+  intensity?: number;
+  className?: string;
+  interactive?: boolean;
+  glow?: boolean;
+  minHeight?: string;
+  equalSize?: boolean;
+  onHoverChange?: (isHovered: boolean) => void;
+  delay?: number;
+  scrollReveal?: boolean;
+}
 
-  // Section change with toast and sound
-  const handleSectionChange = useCallback((section: 'tutorial' | 'community' | 'channel') => {
-    if (section === activeSection) return;
+// Widget avec support thème amélioré
+const WidgetFlottant = memo(({
+  children,
+  intensity = 0.3,
+  className = "",
+  interactive = true,
+  glow = true,
+  minHeight = "min-h-[240px]",
+  equalSize = true,
+  onHoverChange,
+  delay = 0,
+  scrollReveal = true,
+}: WidgetFlottantProps) => {
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+  const [isVisible, setIsVisible] = useState(!scrollReveal);
+  const widgetRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
+  
+  // Désactiver l'interactivité sur mobile pour de meilleures performances
+  const effectiveInteractive = isMobile ? false : interactive;
+  const effectiveGlow = isMobile ? false : glow;
+  
+  useEffect(() => {
+    if (!scrollReveal || !widgetRef.current) return;
     
-    setIsTransitioning(true);
-    setActiveSection(section);
-    
-    playSuccessSound();
-    
-    const sectionName = section === 'tutorial' ? (language === 'fr' ? 'Tutoriels' : 'Tutorials') :
-                       section === 'community' ? (language === 'fr' ? 'Communauté' : 'Community') :
-                       (language === 'fr' ? 'Chaîne' : 'Channel');
-    
-    toast.success(
-      language === 'fr' 
-        ? `Section: ${sectionName}`
-        : `Section: ${sectionName}`,
-      {
-        duration: 1500,
-        position: 'top-center',
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => setIsVisible(true), delay);
+        }
+      },
+      { 
+        threshold: 0.05, 
+        rootMargin: isMobile ? '100px' : '200px' 
       }
     );
     
-    const timer = setTimeout(() => setIsTransitioning(false), 300);
-    return () => clearTimeout(timer);
-  }, [activeSection, language, playSuccessSound]);
-
-  // Character handlers
-  const handleCharacterSelectionOpen = useCallback(() => {
-    setShowCharacterSelection(true);
-    setSelectedCharacter(null);
-    playSuccessSound();
-  }, [playSuccessSound]);
-
-  const handleCharacterSelectionClose = useCallback(() => {
-    setShowCharacterSelection(false);
-  }, []);
-
-  const handleCharacterSelect = useCallback((character: Character) => {
-    setSelectedCharacter(character);
-    setShowCharacterSelection(false);
-    playSuccessSound();
-    setTimeout(() => setShowCharacterDetail(true), 150);
-  }, [playSuccessSound]);
-
-  const handleCharacterDetailClose = useCallback(() => {
-    setShowCharacterDetail(false);
-    setTimeout(() => setSelectedCharacter(null), 300);
-  }, []);
-
-  // Video events
-  const handleVideoLoad = useCallback(() => {
-    setIsLoading(false);
-    setVideoError(false);
-    playSuccessSound();
-  }, [playSuccessSound]);
-
-  const handleVideoError = useCallback((error?: string) => {
-    setIsLoading(false);
-    setVideoError(true);
-    setErrorMessage(error || (language === 'fr' 
-      ? 'Impossible de charger la vidéo' 
-      : 'Unable to load video'
-    ));
-    playErrorSound();
-  }, [language, playErrorSound]);
-
-  const handleRetryVideo = useCallback(() => {
-    if (selectedVideo) {
-      setVideoError(false);
-      setErrorMessage("");
-      setIsLoading(true);
-      playSuccessSound();
-    }
-  }, [selectedVideo, playSuccessSound]);
-
-  const handleImageError = useCallback((imageId: string) => {
-    setImageErrors(prev => ({ ...prev, [imageId]: true }));
-  }, []);
-
-  // Toggle description expansion
-  const toggleDescription = useCallback((videoId: string) => {
-    setExpandedDescriptions(prev => ({
-      ...prev,
-      [videoId]: !prev[videoId]
-    }));
-  }, []);
-
-  // Toggle view mode with toast and sound
-  const toggleViewMode = useCallback(() => {
-    setViewMode(prev => {
-      const newMode = prev === 'grid' ? 'list' : 'grid';
-      
-      if (newMode !== prevViewModeRef.current) {
-        playSuccessSound();
-        toast.success(
-          language === 'fr' 
-            ? newMode === 'grid' ? 'Mode grille activé' : 'Mode liste activé'
-            : newMode === 'grid' ? 'Grid view enabled' : 'List view enabled',
-          {
-            duration: 1500,
-            position: 'top-center',
-          }
-        );
-        prevViewModeRef.current = newMode;
-      }
-      
-      return newMode;
-    });
-  }, [language, playSuccessSound]);
-
-  // Get modal style - IMPROVED FOR PC AND MOBILE
-  const getModalStyle = useCallback((): React.CSSProperties => {
-    if (!selectedVideo) return {};
-    
-    const isPortrait = selectedVideo.aspect === 'portrait';
-    const isShort = selectedVideo.isShort;
-    
-    if (isMobile) {
-      // Mobile - Optimized for all screen sizes
-      if (isPortrait || isShort) {
-        // Portrait/Short videos on mobile - Responsive sizing
-        return {
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '92vw',
-          height: '88vh',
-          maxWidth: '400px',
-          maxHeight: '700px',
-          borderRadius: '20px',
-          margin: 0,
-          zIndex: 50,
-        };
-      } else {
-        // Landscape videos on mobile - Full width with proper aspect
-        const baseWidth = window.innerWidth * 0.95;
-        const calculatedHeight = baseWidth * (9/16); // 16:9 aspect
-        
-        return {
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: `translate(-50%, -50%) ${isRotated ? 'rotate(90deg)' : ''}`,
-          width: `${baseWidth}px`,
-          height: `${Math.min(calculatedHeight, window.innerHeight * 0.85)}px`,
-          maxHeight: '85vh',
-          borderRadius: '20px',
-          margin: 0,
-          zIndex: 50,
-        };
-      }
-    } else {
-      // PC - Larger, optimized modal
-      if (isPortrait || isShort) {
-        // Portrait/Short videos on PC
-        return {
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: 'min(420px, 85vw)',
-          height: 'min(750px, 85vh)',
-          borderRadius: '24px',
-          margin: 0,
-          zIndex: 50,
-        };
-      } else {
-        // Landscape videos on PC - LARGER for better viewing
-        return {
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: 'min(1100px, 92vw)', // Increased from 900px
-          height: 'min(619px, 85vh)', // 16:9 aspect (1100 * 9/16 = 619)
-          borderRadius: '24px',
-          margin: 0,
-          zIndex: 50,
-        };
-      }
-    }
-  }, [selectedVideo, isMobile, isRotated]);
-
-  // Fullscreen change handler
+    observer.observe(widgetRef.current);
+    return () => observer.disconnect();
+  }, [scrollReveal, delay, isMobile]);
+  
   useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-
-    const events = ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'];
+    if (!effectiveInteractive || !widgetRef.current) return;
     
-    events.forEach(event => {
-      document.addEventListener(event, handleFullscreenChange);
-    });
-    
-    return () => {
-      events.forEach(event => {
-        document.removeEventListener(event, handleFullscreenChange);
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = widgetRef.current!.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width;
+      const y = (e.clientY - rect.top) / rect.height;
+      
+      requestAnimationFrame(() => {
+        setMousePosition({ x: (x - 0.5) * 2, y: (y - 0.5) * 2 });
       });
     };
-  }, []);
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if (!isModalOpen) return;
+    
+    const handleMouseEnter = () => {
+      setIsHovered(true);
+      onHoverChange?.(true);
+    };
+    
+    const handleMouseLeave = () => {
+      setIsHovered(false);
+      setMousePosition({ x: 0, y: 0 });
+      onHoverChange?.(false);
+    };
+    
+    const widget = widgetRef.current;
+    widget.addEventListener('mousemove', handleMouseMove);
+    widget.addEventListener('mouseenter', handleMouseEnter);
+    widget.addEventListener('mouseleave', handleMouseLeave);
+    
+    return () => {
+      widget.removeEventListener('mousemove', handleMouseMove);
+      widget.removeEventListener('mouseenter', handleMouseEnter);
+      widget.removeEventListener('mouseleave', handleMouseLeave);
+    };
+  }, [effectiveInteractive, onHoverChange]);
+  
+  const rotateX = effectiveInteractive ? mousePosition.y * 1.5 * intensity : 0;
+  const rotateY = effectiveInteractive ? -mousePosition.x * 1.5 * intensity : 0;
+  const translateZ = isHovered && !isMobile ? 8 : 0;
+  const scale = isHovered && !isMobile ? 1.02 : isVisible ? 1 : 0.95;
+  const opacity = isVisible ? 1 : 0;
+  
+  return (
+    <motion.div
+      ref={widgetRef}
+      className={`relative rounded-2xl group ${className}
+        ${equalSize ? 'w-full h-full flex flex-col' : ''}
+        ${isMobile ? 'min-h-[200px]' : minHeight}
+        transform-gpu will-change-transform
+      `}
+      initial={{ opacity: 0, scale: 0.95, y: 10 }}
+      animate={{ 
+        opacity,
+        scale,
+        rotateX,
+        rotateY,
+        translateZ,
+        y: 0
+      }}
+      transition={{
+        opacity: { duration: 0.5, delay: delay / 1000, ease: "easeOut" },
+        scale: { duration: 0.5, delay: delay / 1000, ease: "easeOut" },
+        rotateX: { duration: 0.3, ease: "easeOut" },
+        rotateY: { duration: 0.3, ease: "easeOut" },
+        translateZ: { duration: 0.3, ease: "easeOut" },
+        y: { duration: 0.5, delay: delay / 1000, ease: "easeOut" }
+      }}
+      style={{
+        transformStyle: 'preserve-3d',
+      }}
+    >
+      {effectiveGlow && (
+        <motion.div
+          className={`
+            absolute -inset-2 rounded-2xl blur-xl
+            dark:bg-gradient-to-br dark:from-blue-500/20 dark:via-emerald-500/15 dark:to-cyan-500/20
+            bg-gradient-to-br from-blue-400/15 via-emerald-400/10 to-cyan-400/15
+          `}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isHovered && !isMobile ? 0.3 : 0 }}
+          transition={{ duration: 0.4 }}
+        />
+      )}
       
-      switch(e.key) {
-        case 'Escape':
-          if (!showCharacterSelection && !showCharacterDetail) {
-            handleModalClose();
-          }
-          break;
-        case 'f':
-        case 'F':
-          if (e.ctrlKey || e.metaKey) {
-            e.preventDefault();
-            toggleFullscreen();
-          }
-          break;
-        case 'm':
-        case 'M':
-          if (e.target === document.body) {
-            e.preventDefault();
-            toggleMute();
-          }
-          break;
-        case ' ':
-          if (e.target === document.body) {
-            e.preventDefault();
-            toggleInterface();
-          }
-          break;
+      <div className={`
+        absolute inset-0 rounded-2xl shadow-lg transition-all duration-300
+        ${isHovered && !isMobile ? 'shadow-xl' : ''}
+        dark:bg-gradient-to-br dark:from-slate-800/95 dark:via-slate-900/90 dark:to-slate-800/85
+        bg-gradient-to-br from-white/95 via-gray-50/90 to-white/85
+        border dark:border-white/10 border-gray-200
+      `} />
+      
+      {!isMobile && (
+        <div className={`absolute inset-0 rounded-2xl overflow-hidden`}>
+          <div className={`
+            absolute -inset-full transition-transform duration-1000
+            ${isHovered ? 'translate-x-full' : '-translate-x-full'}
+            dark:bg-gradient-to-r dark:from-transparent dark:via-white/5 dark:to-transparent
+            bg-gradient-to-r from-transparent via-blue-500/3 to-transparent
+          `} />
+        </div>
+      )}
+      
+      <div className="relative z-10 h-full transform-gpu">
+        {children}
+      </div>
+    </motion.div>
+  );
+});
+
+WidgetFlottant.displayName = 'WidgetFlottant';
+
+// Arrière-plan animé optimisé
+const FondAnime = memo(() => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationRef = useRef<number>();
+  const particlesRef = useRef<Array<{
+    x: number; y: number; size: number; speedX: number; speedY: number;
+    color: string; alpha: number; pulseSpeed: number;
+  }>>([]);
+  const timeRef = useRef(0);
+  const isMobile = useIsMobile();
+  
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    const resize = () => {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      initParticles();
+    };
+    
+    const initParticles = () => {
+      particlesRef.current = [];
+      const particleCount = isMobile ? 40 : 60;
+      const isDark = document.documentElement.classList.contains('dark');
+      
+      const colors = isDark 
+        ? ['#60a5fa', '#34d399', '#22d3ee']
+        : ['#3b82f6', '#10b981', '#06b6d4'];
+      
+      for (let i = 0; i < particleCount; i++) {
+        particlesRef.current.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          size: Math.random() * 1.5 + 0.5,
+          speedX: Math.random() * 0.2 - 0.1,
+          speedY: Math.random() * 0.2 - 0.1,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          alpha: Math.random() * 0.2 + 0.1,
+          pulseSpeed: Math.random() * 0.02 + 0.005,
+        });
       }
     };
-
-    window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [isModalOpen, handleModalClose, toggleFullscreen, toggleMute, toggleInterface, showCharacterSelection, showCharacterDetail]);
-
-  // Cleanup timeouts
-  useEffect(() => {
-    return () => {
-      if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
-      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    
+    const animate = () => {
+      timeRef.current += 0.01;
+      
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      const isDark = document.documentElement.classList.contains('dark');
+      
+      // Fond dégradé subtil
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      
+      if (isDark) {
+        gradient.addColorStop(0, 'rgba(15, 23, 42, 0.1)');
+        gradient.addColorStop(0.5, 'rgba(30, 41, 59, 0.08)');
+        gradient.addColorStop(1, 'rgba(15, 23, 42, 0.1)');
+      } else {
+        gradient.addColorStop(0, 'rgba(249, 250, 251, 0.2)');
+        gradient.addColorStop(0.5, 'rgba(243, 244, 246, 0.15)');
+        gradient.addColorStop(1, 'rgba(249, 250, 251, 0.2)');
+      }
+      
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Dessiner les particules
+      particlesRef.current.forEach(particle => {
+        particle.x += particle.speedX;
+        particle.y += particle.speedY;
+        
+        // Rebond sur les bords
+        if (particle.x > canvas.width) particle.x = 0;
+        if (particle.x < 0) particle.x = canvas.width;
+        if (particle.y > canvas.height) particle.y = 0;
+        if (particle.y < 0) particle.y = canvas.height;
+        
+        // Animation de pulsation
+        particle.alpha = 0.15 + Math.sin(timeRef.current * particle.pulseSpeed) * 0.1;
+        
+        ctx.save();
+        ctx.globalAlpha = particle.alpha;
+        ctx.fillStyle = particle.color;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = particle.color;
+        
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+      
+      animationRef.current = requestAnimationFrame(animate);
     };
-  }, []);
-
-  // Open in YouTube
-  const openInYouTube = useCallback((youtubeId: string) => {
-    window.open(`https://www.youtube.com/watch?v=${youtubeId}`, '_blank', 'noopener,noreferrer');
-  }, []);
-
-  // Get aspect ratio for player
-  const getAspectRatio = useCallback((video: Video): '16:9' | '9:16' => {
-    return video.aspect === 'portrait' ? '9:16' : '16:9';
-  }, []);
-
-  // Render video cards based on view mode
-  const renderVideoCards = () => {
-    if (filteredVideos.length === 0) {
-      const noResultsText = debouncedSearchQuery 
-        ? (language === 'fr' ? 'Aucun résultat trouvé' : 'No results found')
-        : (language === 'fr' ? 'Aucune vidéo disponible' : 'No videos available');
+    
+    resize();
+    window.addEventListener('resize', resize);
+    animate();
+    
+    return () => {
+      window.removeEventListener('resize', resize);
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    };
+  }, [isMobile]);
+  
+  return (
+    <>
+      <canvas
+        ref={canvasRef}
+        className="fixed inset-0 pointer-events-none -z-10"
+        aria-hidden="true"
+      />
       
-      const noResultsDescription = debouncedSearchQuery 
-        ? (language === 'fr' ? 'Essayez avec d\'autres termes de recherche' : 'Try different search terms')
-        : (language === 'fr' ? 'Revenez plus tard pour plus de contenu !' : 'Check back later for more content!');
+      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+        <div className={`
+          absolute inset-0
+          dark:bg-gradient-to-br dark:from-blue-900/5 dark:via-transparent dark:to-emerald-900/5
+          bg-gradient-to-br from-blue-50/10 via-transparent to-emerald-50/10
+          animate-gradient-flow
+        `} />
+      </div>
+    </>
+  );
+});
 
-      const icon = activeSection === 'tutorial' ? <Video className="w-12 h-12" /> :
-                   activeSection === 'community' ? <Users className="w-12 h-12" /> :
-                   <Youtube className="w-12 h-12" />;
-      
-      return (
-        <div className="text-center py-16 animate-fade-in">
-          <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-emerald-500/10 to-green-500/10 rounded-full flex items-center justify-center animate-pulse">
-            <div className="w-20 h-20 bg-gradient-to-br from-emerald-500/20 to-green-500/20 rounded-full flex items-center justify-center">
-              {icon}
-            </div>
-          </div>
-          <h3 className="text-2xl font-semibold mb-3 text-foreground">
-            {noResultsText}
-          </h3>
-          <p className="text-muted-foreground max-w-md mx-auto text-lg">
-            {noResultsDescription}
-          </p>
-        </div>
-      );
+FondAnime.displayName = 'FondAnime';
+
+// Types pour la carte
+interface CarteInteractiveProps {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  color?: string;
+  bg?: string;
+  onClick?: () => void;
+  isActive?: boolean;
+  delay?: number;
+  href?: string;
+}
+
+// Carte interactive améliorée avec support de navigation
+const CarteInteractive = memo(({ 
+  icon: Icon,
+  title,
+  description,
+  color = "dark:text-blue-600 text-blue-500",
+  bg = "dark:bg-gradient-to-br dark:from-blue-500/20 dark:to-blue-500/10 bg-gradient-to-br from-blue-400/20 to-blue-400/10",
+  onClick,
+  isActive = false,
+  delay = 0,
+  href,
+}: CarteInteractiveProps) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => setIsVisible(true), delay);
+        }
+      },
+      { 
+        threshold: 0.05, 
+        rootMargin: '100px' 
+      }
+    );
+    
+    if (cardRef.current) observer.observe(cardRef.current);
+    return () => {
+      if (cardRef.current) observer.unobserve(cardRef.current);
+    };
+  }, [delay]);
+  
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Feedback visuel
+    setIsPressed(true);
+    setTimeout(() => setIsPressed(false), 150);
+    
+    // Exécuter le callback onClick si fourni
+    if (onClick) {
+      onClick();
+    } else if (href) {
+      // Naviguer vers l'URL si href est fourni
+      setTimeout(() => {
+        navigate(href);
+      }, isMobile ? 100 : 150);
     }
+  }, [onClick, href, navigate, isMobile]);
+  
+  return (
+    <div ref={cardRef} className="h-full">
+      <WidgetFlottant 
+        intensity={0.25}
+        glow={!isMobile}
+        minHeight={isMobile ? "min-h-[180px]" : "min-h-[200px]"}
+        onHoverChange={setIsHovered}
+        delay={delay}
+      >
+        <Link 
+          to={href || '#'}
+          className="block h-full"
+          onClick={handleClick}
+        >
+          <motion.div
+            className="cursor-pointer h-full"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ 
+              opacity: isVisible ? 1 : 0, 
+              y: isVisible ? 0 : 20,
+              scale: isPressed ? 0.98 : 1
+            }}
+            transition={{ 
+              opacity: { duration: 0.4, delay: delay / 1000, ease: "easeOut" },
+              y: { duration: 0.4, delay: delay / 1000, ease: "easeOut" },
+              scale: { duration: 0.15 }
+            }}
+          >
+            <Card className="h-full border-0 overflow-hidden bg-transparent rounded-2xl">
+              <CardContent className={`${isMobile ? 'p-4' : 'p-5'} text-center flex flex-col items-center justify-center h-full relative`}>
+                {isActive && (
+                  <motion.div
+                    className="absolute top-2 right-2 z-20"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring" }}
+                  >
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/50 animate-pulse" />
+                  </motion.div>
+                )}
+                
+                <motion.div
+                  className={`relative ${isMobile ? 'w-12 h-12' : 'w-14 h-14'} rounded-xl ${bg} flex items-center justify-center mx-auto mb-3 shadow-lg transform-gpu`}
+                  whileHover={!isMobile ? { scale: 1.1 } : {}}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                >
+                  <Icon className={`relative z-10 ${isMobile ? 'w-6 h-6' : 'w-7 h-7'} ${color}`} />
+                </motion.div>
+                
+                <motion.h3
+                  className={`font-bold ${isMobile ? 'text-base mb-1' : 'text-lg mb-2'}`}
+                  whileHover={!isMobile ? { scale: 1.05 } : {}}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
+                  <span className={`
+                    bg-gradient-to-r bg-clip-text text-transparent
+                    ${isHovered && !isMobile ? 'from-blue-500 via-emerald-500 to-cyan-500' : 'dark:from-white dark:to-white/80 from-gray-900 to-gray-700'}
+                  `}>
+                    {title}
+                  </span>
+                </motion.h3>
+                
+                {description && (
+                  <motion.p
+                    className={`${isMobile ? 'text-xs mb-2' : 'text-sm mb-3'} flex-grow`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: isVisible ? 1 : 0 }}
+                    transition={{ duration: 0.3, delay: (delay + 200) / 1000 }}
+                  >
+                    <span className="dark:text-gray-300 text-gray-600">
+                      {description}
+                    </span>
+                  </motion.p>
+                )}
+                
+                {href && (
+                  <motion.div
+                    className="mt-2"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: isVisible ? 1 : 0 }}
+                    transition={{ duration: 0.3, delay: (delay + 300) / 1000 }}
+                  >
+                    <div className="inline-flex items-center gap-1 text-xs dark:text-blue-400 text-blue-600">
+                      <span>Explorer</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </div>
+                  </motion.div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        </Link>
+      </WidgetFlottant>
+    </div>
+  );
+});
 
-    if (viewMode === 'grid') {
-      return (
-        <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'} gap-4 md:gap-6 animate-fade-in`}>
-          {filteredVideos.map((video) => (
-            <VideoCard
-              key={video.id}
-              video={video}
-              getLocalizedText={getLocalizedText}
-              getThumbnailUrl={getThumbnailUrl}
-              formatDate={formatDate}
-              onVideoSelect={handleVideoSelect}
-              onCharacterInfoClick={handleCharacterSelectionOpen}
-              onThumbnailClick={handleThumbnailClick}
-              language={language}
-              showCharacterInfo={video.creator?.name === "Salsabile"}
-              isExpanded={expandedDescriptions[video.id]}
-              onToggleDescription={() => toggleDescription(video.id)}
-              imageError={imageErrors[video.youtubeId]}
-              onImageError={() => handleImageError(video.youtubeId)}
-            />
-          ))}
-        </div>
-      );
+CarteInteractive.displayName = 'CarteInteractive';
+
+// Types pour le modal
+interface BinModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  details: string;
+  color?: string;
+  bg?: string;
+}
+
+// Modal optimisé
+const BinModal = memo(({ 
+  isOpen,
+  onClose,
+  icon: Icon,
+  title,
+  description,
+  details,
+  color = "dark:text-blue-600 text-blue-500",
+  bg = "dark:bg-gradient-to-br dark:from-blue-500/20 dark:to-blue-500/10 bg-gradient-to-br from-blue-400/20 to-blue-400/10",
+}: BinModalProps) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
+  
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
+  
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
     } else {
-      return (
-        <div className="space-y-4 md:space-y-5 max-w-6xl mx-auto animate-fade-in">
-          {filteredVideos.map((video) => (
-            <ListViewVideoCard
-              key={video.id}
-              video={video}
-              getLocalizedText={getLocalizedText}
-              getThumbnailUrl={getThumbnailUrl}
-              formatDate={formatDate}
-              onVideoSelect={handleVideoSelect}
-              onCharacterInfoClick={handleCharacterSelectionOpen}
-              language={language}
-              showCharacterInfo={video.creator?.name === "Salsabile"}
-              isExpanded={expandedDescriptions[video.id]}
-              onToggleDescription={() => toggleDescription(video.id)}
-              imageError={imageErrors[video.youtubeId]}
-              onImageError={() => handleImageError(video.youtubeId)}
-            />
-          ))}
-        </div>
-      );
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+  
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+      onClose();
     }
   };
-
+  
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-emerald-50/5 dark:to-emerald-950/5">
-      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12">
-        <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-8 sm:mb-10 md:mb-12">
-            <div className="inline-flex items-center justify-center p-3 mb-4 sm:mb-5">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/30 via-green-500/30 to-teal-500/30 blur-xl rounded-full animate-pulse-slow"></div>
-                <div className="relative bg-gradient-to-br from-emerald-500/20 via-green-500/20 to-teal-500/20 backdrop-blur-sm border border-emerald-500/30 p-4 sm:p-5 rounded-2xl shadow-xl shadow-emerald-500/10 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-emerald-500/20">
-                  <Video className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 text-emerald-600 dark:text-emerald-400 transition-transform duration-500 group-hover:scale-110" />
-                </div>
-              </div>
-            </div>
-            
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4 animate-slide-up">
-              <span className="bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 bg-clip-text text-transparent">
-                {language === 'fr' ? 'Vidéos Éducatives' : 'Educational Videos'}
-              </span>
-            </h1>
-            
-            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4 animate-slide-up delay-75">
-              {language === 'fr' 
-                ? 'Apprenez et inspirez-vous pour un avenir plus durable' 
-                : 'Learn and get inspired for a more sustainable future'}
-            </p>
-          </div>
-
-          {/* Search Bar - CENTERED WITH LAYOUT BUTTON */}
-          <div className="mb-6 sm:mb-8 md:mb-10 animate-slide-up delay-150">
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
-              {/* Search Bar - Centered */}
-              <div className="relative w-full max-w-2xl">
-                <div className={`relative flex items-center transition-all duration-300 ease-out ${
-                  isSearchFocused 
-                    ? 'scale-[1.01] shadow-lg shadow-emerald-500/10 ring-2 ring-emerald-500/20' 
-                    : ''
-                }`}>
-                  <div className={`absolute left-4 top-1/2 transform -translate-y-1/2 transition-all duration-300 ${
-                    isSearchFocused ? 'scale-110 text-emerald-500' : 'text-muted-foreground'
-                  }`}>
-                    <Search className="w-5 h-5" />
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={handleBackdropClick}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ 
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)'
+          }}
+        >
+          <motion.div
+            ref={modalRef}
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -20 }}
+            transition={{ 
+              type: "spring",
+              damping: 25,
+              stiffness: 300,
+              mass: 0.8
+            }}
+            className={`relative w-full ${isMobile ? 'max-w-full' : 'max-w-2xl'}`}
+          >
+            <WidgetFlottant intensity={0.15} glow={!isMobile} minHeight="min-h-0">
+              <Card className={`
+                border overflow-hidden
+                dark:border-white/20 dark:bg-slate-900/95
+                border-gray-300 bg-white/95
+                ${isMobile ? 'max-h-[90vh]' : 'max-h-[85vh]'} overflow-y-auto
+                [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]
+              `}>
+                <CardContent className={`${isMobile ? 'p-4' : 'p-6'}`}>
+                  <div className={`flex items-start justify-between ${isMobile ? 'mb-4' : 'mb-6'}`}>
+                    <motion.div 
+                      className="flex items-center gap-3"
+                      initial={{ x: -20, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ delay: 0.1 }}
+                    >
+                      <div className={`${isMobile ? 'w-10 h-10' : 'w-12 h-12'} rounded-lg ${bg} flex items-center justify-center`}>
+                        <Icon className={`${isMobile ? 'w-5 h-5' : 'w-6 h-6'} ${color}`} />
+                      </div>
+                      <div>
+                        <h3 className={`
+                          ${isMobile ? 'text-lg' : 'text-xl'} font-bold mb-1
+                          dark:text-white text-gray-900
+                        `}>
+                          {title}
+                        </h3>
+                        <p className={`
+                          ${isMobile ? 'text-xs' : 'text-sm'}
+                          dark:text-gray-300 text-gray-600
+                        `}>
+                          {description}
+                        </p>
+                      </div>
+                    </motion.div>
+                    
+                    <motion.button
+                      onClick={onClose}
+                      className={`
+                        p-1 rounded-lg transition-colors flex-shrink-0
+                        dark:hover:bg-white/10 hover:bg-gray-100
+                      `}
+                      aria-label="Fermer"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <X className={`
+                        ${isMobile ? 'w-5 h-5' : 'w-6 h-6'}
+                        dark:text-white text-gray-700
+                      `} />
+                    </motion.button>
                   </div>
                   
-                  <Input
-                    ref={searchInputRef}
-                    type="text"
-                    placeholder={language === 'fr' ? 'Rechercher des vidéos...' : 'Search videos...'}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    onFocus={() => setIsSearchFocused(true)}
-                    onBlur={() => setIsSearchFocused(false)}
-                    className={`pl-12 pr-10 py-4 text-base transition-all duration-300 ${
-                      isSearchFocused 
-                        ? 'border-emerald-500 bg-white dark:bg-gray-900' 
-                        : 'border-border/50 bg-background/80 backdrop-blur-sm'
-                    } rounded-xl hover:shadow-md`}
-                  />
-                  
-                  {searchQuery && (
-                    <button
-                      onClick={handleClearSearch}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 text-muted-foreground hover:text-foreground transition-all duration-200 hover:scale-110 hover:text-emerald-500"
-                      aria-label={language === 'fr' ? 'Effacer la recherche' : 'Clear search'}
+                  <div className={`${isMobile ? 'space-y-3' : 'space-y-4'}`}>
+                    <motion.div
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.3 }}
                     >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-                
-                {/* Search status */}
-                {debouncedSearchQuery && (
-                  <div className="mt-2 flex items-center justify-between px-2 animate-fade-in">
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-                        {filteredVideos.length} {language === 'fr' ? 'résultat(s)' : 'result(s)'}
-                      </span>
-                      <span className="text-muted-foreground hidden sm:inline">•</span>
-                      <span className="text-muted-foreground hidden sm:inline">"{searchQuery}"</span>
-                    </div>
-                    <button
-                      onClick={handleClearSearch}
-                      className="text-xs text-muted-foreground hover:text-foreground transition-colors hover:text-emerald-500 sm:hidden"
-                    >
-                      {language === 'fr' ? 'Effacer' : 'Clear'}
-                    </button>
-                  </div>
-                )}
-              </div>
-              
-              {/* Layout Button - BIGGER WITH TEXT */}
-              <div className="w-full sm:w-auto flex justify-center sm:justify-start">
-                <button
-                  onClick={toggleViewMode}
-                  className={`flex items-center gap-3 px-5 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 active:scale-95 ${
-                    viewMode === 'grid'
-                      ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/30'
-                      : 'bg-gradient-to-r from-gray-800 to-gray-900 dark:from-gray-700 dark:to-gray-800 text-white border border-gray-700 dark:border-gray-600'
-                  }`}
-                  aria-label={viewMode === 'grid' ? (language === 'fr' ? 'Passer en mode liste' : 'Switch to list view') : (language === 'fr' ? 'Passer en mode grille' : 'Switch to grid view')}
-                >
-                  {viewMode === 'grid' ? (
-                    <>
-                      <Grid className="w-5 h-5" />
-                      <span className="text-sm font-medium">{language === 'fr' ? 'Grille' : 'Grid'}</span>
-                    </>
-                  ) : (
-                    <>
-                      <List className="w-5 h-5" />
-                      <span className="text-sm font-medium">{language === 'fr' ? 'Liste' : 'List'}</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Section Navigation */}
-            <div className="flex flex-wrap gap-2 sm:gap-3 justify-center animate-slide-up delay-225">
-              {(['tutorial', 'community', 'channel'] as const).map((section) => {
-                const count = section === 'tutorial' ? sectionCounts.tutorialCount :
-                            section === 'community' ? sectionCounts.communityCount :
-                            sectionCounts.channelCount;
-                
-                return (
-                  <button
-                    key={section}
-                    onClick={() => handleSectionChange(section)}
-                    className={`px-4 sm:px-5 py-2.5 rounded-lg sm:rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2 sm:gap-3 hover:scale-105 active:scale-95 ${
-                      activeSection === section
-                        ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/30'
-                        : 'bg-background/70 border border-border/50 hover:border-emerald-500/30 hover:bg-emerald-500/5 text-muted-foreground'
-                    }`}
-                    aria-label={`${section} section with ${count} videos`}
-                    aria-current={activeSection === section ? 'page' : undefined}
-                  >
-                    {section === 'tutorial' ? <Recycle className="w-4 h-4" /> :
-                     section === 'community' ? <Users className="w-4 h-4" /> :
-                     <Youtube className="w-4 h-4" />}
-                    <span>
-                      {section === 'tutorial' ? (language === 'fr' ? 'Tutoriels' : 'Tutorials') :
-                       section === 'community' ? (language === 'fr' ? 'Communauté' : 'Community') :
-                       (language === 'fr' ? 'Chaîne' : 'Channel')}
-                    </span>
-                    <span className={`px-2 py-1 text-xs rounded-full transition-all duration-300 ${
-                      activeSection === section 
-                        ? 'bg-white/20 text-white backdrop-blur-sm' 
-                        : 'bg-emerald-500/10 text-emerald-600'
-                    }`}>
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Content Area */}
-          <div className={`transition-all duration-300 ease-out ${isTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
-            {renderVideoCards()}
-          </div>
-
-          {/* YouTube Channel Link */}
-          <div className="mt-10 sm:mt-14 md:mt-16 animate-fade-in">
-            <div className="bg-gradient-to-r from-emerald-500/5 via-green-500/5 to-teal-500/5 rounded-xl sm:rounded-2xl border border-emerald-500/20 p-5 sm:p-6 transition-all duration-500 hover:shadow-lg hover:shadow-emerald-500/5 hover:border-emerald-500/30">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
-                <div className="text-center sm:text-left">
-                  <div className="inline-flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-500 rounded-xl flex items-center justify-center animate-pulse-slow">
-                      <Youtube className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg sm:text-xl font-bold">
-                        {language === 'fr' ? 'Notre Chaîne YouTube' : 'Our YouTube Channel'}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {language === 'fr' 
-                          ? 'Plus de contenu éducatif disponible' 
-                          : 'More educational content available'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
-                <Button
-                  size="default"
-                  className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 transition-all duration-300 hover:scale-105 active:scale-95 shadow-md"
-                  onClick={() => window.open("https://www.youtube.com/channel/UC1H5HYDNTWHw7fGOYBJp0RQ", '_blank')}
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  {language === 'fr' ? 'Visiter la chaîne' : 'Visit channel'}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Video Modal */}
-      {isModalOpen && selectedVideo && (
-        <>
-          <div 
-            className="fixed inset-0 bg-black/90 backdrop-blur-sm z-40 animate-fade-in"
-            onClick={handleModalClose}
-          />
-          
-          <Dialog open={isModalOpen} onOpenChange={handleModalClose}>
-            <DialogContent 
-              ref={modalRef}
-              className="fixed border-none bg-black shadow-2xl overflow-hidden p-0 z-50"
-              style={getModalStyle()}
-              onMouseMove={handleMouseMove}
-              onTouchMove={handleMouseMove}
-              onTouchStart={() => setShowControls(true)}
-              aria-label={`Video player for ${getLocalizedText(selectedVideo.title)}`}
-            >
-              {/* Loading Overlay */}
-              {isLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/95 z-50">
-                  <div className="relative">
-                    <div className="w-16 h-16 border-3 border-transparent border-t-emerald-500 rounded-full animate-spin"></div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Play className="w-8 h-8 text-emerald-500 animate-pulse" />
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {/* Error Overlay */}
-              {videoError && !isLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/95 z-50 animate-fade-in">
-                  <div className="text-center p-5 sm:p-6 max-w-sm">
-                    <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-4 sm:mb-5 bg-red-500/10 rounded-full flex items-center justify-center border border-red-500/30">
-                      <AlertCircle className="w-10 h-10 sm:w-12 sm:h-12 text-red-500" />
-                    </div>
-                    <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">
-                      {language === 'fr' ? 'Erreur' : 'Error'}
-                    </h3>
-                    <p className="text-white/80 mb-5 sm:mb-6 text-sm sm:text-base">{errorMessage}</p>
-                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                      <Button
-                        onClick={handleRetryVideo}
-                        className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:scale-105 transition-transform"
-                      >
-                        <RefreshCw className="w-4 h-4" />
-                        {language === 'fr' ? 'Réessayer' : 'Retry'}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={handleModalClose}
-                        className="border-white/30 text-white hover:scale-105 transition-transform"
-                      >
-                        {language === 'fr' ? 'Fermer' : 'Close'}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {/* Top Controls */}
-              {showInterface && !videoError && (
-                <div 
-                  className={`absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/95 to-transparent p-3 sm:p-4 transition-all duration-300 ${
-                    showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 sm:h-9 sm:w-9 bg-black/60 text-white hover:bg-black/80 hover:scale-110 transition-transform"
-                        onClick={handleModalClose}
-                        aria-label={language === 'fr' ? 'Fermer la vidéo' : 'Close video'}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                      <h3 className="text-sm font-semibold text-white/95 truncate max-w-[180px] sm:max-w-md">
-                        {getLocalizedText(selectedVideo.title)}
-                      </h3>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      {isMobile && selectedVideo.aspect === 'landscape' && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 sm:h-9 sm:w-9 bg-black/60 text-white hover:bg-black/80 hover:scale-110 transition-transform"
-                          onClick={toggleRotation}
-                          aria-label={language === 'fr' ? 'Tourner la vidéo' : 'Rotate video'}
-                        >
-                          <RotateCw className={`w-4 h-4 transition-transform ${isRotated ? 'rotate-180' : ''}`} />
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 sm:h-9 sm:w-9 bg-black/60 text-white hover:bg-black/80 hover:scale-110 transition-transform"
-                        onClick={toggleInterface}
-                        aria-label={language === 'fr' ? 'Masquer l\'interface' : 'Hide interface'}
-                      >
-                        {showInterface ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 sm:h-9 sm:w-9 bg-black/60 text-white hover:bg-black/80 hover:scale-110 transition-transform"
-                        onClick={() => openInYouTube(selectedVideo.youtubeId)}
-                        aria-label={language === 'fr' ? 'Ouvrir sur YouTube' : 'Open on YouTube'}
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 sm:h-9 sm:w-9 bg-black/60 text-white hover:bg-black/80 hover:scale-110 transition-transform"
-                        onClick={toggleFullscreen}
-                        aria-label={isFullscreen ? (language === 'fr' ? 'Quitter le mode plein écran' : 'Exit fullscreen') : (language === 'fr' ? 'Mode plein écran' : 'Fullscreen')}
-                      >
-                        {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Video Player */}
-              <div className="relative w-full h-full bg-black">
-                {!videoError && (
-                  <div className="w-full h-full">
-                    <LazyVideoPlayer
-                      youtubeId={selectedVideo.youtubeId}
-                      title={getLocalizedText(selectedVideo.title)}
-                      autoplay={true}
-                      muted={isMuted}
-                      loop={selectedVideo.isShort}
-                      showControls={false}
-                      aspectRatio={getAspectRatio(selectedVideo)}
-                      className="w-full h-full"
-                      onLoad={handleVideoLoad}
-                      onError={(error) => handleVideoError(error)}
-                    />
-                  </div>
-                )}
-                
-                {/* Floating Controls */}
-                {!showInterface && showControls && !videoError && (
-                  <div className="absolute top-3 sm:top-4 right-3 sm:right-4 z-50 flex flex-col gap-2 animate-fade-in">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-9 w-9 sm:h-10 sm:w-10 bg-black/60 text-white hover:bg-black/80 hover:scale-110 transition-transform"
-                      onClick={toggleInterface}
-                      aria-label={language === 'fr' ? 'Afficher l\'interface' : 'Show interface'}
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-9 w-9 sm:h-10 sm:w-10 bg-black/60 text-white hover:bg-black/80 hover:scale-110 transition-transform"
-                      onClick={toggleMute}
-                      aria-label={isMuted ? (language === 'fr' ? 'Activer le son' : 'Unmute') : (language === 'fr' ? 'Désactiver le son' : 'Mute')}
-                    >
-                      {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              {/* Bottom Controls */}
-              {showInterface && !videoError && (
-                <div 
-                  className={`absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/95 to-transparent p-3 sm:p-4 transition-all duration-300 ${
-                    showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
-                  }`}
-                >
-                  <div className="space-y-2 sm:space-y-3">
-                    <div>
-                      <h3 className="text-base font-semibold text-white line-clamp-1">
-                        {getLocalizedText(selectedVideo.title)}
-                      </h3>
-                      <p className="text-sm text-white/80 line-clamp-2">
-                        {getLocalizedText(selectedVideo.description)}
-                      </p>
-                    </div>
-                    
-                    <div className="flex items-center justify-between pt-2 border-t border-white/20">
-                      <div className="flex items-center gap-3 sm:gap-4 text-sm text-white/70">
-                        {selectedVideo.publishDate && (
-                          <span className="flex items-center gap-1.5">
-                            <Calendar className="w-4 h-4" />
-                            {formatDate(selectedVideo.publishDate)}
-                          </span>
-                        )}
-                        {selectedVideo.duration && (
-                          <span className="flex items-center gap-1.5">
-                            <Clock className="w-4 h-4" />
-                            {selectedVideo.duration}
-                          </span>
-                        )}
-                      </div>
-                      
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 sm:h-9 sm:w-9 text-white hover:bg-white/10 hover:scale-110 transition-transform"
-                        onClick={toggleMute}
-                        aria-label={isMuted ? (language === 'fr' ? 'Activer le son' : 'Unmute') : (language === 'fr' ? 'Désactiver le son' : 'Mute')}
-                      >
-                        {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </DialogContent>
-          </Dialog>
-        </>
-      )}
-
-      {/* Character Selection Modal */}
-      {showCharacterSelection && (
-        <>
-          <div 
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 animate-fade-in"
-            onClick={handleCharacterSelectionClose}
-          />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-            <div className="bg-white dark:bg-gray-900 rounded-xl sm:rounded-2xl shadow-2xl max-w-sm sm:max-w-md w-full max-h-[85vh] sm:max-h-[90vh] overflow-y-auto animate-scale-in">
-              <div className="p-4 sm:p-6">
-                <div className="flex items-center justify-between mb-4 sm:mb-6">
-                  <div>
-                    <h3 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-200">
-                      {language === 'fr' ? 'Personnages' : 'Characters'}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {language === 'fr' ? 'Choisissez un personnage' : 'Choose a character'}
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 hover:scale-110 transition-transform"
-                    onClick={handleCharacterSelectionClose}
-                    aria-label={language === 'fr' ? 'Fermer' : 'Close'}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-                
-                <div className="grid grid-cols-3 gap-3 sm:gap-4">
-                  {characters.map((character) => (
-                    <button
-                      key={character.id}
-                      onClick={() => handleCharacterSelect(character)}
-                      className="flex flex-col items-center p-3 sm:p-4 rounded-lg sm:rounded-xl border border-gray-200 dark:border-gray-800 hover:border-emerald-500 hover:scale-105 transition-all duration-300 group"
-                      aria-label={`Select character: ${character.name}`}
-                    >
-                      <div className="relative mb-2 sm:mb-3">
-                        <div className={`absolute inset-0 bg-gradient-to-r ${character.color} rounded-full blur-lg opacity-60 group-hover:opacity-80 transition-opacity`} />
-                        <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full border-3 sm:border-4 border-white/20 overflow-hidden">
-                          <img
-                            src={character.imageUrl}
-                            alt={character.name}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                            onError={() => handleImageError(character.id)}
-                          />
-                        </div>
-                      </div>
-                      <h4 className="font-bold text-gray-800 dark:text-gray-200 mb-1 text-sm sm:text-base">
-                        {character.name}
+                      <h4 className={`
+                        font-semibold ${isMobile ? 'text-base' : 'text-lg'} mb-2
+                        dark:text-blue-400 text-blue-600
+                      `}>
+                        Description
                       </h4>
-                      <p className="text-xs text-muted-foreground">{character.role}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Character Detail Modal */}
-      {showCharacterDetail && selectedCharacter && (
-        <>
-          <div 
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 animate-fade-in"
-            onClick={handleCharacterDetailClose}
-          />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-            <div className="bg-white dark:bg-gray-900 rounded-xl sm:rounded-2xl shadow-2xl max-w-sm sm:max-w-md w-full animate-scale-in">
-              <div className="p-4 sm:p-6">
-                <div className="flex items-center justify-between mb-4 sm:mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${selectedCharacter.color} flex items-center justify-center text-white font-bold text-lg shadow-lg`}>
-                      {selectedCharacter.name.charAt(0)}
-                    </div>
-                    <div>
-                      <h3 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-200">
-                        {selectedCharacter.name}
-                      </h3>
-                      <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
-                        {selectedCharacter.role}
+                      <p className={`
+                        ${isMobile ? 'text-sm' : 'leading-relaxed'}
+                        dark:text-gray-300 text-gray-700
+                      `}>
+                        {details}
                       </p>
-                    </div>
+                    </motion.div>
+                    
+                    <motion.div
+                      className={`
+                        p-3 rounded-lg border
+                        dark:bg-blue-500/10 dark:border-blue-500/20
+                        bg-blue-50 border-blue-200
+                      `}
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.4 }}
+                    >
+                      <h4 className={`
+                        font-semibold text-xs mb-1 flex items-center gap-1
+                        dark:text-blue-400 text-blue-600
+                      `}>
+                        <Sparkles className="w-3 h-3" />
+                        CONSEILS DE TRI
+                      </h4>
+                      <ul className="text-xs space-y-1">
+                        <li className="dark:text-gray-300 text-gray-700">• Bien nettoyer les contenants</li>
+                        <li className="dark:text-gray-300 text-gray-700">• Retirer les couvercles non-recyclables</li>
+                        <li className="dark:text-gray-300 text-gray-700">• Compacter pour gagner de l'espace</li>
+                      </ul>
+                    </motion.div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 hover:scale-110 transition-transform"
-                    onClick={handleCharacterDetailClose}
-                    aria-label={language === 'fr' ? 'Fermer' : 'Close'}
+                  
+                  <motion.div 
+                    className={`
+                      flex gap-3 mt-6 pt-4 border-t
+                      dark:border-white/20 border-gray-200
+                    `}
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.5 }}
                   >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-                
-                <div className="aspect-square rounded-lg sm:rounded-xl overflow-hidden mb-4 sm:mb-6 border border-gray-200 dark:border-gray-800 bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-900">
-                  {imageErrors[selectedCharacter.id] ? (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <AlertCircle className="w-16 h-16 text-gray-400" />
-                    </div>
-                  ) : (
-                    <img
-                      src={selectedCharacter.imageUrl}
-                      alt={selectedCharacter.name}
-                      className="w-full h-full object-contain p-4"
-                      onError={() => handleImageError(selectedCharacter.id)}
-                    />
-                  )}
-                </div>
-                
-                {selectedCharacter.description && (
-                  <p className="text-sm text-muted-foreground mb-4 text-center">
-                    {getLocalizedText(selectedCharacter.description)}
-                  </p>
-                )}
-                
-                <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <Heart className="w-4 h-4 text-pink-500" />
-                    <span>{language === 'fr' ? 'Créé par Salsabile' : 'Created by Salsabile'}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
+                    <BoutonAnime
+                      variant="outline"
+                      size="sm"
+                      onClick={onClose}
+                      className="flex-1"
+                    >
+                      Fermer
+                    </BoutonAnime>
+                    
+                    <BoutonAnime
+                      variant="gradient"
+                      size="sm"
+                      href="/guide"
+                      className="flex-1"
+                      glow={!isMobile}
+                    >
+                      <BookOpen className="w-3 h-3 mr-1" />
+                      Guide
+                    </BoutonAnime>
+                  </motion.div>
+                </CardContent>
+              </Card>
+            </WidgetFlottant>
+          </motion.div>
+        </motion.div>
       )}
+    </AnimatePresence>
+  );
+});
+
+BinModal.displayName = 'BinModal';
+
+// Composant Switch pour thème
+const ThemeSwitch = memo(() => {
+  const { theme, toggleTheme } = useTheme();
+  const isMobile = useIsMobile();
+  
+  return (
+    <motion.button
+      onClick={toggleTheme}
+      className={`
+        relative p-2 rounded-lg transition-colors
+        dark:bg-slate-800/50 dark:hover:bg-slate-700/50
+        bg-gray-100 hover:bg-gray-200
+        border dark:border-white/10 border-gray-300
+      `}
+      aria-label={theme === 'dark' ? 'Passer au mode clair' : 'Passer au mode sombre'}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.9 }}
+    >
+      <motion.div
+        initial={false}
+        animate={{ rotate: theme === 'dark' ? 0 : 180 }}
+        transition={{ type: "spring", stiffness: 400, damping: 10 }}
+      >
+        {theme === 'dark' ? (
+          <Sun className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-yellow-500`} />
+        ) : (
+          <Moon className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-blue-600`} />
+        )}
+      </motion.div>
+    </motion.button>
+  );
+});
+
+ThemeSwitch.displayName = 'ThemeSwitch';
+
+// Composant principal optimisé
+export default function ProjectEco() {
+  const { theme } = useTheme();
+  const { t } = useLanguage();
+  const isMobile = useIsMobile();
+  
+  // États optimisés
+  const [activeBinIndex, setActiveBinIndex] = useState(0);
+  const [isAutoRotating, setIsAutoRotating] = useState(true);
+  const [openModalIndex, setOpenModalIndex] = useState<number | null>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  
+  const autoRotationInterval = useRef<NodeJS.Timeout>();
+  const mountedRef = useRef(true);
+  
+  // Données optimisées avec traductions
+  const bins = useMemo(() => [
+    { 
+      icon: FileText, 
+      color: "dark:text-amber-600 text-amber-500", 
+      bg: "dark:bg-gradient-to-br dark:from-amber-500/20 dark:to-amber-600/10 bg-gradient-to-br from-amber-400/20 to-amber-500/10", 
+      label: t("project.bins.paper", "Papier & Carton"),
+      description: "",
+      details: t("project.bins.paperDetails", "Le papier et le carton représentent environ 25% de nos déchets ménagers. Leur recyclage permet de sauver des arbres et réduire la consommation d'eau et d'énergie.")
+    },
+    { 
+      icon: Package, 
+      color: "dark:text-blue-600 text-blue-500", 
+      bg: "dark:bg-gradient-to-br dark:from-blue-500/20 dark:to-cyan-600/10 bg-gradient-to-br from-blue-400/20 to-cyan-500/10", 
+      label: t("project.bins.plastic", "Plastique"),
+      description: t("project.bins.plasticDesc", "Bouteilles, emballages plastiques"),
+      details: t("project.bins.plasticDetails", "Les plastiques peuvent mettre jusqu'à 500 ans à se décomposer. Notre programme de recyclage les transforme en nouvelles ressources.")
+    },
+    { 
+      icon: Trash2, 
+      color: "dark:text-gray-600 text-gray-500", 
+      bg: "dark:bg-gradient-to-br dark:from-gray-500/20 dark:to-gray-600/10 bg-gradient-to-br from-gray-400/20 to-gray-500/10", 
+      label: t("project.bins.metal", "Métal"),
+      description: t("project.bins.metalDesc", "Cannettes, boîtes de conserve"),
+      details: t("project.bins.metalDetails", "Le recyclage des métaux permet d'économiser jusqu'à 95% de l'énergie nécessaire à leur production primaire.")
+    },
+    { 
+      icon: Apple, 
+      color: "dark:text-green-600 text-green-500", 
+      bg: "dark:bg-gradient-to-br dark:from-green-500/20 dark:to-emerald-600/10 bg-gradient-to-br from-green-400/20 to-emerald-500/10", 
+      label: t("project.bins.organic", "Organique"),
+      description: t("project.bins.organicDesc", "Déchets alimentaires, compostables"),
+      details: t("project.bins.organicDetails", "Transformés en compost pour enrichir les sols des jardins communautaires et espaces verts publics.")
+    },
+  ], [t]);
+  
+  const goals = useMemo(() => [
+    {
+      icon: Target,
+      title: t("project.implementation", "Mission Éducative"),
+      description: t("project.implementation.desc", "Sensibiliser aux enjeux environnementaux"),
+      color: "dark:text-blue-600 text-blue-500",
+      bg: "dark:bg-gradient-to-br dark:from-blue-500/20 dark:to-cyan-600/10 bg-gradient-to-br from-blue-400/20 to-cyan-500/10",
+    },
+    {
+      icon: Users,
+      title: t("project.awareness", "Engagement Communautaire"),
+      description: t("project.awareness.desc", "Créer une communauté active et engagée"),
+      color: "dark:text-green-600 text-green-500",
+      bg: "dark:bg-gradient-to-br dark:from-green-500/20 dark:to-emerald-600/10 bg-gradient-to-br from-green-400/20 to-emerald-500/10",
+    },
+    {
+      icon: Recycle,
+      title: t("project.mobilization", "Innovation Technologique"),
+      description: t("project.mobilization.desc", "Développer des solutions innovantes"),
+      color: "dark:text-purple-600 text-purple-500",
+      bg: "dark:bg-gradient-to-br dark:from-purple-500/20 dark:to-pink-600/10 bg-gradient-to-br from-purple-400/20 to-pink-500/10",
+    },
+    {
+      icon: Award,
+      title: t("project.impact.1", "Impact Mesurable"),
+      description: t("project.impact.2", "Atteindre des résultats concrets"),
+      color: "dark:text-amber-600 text-amber-500",
+      bg: "dark:bg-gradient-to-br dark:from-amber-500/20 dark:to-orange-600/10 bg-gradient-to-br from-amber-400/20 to-orange-500/10",
+    }
+  ], [t]);
+  
+  // Activités Éducatives section cards
+  const activities = useMemo(() => [
+    {
+      icon: Gamepad2,
+      title: t("activities.games", "Jeux"),
+      description: t("activities.games.desc", "Jouez et apprenez avec nos jeux interactifs"),
+      color: "dark:text-blue-600 text-blue-500",
+      bg: "dark:bg-gradient-to-br dark:from-blue-500/20 dark:to-cyan-600/10 bg-gradient-to-br from-blue-400/20 to-cyan-500/10",
+      href: "/activities"
+    },
+    {
+      icon: Video,
+      title: t("videos.title", "Vidéos"),
+      description: t("videos.subtitle", "Découvrez nos vidéos éducatives"),
+      color: "dark:text-green-600 text-green-500",
+      bg: "dark:bg-gradient-to-br dark:from-green-500/20 dark:to-emerald-600/10 bg-gradient-to-br from-green-400/20 to-emerald-500/10",
+      href: "/videos"
+    },
+    {
+      icon: Image,
+      title: t("posters.title", "Posters"),
+      description: t("posters.subtitle", "Affiches éducatives sur le recyclage"),
+      color: "dark:text-purple-600 text-purple-500",
+      bg: "dark:bg-gradient-to-br dark:from-purple-500/20 dark:to-pink-600/10 bg-gradient-to-br from-purple-400/20 to-pink-500/10",
+      href: "/posters"
+    },
+    {
+      icon: BookOpen,
+      title: t("guide.title", "Guide"),
+      description: t("guide.subtitle", "Apprenez à trier correctement vos déchets"),
+      color: "dark:text-amber-600 text-amber-500",
+      bg: "dark:bg-gradient-to-br dark:from-amber-500/20 dark:to-orange-600/10 bg-gradient-to-br from-amber-400/20 to-orange-500/10",
+      href: "/guide"
+    }
+  ], [t]);
+  
+  // Animation de scroll optimisée
+  useEffect(() => {
+    let ticking = false;
+    
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrollTop = window.scrollY;
+          const docHeight = document.body.scrollHeight - window.innerHeight;
+          const progress = Math.min((scrollTop / docHeight) * 100, 100);
+          setScrollProgress(progress);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+  
+  // Rotation automatique optimisée
+  useEffect(() => {
+    mountedRef.current = true;
+    
+    const rotateBins = () => {
+      if (mountedRef.current && isAutoRotating && openModalIndex === null) {
+        setActiveBinIndex(prev => (prev + 1) % bins.length);
+      }
+    };
+    
+    if (autoRotationInterval.current) {
+      clearInterval(autoRotationInterval.current);
+    }
+    
+    const interval = isMobile ? 5000 : 4000;
+    autoRotationInterval.current = setInterval(rotateBins, interval);
+    
+    return () => {
+      mountedRef.current = false;
+      if (autoRotationInterval.current) {
+        clearInterval(autoRotationInterval.current);
+      }
+    };
+  }, [isAutoRotating, openModalIndex, bins.length, isMobile]);
+  
+  // Gestion des interactions
+  const handleBinClick = useCallback((index: number) => {
+    setActiveBinIndex(index);
+    setOpenModalIndex(index);
+    setIsAutoRotating(false);
+  }, []);
+  
+  const handleCloseModal = useCallback(() => {
+    setOpenModalIndex(null);
+    setTimeout(() => {
+      setIsAutoRotating(true);
+    }, 300);
+  }, []);
+  
+  return (
+    <div className="min-h-screen overflow-hidden">
+      <FondAnime />
+      
+      {/* Barre de progression de scroll */}
+      <motion.div 
+        className="fixed top-0 left-0 w-full h-1 z-40"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5, duration: 0.5 }}
+      >
+        <div className={`
+          w-full h-full
+          dark:bg-slate-900/30 bg-gray-100/30
+          backdrop-blur-sm
+        `}>
+          <motion.div 
+            className={`
+              h-full rounded-r-full
+              dark:bg-gradient-to-r dark:from-blue-600 dark:via-emerald-600 dark:to-cyan-600
+              bg-gradient-to-r from-blue-500 via-emerald-500 to-cyan-500
+            `}
+            style={{ width: `${scrollProgress}%` }}
+            transition={{ type: "spring", damping: 30, stiffness: 100, mass: 0.5 }}
+          />
+        </div>
+      </motion.div>
+      
+      {/* Bouton thème */}
+      <div className="fixed top-4 right-4 z-40">
+        <ThemeSwitch />
+      </div>
+      
+      <div className={`container mx-auto px-4 ${isMobile ? 'py-6' : 'py-8 md:py-12 lg:py-16'}`}>
+        {/* Section Héro */}
+        <motion.section
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6 }}
+          className={`max-w-6xl mx-auto text-center ${isMobile ? 'mb-12 pt-12' : 'mb-16 md:mb-24 pt-16'}`}
+        >
+          <motion.div
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
+            className={`
+              inline-flex items-center gap-2 ${isMobile ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm'} rounded-full font-medium mb-6
+              backdrop-blur-xl shadow-lg border
+              dark:bg-gradient-to-r dark:from-blue-600/30 dark:via-emerald-500/30 dark:to-cyan-500/30
+              dark:border-white/20 dark:text-white
+              bg-gradient-to-r from-blue-500/20 via-emerald-400/20 to-cyan-400/20
+              border-gray-300 text-gray-800
+            `}
+          >
+            <Sparkles className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
+            <span>{t("hero.badge", "Our project explained")}</span>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4, ease: "easeOut" }}
+            className="mb-6"
+          >
+            <motion.h1 
+              className={`${isMobile ? 'text-3xl md:text-4xl' : 'text-4xl md:text-6xl lg:text-7xl'} font-black mb-4 tracking-tight`}
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+            >
+              <motion.span
+                className={`
+                  bg-gradient-to-r bg-clip-text text-transparent inline-block
+                  dark:from-blue-600 dark:via-emerald-600 dark:to-cyan-600
+                  from-blue-500 via-emerald-500 to-cyan-500
+                `}
+                animate={{ 
+                  backgroundPosition: ['0% 50%', '100% 50%', '0% 50%']
+                }}
+                transition={{ 
+                  duration: 8,
+                  repeat: Infinity,
+                  ease: "linear"
+                }}
+                style={{ backgroundSize: '200% auto' }}
+              >
+                {t("hero.title", "Écologie")}
+              </motion.span>
+            </motion.h1>
+            
+            <motion.h2
+              className={`${isMobile ? 'text-xl' : 'text-2xl md:text-3xl'} font-bold mb-4`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7, duration: 0.5 }}
+            >
+              <span className="dark:text-white text-gray-900">
+                {t("project.title", "Notre Planète, Notre Avenir")}
+              </span>
+            </motion.h2>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.9, ease: "easeOut" }}
+            className={`max-w-2xl mx-auto mb-6`}
+          >
+            <p className={`
+              ${isMobile ? 'text-base' : 'text-lg'} leading-relaxed mb-6
+              dark:text-gray-300 text-gray-700
+            `}>
+              {t("project.intro", "Bienvenue dans notre mouvement écologique communautaire. Ensemble, nous créons un avenir durable pour les générations à venir.")}
+            </p>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 1.1, ease: "easeOut" }}
+            className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-3 justify-center items-center mb-8`}
+          >
+            <BoutonAnime
+              variant="gradient"
+              size={isMobile ? "default" : "lg"}
+              icon={<Rocket className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />}
+              href="/project"
+              glow={!isMobile}
+              pulse={!isMobile}
+            >
+              {t("hero.cta", "Découvrir")}
+            </BoutonAnime>
+            
+            <BoutonAnime
+              variant="outline"
+              size={isMobile ? "default" : "lg"}
+              icon={<BookOpen className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />}
+              href="/guide"
+            >
+              {t("guide.title", "Guide Pratique")}
+            </BoutonAnime>
+          </motion.div>
+        </motion.section>
+        
+        {/* Section Objectifs */}
+        <motion.section
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true, margin: isMobile ? "-50px" : "-100px" }}
+          transition={{ duration: 0.5 }}
+          className={`max-w-7xl mx-auto ${isMobile ? 'mb-12' : 'mb-16'}`}
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-8"
+          >
+            <motion.div
+              whileHover={!isMobile ? { rotate: 360 } : {}}
+              transition={{ duration: 0.8 }}
+            >
+              <Target className={`
+                ${isMobile ? 'w-10 h-10' : 'w-12 h-12'} mx-auto mb-3
+                dark:text-blue-600 text-blue-500
+              `} />
+            </motion.div>
+            <motion.h2
+              className={`
+                ${isMobile ? 'text-2xl' : 'text-3xl md:text-4xl'} font-bold mb-3
+                dark:text-white text-gray-900
+              `}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              {t("project.goal.title", "Nos Objectifs")}
+            </motion.h2>
+            <motion.p
+              className={`
+                ${isMobile ? 'text-base' : 'text-lg'}
+                dark:text-gray-300 text-gray-600
+              `}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              {t("project.goal.text", "Construire un avenir durable ensemble")}
+            </motion.p>
+          </motion.div>
+          
+          <div className={`grid grid-cols-1 ${isMobile ? 'gap-4' : 'md:grid-cols-2 lg:grid-cols-4 gap-5'}`}>
+            {goals.map((goal, index) => (
+              <motion.div
+                key={goal.title}
+                initial={{ opacity: 0, y: 60 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.5, delay: index * 0.1, ease: "easeOut" }}
+                className="h-full"
+              >
+                <CarteInteractive
+                  icon={goal.icon}
+                  title={goal.title}
+                  description={goal.description}
+                  color={goal.color}
+                  bg={goal.bg}
+                  delay={index * 100}
+                />
+              </motion.div>
+            ))}
+          </div>
+        </motion.section>
+        
+        {/* Section Tri Sélectif */}
+        <motion.section
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true, margin: isMobile ? "-50px" : "-100px" }}
+          transition={{ duration: 0.5 }}
+          className={`max-w-7xl mx-auto ${isMobile ? 'mb-12' : 'mb-16'}`}
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-8"
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: isMobile ? 15 : 12, repeat: Infinity, ease: "linear" }}
+            >
+              <Recycle className={`
+                ${isMobile ? 'w-10 h-10' : 'w-12 h-12'} mx-auto mb-3
+                dark:text-emerald-600 text-emerald-500
+              `} />
+            </motion.div>
+            <motion.h2
+              className={`
+                ${isMobile ? 'text-2xl' : 'text-3xl md:text-4xl'} font-bold mb-3
+                dark:text-white text-gray-900
+              `}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              {t("project.bins.title", "Tri Sélectif")}
+            </motion.h2>
+            <motion.p
+              className={`
+                ${isMobile ? 'text-base' : 'text-lg'}
+                dark:text-gray-300 text-gray-600
+              `}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              {t("project.bins.text", "Un système simple pour un impact maximal")}
+            </motion.p>
+          </motion.div>
+          
+          <div className={`grid grid-cols-1 ${isMobile ? 'gap-4' : 'md:grid-cols-2 lg:grid-cols-4 gap-5'} mb-6`}>
+            {bins.map((bin, index) => (
+              <motion.div
+                key={bin.label}
+                initial={{ opacity: 0, y: 60 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.5, delay: index * 0.1, ease: "easeOut" }}
+                className="h-full"
+              >
+                <CarteInteractive
+                  icon={bin.icon}
+                  title={bin.label}
+                  description={bin.description}
+                  color={bin.color}
+                  bg={bin.bg}
+                  onClick={() => handleBinClick(index)}
+                  isActive={activeBinIndex === index}
+                  delay={index * 100}
+                />
+              </motion.div>
+            ))}
+          </div>
+          
+          {/* Navigation */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="flex flex-col items-center gap-3 mt-6"
+          >
+            <div className="flex items-center gap-2">
+              {bins.map((_, index) => (
+                <motion.button
+                  key={index}
+                  onClick={() => handleBinClick(index)}
+                  className={`
+                    relative w-2.5 h-2.5 rounded-full transition-colors duration-200
+                    ${index === activeBinIndex 
+                      ? 'dark:bg-gradient-to-r dark:from-blue-600 dark:to-emerald-600 bg-gradient-to-r from-blue-500 to-emerald-500' 
+                      : 'dark:bg-white/30 dark:hover:bg-white/50 bg-gray-400 hover:bg-gray-600'
+                    }
+                  `}
+                  whileHover={!isMobile ? { scale: 1.5 } : {}}
+                  whileTap={{ scale: 0.8 }}
+                  aria-label={`${t("common.view", "Voir")} ${bins[index].label}`}
+                >
+                  {index === activeBinIndex && (
+                    <motion.div
+                      className="absolute -inset-1.5 rounded-full border"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring" }}
+                    >
+                      <div className={`
+                        w-full h-full rounded-full
+                        dark:border-emerald-500/30 border-emerald-400/30
+                      `} />
+                    </motion.div>
+                  )}
+                </motion.button>
+              ))}
+            </div>
+            
+            <motion.div whileHover={!isMobile ? { scale: 1.05 } : {}}>
+              <BoutonAnime
+                variant="outline"
+                size="sm"
+                icon={isAutoRotating ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+                onClick={() => setIsAutoRotating(!isAutoRotating)}
+              >
+                {isAutoRotating ? t("common.pause", 'Pause') : t("common.play", 'Reprendre')}
+              </BoutonAnime>
+            </motion.div>
+          </motion.div>
+        </motion.section>
+        
+        {/* Section Activités Éducatives */}
+        <motion.section
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true, margin: isMobile ? "-50px" : "-100px" }}
+          transition={{ duration: 0.5 }}
+          className={`max-w-7xl mx-auto ${isMobile ? 'mb-12' : 'mb-16'}`}
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-8"
+          >
+            <motion.div
+              animate={!isMobile ? { scale: [1, 1.05, 1] } : {}}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              <Trophy className={`
+                ${isMobile ? 'w-10 h-10' : 'w-12 h-12'} mx-auto mb-3
+                dark:text-yellow-500 text-yellow-500
+              `} />
+            </motion.div>
+            <motion.h2
+              className={`
+                ${isMobile ? 'text-2xl' : 'text-3xl md:text-4xl'} font-bold mb-3
+                dark:text-white text-gray-900
+              `}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              {t("activities.title", "Activités Éducatives")}
+            </motion.h2>
+            <motion.p
+              className={`
+                ${isMobile ? 'text-base' : 'text-lg'}
+                dark:text-gray-300 text-gray-600
+              `}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              {t("activities.subtitle", "Explorez nos ressources interactives")}
+            </motion.p>
+          </motion.div>
+          
+          <div className={`grid grid-cols-1 ${isMobile ? 'gap-4' : 'md:grid-cols-2 lg:grid-cols-4 gap-5'}`}>
+            {activities.map((activity, index) => (
+              <motion.div
+                key={activity.title}
+                initial={{ opacity: 0, y: 60 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.5, delay: index * 0.1, ease: "easeOut" }}
+                className="h-full"
+              >
+                <CarteInteractive
+                  icon={activity.icon}
+                  title={activity.title}
+                  description={activity.description}
+                  color={activity.color}
+                  bg={activity.bg}
+                  href={activity.href}
+                  delay={index * 100}
+                />
+              </motion.div>
+            ))}
+          </div>
+          
+          {/* CTA Final */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="mt-12"
+          >
+            <WidgetFlottant intensity={0.15} glow={!isMobile} minHeight="min-h-0">
+              <Card className={`
+                border overflow-hidden
+                dark:bg-gradient-to-br dark:from-blue-600/20 dark:via-emerald-600/20 dark:to-cyan-600/20
+                bg-gradient-to-br from-blue-500/15 via-emerald-500/15 to-cyan-500/15
+                dark:border-white/20 border-gray-300
+              `}>
+                <CardContent className={`${isMobile ? 'p-5' : 'p-6'} text-center`}>
+                  <Heart className={`
+                    ${isMobile ? 'w-12 h-12' : 'w-14 h-14'} mx-auto mb-4 animate-pulse
+                    dark:text-pink-500 text-pink-500
+                  `} />
+                  <h3 className={`
+                    ${isMobile ? 'text-xl' : 'text-2xl'} font-bold mb-3
+                    dark:text-white text-gray-900
+                  `}>
+                    {t("project.why.title", "Votre Engagement Compte")}
+                  </h3>
+                  <p className={`
+                    mb-4 max-w-2xl mx-auto ${isMobile ? 'text-sm' : ''}
+                    dark:text-gray-300 text-gray-700
+                  `}>
+                    {t("project.why.text", "Chaque geste que vous posez pour l'environnement a un impact réel. Ensemble, nous pouvons créer un changement durable.")}
+                  </p>
+                  <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-3 justify-center`}>
+                    <BoutonAnime
+                      variant="gradient"
+                      size={isMobile ? "default" : "default"}
+                      icon={<Users className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />}
+                      href="/contact"
+                      glow={!isMobile}
+                    >
+                      {t("nav.contact", "Nous Contacter")}
+                    </BoutonAnime>
+                    
+                    <BoutonAnime
+                      variant="outline"
+                      size={isMobile ? "default" : "default"}
+                      icon={<Gamepad2 className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />}
+                      href="/activities"
+                    >
+                      {t("activities.games", "Jeux")}
+                    </BoutonAnime>
+                  </div>
+                </CardContent>
+              </Card>
+            </WidgetFlottant>
+          </motion.div>
+        </motion.section>
+      </div>
+      
+      {/* Modals */}
+      {openModalIndex !== null && (
+        <BinModal
+          isOpen={true}
+          onClose={handleCloseModal}
+          icon={bins[openModalIndex].icon}
+          title={bins[openModalIndex].label}
+          description={bins[openModalIndex].description || bins[openModalIndex].label}
+          details={bins[openModalIndex].details}
+          color={bins[openModalIndex].color}
+          bg={bins[openModalIndex].bg}
+        />
+      )}
+      
+      {/* Styles globaux optimisés */}
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.8; transform: scale(1.03); }
+        }
+        
+        @keyframes gradient-flow {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        
+        @keyframes float-gentle {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-8px); }
+        }
+        
+        .animate-spin {
+          animation: spin 0.8s linear infinite;
+        }
+        
+        .animate-pulse {
+          animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        .animate-gradient-flow {
+          animation: gradient-flow 15s ease infinite;
+          background-size: 200% 200%;
+        }
+        
+        .animate-float-gentle {
+          animation: float-gentle 8s ease-in-out infinite;
+        }
+        
+        * {
+          -webkit-tap-highlight-color: transparent;
+          touch-action: manipulation;
+        }
+        
+        .transform-gpu {
+          transform: translateZ(0);
+        }
+        
+        .will-change-transform {
+          will-change: transform;
+        }
+        
+        /* Cache les scrollbars */
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        
+        /* Smooth transitions for theme changes */
+        * {
+          transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+        
+        /* Optimisations pour mobile */
+        @media (max-width: 768px) {
+          .touch-manipulation {
+            touch-action: manipulation;
+          }
+          
+          /* Prévenir le zoom sur les inputs iOS */
+          input, select, textarea {
+            font-size: 16px !important;
+          }
+        }
+        
+        /* Améliorations de performance */
+        .performance-optimized {
+          backface-visibility: hidden;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+      `}</style>
     </div>
   );
 }
-
-// Video Card Component (Grid View)
-const VideoCard = memo(({
-  video,
-  getLocalizedText,
-  getThumbnailUrl,
-  formatDate,
-  onVideoSelect,
-  onCharacterInfoClick,
-  onThumbnailClick,
-  language,
-  showCharacterInfo,
-  isExpanded,
-  onToggleDescription,
-  imageError,
-  onImageError
-}: VideoCardProps) => {
-  const hasDescription = getLocalizedText(video.description).length > 80;
-  
-  return (
-    <Card className="group overflow-hidden border-border/40 hover:border-emerald-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/5 hover:scale-[1.02] animate-fade-in">
-      <CardContent className="p-0">
-        {/* Thumbnail */}
-        <div 
-          className={`relative ${video.aspect === 'portrait' ? 'aspect-[9/16]' : 'aspect-video'} overflow-hidden cursor-pointer bg-gradient-to-br from-emerald-500/5 to-teal-500/5`}
-          onClick={(e) => onThumbnailClick(e, video)}
-          aria-label={`Watch video: ${getLocalizedText(video.title)}`}
-        >
-          {imageError ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-emerald-500/10 to-green-500/10 animate-pulse">
-              <div className="relative">
-                <Video className="w-12 h-12 text-emerald-500/50" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-              </div>
-            </div>
-          ) : (
-            <img
-              src={getThumbnailUrl(video.youtubeId, video.isShort)}
-              alt={getLocalizedText(video.title)}
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              onError={onImageError}
-              loading="lazy"
-            />
-          )}
-          
-          {/* Play Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="relative">
-                <div className="relative w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
-                  <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center">
-                    <Play className="w-5 h-5 text-emerald-600 ml-0.5" fill="currentColor" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Badges */}
-          <div className="absolute top-3 left-3">
-            {video.isShort ? (
-              <Badge className="bg-gradient-to-r from-emerald-600 to-green-500 text-white border-0 text-xs">
-                <Zap className="w-3 h-3 mr-1" />
-                SHORT
-              </Badge>
-            ) : (
-              video.category && (
-                <Badge className="bg-black/80 backdrop-blur-sm text-white border-0 text-xs">
-                  {getLocalizedText(video.category)}
-                </Badge>
-              )
-            )}
-          </div>
-
-          {/* Duration */}
-          {video.duration && (
-            <div className="absolute bottom-3 right-3 bg-black/80 backdrop-blur-sm text-white text-xs px-2 py-1 rounded">
-              {video.duration}
-            </div>
-          )}
-        </div>
-
-        {/* Content */}
-        <div className="p-4">
-          <div className="space-y-3">
-            {/* Title */}
-            <h3 className="font-bold text-base line-clamp-2 group-hover:text-emerald-600 transition-colors duration-300">
-              {getLocalizedText(video.title)}
-            </h3>
-            
-            {/* Creator */}
-            {video.creator && (
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <div className="w-8 h-8 bg-gradient-to-br from-emerald-500/20 to-green-500/20 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-emerald-600" />
-                  </div>
-                  {showCharacterInfo && onCharacterInfoClick && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onCharacterInfoClick();
-                      }}
-                      className="absolute -right-1 -top-1 h-5 w-5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-0.5 rounded-full border-2 border-background shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
-                      title={language === 'fr' ? 'Voir les personnages' : 'View characters'}
-                      aria-label={language === 'fr' ? 'Voir les personnages' : 'View characters'}
-                    >
-                      <Info className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-sm font-medium truncate block">{video.creator.name}</span>
-                  <p className="text-xs text-muted-foreground truncate">{video.creator.role}</p>
-                </div>
-              </div>
-            )}
-            
-            {/* Description */}
-            <div className="space-y-1.5">
-              <p className={`text-sm text-muted-foreground ${!isExpanded ? 'line-clamp-2' : ''}`}>
-                {getLocalizedText(video.description)}
-              </p>
-              {hasDescription && onToggleDescription && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleDescription();
-                  }}
-                  className="text-xs text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1 hover:scale-105 transition-transform"
-                  aria-expanded={isExpanded}
-                >
-                  {isExpanded ? (
-                    <>
-                      {language === 'fr' ? 'Voir moins' : 'See less'}
-                      <ChevronUp className="w-3 h-3" />
-                    </>
-                  ) : (
-                    <>
-                      {language === 'fr' ? 'Voir plus' : 'See more'}
-                      <ChevronDown className="w-3 h-3" />
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-            
-            {/* Footer */}
-            <div className="flex items-center justify-between pt-2 border-t border-border/40">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                {video.publishDate && (
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    {formatDate(video.publishDate)}
-                  </span>
-                )}
-              </div>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs hover:bg-emerald-500/10 hover:text-emerald-600 hover:scale-105 transition-transform h-7 px-2"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onVideoSelect(video);
-                }}
-                aria-label={language === 'fr' ? 'Regarder la vidéo' : 'Watch video'}
-              >
-                <Play className="w-3 h-3 mr-1" />
-                {language === 'fr' ? 'Regarder' : 'Watch'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-});
-
-VideoCard.displayName = 'VideoCard';
-
-// List View Video Card Component
-const ListViewVideoCard = memo(({
-  video,
-  getLocalizedText,
-  getThumbnailUrl,
-  formatDate,
-  onVideoSelect,
-  onCharacterInfoClick,
-  language,
-  showCharacterInfo,
-  isExpanded,
-  onToggleDescription,
-  imageError,
-  onImageError
-}: Omit<VideoCardProps, 'onThumbnailClick'>) => {
-  const hasDescription = getLocalizedText(video.description).length > 120;
-  
-  return (
-    <Card className="overflow-hidden border-border/40 hover:border-emerald-500/50 transition-all duration-300 hover:shadow-lg animate-fade-in">
-      <div className="flex flex-col md:flex-row">
-        {/* Thumbnail */}
-        <div 
-          className={`relative ${video.aspect === 'portrait' ? 'md:w-56 aspect-[9/16]' : 'md:w-64 aspect-video'} overflow-hidden cursor-pointer bg-gradient-to-br from-emerald-500/5 to-teal-500/5`}
-          onClick={() => onVideoSelect(video)}
-          aria-label={`Watch video: ${getLocalizedText(video.title)}`}
-        >
-          {imageError ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-emerald-500/10 to-green-500/10">
-              <Video className="w-16 h-16 text-emerald-500/50" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            </div>
-          ) : (
-            <img
-              src={getThumbnailUrl(video.youtubeId, video.isShort)}
-              alt={getLocalizedText(video.title)}
-              className="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-              onError={onImageError}
-              loading="lazy"
-            />
-          )}
-          
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-          
-          <div className="absolute bottom-3 left-3 right-3">
-            {video.isShort ? (
-              <Badge className="bg-gradient-to-r from-emerald-600 to-green-500 text-white border-0 text-xs">
-                <Zap className="w-3 h-3 mr-1" />
-                SHORT
-              </Badge>
-            ) : (
-              video.category && (
-                <Badge className="bg-black/80 backdrop-blur-sm text-white border-0 text-xs">
-                  {getLocalizedText(video.category)}
-                </Badge>
-              )
-            )}
-          </div>
-          
-          {video.duration && (
-            <div className="absolute top-3 right-3 bg-black/80 backdrop-blur-sm text-white text-xs px-2 py-1 rounded">
-              {video.duration}
-            </div>
-          )}
-        </div>
-        
-        {/* Content */}
-        <div className="flex-1 p-4 md:p-5">
-          <div className="space-y-3 md:space-y-4">
-            {/* Header */}
-            <div>
-              <h3 className="text-lg font-bold mb-2 hover:text-emerald-600 transition-colors cursor-pointer" onClick={() => onVideoSelect(video)}>
-                {getLocalizedText(video.title)}
-              </h3>
-              
-              {video.creator && (
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="relative">
-                    <div className="w-8 h-8 bg-gradient-to-br from-emerald-500/20 to-green-500/20 rounded-full flex items-center justify-center">
-                      <User className="w-4 h-4 text-emerald-600" />
-                    </div>
-                    {showCharacterInfo && onCharacterInfoClick && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onCharacterInfoClick();
-                        }}
-                        className="absolute -right-1 -top-1 h-5 w-5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-0.5 rounded-full border-2 border-background shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
-                        title={language === 'fr' ? 'Voir les personnages' : 'View characters'}
-                        aria-label={language === 'fr' ? 'Voir les personnages' : 'View characters'}
-                      >
-                        <Info className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium">{video.creator.name}</span>
-                    <p className="text-xs text-muted-foreground">{video.creator.role}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            {/* Description */}
-            <div className="space-y-1.5">
-              <p className={`text-sm text-muted-foreground ${!isExpanded ? 'line-clamp-3' : ''}`}>
-                {getLocalizedText(video.description)}
-              </p>
-              {hasDescription && onToggleDescription && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleDescription();
-                  }}
-                  className="text-xs text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1 hover:scale-105 transition-transform"
-                  aria-expanded={isExpanded}
-                >
-                  {isExpanded ? (
-                    <>
-                      {language === 'fr' ? 'Voir moins' : 'See less'}
-                      <ChevronUp className="w-3 h-3" />
-                    </>
-                  ) : (
-                    <>
-                      {language === 'fr' ? 'Voir plus' : 'See more'}
-                      <ChevronDown className="w-3 h-3" />
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-            
-            {/* Metadata */}
-            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground pt-3 border-t border-border/40">
-              {video.publishDate && (
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4" />
-                  {formatDate(video.publishDate)}
-                </span>
-              )}
-            </div>
-            
-            {/* Actions */}
-            <div className="flex items-center justify-between pt-4">
-              <Button
-                size="sm"
-                className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 hover:scale-105 transition-transform"
-                onClick={() => onVideoSelect(video)}
-                aria-label={language === 'fr' ? 'Regarder la vidéo' : 'Watch video'}
-              >
-                <Play className="w-4 h-4" />
-                {language === 'fr' ? 'Regarder' : 'Watch'}
-              </Button>
-              
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 hover:scale-110 transition-transform"
-                  onClick={() => window.open(`https://www.youtube.com/watch?v=${video.youtubeId}`, '_blank')}
-                  title={language === 'fr' ? 'Ouvrir sur YouTube' : 'Open on YouTube'}
-                  aria-label={language === 'fr' ? 'Ouvrir sur YouTube' : 'Open on YouTube'}
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
-});
-
-ListViewVideoCard.displayName = 'ListViewVideoCard';
