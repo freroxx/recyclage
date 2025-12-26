@@ -1,20 +1,18 @@
-name: Update Browserslist DB
+name: Node.js Install
 
 on:
-  schedule:
-    - cron: "0 3 * * 1" # chaque lundi à 03:00
-  workflow_dispatch:
+  push:
+    branches: ["main"]
+  pull_request:
 
 jobs:
-  update-browserslist:
+  install:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
@@ -24,17 +22,3 @@ jobs:
 
       - name: Update Browserslist DB
         run: npx update-browserslist-db@latest
-
-      - name: Commit & push changes
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          if git diff --quiet; then
-            echo "No changes to commit"
-            exit 0
-          fi
-
-          git add package-lock.json
-          git commit -m "chore: update browserslist db"
-          git push
