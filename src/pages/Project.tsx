@@ -3,17 +3,34 @@ import {
   Trash2, FileText, Apple, Package, Target, Users, Recycle, 
   ArrowRight, Sparkles, Award, BookOpen, Calendar, Gamepad2, 
   Home, X, Share2, Rocket, Zap, Heart, Star, Sun, Moon, 
-  Pause, Play, LucideIcon, Video, Image, Trophy
+  Pause, Play, LucideIcon, Video, Image, Trophy, ExternalLink
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useIsMobile } from "../hooks/use-mobile";
 
-// Hook de navigation SPA
+// Hook de navigation SPA amélioré
 const useNavigate = () => {
   const navigate = useCallback((path: string) => {
+    // Stocker l'état actuel de scroll
+    const scrollY = window.scrollY;
+    sessionStorage.setItem('scrollY', scrollY.toString());
+    
     window.history.pushState({}, '', path);
+    
+    // Créer un événement personnalisé pour la navigation
+    const navEvent = new CustomEvent('spa:navigate', { 
+      detail: { path, timestamp: Date.now() }
+    });
+    window.dispatchEvent(navEvent);
+    
+    // Forcer le re-rendu de l'application
     window.dispatchEvent(new PopStateEvent('popstate'));
+    
+    // Scroll doux vers le haut pour les nouvelles pages
+    if (path !== window.location.pathname) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }, []);
 
   return navigate;
@@ -35,8 +52,9 @@ const useTheme = () => {
   }, []);
   
   useEffect(() => {
-    document.documentElement.classList.remove('light', 'dark');
-    document.documentElement.classList.add(theme);
+    const root = document.documentElement;
+    root.classList.remove('light', 'dark');
+    root.classList.add(theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
   
@@ -60,26 +78,45 @@ const CardContent = ({ children, className = "" }: { children: ReactNode; classN
   </div>
 );
 
-// Composant Link optimisé pour SPA
-const Link = ({ to, children, className = "", onClick }: { 
+// Composant Link optimisé pour SPA avec meilleure gestion des événements
+const Link = ({ to, children, className = "", onClick, ...props }: { 
   to: string; 
   children: ReactNode; 
   className?: string;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent) => void;
+  [key: string]: any;
 }) => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    navigate(to);
-    onClick?.();
-  };
+    e.stopPropagation();
+    
+    // Exécuter le callback onClick si fourni
+    onClick?.(e);
+    
+    // Ajouter un effet visuel pour le feedback
+    const target = e.currentTarget as HTMLElement;
+    target.style.transform = 'scale(0.98)';
+    target.style.transition = 'transform 0.2s ease';
+    
+    setTimeout(() => {
+      target.style.transform = '';
+      
+      // Naviguer après l'animation
+      setTimeout(() => {
+        navigate(to);
+      }, isMobile ? 50 : 100);
+    }, 150);
+  }, [to, navigate, onClick, isMobile]);
   
   return (
     <a 
       href={to} 
       className={className}
       onClick={handleClick}
+      {...props}
     >
       {children}
     </a>
@@ -92,7 +129,7 @@ interface BoutonAnimeProps {
   variant?: "default" | "outline" | "gradient" | "eco";
   size?: "sm" | "default" | "lg";
   className?: string;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent) => void;
   icon?: ReactNode;
   href?: string;
   disabled?: boolean;
@@ -141,8 +178,19 @@ const BoutonAnime = memo(({
   const handleClick = useCallback((e: React.MouseEvent) => {
     if (disabled || loading) return;
     e.preventDefault();
-    onClick?.();
-  }, [disabled, loading, onClick]);
+    e.stopPropagation();
+    
+    // Effet de feedback tactile
+    if (isMobile) {
+      const button = e.currentTarget as HTMLButtonElement;
+      button.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        button.style.transform = '';
+      }, 150);
+    }
+    
+    onClick?.(e);
+  }, [disabled, loading, onClick, isMobile]);
   
   // Tailles adaptées pour mobile
   const sizeClasses: Record<string, string> = isMobile ? {
@@ -197,12 +245,12 @@ const BoutonAnime = memo(({
   
   const buttonClasses = `
     relative overflow-hidden rounded-xl font-bold
-    transition-all duration-300 ease-out
+    transition-all duration-200 ease-out
     disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
     focus:outline-none focus:ring-3 dark:focus:ring-blue-500/40 focus:ring-blue-500/30
     ${fullWidth ? 'w-full' : ''}
     group ${sizeClasses[size]} ${variantClasses[variant]} ${className}
-    ${!isMobile && isHovered ? 'shadow-2xl scale-105' : 'shadow-xl'}
+    ${!isMobile && isHovered ? 'shadow-2xl scale-[1.02]' : 'shadow-xl'}
     ${!isMobile && isPressed ? 'scale-95 shadow-lg' : ''}
     ${isMobile ? 'active:scale-95 touch-manipulation' : ''}
   `;
@@ -210,46 +258,73 @@ const BoutonAnime = memo(({
   const ButtonContent = (
     <>
       {!isMobile && glow && (
-        <span className={`
-          absolute -inset-1 rounded-xl blur-xl transition-all duration-500
-          ${isHovered ? 'opacity-100' : 'opacity-0'}
-          dark:bg-gradient-to-r dark:from-blue-500/30 dark:via-emerald-500/20 dark:to-cyan-500/30
-          bg-gradient-to-r from-blue-400/20 via-emerald-400/15 to-cyan-400/20
-        `} />
+        <motion.span
+          className={`
+            absolute -inset-1 rounded-xl blur-xl
+            dark:bg-gradient-to-r dark:from-blue-500/30 dark:via-emerald-500/20 dark:to-cyan-500/30
+            bg-gradient-to-r from-blue-400/20 via-emerald-400/15 to-cyan-400/20
+          `}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isHovered ? 0.3 : 0 }}
+          transition={{ duration: 0.3 }}
+        />
       )}
       
       {!isMobile && pulse && (
         <span className={`
-          absolute -inset-1 rounded-xl transition-opacity duration-500
-          ${isHovered ? 'opacity-100' : 'opacity-50'}
+          absolute -inset-1 rounded-xl
           dark:bg-gradient-to-r dark:from-blue-500/40 dark:via-emerald-500/30 dark:to-cyan-500/40
           bg-gradient-to-r from-blue-400/30 via-emerald-400/20 to-cyan-400/30
         `} style={{ animation: 'pulse 3s ease-in-out infinite' }} />
       )}
       
       {loading && (
-        <span className="absolute inset-0 flex items-center justify-center dark:bg-black/20 bg-white/20 backdrop-blur-sm rounded-xl">
-          <span className="rounded-full h-6 w-6 border-t-2 border-b-2 dark:border-white border-blue-600 animate-spin"></span>
-        </span>
+        <motion.span 
+          className="absolute inset-0 flex items-center justify-center dark:bg-black/20 bg-white/20 backdrop-blur-sm rounded-xl"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
+        >
+          <span className="rounded-full h-6 w-6 border-t-2 border-b-2 dark:border-white border-blue-600 animate-spin" />
+        </motion.span>
       )}
       
-      <span className={`relative flex items-center justify-center gap-3 transition-all duration-300 ${isPressed ? 'scale-95' : ''}`}>
+      <motion.span 
+        className={`relative flex items-center justify-center gap-3 ${isPressed ? 'scale-95' : ''}`}
+        whileTap={{ scale: 0.95 }}
+        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+      >
         {icon && !loading && (
-          <span className={`transition-all duration-300 ${!isMobile && isHovered ? 'scale-110' : ''}`}>
+          <motion.span
+            initial={false}
+            animate={{ scale: !isMobile && isHovered ? 1.1 : 1 }}
+            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+          >
             {icon}
-          </span>
+          </motion.span>
         )}
         {loading ? (
           <span className="opacity-0">{children}</span>
         ) : (
-          <span className={`relative ${!isMobile && isHovered ? 'scale-105' : ''} transition-transform duration-300`}>
+          <motion.span 
+            className="relative"
+            initial={false}
+            animate={{ scale: !isMobile && isHovered ? 1.05 : 1 }}
+            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+          >
             {children}
-          </span>
+          </motion.span>
         )}
         {!loading && variant !== 'outline' && !isMobile && (
-          <ArrowRight className={`w-4 h-4 transition-all duration-300 ${isHovered ? 'translate-x-2' : ''}`} />
+          <motion.div
+            initial={false}
+            animate={{ x: isHovered ? 2 : 0 }}
+            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+          >
+            <ArrowRight className="w-4 h-4" />
+          </motion.div>
         )}
-      </span>
+      </motion.span>
     </>
   );
   
@@ -355,7 +430,9 @@ const WidgetFlottant = memo(({
       const x = (e.clientX - rect.left) / rect.width;
       const y = (e.clientY - rect.top) / rect.height;
       
-      setMousePosition({ x: (x - 0.5) * 2, y: (y - 0.5) * 2 });
+      requestAnimationFrame(() => {
+        setMousePosition({ x: (x - 0.5) * 2, y: (y - 0.5) * 2 });
+      });
     };
     
     const handleMouseEnter = () => {
@@ -381,42 +458,56 @@ const WidgetFlottant = memo(({
     };
   }, [effectiveInteractive, onHoverChange]);
   
-  const rotateX = effectiveInteractive ? mousePosition.y * 2 * intensity : 0;
-  const rotateY = effectiveInteractive ? -mousePosition.x * 2 * intensity : 0;
+  const rotateX = effectiveInteractive ? mousePosition.y * 1.5 * intensity : 0;
+  const rotateY = effectiveInteractive ? -mousePosition.x * 1.5 * intensity : 0;
   const translateZ = isHovered && !isMobile ? 8 : 0;
   const scale = isHovered && !isMobile ? 1.02 : isVisible ? 1 : 0.95;
   const opacity = isVisible ? 1 : 0;
   
   return (
-    <div
+    <motion.div
       ref={widgetRef}
       className={`relative rounded-2xl group ${className}
         ${equalSize ? 'w-full h-full flex flex-col' : ''}
         ${isMobile ? 'min-h-[200px]' : minHeight}
         transform-gpu will-change-transform
       `}
-      style={{
-        transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(${translateZ}px) scale(${scale})`,
+      initial={{ opacity: 0, scale: 0.95, y: 10 }}
+      animate={{ 
         opacity,
-        transition: `
-          transform 600ms cubic-bezier(0.16, 1, 0.3, 1),
-          opacity 600ms cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms,
-          box-shadow 400ms cubic-bezier(0.16, 1, 0.3, 1)
-        `,
+        scale,
+        rotateX,
+        rotateY,
+        translateZ,
+        y: 0
+      }}
+      transition={{
+        opacity: { duration: 0.5, delay: delay / 1000, ease: "easeOut" },
+        scale: { duration: 0.5, delay: delay / 1000, ease: "easeOut" },
+        rotateX: { duration: 0.3, ease: "easeOut" },
+        rotateY: { duration: 0.3, ease: "easeOut" },
+        translateZ: { duration: 0.3, ease: "easeOut" },
+        y: { duration: 0.5, delay: delay / 1000, ease: "easeOut" }
+      }}
+      style={{
         transformStyle: 'preserve-3d',
       }}
     >
       {effectiveGlow && (
-        <div className={`
-          absolute -inset-2 rounded-2xl transition-all duration-500
-          ${isHovered && !isMobile ? 'opacity-100 blur-xl' : 'opacity-0 blur-lg'}
-          dark:bg-gradient-to-br dark:from-blue-500/20 dark:via-emerald-500/15 dark:to-cyan-500/20
-          bg-gradient-to-br from-blue-400/15 via-emerald-400/10 to-cyan-400/15
-        `} />
+        <motion.div
+          className={`
+            absolute -inset-2 rounded-2xl blur-xl
+            dark:bg-gradient-to-br dark:from-blue-500/20 dark:via-emerald-500/15 dark:to-cyan-500/20
+            bg-gradient-to-br from-blue-400/15 via-emerald-400/10 to-cyan-400/15
+          `}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isHovered && !isMobile ? 0.3 : 0 }}
+          transition={{ duration: 0.4 }}
+        />
       )}
       
       <div className={`
-        absolute inset-0 rounded-2xl shadow-lg transition-all duration-500
+        absolute inset-0 rounded-2xl shadow-lg transition-all duration-300
         ${isHovered && !isMobile ? 'shadow-xl' : ''}
         dark:bg-gradient-to-br dark:from-slate-800/95 dark:via-slate-900/90 dark:to-slate-800/85
         bg-gradient-to-br from-white/95 via-gray-50/90 to-white/85
@@ -437,7 +528,7 @@ const WidgetFlottant = memo(({
       <div className="relative z-10 h-full transform-gpu">
         {children}
       </div>
-    </div>
+    </motion.div>
   );
 });
 
@@ -588,9 +679,10 @@ interface CarteInteractiveProps {
   onClick?: () => void;
   isActive?: boolean;
   delay?: number;
+  href?: string;
 }
 
-// Carte interactive améliorée
+// Carte interactive améliorée avec support de navigation
 const CarteInteractive = memo(({ 
   icon: Icon,
   title,
@@ -600,11 +692,14 @@ const CarteInteractive = memo(({
   onClick,
   isActive = false,
   delay = 0,
+  href,
 }: CarteInteractiveProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -625,6 +720,25 @@ const CarteInteractive = memo(({
     };
   }, [delay]);
   
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Feedback visuel
+    setIsPressed(true);
+    setTimeout(() => setIsPressed(false), 150);
+    
+    // Exécuter le callback onClick si fourni
+    if (onClick) {
+      onClick();
+    } else if (href) {
+      // Naviguer vers l'URL si href est fourni
+      setTimeout(() => {
+        navigate(href);
+      }, isMobile ? 100 : 150);
+    }
+  }, [onClick, href, navigate, isMobile]);
+  
   return (
     <div ref={cardRef} className="h-full">
       <WidgetFlottant 
@@ -634,64 +748,90 @@ const CarteInteractive = memo(({
         onHoverChange={setIsHovered}
         delay={delay}
       >
-        <motion.div
-          onClick={onClick}
-          onMouseEnter={() => !isMobile && setIsHovered(true)}
-          onMouseLeave={() => !isMobile && setIsHovered(false)}
-          className="cursor-pointer h-full"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
-          transition={{ duration: 0.5, delay: delay / 1000 }}
+        <Link 
+          to={href || '#'}
+          className="block h-full"
+          onClick={handleClick}
         >
-          <Card className="h-full border-0 overflow-hidden bg-transparent rounded-2xl">
-            <CardContent className={`${isMobile ? 'p-4' : 'p-5'} text-center flex flex-col items-center justify-center h-full`}>
-              {isActive && (
+          <motion.div
+            className="cursor-pointer h-full"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ 
+              opacity: isVisible ? 1 : 0, 
+              y: isVisible ? 0 : 20,
+              scale: isPressed ? 0.98 : 1
+            }}
+            transition={{ 
+              opacity: { duration: 0.4, delay: delay / 1000, ease: "easeOut" },
+              y: { duration: 0.4, delay: delay / 1000, ease: "easeOut" },
+              scale: { duration: 0.15 }
+            }}
+          >
+            <Card className="h-full border-0 overflow-hidden bg-transparent rounded-2xl">
+              <CardContent className={`${isMobile ? 'p-4' : 'p-5'} text-center flex flex-col items-center justify-center h-full relative`}>
+                {isActive && (
+                  <motion.div
+                    className="absolute top-2 right-2 z-20"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring" }}
+                  >
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/50 animate-pulse" />
+                  </motion.div>
+                )}
+                
                 <motion.div
-                  className="absolute top-2 right-2 z-20"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring" }}
+                  className={`relative ${isMobile ? 'w-12 h-12' : 'w-14 h-14'} rounded-xl ${bg} flex items-center justify-center mx-auto mb-3 shadow-lg transform-gpu`}
+                  whileHover={!isMobile ? { scale: 1.1 } : {}}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 15 }}
                 >
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/50 animate-pulse" />
+                  <Icon className={`relative z-10 ${isMobile ? 'w-6 h-6' : 'w-7 h-7'} ${color}`} />
                 </motion.div>
-              )}
-              
-              <motion.div
-                className={`relative ${isMobile ? 'w-12 h-12' : 'w-14 h-14'} rounded-xl ${bg} flex items-center justify-center mx-auto mb-3 shadow-lg transform-gpu`}
-                whileHover={!isMobile ? { scale: 1.1 } : {}}
-                transition={{ type: "spring", stiffness: 200, damping: 15 }}
-              >
-                <Icon className={`relative z-10 ${isMobile ? 'w-6 h-6' : 'w-7 h-7'} ${color}`} />
-              </motion.div>
-              
-              <motion.h3
-                className={`font-bold ${isMobile ? 'text-base mb-1' : 'text-lg mb-2'}`}
-                whileHover={!isMobile ? { scale: 1.05 } : {}}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <span className={`
-                  bg-gradient-to-r bg-clip-text text-transparent
-                  ${isHovered && !isMobile ? 'from-blue-500 via-emerald-500 to-cyan-500' : 'dark:from-white dark:to-white/80 from-gray-900 to-gray-700'}
-                `}>
-                  {title}
-                </span>
-              </motion.h3>
-              
-              {description && (
-                <motion.p
-                  className={`${isMobile ? 'text-xs mb-2' : 'text-sm mb-3'} flex-grow`}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: isVisible ? 1 : 0 }}
-                  transition={{ duration: 0.3, delay: (delay + 200) / 1000 }}
+                
+                <motion.h3
+                  className={`font-bold ${isMobile ? 'text-base mb-1' : 'text-lg mb-2'}`}
+                  whileHover={!isMobile ? { scale: 1.05 } : {}}
+                  transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <span className="dark:text-gray-300 text-gray-600">
-                    {description}
+                  <span className={`
+                    bg-gradient-to-r bg-clip-text text-transparent
+                    ${isHovered && !isMobile ? 'from-blue-500 via-emerald-500 to-cyan-500' : 'dark:from-white dark:to-white/80 from-gray-900 to-gray-700'}
+                  `}>
+                    {title}
                   </span>
-                </motion.p>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
+                </motion.h3>
+                
+                {description && (
+                  <motion.p
+                    className={`${isMobile ? 'text-xs mb-2' : 'text-sm mb-3'} flex-grow`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: isVisible ? 1 : 0 }}
+                    transition={{ duration: 0.3, delay: (delay + 200) / 1000 }}
+                  >
+                    <span className="dark:text-gray-300 text-gray-600">
+                      {description}
+                    </span>
+                  </motion.p>
+                )}
+                
+                {href && (
+                  <motion.div
+                    className="mt-2"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: isVisible ? 1 : 0 }}
+                    transition={{ duration: 0.3, delay: (delay + 300) / 1000 }}
+                  >
+                    <div className="inline-flex items-center gap-1 text-xs dark:text-blue-400 text-blue-600">
+                      <span>Explorer</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </div>
+                  </motion.div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        </Link>
       </WidgetFlottant>
     </div>
   );
@@ -763,8 +903,8 @@ const BinModal = memo(({
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ 
             backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            backdropFilter: 'blur(4px)',
-            WebkitBackdropFilter: 'blur(4px)'
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)'
           }}
         >
           <motion.div
@@ -937,12 +1077,12 @@ const ThemeSwitch = memo(() => {
       `}
       aria-label={theme === 'dark' ? 'Passer au mode clair' : 'Passer au mode sombre'}
       whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
+      whileTap={{ scale: 0.9 }}
     >
       <motion.div
         initial={false}
         animate={{ rotate: theme === 'dark' ? 0 : 180 }}
-        transition={{ type: "spring", stiffness: 200, damping: 10 }}
+        transition={{ type: "spring", stiffness: 400, damping: 10 }}
       >
         {theme === 'dark' ? (
           <Sun className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-yellow-500`} />
@@ -1038,7 +1178,7 @@ export default function ProjectEco() {
     }
   ], [t]);
   
-  // Activités Éducatives section cards - Updated as requested
+  // Activités Éducatives section cards
   const activities = useMemo(() => [
     {
       icon: Gamepad2,
@@ -1145,7 +1285,7 @@ export default function ProjectEco() {
         className="fixed top-0 left-0 w-full h-1 z-40"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
+        transition={{ delay: 0.5, duration: 0.5 }}
       >
         <div className={`
           w-full h-full
@@ -1159,7 +1299,7 @@ export default function ProjectEco() {
               bg-gradient-to-r from-blue-500 via-emerald-500 to-cyan-500
             `}
             style={{ width: `${scrollProgress}%` }}
-            transition={{ type: "spring", damping: 30, stiffness: 100 }}
+            transition={{ type: "spring", damping: 30, stiffness: 100, mass: 0.5 }}
           />
         </div>
       </motion.div>
@@ -1174,12 +1314,12 @@ export default function ProjectEco() {
         <motion.section
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.6 }}
           className={`max-w-6xl mx-auto text-center ${isMobile ? 'mb-12 pt-12' : 'mb-16 md:mb-24 pt-16'}`}
         >
           <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
             className={`
               inline-flex items-center gap-2 ${isMobile ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm'} rounded-full font-medium mb-6
@@ -1195,12 +1335,17 @@ export default function ProjectEco() {
           </motion.div>
           
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.4 }}
+            transition={{ duration: 0.5, delay: 0.4, ease: "easeOut" }}
             className="mb-6"
           >
-            <h1 className={`${isMobile ? 'text-3xl md:text-4xl' : 'text-4xl md:text-6xl lg:text-7xl'} font-black mb-4 tracking-tight`}>
+            <motion.h1 
+              className={`${isMobile ? 'text-3xl md:text-4xl' : 'text-4xl md:text-6xl lg:text-7xl'} font-black mb-4 tracking-tight`}
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+            >
               <motion.span
                 className={`
                   bg-gradient-to-r bg-clip-text text-transparent inline-block
@@ -1219,13 +1364,13 @@ export default function ProjectEco() {
               >
                 {t("hero.title", "Écologie")}
               </motion.span>
-            </h1>
+            </motion.h1>
             
             <motion.h2
               className={`${isMobile ? 'text-xl' : 'text-2xl md:text-3xl'} font-bold mb-4`}
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
+              transition={{ delay: 0.7, duration: 0.5 }}
             >
               <span className="dark:text-white text-gray-900">
                 {t("project.title", "Notre Planète, Notre Avenir")}
@@ -1234,9 +1379,9 @@ export default function ProjectEco() {
           </motion.div>
           
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.8 }}
+            transition={{ duration: 0.5, delay: 0.9, ease: "easeOut" }}
             className={`max-w-2xl mx-auto mb-6`}
           >
             <p className={`
@@ -1248,9 +1393,9 @@ export default function ProjectEco() {
           </motion.div>
           
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 1 }}
+            transition={{ duration: 0.5, delay: 1.1, ease: "easeOut" }}
             className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-3 justify-center items-center mb-8`}
           >
             <BoutonAnime
@@ -1280,13 +1425,14 @@ export default function ProjectEco() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true, margin: isMobile ? "-50px" : "-100px" }}
-          transition={{ duration: 0.4 }}
+          transition={{ duration: 0.5 }}
           className={`max-w-7xl mx-auto ${isMobile ? 'mb-12' : 'mb-16'}`}
         >
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
             className="text-center mb-8"
           >
             <motion.div
@@ -1298,28 +1444,40 @@ export default function ProjectEco() {
                 dark:text-blue-600 text-blue-500
               `} />
             </motion.div>
-            <h2 className={`
-              ${isMobile ? 'text-2xl' : 'text-3xl md:text-4xl'} font-bold mb-3
-              dark:text-white text-gray-900
-            `}>
+            <motion.h2
+              className={`
+                ${isMobile ? 'text-2xl' : 'text-3xl md:text-4xl'} font-bold mb-3
+                dark:text-white text-gray-900
+              `}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
               {t("project.goal.title", "Nos Objectifs")}
-            </h2>
-            <p className={`
-              ${isMobile ? 'text-base' : 'text-lg'}
-              dark:text-gray-300 text-gray-600
-            `}>
+            </motion.h2>
+            <motion.p
+              className={`
+                ${isMobile ? 'text-base' : 'text-lg'}
+                dark:text-gray-300 text-gray-600
+              `}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
               {t("project.goal.text", "Construire un avenir durable ensemble")}
-            </p>
+            </motion.p>
           </motion.div>
           
           <div className={`grid grid-cols-1 ${isMobile ? 'gap-4' : 'md:grid-cols-2 lg:grid-cols-4 gap-5'}`}>
             {goals.map((goal, index) => (
               <motion.div
                 key={goal.title}
-                initial={{ opacity: 0, y: 40 }}
+                initial={{ opacity: 0, y: 60 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
+                transition={{ duration: 0.5, delay: index * 0.1, ease: "easeOut" }}
                 className="h-full"
               >
                 <CarteInteractive
@@ -1340,13 +1498,14 @@ export default function ProjectEco() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true, margin: isMobile ? "-50px" : "-100px" }}
-          transition={{ duration: 0.4 }}
+          transition={{ duration: 0.5 }}
           className={`max-w-7xl mx-auto ${isMobile ? 'mb-12' : 'mb-16'}`}
         >
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
             className="text-center mb-8"
           >
             <motion.div
@@ -1358,28 +1517,40 @@ export default function ProjectEco() {
                 dark:text-emerald-600 text-emerald-500
               `} />
             </motion.div>
-            <h2 className={`
-              ${isMobile ? 'text-2xl' : 'text-3xl md:text-4xl'} font-bold mb-3
-              dark:text-white text-gray-900
-            `}>
+            <motion.h2
+              className={`
+                ${isMobile ? 'text-2xl' : 'text-3xl md:text-4xl'} font-bold mb-3
+                dark:text-white text-gray-900
+              `}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
               {t("project.bins.title", "Tri Sélectif")}
-            </h2>
-            <p className={`
-              ${isMobile ? 'text-base' : 'text-lg'}
-              dark:text-gray-300 text-gray-600
-            `}>
+            </motion.h2>
+            <motion.p
+              className={`
+                ${isMobile ? 'text-base' : 'text-lg'}
+                dark:text-gray-300 text-gray-600
+              `}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
               {t("project.bins.text", "Un système simple pour un impact maximal")}
-            </p>
+            </motion.p>
           </motion.div>
           
           <div className={`grid grid-cols-1 ${isMobile ? 'gap-4' : 'md:grid-cols-2 lg:grid-cols-4 gap-5'} mb-6`}>
             {bins.map((bin, index) => (
               <motion.div
                 key={bin.label}
-                initial={{ opacity: 0, y: 40 }}
+                initial={{ opacity: 0, y: 60 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
+                transition={{ duration: 0.5, delay: index * 0.1, ease: "easeOut" }}
                 className="h-full"
               >
                 <CarteInteractive
@@ -1401,6 +1572,7 @@ export default function ProjectEco() {
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
             className="flex flex-col items-center gap-3 mt-6"
           >
             <div className="flex items-center gap-2">
@@ -1454,13 +1626,14 @@ export default function ProjectEco() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true, margin: isMobile ? "-50px" : "-100px" }}
-          transition={{ duration: 0.4 }}
+          transition={{ duration: 0.5 }}
           className={`max-w-7xl mx-auto ${isMobile ? 'mb-12' : 'mb-16'}`}
         >
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
             className="text-center mb-8"
           >
             <motion.div
@@ -1472,28 +1645,40 @@ export default function ProjectEco() {
                 dark:text-yellow-500 text-yellow-500
               `} />
             </motion.div>
-            <h2 className={`
-              ${isMobile ? 'text-2xl' : 'text-3xl md:text-4xl'} font-bold mb-3
-              dark:text-white text-gray-900
-            `}>
+            <motion.h2
+              className={`
+                ${isMobile ? 'text-2xl' : 'text-3xl md:text-4xl'} font-bold mb-3
+                dark:text-white text-gray-900
+              `}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
               {t("activities.title", "Activités Éducatives")}
-            </h2>
-            <p className={`
-              ${isMobile ? 'text-base' : 'text-lg'}
-              dark:text-gray-300 text-gray-600
-            `}>
+            </motion.h2>
+            <motion.p
+              className={`
+                ${isMobile ? 'text-base' : 'text-lg'}
+                dark:text-gray-300 text-gray-600
+              `}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
               {t("activities.subtitle", "Explorez nos ressources interactives")}
-            </p>
+            </motion.p>
           </motion.div>
           
           <div className={`grid grid-cols-1 ${isMobile ? 'gap-4' : 'md:grid-cols-2 lg:grid-cols-4 gap-5'}`}>
             {activities.map((activity, index) => (
               <motion.div
                 key={activity.title}
-                initial={{ opacity: 0, y: 40 }}
+                initial={{ opacity: 0, y: 60 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
+                transition={{ duration: 0.5, delay: index * 0.1, ease: "easeOut" }}
                 className="h-full"
               >
                 <CarteInteractive
@@ -1502,7 +1687,7 @@ export default function ProjectEco() {
                   description={activity.description}
                   color={activity.color}
                   bg={activity.bg}
-                  onClick={() => window.history.pushState({}, '', activity.href)}
+                  href={activity.href}
                   delay={index * 100}
                 />
               </motion.div>
@@ -1511,10 +1696,10 @@ export default function ProjectEco() {
           
           {/* CTA Final */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: 0.4 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
             className="mt-12"
           >
             <WidgetFlottant intensity={0.15} glow={!isMobile} minHeight="min-h-0">
@@ -1582,7 +1767,7 @@ export default function ProjectEco() {
         />
       )}
       
-      {/* Styles globaux */}
+      {/* Styles globaux optimisés */}
       <style>{`
         @keyframes spin {
           from { transform: rotate(0deg); }
@@ -1660,6 +1845,13 @@ export default function ProjectEco() {
           input, select, textarea {
             font-size: 16px !important;
           }
+        }
+        
+        /* Améliorations de performance */
+        .performance-optimized {
+          backface-visibility: hidden;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
         }
       `}</style>
     </div>
