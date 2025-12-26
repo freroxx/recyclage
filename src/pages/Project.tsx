@@ -3,12 +3,11 @@ import {
   Trash2, FileText, Apple, Package, Target, Users, Leaf, Recycle, 
   CheckCircle2, ArrowRight, Sparkles, Award, BookOpen, Calendar, 
   Home, X, Share2, Rocket, Zap, Heart, Star, Cloud, Sun, Moon, 
-  Droplets, Clock, Infinity, ChevronRight, Pause, Play, LucideIcon,
-  Globe
+  Droplets, Clock, Infinity, ChevronRight, Pause, Play, LucideIcon 
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useLanguage } from "./Languagecontext";
-import { useIsMobile } from "./use_mobile";
+import { useLanguage } from "../contexts/LanguageContext";
+import { useIsMobile } from "../hooks/use-mobile";
 
 // Hook de navigation SPA
 const useNavigate = () => {
@@ -101,7 +100,6 @@ interface BoutonAnimeProps {
   fullWidth?: boolean;
   glow?: boolean;
   pulse?: boolean;
-  mobileOptimized?: boolean;
 }
 
 // Composant Bouton avec support thème amélioré
@@ -118,7 +116,6 @@ const BoutonAnime = memo(({
   fullWidth = false,
   glow = true,
   pulse = false,
-  mobileOptimized = true,
 }: BoutonAnimeProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
@@ -147,11 +144,11 @@ const BoutonAnime = memo(({
     onClick?.();
   }, [disabled, loading, onClick]);
   
-  // Optimisation mobile: tailles plus petites sur mobile
+  // Tailles adaptées pour mobile
   const sizeClasses: Record<string, string> = isMobile ? {
-    sm: "px-4 py-2 text-xs",
-    default: "px-6 py-3 text-sm",
-    lg: "px-8 py-4 text-base",
+    sm: "px-4 py-2 text-sm",
+    default: "px-5 py-3 text-base",
+    lg: "px-6 py-4 text-lg",
   } : {
     sm: "px-5 py-2.5 text-sm",
     default: "px-7 py-3.5 text-base",
@@ -199,22 +196,22 @@ const BoutonAnime = memo(({
   };
   
   const buttonClasses = `
-    relative overflow-hidden rounded-2xl font-bold
-    transition-all duration-500
+    relative overflow-hidden rounded-xl font-bold
+    transition-all duration-300 ease-out
     disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
-    focus:outline-none focus:ring-4 dark:focus:ring-blue-500/30 focus:ring-blue-500/20
+    focus:outline-none focus:ring-3 dark:focus:ring-blue-500/40 focus:ring-blue-500/30
     ${fullWidth ? 'w-full' : ''}
     group ${sizeClasses[size]} ${variantClasses[variant]} ${className}
     ${!isMobile && isHovered ? 'shadow-2xl scale-105' : 'shadow-xl'}
     ${!isMobile && isPressed ? 'scale-95 shadow-lg' : ''}
-    ${mobileOptimized && isMobile ? 'touch-manipulation active:scale-95' : ''}
+    ${isMobile ? 'active:scale-95 touch-manipulation' : ''}
   `;
   
   const ButtonContent = (
     <>
       {!isMobile && glow && (
         <span className={`
-          absolute -inset-2 rounded-2xl blur-xl transition-all duration-700
+          absolute -inset-1 rounded-xl blur-xl transition-all duration-500
           ${isHovered ? 'opacity-100' : 'opacity-0'}
           dark:bg-gradient-to-r dark:from-blue-500/30 dark:via-emerald-500/20 dark:to-cyan-500/30
           bg-gradient-to-r from-blue-400/20 via-emerald-400/15 to-cyan-400/20
@@ -223,7 +220,7 @@ const BoutonAnime = memo(({
       
       {!isMobile && pulse && (
         <span className={`
-          absolute -inset-2 rounded-2xl transition-opacity duration-500
+          absolute -inset-1 rounded-xl transition-opacity duration-500
           ${isHovered ? 'opacity-100' : 'opacity-50'}
           dark:bg-gradient-to-r dark:from-blue-500/40 dark:via-emerald-500/30 dark:to-cyan-500/40
           bg-gradient-to-r from-blue-400/30 via-emerald-400/20 to-cyan-400/30
@@ -231,14 +228,14 @@ const BoutonAnime = memo(({
       )}
       
       {loading && (
-        <span className="absolute inset-0 flex items-center justify-center dark:bg-black/20 bg-white/20 backdrop-blur-sm rounded-2xl">
-          <span className="rounded-full h-8 w-8 border-t-3 border-b-3 dark:border-white border-blue-600 animate-spin"></span>
+        <span className="absolute inset-0 flex items-center justify-center dark:bg-black/20 bg-white/20 backdrop-blur-sm rounded-xl">
+          <span className="rounded-full h-6 w-6 border-t-2 border-b-2 dark:border-white border-blue-600 animate-spin"></span>
         </span>
       )}
       
-      <span className={`relative flex items-center justify-center gap-3 transition-all duration-500 ${isPressed ? 'scale-95' : ''}`}>
+      <span className={`relative flex items-center justify-center gap-3 transition-all duration-300 ${isPressed ? 'scale-95' : ''}`}>
         {icon && !loading && (
-          <span className={`transition-all duration-500 ${!isMobile && isHovered ? 'scale-125 rotate-12' : ''}`}>
+          <span className={`transition-all duration-300 ${!isMobile && isHovered ? 'scale-110' : ''}`}>
             {icon}
           </span>
         )}
@@ -250,7 +247,7 @@ const BoutonAnime = memo(({
           </span>
         )}
         {!loading && variant !== 'outline' && !isMobile && (
-          <ArrowRight className={`w-5 h-5 transition-all duration-500 ${isHovered ? 'translate-x-3 scale-125 rotate-6' : ''}`} />
+          <ArrowRight className={`w-4 h-4 transition-all duration-300 ${isHovered ? 'translate-x-2' : ''}`} />
         )}
       </span>
     </>
@@ -269,8 +266,6 @@ const BoutonAnime = memo(({
           onMouseLeave={!isMobile ? handleMouseLeave : undefined}
           onMouseDown={!isMobile ? handleMouseDown : undefined}
           onMouseUp={!isMobile ? handleMouseUp : undefined}
-          onTouchStart={() => isMobile && setIsPressed(true)}
-          onTouchEnd={() => isMobile && setIsPressed(false)}
           disabled={disabled || loading}
         >
           {ButtonContent}
@@ -286,8 +281,6 @@ const BoutonAnime = memo(({
       onMouseLeave={!isMobile ? handleMouseLeave : undefined}
       onMouseDown={!isMobile ? handleMouseDown : undefined}
       onMouseUp={!isMobile ? handleMouseUp : undefined}
-      onTouchStart={() => isMobile && setIsPressed(true)}
-      onTouchEnd={() => isMobile && setIsPressed(false)}
       onClick={handleClick}
       disabled={disabled || loading}
     >
@@ -310,10 +303,9 @@ interface WidgetFlottantProps {
   onHoverChange?: (isHovered: boolean) => void;
   delay?: number;
   scrollReveal?: boolean;
-  mobileReducedEffects?: boolean;
 }
 
-// Widget avec support thème amélioré et optimisation mobile
+// Widget avec support thème amélioré
 const WidgetFlottant = memo(({
   children,
   intensity = 0.3,
@@ -325,7 +317,6 @@ const WidgetFlottant = memo(({
   onHoverChange,
   delay = 0,
   scrollReveal = true,
-  mobileReducedEffects = true,
 }: WidgetFlottantProps) => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
@@ -333,10 +324,9 @@ const WidgetFlottant = memo(({
   const widgetRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   
-  // Optimisation: réduire les effets sur mobile
-  const effectiveIntensity = isMobile && mobileReducedEffects ? intensity * 0.5 : intensity;
+  // Désactiver l'interactivité sur mobile pour de meilleures performances
   const effectiveInteractive = isMobile ? false : interactive;
-  const effectiveGlow = isMobile && mobileReducedEffects ? false : glow;
+  const effectiveGlow = isMobile ? false : glow;
   
   useEffect(() => {
     if (!scrollReveal || !widgetRef.current) return;
@@ -349,7 +339,7 @@ const WidgetFlottant = memo(({
       },
       { 
         threshold: 0.05, 
-        rootMargin: isMobile ? '25px' : '50px' 
+        rootMargin: isMobile ? '100px' : '200px' 
       }
     );
     
@@ -365,9 +355,7 @@ const WidgetFlottant = memo(({
       const x = (e.clientX - rect.left) / rect.width;
       const y = (e.clientY - rect.top) / rect.height;
       
-      requestAnimationFrame(() => {
-        setMousePosition({ x: (x - 0.5) * 2, y: (y - 0.5) * 2 });
-      });
+      setMousePosition({ x: (x - 0.5) * 2, y: (y - 0.5) * 2 });
     };
     
     const handleMouseEnter = () => {
@@ -393,59 +381,55 @@ const WidgetFlottant = memo(({
     };
   }, [effectiveInteractive, onHoverChange]);
   
-  const rotateX = effectiveInteractive ? mousePosition.y * 4 * effectiveIntensity : 0;
-  const rotateY = effectiveInteractive ? -mousePosition.x * 4 * effectiveIntensity : 0;
-  const translateZ = isHovered && !isMobile ? 12 : 0;
-  const scale = isHovered && !isMobile ? 1.02 : isVisible ? 1 : 0.97;
+  const rotateX = effectiveInteractive ? mousePosition.y * 2 * intensity : 0;
+  const rotateY = effectiveInteractive ? -mousePosition.x * 2 * intensity : 0;
+  const translateZ = isHovered && !isMobile ? 8 : 0;
+  const scale = isHovered && !isMobile ? 1.02 : isVisible ? 1 : 0.95;
   const opacity = isVisible ? 1 : 0;
   
   return (
     <div
       ref={widgetRef}
-      className={`relative rounded-3xl group ${className}
+      className={`relative rounded-2xl group ${className}
         ${equalSize ? 'w-full h-full flex flex-col' : ''}
         ${isMobile ? 'min-h-[200px]' : minHeight}
         transform-gpu will-change-transform
       `}
       style={{
-        transform: `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(${translateZ}px) scale(${scale})`,
+        transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(${translateZ}px) scale(${scale})`,
         opacity,
-        transition: isMobile ? `
-          transform 300ms cubic-bezier(0.16, 1, 0.3, 1),
-          opacity 300ms cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms,
-          box-shadow 300ms cubic-bezier(0.16, 1, 0.3, 1)
-        ` : `
-          transform 800ms cubic-bezier(0.16, 1, 0.3, 1),
-          opacity 800ms cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms,
-          box-shadow 600ms cubic-bezier(0.16, 1, 0.3, 1)
+        transition: `
+          transform 600ms cubic-bezier(0.16, 1, 0.3, 1),
+          opacity 600ms cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms,
+          box-shadow 400ms cubic-bezier(0.16, 1, 0.3, 1)
         `,
         transformStyle: 'preserve-3d',
       }}
     >
       {effectiveGlow && (
         <div className={`
-          absolute -inset-3 rounded-3xl transition-all duration-700
-          ${isHovered && !isMobile ? 'opacity-100 blur-2xl' : 'opacity-0 blur-xl'}
-          dark:bg-gradient-to-br dark:from-blue-500/25 dark:via-emerald-500/20 dark:to-cyan-500/25
+          absolute -inset-2 rounded-2xl transition-all duration-500
+          ${isHovered && !isMobile ? 'opacity-100 blur-xl' : 'opacity-0 blur-lg'}
+          dark:bg-gradient-to-br dark:from-blue-500/20 dark:via-emerald-500/15 dark:to-cyan-500/20
           bg-gradient-to-br from-blue-400/15 via-emerald-400/10 to-cyan-400/15
         `} />
       )}
       
       <div className={`
-        absolute inset-0 rounded-3xl shadow-xl transition-all duration-700
-        ${isHovered && !isMobile ? 'shadow-2xl' : ''}
+        absolute inset-0 rounded-2xl shadow-lg transition-all duration-500
+        ${isHovered && !isMobile ? 'shadow-xl' : ''}
         dark:bg-gradient-to-br dark:from-slate-800/95 dark:via-slate-900/90 dark:to-slate-800/85
         bg-gradient-to-br from-white/95 via-gray-50/90 to-white/85
         border dark:border-white/10 border-gray-200
       `} />
       
       {!isMobile && (
-        <div className={`absolute inset-0 rounded-3xl overflow-hidden`}>
+        <div className={`absolute inset-0 rounded-2xl overflow-hidden`}>
           <div className={`
-            absolute -inset-full transition-transform duration-1200
+            absolute -inset-full transition-transform duration-1000
             ${isHovered ? 'translate-x-full' : '-translate-x-full'}
-            dark:bg-gradient-to-r dark:from-transparent dark:via-white/10 dark:to-transparent
-            bg-gradient-to-r from-transparent via-blue-500/5 to-transparent
+            dark:bg-gradient-to-r dark:from-transparent dark:via-white/5 dark:to-transparent
+            bg-gradient-to-r from-transparent via-blue-500/3 to-transparent
           `} />
         </div>
       )}
@@ -459,7 +443,7 @@ const WidgetFlottant = memo(({
 
 WidgetFlottant.displayName = 'WidgetFlottant';
 
-// Arrière-plan animé optimisé pour mobile
+// Arrière-plan animé optimisé pour mobile et PC
 const FondAnime = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
@@ -489,10 +473,10 @@ const FondAnime = memo(() => {
     
     const initParticles = () => {
       particlesRef.current = [];
-      // Réduire le nombre de particules sur mobile
+      // Réduire légèrement le nombre de particules sur mobile pour maintenir les 60 FPS
       const particleCount = isMobile 
-        ? Math.min(Math.floor((canvas.width * canvas.height) / 80000), 40)
-        : Math.min(Math.floor((canvas.width * canvas.height) / 30000), 80);
+        ? Math.min(Math.floor((window.innerWidth * window.innerHeight) / 40000), 60)
+        : Math.min(Math.floor((window.innerWidth * window.innerHeight) / 30000), 80);
       
       const isDark = document.documentElement.classList.contains('dark');
       
@@ -504,13 +488,13 @@ const FondAnime = memo(() => {
         particlesRef.current.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          size: Math.random() * (isMobile ? 1.5 : 2) + 0.5,
-          speedX: Math.random() * 0.3 - 0.15,
-          speedY: Math.random() * 0.3 - 0.15,
+          size: Math.random() * 1.5 + 0.5,
+          speedX: Math.random() * 0.2 - 0.1,
+          speedY: Math.random() * 0.2 - 0.1,
           color: colors[Math.floor(Math.random() * colors.length)],
           alpha: Math.random() * 0.2 + 0.1,
           pulseSpeed: Math.random() * 0.02 + 0.005,
-          type: Math.random() > 0.8 ? 'sparkle' : 'dot'
+          type: Math.random() > 0.9 ? 'sparkle' : 'dot'
         });
       }
     };
@@ -519,32 +503,34 @@ const FondAnime = memo(() => {
       ctx.save();
       ctx.globalAlpha = particle.alpha;
       
-      if (particle.type === 'sparkle' && !isMobile) {
+      if (particle.type === 'sparkle') {
         ctx.fillStyle = '#ffffff';
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 8;
         ctx.shadowColor = particle.color;
         
         ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.size * 1.5, 0, Math.PI * 2);
+        ctx.arc(particle.x, particle.y, particle.size * 1.2, 0, Math.PI * 2);
         ctx.fill();
         
-        for (let i = 0; i < 6; i++) {
-          const angle = (i * Math.PI) / 3;
+        // Rayons simplifiés pour mobile
+        const rayCount = isMobile ? 4 : 6;
+        for (let i = 0; i < rayCount; i++) {
+          const angle = (i * Math.PI * 2) / rayCount;
           const x1 = particle.x + Math.cos(angle) * particle.size;
           const y1 = particle.y + Math.sin(angle) * particle.size;
-          const x2 = particle.x + Math.cos(angle) * particle.size * 4;
-          const y2 = particle.y + Math.sin(angle) * particle.size * 4;
+          const x2 = particle.x + Math.cos(angle) * particle.size * 3;
+          const y2 = particle.y + Math.sin(angle) * particle.size * 3;
           
           ctx.beginPath();
           ctx.moveTo(x1, y1);
           ctx.lineTo(x2, y2);
-          ctx.lineWidth = 0.5;
+          ctx.lineWidth = 0.3;
           ctx.strokeStyle = '#ffffff';
           ctx.stroke();
         }
       } else {
         ctx.fillStyle = particle.color;
-        ctx.shadowBlur = isMobile ? 8 : 15;
+        ctx.shadowBlur = 10;
         ctx.shadowColor = particle.color;
         
         ctx.beginPath();
@@ -558,53 +544,42 @@ const FondAnime = memo(() => {
     const animate = () => {
       timeRef.current += 0.01;
       
-      // Optimisation: utiliser requestAnimationFrame efficacement
-      const now = performance.now();
-      const shouldSkipFrame = isMobile && now % 2 === 0; // Réduire FPS sur mobile
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      if (!shouldSkipFrame) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        const isDark = document.documentElement.classList.contains('dark');
-        
-        // Fond dégradé simplifié sur mobile
-        if (!isMobile) {
-          const gradient = ctx.createLinearGradient(
-            0, 0,
-            canvas.width * Math.cos(timeRef.current * 0.1),
-            canvas.height * Math.sin(timeRef.current * 0.1)
-          );
-          
-          if (isDark) {
-            gradient.addColorStop(0, 'rgba(15, 23, 42, 0.2)');
-            gradient.addColorStop(0.5, 'rgba(30, 41, 59, 0.15)');
-            gradient.addColorStop(1, 'rgba(15, 23, 42, 0.2)');
-          } else {
-            gradient.addColorStop(0, 'rgba(249, 250, 251, 0.3)');
-            gradient.addColorStop(0.5, 'rgba(243, 244, 246, 0.2)');
-            gradient.addColorStop(1, 'rgba(249, 250, 251, 0.3)');
-          }
-          
-          ctx.fillStyle = gradient;
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-        
-        // Mettre à jour et dessiner les particules
-        particlesRef.current.forEach(particle => {
-          particle.x += particle.speedX;
-          particle.y += particle.speedY;
-          
-          // Rebond sur les bords
-          if (particle.x > canvas.width) particle.x = 0;
-          if (particle.x < 0) particle.x = canvas.width;
-          if (particle.y > canvas.height) particle.y = 0;
-          if (particle.y < 0) particle.y = canvas.height;
-          
-          particle.alpha = 0.15 + Math.sin(timeRef.current * particle.pulseSpeed) * 0.1;
-          
-          drawParticle(particle, ctx);
-        });
+      const isDark = document.documentElement.classList.contains('dark');
+      
+      // Fond dégradé subtil
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      
+      if (isDark) {
+        gradient.addColorStop(0, 'rgba(15, 23, 42, 0.1)');
+        gradient.addColorStop(0.5, 'rgba(30, 41, 59, 0.08)');
+        gradient.addColorStop(1, 'rgba(15, 23, 42, 0.1)');
+      } else {
+        gradient.addColorStop(0, 'rgba(249, 250, 251, 0.2)');
+        gradient.addColorStop(0.5, 'rgba(243, 244, 246, 0.15)');
+        gradient.addColorStop(1, 'rgba(249, 250, 251, 0.2)');
       }
+      
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Mettre à jour et dessiner les particules
+      particlesRef.current.forEach(particle => {
+        particle.x += particle.speedX;
+        particle.y += particle.speedY;
+        
+        // Rebond sur les bords
+        if (particle.x > canvas.width) particle.x = 0;
+        if (particle.x < 0) particle.x = canvas.width;
+        if (particle.y > canvas.height) particle.y = 0;
+        if (particle.y < 0) particle.y = canvas.height;
+        
+        // Animation de pulsation
+        particle.alpha = 0.15 + Math.sin(timeRef.current * particle.pulseSpeed) * 0.1;
+        
+        drawParticle(particle, ctx);
+      });
       
       animationRef.current = requestAnimationFrame(animate);
     };
@@ -628,32 +603,28 @@ const FondAnime = memo(() => {
       />
       
       <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-        {/* Gradients animés - simplifiés sur mobile */}
+        {/* Gradients animés */}
         <div className={`
           absolute inset-0
-          dark:bg-gradient-to-br dark:from-blue-900/10 dark:via-transparent dark:to-emerald-900/10
-          bg-gradient-to-br from-blue-50/20 via-transparent to-emerald-50/20
+          dark:bg-gradient-to-br dark:from-blue-900/5 dark:via-transparent dark:to-emerald-900/5
+          bg-gradient-to-br from-blue-50/10 via-transparent to-emerald-50/10
           animate-gradient-flow
         `} />
         
-        {/* Effets de lumière - réduits sur mobile */}
-        {!isMobile && (
-          <>
-            <div className={`
-              absolute top-0 left-0 right-0 h-64
-              dark:bg-gradient-to-b dark:from-blue-500/10 dark:to-transparent
-              bg-gradient-to-b from-blue-400/10 to-transparent
-              animate-float-gentle
-            `} />
-            
-            <div className={`
-              absolute bottom-0 left-0 right-0 h-64
-              dark:bg-gradient-to-t dark:from-emerald-500/10 dark:to-transparent
-              bg-gradient-to-t from-emerald-400/10 to-transparent
-              animate-float-gentle-reverse
-            `} />
-          </>
-        )}
+        {/* Effets de lumière */}
+        <div className={`
+          absolute top-0 left-0 right-0 h-64
+          dark:bg-gradient-to-b dark:from-blue-500/5 dark:to-transparent
+          bg-gradient-to-b from-blue-400/5 to-transparent
+          animate-float-gentle
+        `} />
+        
+        <div className={`
+          absolute bottom-0 left-0 right-0 h-64
+          dark:bg-gradient-to-t dark:from-emerald-500/5 dark:to-transparent
+          bg-gradient-to-t from-emerald-400/5 to-transparent
+          animate-float-gentle-reverse
+        `} />
       </div>
     </>
   );
@@ -673,7 +644,7 @@ interface CarteInteractiveProps {
   delay?: number;
 }
 
-// Carte interactive améliorée avec optimisation mobile
+// Carte interactive améliorée
 const CarteInteractive = memo(({ 
   icon: Icon,
   title,
@@ -698,7 +669,7 @@ const CarteInteractive = memo(({
       },
       { 
         threshold: 0.05, 
-        rootMargin: isMobile ? '50px 0px' : '100px 0px' 
+        rootMargin: '100px' 
       }
     );
     
@@ -706,34 +677,31 @@ const CarteInteractive = memo(({
     return () => {
       if (cardRef.current) observer.unobserve(cardRef.current);
     };
-  }, [delay, isMobile]);
+  }, [delay]);
   
   return (
     <div ref={cardRef} className="h-full">
       <WidgetFlottant 
-        intensity={0.35}
-        glow={true}
-        minHeight={isMobile ? "min-h-[180px]" : "min-h-[220px]"}
+        intensity={0.25}
+        glow={!isMobile}
+        minHeight={isMobile ? "min-h-[180px]" : "min-h-[200px]"}
         onHoverChange={setIsHovered}
         delay={delay}
-        mobileReducedEffects={true}
       >
         <motion.div
           onClick={onClick}
           onMouseEnter={() => !isMobile && setIsHovered(true)}
           onMouseLeave={() => !isMobile && setIsHovered(false)}
-          onTouchStart={() => isMobile && setIsHovered(true)}
-          onTouchEnd={() => isMobile && setIsHovered(false)}
           className="cursor-pointer h-full"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 30 }}
-          transition={{ duration: isMobile ? 0.3 : 0.6, delay: delay / 1000 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
+          transition={{ duration: 0.5, delay: delay / 1000 }}
         >
-          <Card className="h-full border-0 overflow-hidden bg-transparent rounded-3xl">
+          <Card className="h-full border-0 overflow-hidden bg-transparent rounded-2xl">
             <CardContent className={`${isMobile ? 'p-4' : 'p-5'} text-center flex flex-col items-center justify-center h-full`}>
               {isActive && (
                 <motion.div
-                  className="absolute top-3 right-3 z-20"
+                  className="absolute top-2 right-2 z-20"
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: "spring" }}
@@ -743,11 +711,11 @@ const CarteInteractive = memo(({
               )}
               
               <motion.div
-                className={`relative ${isMobile ? 'w-12 h-12' : 'w-16 h-16'} rounded-2xl ${bg} flex items-center justify-center mx-auto mb-4 shadow-lg transform-gpu`}
-                whileHover={!isMobile ? { rotateY: 3, rotateX: 3, scale: 1.1 } : {}}
+                className={`relative ${isMobile ? 'w-12 h-12' : 'w-14 h-14'} rounded-xl ${bg} flex items-center justify-center mx-auto mb-3 shadow-lg transform-gpu`}
+                whileHover={!isMobile ? { scale: 1.1 } : {}}
                 transition={{ type: "spring", stiffness: 200, damping: 15 }}
               >
-                <Icon className={`relative z-10 ${isMobile ? 'w-6 h-6' : 'w-8 h-8'} ${color}`} />
+                <Icon className={`relative z-10 ${isMobile ? 'w-6 h-6' : 'w-7 h-7'} ${color}`} />
               </motion.div>
               
               <motion.h3
@@ -764,10 +732,10 @@ const CarteInteractive = memo(({
               </motion.h3>
               
               <motion.p
-                className={`${isMobile ? 'text-xs mb-3' : 'text-sm mb-4'} flex-grow`}
+                className={`${isMobile ? 'text-xs mb-2' : 'text-sm mb-3'} flex-grow`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: isVisible ? 1 : 0 }}
-                transition={{ duration: isMobile ? 0.2 : 0.4, delay: (delay + 200) / 1000 }}
+                transition={{ duration: 0.3, delay: (delay + 200) / 1000 }}
               >
                 <span className="dark:text-gray-300 text-gray-600">
                   {description}
@@ -795,7 +763,7 @@ interface BinModalProps {
   bg?: string;
 }
 
-// Modal optimisé pour mobile
+// Modal optimisé pour mobile et PC
 const BinModal = memo(({ 
   isOpen,
   onClose,
@@ -846,7 +814,7 @@ const BinModal = memo(({
           onClick={handleBackdropClick}
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ 
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
             backdropFilter: 'blur(4px)',
             WebkitBackdropFilter: 'blur(4px)'
           }}
@@ -858,13 +826,13 @@ const BinModal = memo(({
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
             transition={{ 
               type: "spring",
-              damping: isMobile ? 30 : 25,
-              stiffness: isMobile ? 400 : 300,
+              damping: 25,
+              stiffness: 300,
               mass: 0.8
             }}
             className={`relative w-full ${isMobile ? 'max-w-full' : 'max-w-2xl'}`}
           >
-            <WidgetFlottant intensity={0.2} glow={!isMobile} minHeight="min-h-0" mobileReducedEffects={true}>
+            <WidgetFlottant intensity={0.15} glow={!isMobile} minHeight="min-h-0">
               <Card className={`
                 border overflow-hidden
                 dark:border-white/20 dark:bg-slate-900/95
@@ -876,17 +844,17 @@ const BinModal = memo(({
                   {/* Header */}
                   <div className={`flex items-start justify-between ${isMobile ? 'mb-4' : 'mb-6'}`}>
                     <motion.div 
-                      className="flex items-center gap-4"
+                      className="flex items-center gap-3"
                       initial={{ x: -20, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
                       transition={{ delay: 0.1 }}
                     >
-                      <div className={`${isMobile ? 'w-12 h-12' : 'w-14 h-14'} rounded-xl ${bg} flex items-center justify-center`}>
-                        <Icon className={`${isMobile ? 'w-6 h-6' : 'w-7 h-7'} ${color}`} />
+                      <div className={`${isMobile ? 'w-10 h-10' : 'w-12 h-12'} rounded-lg ${bg} flex items-center justify-center`}>
+                        <Icon className={`${isMobile ? 'w-5 h-5' : 'w-6 h-6'} ${color}`} />
                       </div>
                       <div>
                         <h3 className={`
-                          ${isMobile ? 'text-xl' : 'text-2xl'} font-bold mb-1
+                          ${isMobile ? 'text-lg' : 'text-xl'} font-bold mb-1
                           dark:text-white text-gray-900
                         `}>
                           {title}
@@ -903,11 +871,11 @@ const BinModal = memo(({
                     <motion.button
                       onClick={onClose}
                       className={`
-                        p-2 rounded-xl transition-colors flex-shrink-0
+                        p-1 rounded-lg transition-colors flex-shrink-0
                         dark:hover:bg-white/10 hover:bg-gray-100
                       `}
                       aria-label="Fermer"
-                      whileHover={{ scale: 1.1, rotate: 90 }}
+                      whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -921,20 +889,20 @@ const BinModal = memo(({
                   </div>
                   
                   {/* Details */}
-                  <div className={`${isMobile ? 'space-y-4' : 'space-y-6'}`}>
+                  <div className={`${isMobile ? 'space-y-3' : 'space-y-4'}`}>
                     <motion.div
                       initial={{ y: 20, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.3 }}
                     >
                       <h4 className={`
-                        font-semibold ${isMobile ? 'text-base' : 'text-lg'} mb-3
+                        font-semibold ${isMobile ? 'text-base' : 'text-lg'} mb-2
                         dark:text-blue-400 text-blue-600
                       `}>
                         Description
                       </h4>
                       <p className={`
-                        ${isMobile ? 'text-sm leading-relaxed' : 'leading-relaxed'}
+                        ${isMobile ? 'text-sm' : 'leading-relaxed'}
                         dark:text-gray-300 text-gray-700
                       `}>
                         {details}
@@ -943,7 +911,7 @@ const BinModal = memo(({
                     
                     <motion.div
                       className={`
-                        p-4 rounded-xl border
+                        p-3 rounded-lg border
                         dark:bg-blue-500/10 dark:border-blue-500/20
                         bg-blue-50 border-blue-200
                       `}
@@ -952,13 +920,13 @@ const BinModal = memo(({
                       transition={{ delay: 0.4 }}
                     >
                       <h4 className={`
-                        font-semibold text-sm mb-2 flex items-center gap-2
+                        font-semibold text-xs mb-1 flex items-center gap-1
                         dark:text-blue-400 text-blue-600
                       `}>
-                        <Sparkles className="w-4 h-4" />
+                        <Sparkles className="w-3 h-3" />
                         CONSEILS DE TRI
                       </h4>
-                      <ul className="text-sm space-y-1">
+                      <ul className="text-xs space-y-1">
                         <li className={`
                           dark:text-gray-300 text-gray-700
                         `}>• Bien nettoyer les contenants</li>
@@ -975,7 +943,7 @@ const BinModal = memo(({
                   {/* Actions */}
                   <motion.div 
                     className={`
-                      flex gap-4 mt-8 pt-6 border-t
+                      flex gap-3 mt-6 pt-4 border-t
                       dark:border-white/20 border-gray-200
                     `}
                     initial={{ y: 20, opacity: 0 }}
@@ -984,23 +952,21 @@ const BinModal = memo(({
                   >
                     <BoutonAnime
                       variant="outline"
-                      size={isMobile ? "sm" : "sm"}
+                      size="sm"
                       onClick={onClose}
                       className="flex-1"
-                      mobileOptimized={true}
                     >
                       Fermer
                     </BoutonAnime>
                     
                     <BoutonAnime
                       variant="gradient"
-                      size={isMobile ? "sm" : "sm"}
+                      size="sm"
                       href="/guide"
                       className="flex-1"
                       glow={!isMobile}
-                      mobileOptimized={true}
                     >
-                      <BookOpen className="w-4 h-4 mr-2" />
+                      <BookOpen className="w-3 h-3 mr-1" />
                       Guide
                     </BoutonAnime>
                   </motion.div>
@@ -1025,11 +991,10 @@ const ThemeSwitch = memo(() => {
     <motion.button
       onClick={toggleTheme}
       className={`
-        relative p-3 rounded-xl transition-colors
+        relative p-2 rounded-lg transition-colors
         dark:bg-slate-800/50 dark:hover:bg-slate-700/50
         bg-gray-100 hover:bg-gray-200
         border dark:border-white/10 border-gray-300
-        ${isMobile ? 'p-2' : ''}
       `}
       aria-label={theme === 'dark' ? 'Passer au mode clair' : 'Passer au mode sombre'}
       whileHover={{ scale: 1.05 }}
@@ -1052,46 +1017,6 @@ const ThemeSwitch = memo(() => {
 
 ThemeSwitch.displayName = 'ThemeSwitch';
 
-// Composant Switch pour langue
-const LanguageSwitch = memo(() => {
-  const { language, setLanguage } = useLanguage();
-  const isMobile = useIsMobile();
-  
-  const toggleLanguage = useCallback(() => {
-    setLanguage(language === 'fr' ? 'en' : 'fr');
-  }, [language, setLanguage]);
-  
-  return (
-    <motion.button
-      onClick={toggleLanguage}
-      className={`
-        relative p-3 rounded-xl transition-colors
-        dark:bg-slate-800/50 dark:hover:bg-slate-700/50
-        bg-gray-100 hover:bg-gray-200
-        border dark:border-white/10 border-gray-300
-        ${isMobile ? 'p-2' : ''}
-      `}
-      aria-label={language === 'fr' ? 'Switch to English' : 'Passer en Français'}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-    >
-      <motion.div
-        initial={false}
-        animate={{ scale: 1 }}
-        whileTap={{ scale: 0.9 }}
-        className="flex items-center gap-1"
-      >
-        <Globe className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} dark:text-blue-400 text-blue-600`} />
-        <span className={`font-semibold ${isMobile ? 'text-xs' : 'text-sm'}`}>
-          {language.toUpperCase()}
-        </span>
-      </motion.div>
-    </motion.button>
-  );
-});
-
-LanguageSwitch.displayName = 'LanguageSwitch';
-
 // Composant principal optimisé
 export default function ProjectEco() {
   const { theme } = useTheme();
@@ -1100,7 +1025,7 @@ export default function ProjectEco() {
   
   // États optimisés
   const [activeBinIndex, setActiveBinIndex] = useState(0);
-  const [isAutoRotating, setIsAutoRotating] = useState(!isMobile); // Désactiver auto-rotation sur mobile par défaut
+  const [isAutoRotating, setIsAutoRotating] = useState(true);
   const [openModalIndex, setOpenModalIndex] = useState<number | null>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   
@@ -1209,14 +1134,13 @@ export default function ProjectEco() {
     }
   ], [t]);
   
-  // Animation de scroll optimisée pour mobile
+  // Animation de scroll optimisée
   useEffect(() => {
     let ticking = false;
-    let rafId: number;
     
     const handleScroll = () => {
       if (!ticking) {
-        rafId = requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
           const scrollTop = window.scrollY;
           const docHeight = document.body.scrollHeight - window.innerHeight;
           const progress = Math.min((scrollTop / docHeight) * 100, 100);
@@ -1230,13 +1154,10 @@ export default function ProjectEco() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
     
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (rafId) cancelAnimationFrame(rafId);
-    };
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   
-  // Rotation automatique optimisée pour mobile
+  // Rotation automatique optimisée
   useEffect(() => {
     mountedRef.current = true;
     
@@ -1250,8 +1171,8 @@ export default function ProjectEco() {
       clearInterval(autoRotationInterval.current);
     }
     
-    // Ralentir l'intervalle sur mobile
-    const interval = isMobile ? 6000 : 4000;
+    // Ralentir légèrement sur mobile
+    const interval = isMobile ? 5000 : 4000;
     autoRotationInterval.current = setInterval(rotateBins, interval);
     
     return () => {
@@ -1262,7 +1183,7 @@ export default function ProjectEco() {
     };
   }, [isAutoRotating, openModalIndex, bins.length, isMobile]);
   
-  // Gestion des interactions optimisée pour mobile
+  // Gestion des interactions
   const handleBinClick = useCallback((index: number) => {
     setActiveBinIndex(index);
     setOpenModalIndex(index);
@@ -1272,9 +1193,9 @@ export default function ProjectEco() {
   const handleCloseModal = useCallback(() => {
     setOpenModalIndex(null);
     setTimeout(() => {
-      setIsAutoRotating(!isMobile); // Ne pas réactiver auto-rotation sur mobile
+      setIsAutoRotating(true);
     }, 300);
-  }, [isMobile]);
+  }, []);
   
   return (
     <div className="min-h-screen overflow-hidden">
@@ -1304,26 +1225,25 @@ export default function ProjectEco() {
         </div>
       </motion.div>
       
-      {/* Boutons thème et langue */}
-      <div className="fixed top-4 right-4 z-40 flex gap-2">
+      {/* Bouton thème */}
+      <div className="fixed top-4 right-4 z-40">
         <ThemeSwitch />
-        <LanguageSwitch />
       </div>
       
-      <div className={`container mx-auto px-4 py-8 ${isMobile ? 'py-6' : 'md:py-12 lg:py-16'}`}>
-        {/* Section Héro avec meilleur contraste */}
+      <div className={`container mx-auto px-4 ${isMobile ? 'py-6' : 'py-8 md:py-12 lg:py-16'}`}>
+        {/* Section Héro */}
         <motion.section
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: isMobile ? 0.4 : 0.8 }}
-          className={`max-w-6xl mx-auto text-center mb-16 ${isMobile ? 'mb-12 pt-12' : 'md:mb-24 pt-16'}`}
+          transition={{ duration: 0.5 }}
+          className={`max-w-6xl mx-auto text-center ${isMobile ? 'mb-12 pt-12' : 'mb-16 md:mb-24 pt-16'}`}
         >
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
             className={`
-              inline-flex items-center gap-3 ${isMobile ? 'px-4 py-2 text-xs' : 'px-6 py-3 text-sm'} rounded-full font-medium mb-8 
+              inline-flex items-center gap-2 ${isMobile ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm'} rounded-full font-medium mb-6
               backdrop-blur-xl shadow-lg border
               dark:bg-gradient-to-r dark:from-blue-600/30 dark:via-emerald-500/30 dark:to-cyan-500/30
               dark:border-white/20 dark:text-white
@@ -1336,12 +1256,12 @@ export default function ProjectEco() {
           </motion.div>
           
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: isMobile ? 0.3 : 0.6, delay: 0.4 }}
-            className="mb-8"
+            transition={{ duration: 0.4, delay: 0.4 }}
+            className="mb-6"
           >
-            <h1 className={`${isMobile ? 'text-3xl md:text-4xl' : 'text-5xl md:text-7xl lg:text-8xl'} font-black mb-6 tracking-tighter`}>
+            <h1 className={`${isMobile ? 'text-3xl md:text-4xl' : 'text-4xl md:text-6xl lg:text-7xl'} font-black mb-4 tracking-tight`}>
               <motion.span
                 className={`
                   bg-gradient-to-r bg-clip-text text-transparent inline-block
@@ -1352,7 +1272,7 @@ export default function ProjectEco() {
                   backgroundPosition: ['0% 50%', '100% 50%', '0% 50%']
                 }}
                 transition={{ 
-                  duration: 10,
+                  duration: 8,
                   repeat: Infinity,
                   ease: "linear"
                 }}
@@ -1363,8 +1283,8 @@ export default function ProjectEco() {
             </h1>
             
             <motion.h2
-              className={`${isMobile ? 'text-xl md:text-2xl' : 'text-3xl md:text-4xl'} font-bold mb-6`}
-              initial={{ opacity: 0, y: 20 }}
+              className={`${isMobile ? 'text-xl' : 'text-2xl md:text-3xl'} font-bold mb-4`}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
             >
@@ -1377,13 +1297,13 @@ export default function ProjectEco() {
           </motion.div>
           
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: isMobile ? 0.3 : 0.6, delay: 0.8 }}
-            className={`max-w-2xl mx-auto mb-8`}
+            transition={{ duration: 0.4, delay: 0.8 }}
+            className={`max-w-2xl mx-auto mb-6`}
           >
             <p className={`
-              ${isMobile ? 'text-base' : 'text-xl'} leading-relaxed mb-6
+              ${isMobile ? 'text-base' : 'text-lg'} leading-relaxed mb-6
               dark:text-gray-300 text-gray-700
             `}>
               {t("project.intro", "Bienvenue dans notre mouvement écologique communautaire. Ensemble, nous créons un avenir durable pour les générations à venir.")}
@@ -1391,10 +1311,10 @@ export default function ProjectEco() {
           </motion.div>
           
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: isMobile ? 0.3 : 0.6, delay: 1 }}
-            className={`flex ${isMobile ? 'flex-col' : 'flex-col sm:flex-row'} gap-4 justify-center items-center mb-12`}
+            transition={{ duration: 0.4, delay: 1 }}
+            className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-3 justify-center items-center mb-8`}
           >
             <BoutonAnime
               variant="gradient"
@@ -1403,7 +1323,6 @@ export default function ProjectEco() {
               href="/project"
               glow={!isMobile}
               pulse={!isMobile}
-              mobileOptimized={true}
             >
               {t("hero.cta", "Découvrir")}
             </BoutonAnime>
@@ -1413,7 +1332,6 @@ export default function ProjectEco() {
               size={isMobile ? "default" : "lg"}
               icon={<BookOpen className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />}
               href="/guide"
-              mobileOptimized={true}
             >
               {t("guide.title", "Guide Pratique")}
             </BoutonAnime>
@@ -1425,26 +1343,26 @@ export default function ProjectEco() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true, margin: isMobile ? "-50px" : "-100px" }}
-          transition={{ duration: isMobile ? 0.3 : 0.6 }}
-          className={`max-w-7xl mx-auto ${isMobile ? 'mb-12' : 'mb-20'}`}
+          transition={{ duration: 0.4 }}
+          className={`max-w-7xl mx-auto ${isMobile ? 'mb-12' : 'mb-16'}`}
         >
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-8"
           >
             <motion.div
               whileHover={!isMobile ? { rotate: 360 } : {}}
-              transition={{ duration: 1 }}
+              transition={{ duration: 0.8 }}
             >
               <Target className={`
-                ${isMobile ? 'w-10 h-10' : 'w-12 h-12'} mx-auto mb-4
+                ${isMobile ? 'w-10 h-10' : 'w-12 h-12'} mx-auto mb-3
                 dark:text-blue-600 text-blue-500
               `} />
             </motion.div>
             <h2 className={`
-              ${isMobile ? 'text-2xl md:text-3xl' : 'text-4xl md:text-5xl'} font-bold mb-4
+              ${isMobile ? 'text-2xl' : 'text-3xl md:text-4xl'} font-bold mb-3
               dark:text-white text-gray-900
             `}>
               {t("project.goal.title", "Nos Objectifs")}
@@ -1457,14 +1375,14 @@ export default function ProjectEco() {
             </p>
           </motion.div>
           
-          <div className={`grid grid-cols-1 ${isMobile ? 'gap-4' : 'md:grid-cols-2 lg:grid-cols-4 gap-6'}`}>
+          <div className={`grid grid-cols-1 ${isMobile ? 'gap-4' : 'md:grid-cols-2 lg:grid-cols-4 gap-5'}`}>
             {goals.map((goal, index) => (
               <motion.div
                 key={goal.title}
-                initial={{ opacity: 0, y: 60 }}
+                initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: isMobile ? "-25px" : "-50px" }}
-                transition={{ duration: isMobile ? 0.3 : 0.5, delay: index * 0.1 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.4, delay: index * 0.1 }}
                 className="h-full"
               >
                 <CarteInteractive
@@ -1485,26 +1403,26 @@ export default function ProjectEco() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true, margin: isMobile ? "-50px" : "-100px" }}
-          transition={{ duration: isMobile ? 0.3 : 0.6 }}
-          className={`max-w-7xl mx-auto ${isMobile ? 'mb-12' : 'mb-20'}`}
+          transition={{ duration: 0.4 }}
+          className={`max-w-7xl mx-auto ${isMobile ? 'mb-12' : 'mb-16'}`}
         >
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-8"
           >
             <motion.div
               animate={{ rotate: 360 }}
-              transition={{ duration: isMobile ? 20 : 15, repeat: Infinity, ease: "linear" }}
+              transition={{ duration: isMobile ? 15 : 12, repeat: Infinity, ease: "linear" }}
             >
               <Recycle className={`
-                ${isMobile ? 'w-10 h-10' : 'w-12 h-12'} mx-auto mb-4
+                ${isMobile ? 'w-10 h-10' : 'w-12 h-12'} mx-auto mb-3
                 dark:text-emerald-600 text-emerald-500
               `} />
             </motion.div>
             <h2 className={`
-              ${isMobile ? 'text-2xl md:text-3xl' : 'text-4xl md:text-5xl'} font-bold mb-4
+              ${isMobile ? 'text-2xl' : 'text-3xl md:text-4xl'} font-bold mb-3
               dark:text-white text-gray-900
             `}>
               {t("project.bins.title", "Tri Sélectif")}
@@ -1517,14 +1435,14 @@ export default function ProjectEco() {
             </p>
           </motion.div>
           
-          <div className={`grid grid-cols-1 ${isMobile ? 'gap-4' : 'md:grid-cols-2 lg:grid-cols-4 gap-6'} mb-8`}>
+          <div className={`grid grid-cols-1 ${isMobile ? 'gap-4' : 'md:grid-cols-2 lg:grid-cols-4 gap-5'} mb-6`}>
             {bins.map((bin, index) => (
               <motion.div
                 key={bin.label}
-                initial={{ opacity: 0, y: 60 }}
+                initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: isMobile ? "-25px" : "-50px" }}
-                transition={{ duration: isMobile ? 0.3 : 0.5, delay: index * 0.1 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.4, delay: index * 0.1 }}
                 className="h-full"
               >
                 <CarteInteractive
@@ -1546,7 +1464,7 @@ export default function ProjectEco() {
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="flex flex-col items-center gap-4 mt-8"
+            className="flex flex-col items-center gap-3 mt-6"
           >
             <div className="flex items-center gap-2">
               {bins.map((_, index) => (
@@ -1554,7 +1472,7 @@ export default function ProjectEco() {
                   key={index}
                   onClick={() => handleBinClick(index)}
                   className={`
-                    relative w-3 h-3 rounded-full transition-colors duration-300
+                    relative w-2.5 h-2.5 rounded-full transition-colors duration-200
                     ${index === activeBinIndex 
                       ? 'dark:bg-gradient-to-r dark:from-blue-600 dark:to-emerald-600 bg-gradient-to-r from-blue-500 to-emerald-500' 
                       : 'dark:bg-white/30 dark:hover:bg-white/50 bg-gray-400 hover:bg-gray-600'
@@ -1566,7 +1484,7 @@ export default function ProjectEco() {
                 >
                   {index === activeBinIndex && (
                     <motion.div
-                      className="absolute -inset-2 rounded-full border-2"
+                      className="absolute -inset-1.5 rounded-full border"
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ type: "spring" }}
@@ -1587,7 +1505,6 @@ export default function ProjectEco() {
                 size="sm"
                 icon={isAutoRotating ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
                 onClick={() => setIsAutoRotating(!isAutoRotating)}
-                mobileOptimized={true}
               >
                 {isAutoRotating ? t("common.pause", 'Pause') : t("common.play", 'Reprendre')}
               </BoutonAnime>
@@ -1600,26 +1517,26 @@ export default function ProjectEco() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true, margin: isMobile ? "-50px" : "-100px" }}
-          transition={{ duration: isMobile ? 0.3 : 0.6 }}
-          className={`max-w-7xl mx-auto ${isMobile ? 'mb-12' : 'mb-20'}`}
+          transition={{ duration: 0.4 }}
+          className={`max-w-7xl mx-auto ${isMobile ? 'mb-12' : 'mb-16'}`}
         >
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-8"
           >
             <motion.div
-              animate={!isMobile ? { scale: [1, 1.1, 1] } : {}}
+              animate={!isMobile ? { scale: [1, 1.05, 1] } : {}}
               transition={{ duration: 2, repeat: Infinity }}
             >
               <Zap className={`
-                ${isMobile ? 'w-10 h-10' : 'w-12 h-12'} mx-auto mb-4
+                ${isMobile ? 'w-10 h-10' : 'w-12 h-12'} mx-auto mb-3
                 dark:text-yellow-500 text-yellow-500
               `} />
             </motion.div>
             <h2 className={`
-              ${isMobile ? 'text-2xl md:text-3xl' : 'text-4xl md:text-5xl'} font-bold mb-4
+              ${isMobile ? 'text-2xl' : 'text-3xl md:text-4xl'} font-bold mb-3
               dark:text-white text-gray-900
             `}>
               {t("activities.title", "Passez à l'Action")}
@@ -1632,14 +1549,14 @@ export default function ProjectEco() {
             </p>
           </motion.div>
           
-          <div className={`grid grid-cols-1 ${isMobile ? 'gap-4' : 'md:grid-cols-2 lg:grid-cols-4 gap-6'}`}>
+          <div className={`grid grid-cols-1 ${isMobile ? 'gap-4' : 'md:grid-cols-2 lg:grid-cols-4 gap-5'}`}>
             {actions.map((action, index) => (
               <motion.div
                 key={action.title}
-                initial={{ opacity: 0, y: 60 }}
+                initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: isMobile ? "-25px" : "-50px" }}
-                transition={{ duration: isMobile ? 0.3 : 0.5, delay: index * 0.1 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.4, delay: index * 0.1 }}
                 className="h-full"
               >
                 <CarteInteractive
@@ -1657,54 +1574,52 @@ export default function ProjectEco() {
           
           {/* CTA Final */}
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: isMobile ? 0.3 : 0.6, delay: 0.4 }}
-            className="mt-16"
+            transition={{ duration: 0.4, delay: 0.4 }}
+            className="mt-12"
           >
-            <WidgetFlottant intensity={0.2} glow={!isMobile} minHeight="min-h-0" mobileReducedEffects={true}>
+            <WidgetFlottant intensity={0.15} glow={!isMobile} minHeight="min-h-0">
               <Card className={`
                 border overflow-hidden
                 dark:bg-gradient-to-br dark:from-blue-600/20 dark:via-emerald-600/20 dark:to-cyan-600/20
                 bg-gradient-to-br from-blue-500/15 via-emerald-500/15 to-cyan-500/15
                 dark:border-white/20 border-gray-300
               `}>
-                <CardContent className={`${isMobile ? 'p-6' : 'p-8'} text-center`}>
+                <CardContent className={`${isMobile ? 'p-5' : 'p-6'} text-center`}>
                   <Heart className={`
-                    ${isMobile ? 'w-12 h-12' : 'w-16 h-16'} mx-auto mb-6 animate-pulse
+                    ${isMobile ? 'w-12 h-12' : 'w-14 h-14'} mx-auto mb-4 animate-pulse
                     dark:text-pink-500 text-pink-500
                   `} />
                   <h3 className={`
-                    ${isMobile ? 'text-xl' : 'text-3xl'} font-bold mb-4
+                    ${isMobile ? 'text-xl' : 'text-2xl'} font-bold mb-3
                     dark:text-white text-gray-900
                   `}>
                     {t("project.why.title", "Votre Engagement Compte")}
                   </h3>
                   <p className={`
-                    mb-6 max-w-2xl mx-auto ${isMobile ? 'text-sm' : ''}
+                    mb-4 max-w-2xl mx-auto ${isMobile ? 'text-sm' : ''}
                     dark:text-gray-300 text-gray-700
                   `}>
                     {t("project.why.text", "Chaque geste que vous posez pour l'environnement a un impact réel. Ensemble, nous pouvons créer un changement durable.")}
                   </p>
-                  <div className={`flex ${isMobile ? 'flex-col' : 'flex-col sm:flex-row'} gap-4 justify-center`}>
+                  <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-3 justify-center`}>
                     <BoutonAnime
                       variant="gradient"
-                      size={isMobile ? "default" : "lg"}
+                      size={isMobile ? "default" : "default"}
                       icon={<Users className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />}
                       href="/contact"
                       glow={!isMobile}
-                      mobileOptimized={true}
                     >
                       {t("nav.contact", "Nous Contacter")}
                     </BoutonAnime>
                     
                     <BoutonAnime
                       variant="outline"
-                      size={isMobile ? "default" : "lg"}
+                      size={isMobile ? "default" : "default"}
                       icon={<Calendar className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />}
                       href="/activities"
-                      mobileOptimized={true}
                     >
                       {t("nav.events", "Voir les Activités")}
                     </BoutonAnime>
@@ -1730,7 +1645,7 @@ export default function ProjectEco() {
         />
       )}
       
-      {/* Styles globaux optimisés pour mobile */}
+      {/* Styles globaux */}
       <style>{`
         @keyframes spin {
           from { transform: rotate(0deg); }
@@ -1739,7 +1654,7 @@ export default function ProjectEco() {
         
         @keyframes pulse {
           0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.7; transform: scale(1.05); }
+          50% { opacity: 0.8; transform: scale(1.03); }
         }
         
         @keyframes gradient-flow {
@@ -1750,33 +1665,33 @@ export default function ProjectEco() {
         
         @keyframes float-gentle {
           0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
+          50% { transform: translateY(-8px); }
         }
         
         @keyframes float-gentle-reverse {
           0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(10px); }
+          50% { transform: translateY(8px); }
         }
         
         .animate-spin {
-          animation: spin 1s linear infinite;
+          animation: spin 0.8s linear infinite;
         }
         
         .animate-pulse {
-          animation: pulse 2s ease-in-out infinite;
+          animation: pulse 1.5s ease-in-out infinite;
         }
         
         .animate-gradient-flow {
-          animation: gradient-flow 20s ease infinite;
+          animation: gradient-flow 15s ease infinite;
           background-size: 200% 200%;
         }
         
         .animate-float-gentle {
-          animation: float-gentle 10s ease-in-out infinite;
+          animation: float-gentle 8s ease-in-out infinite;
         }
         
         .animate-float-gentle-reverse {
-          animation: float-gentle-reverse 12s ease-in-out infinite;
+          animation: float-gentle-reverse 10s ease-in-out infinite;
         }
         
         * {
@@ -1786,7 +1701,6 @@ export default function ProjectEco() {
         
         .transform-gpu {
           transform: translateZ(0);
-          backface-visibility: hidden;
         }
         
         .will-change-transform {
@@ -1805,7 +1719,7 @@ export default function ProjectEco() {
         
         /* Smooth transitions for theme changes */
         * {
-          transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+          transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
         }
         
         /* Optimisations pour mobile */
@@ -1814,21 +1728,7 @@ export default function ProjectEco() {
             touch-action: manipulation;
           }
           
-          /* Réduire les animations sur mobile */
-          * {
-            animation-duration: 0.5s !important;
-            transition-duration: 0.3s !important;
-          }
-          
-          /* Désactiver certaines animations gourmandes sur mobile */
-          .reduce-motion * {
-            animation: none !important;
-            transition: none !important;
-          }
-        }
-        
-        /* Prévenir le zoom sur les inputs iOS */
-        @media screen and (max-width: 768px) {
+          /* Prévenir le zoom sur les inputs iOS */
           input, select, textarea {
             font-size: 16px !important;
           }
