@@ -727,7 +727,7 @@ export function Footer() {
                     {t("footer.credits.lastUpdated", "Updated")}: 20 Dec 2025
                   </span>
                   <span className="text-xs text-emerald-600 dark:text-emerald-400 px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/20">
-                    v2.3
+                    v2.4
                   </span>
                 </div>
               </div>
